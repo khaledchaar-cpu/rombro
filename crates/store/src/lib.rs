@@ -1,5 +1,6 @@
 //! rombro-store: SQLite persistence for the RDB cache and (later) library state.
 
+mod identify;
 mod import;
 mod lookup;
 mod record;
@@ -7,6 +8,7 @@ mod schema;
 #[cfg(test)]
 mod tests;
 
+pub use identify::Match;
 pub use import::SyncReport;
 pub use record::Record;
 

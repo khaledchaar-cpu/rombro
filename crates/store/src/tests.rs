@@ -145,3 +145,34 @@ fn sync_is_incremental() {
         vec![("Nintendo - SNES".to_owned(), 1)]
     );
 }
+
+#[test]
+fn identify_confirms_by_sha1() {
+    use crate::Match;
+    use rombro_core::Hashes;
+    let dir = tempfile::tempdir().unwrap();
+    fixture(dir.path());
+    let mut s = Store::open_in_memory().unwrap();
+    s.sync_rdbs(dir.path()).unwrap();
+    let foo = Hashes {
+        size: 1024,
+        crc: 0xdead_beef,
+        sha1: [1; 20],
+        md5: [2; 16],
+    };
+    assert!(matches!(s.identify(&foo).unwrap(), Match::Verified(v) if v[0].name == "Foo (USA)"));
+    let bad = Hashes {
+        sha1: [7; 20],
+        ..foo
+    };
+    assert_eq!(s.identify(&bad).unwrap(), Match::Unknown);
+    let wrong_size = Hashes { size: 2048, ..foo };
+    assert_eq!(s.identify(&wrong_size).unwrap(), Match::Unknown);
+    let bar = Hashes {
+        size: 99,
+        crc: 1,
+        sha1: [0; 20],
+        md5: [0; 16],
+    };
+    assert!(matches!(s.identify(&bar).unwrap(), Match::CrcOnly(v) if v[0].name == "Bar (Europe)"));
+}

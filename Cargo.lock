@@ -966,6 +966,7 @@ name = "rombro-store"
 version = "0.1.0"
 dependencies = [
  "rayon",
+ "rombro-core",
  "rombro-rdb",
  "rusqlite",
  "tempfile",
