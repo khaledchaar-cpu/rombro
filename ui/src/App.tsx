@@ -4,6 +4,9 @@ import Topbar from "./components/Topbar";
 import CommandPalette, { type Command } from "./components/CommandPalette";
 import Dashboard from "./views/Dashboard";
 import Placeholder from "./views/Placeholder";
+import Inbox from "./views/Inbox";
+import Plan from "./views/Plan";
+import { execute, plan, undo } from "./state/importStore";
 import { VIEWS, type ViewId } from "./views";
 
 export default function App() {
@@ -23,6 +26,8 @@ export default function App() {
       hint: `Ctrl+${v.key}`,
       run: () => setView(v.id),
     })),
+    ...(plan()?.ops.length ? [{ id: "exec", label: "Execute plan", run: () => void execute() }] : []),
+    { id: "undo", label: "Undo last run", run: () => void undo() },
     { id: "fx", label: `Effects: ${effects() ? "off" : "on"}`, run: toggleEffects },
   ];
 
@@ -52,6 +57,12 @@ export default function App() {
         <Switch fallback={<Placeholder title={title()} />}>
           <Match when={view() === "dashboard"}>
             <Dashboard />
+          </Match>
+          <Match when={view() === "inbox"}>
+            <Inbox onPlanned={() => setView("plan")} />
+          </Match>
+          <Match when={view() === "plan"}>
+            <Plan />
           </Match>
         </Switch>
       </main>

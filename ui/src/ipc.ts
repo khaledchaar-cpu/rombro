@@ -41,3 +41,67 @@ export function onScanProgress(cb: (p: ScanProgress) => void): Promise<UnlistenF
   if (!inTauri) return Promise.resolve(() => {});
   return listen<ScanProgress>("scan://progress", (e) => cb(e.payload));
 }
+
+export type Mode = "move" | "copy" | "hardlink";
+export interface OpView { kind: "move" | "copy" | "link" | "write"; from: string | null; to: string }
+export interface DecisionView {
+  kind: "ambiguous" | "tie" | "rejected" | "skipped" | "conflict";
+  path: string;
+  detail: string;
+  options: string[];
+}
+export interface PlanView {
+  items: number;
+  placed: number;
+  unchanged: number;
+  quarantined: number;
+  ops: OpView[];
+  decisions: DecisionView[];
+}
+export interface ExecResult { done: number; journal: number | null; error: string | null }
+export interface ImportProgress { phase: "library" | "inbox"; done: number; total: number }
+
+function mockPlan(library: string): PlanView {
+  const ops: OpView[] = Array.from({ length: 2000 }, (_, i) => ({
+    kind: i % 50 === 0 ? "write" : "move",
+    from: i % 50 === 0 ? null : `/inbox/rom_${i}.zip`,
+    to: `${library}/Nintendo - Game Boy/Game ${i} (Europe).zip`,
+  }));
+  return {
+    items: 2100, placed: 1960, unchanged: 100, quarantined: 12, ops,
+    decisions: [
+      { kind: "ambiguous", path: "/inbox/x.bin", detail: "", options: ["[Sega - Saturn] A", "[Sega - Saturn] B"] },
+      { kind: "rejected", path: "/inbox/Tetris (Japan).gb", detail: "Tetris (Japan): region; kept Tetris (World)", options: [] },
+      { kind: "conflict", path: "/inbox/y.gb", detail: "target exists: /lib/y.gb", options: [] },
+    ],
+  };
+}
+
+export async function pickDir(title: string): Promise<string | null> {
+  if (!inTauri) return null;
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const r = await open({ directory: true, title });
+  return typeof r === "string" ? r : null;
+}
+
+export async function planImport(inbox: string | null, library: string, mode: Mode): Promise<PlanView> {
+  if (!inTauri) return mockPlan(library);
+  return invoke<PlanView>("plan_import", { inbox, library, mode });
+}
+
+export async function executePlan(): Promise<ExecResult> {
+  if (!inTauri) return { done: 0, journal: null, error: null };
+  return invoke<ExecResult>("execute_plan");
+}
+
+export async function undoLast(): Promise<number> {
+  if (!inTauri) return 0;
+  return invoke<number>("undo_last");
+}
+
+export function onImportProgress(cb: (p: ImportProgress) => void): Promise<UnlistenFn> {
+  if (!inTauri) return Promise.resolve(() => {});
+  return listen<[ImportProgress["phase"], ScanProgress]>("import://progress", (e) =>
+    cb({ phase: e.payload[0], ...e.payload[1] }),
+  );
+}

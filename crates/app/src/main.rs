@@ -2,10 +2,19 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod import;
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![commands::db_stats, commands::scan])
+        .plugin(tauri_plugin_dialog::init())
+        .manage(import::Pending::default())
+        .invoke_handler(tauri::generate_handler![
+            commands::db_stats,
+            commands::scan,
+            import::plan_import,
+            import::execute_plan,
+            import::undo_last
+        ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {
             eprintln!("rombro: {e}");

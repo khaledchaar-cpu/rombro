@@ -17,3 +17,4 @@ rombro-store.workspace = true
 anyhow.workspace = true
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
+tauri-plugin-dialog = "2"

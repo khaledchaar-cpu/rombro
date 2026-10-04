@@ -5,9 +5,9 @@ use std::path::PathBuf;
 use std::time::Instant;
 use tauri::{AppHandle, Emitter};
 
-type CmdResult<T> = Result<T, String>;
+pub(crate) type CmdResult<T> = Result<T, String>;
 
-fn err(e: impl std::fmt::Display) -> String {
+pub(crate) fn err(e: impl std::fmt::Display) -> String {
     e.to_string()
 }
 
@@ -15,7 +15,7 @@ fn db_path() -> CmdResult<PathBuf> {
     rombro_store::default_path().ok_or_else(|| "HOME not set".to_owned())
 }
 
-fn open_store() -> CmdResult<(Store, PathBuf)> {
+pub(crate) fn open_store() -> CmdResult<(Store, PathBuf)> {
     let path = db_path()?;
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir).map_err(err)?;
@@ -57,9 +57,9 @@ pub async fn db_stats() -> CmdResult<DbStats> {
 }
 
 #[derive(Serialize, Clone, Copy)]
-struct Progress {
-    done: usize,
-    total: usize,
+pub(crate) struct Progress {
+    pub done: usize,
+    pub total: usize,
 }
 
 #[derive(Serialize)]
@@ -73,7 +73,7 @@ pub struct ScanSummary {
 }
 
 /// Minimum number of files between two progress events (keeps IPC cheap).
-const PROGRESS_STEP: usize = 64;
+pub(crate) const PROGRESS_STEP: usize = 64;
 
 #[tauri::command]
 pub async fn scan(app: AppHandle, dir: PathBuf) -> CmdResult<ScanSummary> {

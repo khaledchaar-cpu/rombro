@@ -1,0 +1,246 @@
+//! Import flow over IPC: plan (dry run) → execute → undo. The last plan is cached in app state so
+//! `execute` runs exactly what the user reviewed.
+use crate::commands::{CmdResult, PROGRESS_STEP, Progress, err, open_store};
+use rombro_core::plan::{self, Decision, Mode, Op, Options, PLAYLIST_DIR};
+use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tauri::{AppHandle, Emitter, State};
+
+#[derive(Default)]
+pub struct Pending(Mutex<Option<(PathBuf, Vec<Op>)>>);
+
+#[derive(Deserialize, Clone, Copy)]
+#[serde(rename_all = "snake_case")]
+pub enum ModeArg {
+    Move,
+    Copy,
+    Hardlink,
+}
+
+impl From<ModeArg> for Mode {
+    fn from(m: ModeArg) -> Self {
+        match m {
+            ModeArg::Move => Mode::Move,
+            ModeArg::Copy => Mode::Copy,
+            ModeArg::Hardlink => Mode::Hardlink,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct OpView {
+    kind: &'static str,
+    from: Option<String>,
+    to: String,
+}
+
+#[derive(Serialize)]
+pub struct DecisionView {
+    kind: &'static str,
+    path: String,
+    detail: String,
+    options: Vec<String>,
+}
+
+#[derive(Serialize)]
+pub struct PlanView {
+    items: usize,
+    placed: usize,
+    unchanged: usize,
+    quarantined: usize,
+    ops: Vec<OpView>,
+    decisions: Vec<DecisionView>,
+}
+
+#[derive(Serialize)]
+pub struct ExecResult {
+    done: usize,
+    journal: Option<i64>,
+    error: Option<String>,
+}
+
+fn emit_scan(app: &AppHandle, phase: &'static str, dir: &Path) -> rombro_core::ScanReport {
+    rombro_core::scan_with_progress(dir, &|done, total| {
+        if done % PROGRESS_STEP == 0 || done == total {
+            let _ = app.emit("import://progress", (phase, Progress { done, total }));
+        }
+    })
+}
+
+#[tauri::command]
+pub async fn plan_import(
+    app: AppHandle,
+    pending: State<'_, Pending>,
+    inbox: Option<PathBuf>,
+    library: PathBuf,
+    mode: ModeArg,
+) -> CmdResult<PlanView> {
+    let library = std::path::absolute(&library).map_err(err)?;
+    let lib = library.clone();
+    let (p, items) = tauri::async_runtime::spawn_blocking(move || -> CmdResult<_> {
+        let (store, _) = open_store()?;
+        let mut items = Vec::new();
+        if lib.is_dir() {
+            items = store
+                .items(&emit_scan(&app, "library", &lib), true)
+                .map_err(err)?;
+        }
+        if let Some(inbox) = inbox {
+            let inbox = std::path::absolute(&inbox).map_err(err)?;
+            if !inbox.is_dir() {
+                return Err(format!("{} is not a directory", inbox.display()));
+            }
+            items.extend(
+                store
+                    .items(&emit_scan(&app, "inbox", &inbox), false)
+                    .map_err(err)?,
+            );
+        }
+        let opts = Options {
+            mode: mode.into(),
+            rules: Default::default(),
+            playlists: Some(lib.join(PLAYLIST_DIR)),
+        };
+        Ok((plan::build(&items, &lib, &opts), items.len()))
+    })
+    .await
+    .map_err(err)??;
+    let view = PlanView {
+        items,
+        placed: p.placed,
+        unchanged: p.unchanged,
+        quarantined: p.quarantined,
+        ops: p.ops.iter().map(op_view).collect(),
+        decisions: p.decisions.iter().map(decision_view).collect(),
+    };
+    *pending.0.lock().map_err(err)? = Some((library, p.ops));
+    Ok(view)
+}
+
+#[tauri::command]
+pub async fn execute_plan(pending: State<'_, Pending>) -> CmdResult<ExecResult> {
+    let (library, ops) = pending
+        .0
+        .lock()
+        .map_err(err)?
+        .take()
+        .ok_or("no plan to execute")?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let ts = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(err)?
+            .as_secs() as i64;
+        let ex = plan::execute(&ops);
+        let journal = if ex.done.is_empty() {
+            None
+        } else {
+            let (store, _) = open_store()?;
+            Some(
+                store
+                    .add_journal(
+                        ts,
+                        &library.to_string_lossy(),
+                        &plan::journal_to_json(&ex.done),
+                    )
+                    .map_err(err)?,
+            )
+        };
+        Ok(ExecResult {
+            done: ex.done.len(),
+            journal,
+            error: ex
+                .error
+                .map(|(op, e)| format!("{}: {e}", op.target().display())),
+        })
+    })
+    .await
+    .map_err(err)?
+}
+
+/// Reverts the most recent execution; returns the number of reverted operations (0 = nothing to undo).
+#[tauri::command]
+pub async fn undo_last() -> CmdResult<usize> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let (store, _) = open_store()?;
+        let Some(j) = store.last_journal().map_err(err)? else {
+            return Ok(0);
+        };
+        let done = plan::journal_from_json(&j.done).map_err(err)?;
+        let errors = plan::undo(&done);
+        if let Some((op, e)) = errors.first() {
+            return Err(format!(
+                "{} operations could not be reverted (first: {}: {e})",
+                errors.len(),
+                op.target().display()
+            ));
+        }
+        store.mark_undone(j.id).map_err(err)?;
+        Ok(done.len())
+    })
+    .await
+    .map_err(err)?
+}
+
+fn s(p: &Path) -> String {
+    p.display().to_string()
+}
+
+fn op_view(op: &Op) -> OpView {
+    let kind = match op {
+        Op::Move { .. } => "move",
+        Op::Copy { .. } => "copy",
+        Op::Hardlink { .. } => "link",
+        Op::Write { .. } => "write",
+    };
+    OpView {
+        kind,
+        from: op.source().map(s),
+        to: s(op.target()),
+    }
+}
+
+fn decision_view(d: &Decision) -> DecisionView {
+    let (kind, path, detail, options) = match d {
+        Decision::Ambiguous { path, candidates } => (
+            "ambiguous",
+            s(path),
+            String::new(),
+            candidates
+                .iter()
+                .map(|g| format!("[{}] {}", g.system, g.name))
+                .collect(),
+        ),
+        Decision::Tie { system, releases } => {
+            ("tie", system.clone(), String::new(), releases.clone())
+        }
+        Decision::Rejected {
+            path,
+            name,
+            kept,
+            reason,
+        } => (
+            "rejected",
+            s(path),
+            match kept {
+                Some(k) => format!("{name}: {reason}; kept {k}"),
+                None => format!("{name}: excluded ({reason})"),
+            },
+            Vec::new(),
+        ),
+        Decision::Skipped { path, reason } => ("skipped", s(path), reason.clone(), Vec::new()),
+        Decision::Conflict { path, target } => (
+            "conflict",
+            s(path),
+            format!("target exists: {}", target.display()),
+            Vec::new(),
+        ),
+    };
+    DecisionView {
+        kind,
+        path,
+        detail,
+        options,
+    }
+}
