@@ -33,12 +33,6 @@ const MIGRATIONS: &[&str] = &[
         release_month INTEGER,
         users         INTEGER
     );
-    CREATE INDEX entry_crc    ON entry(crc) WHERE crc IS NOT NULL;
-    CREATE INDEX entry_sha1   ON entry(sha1) WHERE sha1 IS NOT NULL;
-    CREATE INDEX entry_md5    ON entry(md5) WHERE md5 IS NOT NULL;
-    CREATE INDEX entry_serial ON entry(serial) WHERE serial IS NOT NULL;
-    CREATE INDEX entry_source ON entry(source_id);
-    CREATE INDEX entry_system ON entry(system);
     CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
 ];
 
@@ -54,5 +48,20 @@ pub fn migrate(conn: &Connection) -> Result<()> {
         tx.pragma_update(None, "user_version", i as i64 + 1)?;
         tx.commit()?;
     }
+    conn.execute_batch(ENTRY_INDEXES)?;
     Ok(())
 }
+
+/// Lookup indexes on `entry`; dropped during bulk imports and rebuilt afterwards.
+pub const ENTRY_INDEXES: &str = "
+    CREATE INDEX IF NOT EXISTS entry_crc    ON entry(crc) WHERE crc IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS entry_sha1   ON entry(sha1) WHERE sha1 IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS entry_md5    ON entry(md5) WHERE md5 IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS entry_serial ON entry(serial) WHERE serial IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS entry_source ON entry(source_id);
+    CREATE INDEX IF NOT EXISTS entry_system ON entry(system);";
+
+pub const DROP_ENTRY_INDEXES: &str = "
+    DROP INDEX IF EXISTS entry_crc; DROP INDEX IF EXISTS entry_sha1;
+    DROP INDEX IF EXISTS entry_md5; DROP INDEX IF EXISTS entry_serial;
+    DROP INDEX IF EXISTS entry_system;";

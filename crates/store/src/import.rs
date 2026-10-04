@@ -76,6 +76,11 @@ impl Store {
             .collect::<Result<Vec<_>>>()?;
 
         let tx = self.conn.transaction()?;
+        // Rebuilding indexes once is far cheaper than maintaining them per insert.
+        let bulk = todo.len() > 4;
+        if bulk {
+            tx.execute_batch(crate::schema::DROP_ENTRY_INDEXES)?;
+        }
         for id in stale {
             tx.execute("DELETE FROM rdb_source WHERE id = ?1", [id])?;
         }
@@ -118,6 +123,9 @@ impl Store {
                 report.merged += p.merged;
                 report.orphaned += p.orphaned;
             }
+        }
+        if bulk {
+            tx.execute_batch(crate::schema::ENTRY_INDEXES)?;
         }
         tx.commit()?;
         report.imported = todo.len();

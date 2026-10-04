@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use clap::Subcommand;
 use rayon::prelude::*;
 use rombro_rdb::RdbFile;
+use rombro_store::Store;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -13,17 +14,94 @@ pub enum DbCmd {
         #[arg(long)]
         path: Option<PathBuf>,
     },
+    /// Import new/changed RDB files into the rombro database
+    Sync {
+        /// RDB directory (default: ~/.config/retroarch/database/rdb)
+        #[arg(long)]
+        path: Option<PathBuf>,
+        /// Database file (default: $XDG_DATA_HOME/rombro/rombro.db)
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
+    /// Look up entries by crc (8 hex), sha1 (40 hex), md5 (32 hex) or serial
+    Lookup {
+        key: String,
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
 }
 
 pub fn run(cmd: DbCmd) -> Result<()> {
     match cmd {
         DbCmd::Stats { path } => stats(path.map_or_else(default_dir, Ok)?),
+        DbCmd::Sync { path, db } => sync(path.map_or_else(default_dir, Ok)?, db),
+        DbCmd::Lookup { key, db } => lookup(&key, db),
     }
 }
 
 fn default_dir() -> Result<PathBuf> {
     let home = std::env::var_os("HOME").context("HOME not set")?;
     Ok(PathBuf::from(home).join(".config/retroarch/database/rdb"))
+}
+
+fn open_store(db: Option<PathBuf>) -> Result<Store> {
+    let path = match db {
+        Some(p) => p,
+        None => {
+            let base = match std::env::var_os("XDG_DATA_HOME") {
+                Some(d) => PathBuf::from(d),
+                None => PathBuf::from(std::env::var_os("HOME").context("HOME not set")?)
+                    .join(".local/share"),
+            };
+            base.join("rombro/rombro.db")
+        }
+    };
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    Store::open(&path).with_context(|| format!("opening {}", path.display()))
+}
+
+fn sync(dir: PathBuf, db: Option<PathBuf>) -> Result<()> {
+    let start = Instant::now();
+    let mut store = open_store(db)?;
+    let r = store.sync_rdbs(&dir)?;
+    println!(
+        "imported {} files ({} entries, {} merged, {} orphaned), {} unchanged, {} removed in {:.0?}",
+        r.imported,
+        r.entries,
+        r.merged,
+        r.orphaned,
+        r.unchanged,
+        r.removed,
+        start.elapsed()
+    );
+    Ok(())
+}
+
+fn lookup(key: &str, db: Option<PathBuf>) -> Result<()> {
+    let store = open_store(db)?;
+    let start = Instant::now();
+    let hex = key.len() % 2 == 0 && key.bytes().all(|b| b.is_ascii_hexdigit());
+    let hits = match (hex, key.len()) {
+        (true, 8) => store.by_crc(u32::from_str_radix(key, 16)?, None)?,
+        (true, 32) => store.by_md5(&decode_hex(key))?,
+        (true, 40) => store.by_sha1(&decode_hex(key))?,
+        _ => store.by_serial(key, None)?,
+    };
+    let elapsed = start.elapsed();
+    for h in &hits {
+        println!("{:<40} {}", h.system, h.name);
+    }
+    println!("{} hit(s) in {:.1?}", hits.len(), elapsed);
+    Ok(())
+}
+
+fn decode_hex(s: &str) -> Vec<u8> {
+    (0..s.len())
+        .step_by(2)
+        .filter_map(|i| u8::from_str_radix(&s[i..i + 2], 16).ok())
+        .collect()
 }
 
 struct Row {
