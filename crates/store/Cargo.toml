@@ -9,5 +9,10 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-rombro-core.workspace = true
+rombro-rdb.workspace = true
 thiserror.workspace = true
+rayon.workspace = true
+rusqlite.workspace = true
+
+[dev-dependencies]
+tempfile = "3.27.0"
