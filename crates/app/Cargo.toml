@@ -8,6 +8,12 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
 [dependencies]
 rombro-core.workspace = true
+rombro-store.workspace = true
 anyhow.workspace = true
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }

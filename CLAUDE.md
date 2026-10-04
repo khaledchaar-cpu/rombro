@@ -36,7 +36,7 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Alle Checks | `./scripts/check.sh` (fmt, clippy -D warnings, test) |
 | Tests Core | `cargo test -q -p rombro-core` |
 | CLI | `cargo run -q -p rombro-cli -- <cmd>` |
-| App dev | `cd ui && pnpm tauri dev` *(ab M7)* |
+| App dev | `cd ui && pnpm tauri dev` (nur Frontend: `pnpm dev`, Mock-IPC) |
 | RDBs → SQLite | `cargo run -q --release -p rombro-cli -- db sync` |
 | Lookup | `cargo run -q --release -p rombro-cli -- db lookup <crc/sha1/md5/serial>` |
 | DB-Statistik | `cargo run -q --release -p rombro-cli -- db stats` |

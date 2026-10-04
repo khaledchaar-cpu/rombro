@@ -47,14 +47,7 @@ fn default_dir() -> Result<PathBuf> {
 pub(crate) fn open_store(db: Option<PathBuf>) -> Result<Store> {
     let path = match db {
         Some(p) => p,
-        None => {
-            let base = match std::env::var_os("XDG_DATA_HOME") {
-                Some(d) => PathBuf::from(d),
-                None => PathBuf::from(std::env::var_os("HOME").context("HOME not set")?)
-                    .join(".local/share"),
-            };
-            base.join("rombro/rombro.db")
-        }
+        None => rombro_store::default_path().context("HOME not set")?,
     };
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;

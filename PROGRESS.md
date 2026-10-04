@@ -9,24 +9,23 @@
 | M4 Disc-Support | ✅ done |
 | M5 Naming & 1G1R | ✅ done |
 | M6 Planner & Import | ✅ done |
-| M7 App-Shell | ⏳ next |
-| M8 GUI Kern | – |
+| M7 App-Shell | ✅ done |
+| M8 GUI Kern | ⏳ next |
 | M9 GUI Feinschliff | – |
 | M10 Gamification | – |
 | M11 Release | – |
 
 ## Aktuell
-M6 fertig: `core::plan` (`build` → `Plan{ops, decisions, …}`, `execute` → Journal `Vec<Done>`, `undo`,
-`lpl::render`), `store` Migration v2 (`journal`, `resolution`), `Store::items(report, in_library)`.
-CLI: `rombro import <inbox> <lib> [--dry-run] [--mode move|copy|hardlink] [--playlists DIR|--no-playlists]`,
-`rombro audit <lib>` (verworfene 1G1R-Releases → TBD-Queue statt Trash), `rombro undo`, `rombro resolve <file> [n]`. Ende-zu-Ende-Test in `store/src/tests.rs`.
+M7 fertig: `crates/app` (Tauri 2, Commands `db_stats`, `scan` + Event `scan://progress`), `ui/` (Solid + Vite,
+`tokens.css`, Sidebar/Topbar, Command-Palette Ctrl+K, Ctrl+1–5 Views, Dashboard mit DB-KPIs + Quick-Scan,
+Segment-Progressbar, Effekte abschaltbar). `ipc.ts` liefert Mock-Daten außerhalb von Tauri. Core: `scan_with_progress`.
+`rombro_store::default_path()` (CLI + App).
 
-## Nächste Schritte (M7 App-Shell)
-1. SPEC §7/§8 lesen. Tauri 2 + SolidJS + Vite in `ui/`, `crates/app` als Tauri-Shell.
-2. Design-Tokens `ui/src/styles/tokens.css`, Layout (Sidebar, Topbar), Command-Palette, Dashboard-Dummy.
-3. IPC: erste Commands (`db_stats`, `scan` mit Fortschritts-Events) als dünne Adapter auf core/store.
-4. Offen aus M6: Reflink-Modus, Discs in ZIP/7z + CHD, Archive mit mehreren ROMs (werden übersprungen),
-   TBD-Queue persistieren + Aktionen (behalten/löschen), konfigurierbare 1G1R-Regeln/Templates (aktuell Defaults), Journal-Liste/Undo älterer Läufe.
+## Nächste Schritte (M8 GUI Kern)
+1. Inbox-View: Ordnerwahl (tauri-plugin-dialog), Scan streamen, Ergebnisliste virtualisiert (TanStack Virtual).
+2. Plan-Diff-View: `plan::build` per IPC, Dry-Run-Anzeige, Execute + Undo.
+3. Library-Tabelle; Dashboard echte KPIs.
+4. Offen aus M6: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, TBD-Queue-Aktionen, 1G1R-Regel-Config, Journal-Liste.
 
 ## Stolpersteine
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
@@ -39,6 +38,8 @@ CLI: `rombro import <inbox> <lib> [--dry-run] [--mode move|copy|hardlink] [--pla
 - 1G1R-Restgleichstände sind meist echte Varianten (andere Disc-Sets, Editionen) → bewusst User-Entscheidung.
 - Planner: Library-Items zuerst übergeben (gewinnen bei gleichem Namen); `_quarantine/_playlists` werden nie neu geplant.
 - Resolution speichert (system, name) statt entry_id – IDs ändern sich bei `db sync`.
+- Tauri-Rust-Crate und `@tauri-apps/api` müssen gleiche Minor haben (aktuell 2.11) – sonst Fehler beim `tauri dev`.
+- `pnpm tauri` setzt `TAURI_APP_PATH=../crates/app`; Fortschritts-Events nur alle 64 Dateien.
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log
@@ -50,3 +51,4 @@ CLI: `rombro import <inbox> <lib> [--dry-run] [--mode move|copy|hardlink] [--pla
 - 2026-10-04: M4 Disc-Support abgeschlossen.
 - 2026-10-05: M5 Naming & 1G1R abgeschlossen.
 - 2026-10-05: M6 Planner & Import abgeschlossen.
+- 2026-10-05: M7 App-Shell abgeschlossen.

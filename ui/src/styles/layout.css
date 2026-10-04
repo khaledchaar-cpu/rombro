@@ -1,0 +1,125 @@
+.shell {
+  display: grid;
+  grid-template: var(--topbar-h) 1fr / var(--sidebar-w) 1fr;
+  grid-template-areas: "side top" "side main";
+  height: 100%;
+}
+.sidebar {
+  grid-area: side;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-2);
+  background: var(--bg-sunken);
+  border-right: 1px solid var(--line);
+}
+.logo {
+  font: 600 var(--fs-lg) var(--font-head);
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-shadow: var(--glow);
+  padding: 0 var(--sp-2) var(--sp-4);
+}
+.nav-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+  transition: color var(--dur), background var(--dur);
+}
+.nav-item:hover { color: var(--text); background: var(--bg-raised); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--bg-raised); }
+
+.topbar {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.topbar h2 { font-size: var(--fs-md); color: var(--text); }
+.palette-trigger { display: flex; gap: var(--sp-2); align-items: center; }
+
+.content { grid-area: main; overflow: auto; padding: var(--sp-4); }
+
+.panel {
+  position: relative;
+  padding: var(--sp-4);
+  background: var(--bg-raised);
+  border: 1px solid var(--line-strong);
+  clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)));
+}
+.panel::before { /* corner marker */
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid var(--accent);
+  border-left: 2px solid var(--accent);
+}
+.panel-title {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--sp-3);
+}
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-4); }
+.wide { grid-column: 1 / -1; }
+.kpi { font: 600 var(--fs-xl) var(--font-head); color: var(--accent); text-shadow: var(--glow); }
+.small { font-size: var(--fs-xs); }
+.err { color: var(--err); }
+.rows { list-style: none; margin: 0; padding: 0; }
+.rows li { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed var(--line); }
+.row { display: flex; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.field {
+  flex: 1;
+  background: var(--bg-sunken);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  padding: var(--sp-2);
+}
+.btn {
+  padding: var(--sp-2) var(--sp-4);
+  font-family: var(--font-head);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--accent);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+.segments { display: flex; gap: 2px; height: 10px; margin-bottom: var(--sp-1); }
+.segments i { flex: 1; background: var(--line); transition: background var(--dur); }
+.segments i.on { background: var(--accent); box-shadow: var(--glow); }
+
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 15vh;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+.palette { width: min(560px, 90vw); padding: var(--sp-2); }
+.palette-input {
+  width: 100%;
+  padding: var(--sp-3);
+  background: var(--bg-sunken);
+  color: var(--accent);
+  border: 1px solid var(--line-strong);
+  outline: none;
+}
+.palette-list { list-style: none; margin: var(--sp-2) 0 0; padding: 0; max-height: 50vh; overflow: auto; }
+.palette-list li { display: flex; justify-content: space-between; padding: var(--sp-2) var(--sp-3); cursor: pointer; }
+.palette-list li.selected { background: var(--bg-sunken); color: var(--accent); border-left: 2px solid var(--accent); }

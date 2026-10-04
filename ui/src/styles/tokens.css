@@ -1,0 +1,53 @@
+/* Design tokens – the only place for colors, fonts, spacing, effects (SPEC §8). */
+:root {
+  --bg: #07070d;
+  --bg-raised: #0e0e18;
+  --bg-sunken: #040408;
+  --line: #1d1d2e;
+  --line-strong: #2c2c45;
+  --text: #d8dcf0;
+  --text-dim: #7c80a0;
+
+  --cyan: #00f0ff;
+  --magenta: #ff2bd6;
+  --yellow: #f5ff3b;
+  --ok: #39ff88;
+  --err: #ff3b5c;
+  --accent: var(--cyan);
+
+  --font-head: "Orbitron", "Rajdhani", system-ui, sans-serif;
+  --font-ui: "Rajdhani", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 2rem;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+
+  --cut: 10px; /* bevel size for clipped corners */
+  --sidebar-w: 208px;
+  --topbar-h: 48px;
+
+  --glow: 0 0 6px color-mix(in srgb, var(--accent) 60%, transparent);
+  --scanline-opacity: 0.06;
+  --dur: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur: 0ms;
+    --scanline-opacity: 0;
+  }
+}
+
+:root[data-effects="off"] {
+  --glow: none;
+  --scanline-opacity: 0;
+}
