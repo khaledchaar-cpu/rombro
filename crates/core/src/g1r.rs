@@ -1,0 +1,229 @@
+//! 1G1R ("one game, one ROM"): group releases by normalized title and pick the best one.
+
+use crate::naming::{self, Flags, NameInfo};
+use std::cmp::Reverse;
+use std::collections::{BTreeMap, HashSet};
+
+/// Selection rules (configurable; defaults per SPEC §11a).
+#[derive(Debug, Clone)]
+pub struct Rules {
+    /// Preferred regions, best first. Unlisted regions rank after all listed ones.
+    pub regions: Vec<String>,
+    /// Preferred languages (tie-breaker after region), best first.
+    pub languages: Vec<String>,
+    /// Releases with any of these flags are never picked.
+    pub exclude: Flags,
+}
+
+impl Default for Rules {
+    fn default() -> Self {
+        let s = |v: &[&str]| v.iter().map(|s| (*s).to_owned()).collect();
+        Self {
+            regions: s(&["Europe", "World", "USA", "Germany", "Japan"]),
+            languages: s(&["En", "De"]),
+            exclude: Flags {
+                beta: true,
+                proto: true,
+                demo: true,
+                kiosk: true,
+                sample: true,
+                unlicensed: true,
+                pirate: true,
+                bios: true,
+                hack: true,
+                translation: true,
+                bad_dump: true,
+                ..Flags::default()
+            },
+        }
+    }
+}
+
+/// Why a release was not picked.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Reason {
+    Excluded(&'static str),
+    /// Same name as another entry (e.g. reprint with identical dump, different serial).
+    Duplicate,
+    Region,
+    Language,
+    /// Alternative dump, digital re-release, Virtual Console, aftermarket.
+    Variant,
+    Revision,
+    TieBreak,
+}
+
+#[derive(Debug)]
+pub struct GroupPick<'a, T> {
+    pub key: String,
+    /// All media (discs) of the chosen release; empty if every release is excluded.
+    pub picked: Vec<&'a T>,
+    pub rejected: Vec<(&'a T, Reason)>,
+    /// Another release scored exactly as well as the pick (`Reason::TieBreak`): no rule
+    /// decides, so the user should confirm the pick (SPEC §11a, ambiguous matches).
+    pub needs_decision: bool,
+}
+
+/// Groups `items` (all of one system) and picks one release per game.
+/// Groups are returned sorted by key; multi-disc releases stay together.
+pub fn select<'a, T>(
+    items: &'a [T],
+    name: impl Fn(&T) -> &str,
+    rules: &Rules,
+) -> Vec<GroupPick<'a, T>> {
+    // group key → release (name without disc tag) → media
+    let mut groups: BTreeMap<String, Group<'a, T>> = BTreeMap::new();
+    let mut seen = HashSet::new();
+    for it in items {
+        let n = name(it);
+        let g = groups
+            .entry(naming::group_key(naming::parse(n).title))
+            .or_default();
+        if seen.insert(n) {
+            g.releases.entry(strip_disc(n)).or_default().push(it);
+        } else {
+            g.dups.push(it);
+        }
+    }
+    groups
+        .into_iter()
+        .map(|(key, g)| {
+            let mut pick = pick_group(key, g.releases, rules);
+            pick.rejected
+                .extend(g.dups.into_iter().map(|d| (d, Reason::Duplicate)));
+            pick
+        })
+        .collect()
+}
+
+struct Group<'a, T> {
+    /// release (name without disc tag) → media
+    releases: BTreeMap<String, Vec<&'a T>>,
+    dups: Vec<&'a T>,
+}
+
+impl<T> Default for Group<'_, T> {
+    fn default() -> Self {
+        Self {
+            releases: BTreeMap::new(),
+            dups: Vec::new(),
+        }
+    }
+}
+
+type Score = (usize, usize, u8, Reverse<u32>);
+
+fn pick_group<'a, T>(
+    key: String,
+    releases: BTreeMap<String, Vec<&'a T>>,
+    rules: &Rules,
+) -> GroupPick<'a, T> {
+    let mut rejected = Vec::new();
+    let mut ranked: Vec<(Score, Vec<&'a T>)> = Vec::new();
+    for (rel, media) in releases {
+        let info = naming::parse(&rel);
+        if let Some(flag) = excluded_by(&info.flags, &rules.exclude) {
+            rejected.extend(media.into_iter().map(|m| (m, Reason::Excluded(flag))));
+        } else {
+            ranked.push((score(&info, rules), media));
+        }
+    }
+    // Stable sort keeps BTreeMap (name) order as the final tie-breaker.
+    ranked.sort_by_key(|(s, _)| *s);
+    let mut it = ranked.into_iter();
+    let Some((best, picked)) = it.next() else {
+        return GroupPick {
+            key,
+            picked: Vec::new(),
+            rejected,
+            needs_decision: false,
+        };
+    };
+    for (s, media) in it {
+        let reason = if s.0 != best.0 {
+            Reason::Region
+        } else if s.1 != best.1 {
+            Reason::Language
+        } else if s.2 != best.2 {
+            Reason::Variant
+        } else if s.3 != best.3 {
+            Reason::Revision
+        } else {
+            Reason::TieBreak
+        };
+        rejected.extend(media.into_iter().map(|m| (m, reason)));
+    }
+    let needs_decision = rejected.iter().any(|(_, r)| *r == Reason::TieBreak);
+    GroupPick {
+        key,
+        picked,
+        rejected,
+        needs_decision,
+    }
+}
+
+fn score(info: &NameInfo<'_>, rules: &Rules) -> Score {
+    let rank = |prefs: &[String], have: &[&str]| {
+        have.iter()
+            .filter_map(|h| prefs.iter().position(|p| p == h))
+            .min()
+            .unwrap_or(prefs.len())
+    };
+    let f = &info.flags;
+    let variant = u8::from(f.alt)
+        + u8::from(f.rerelease)
+        + u8::from(f.virtual_console)
+        + u8::from(f.aftermarket);
+    (
+        rank(&rules.regions, &info.regions),
+        rank(&rules.languages, &info.languages),
+        variant,
+        Reverse(info.revision),
+    )
+}
+
+fn excluded_by(f: &Flags, ex: &Flags) -> Option<&'static str> {
+    [
+        (f.beta && ex.beta, "beta"),
+        (f.proto && ex.proto, "proto"),
+        (f.demo && ex.demo, "demo"),
+        (f.kiosk && ex.kiosk, "kiosk"),
+        (f.sample && ex.sample, "sample"),
+        (f.unlicensed && ex.unlicensed, "unlicensed"),
+        (f.pirate && ex.pirate, "pirate"),
+        (f.bios && ex.bios, "bios"),
+        (f.aftermarket && ex.aftermarket, "aftermarket"),
+        (f.virtual_console && ex.virtual_console, "virtual console"),
+        (f.rerelease && ex.rerelease, "re-release"),
+        (f.hack && ex.hack, "hack"),
+        (f.translation && ex.translation, "translation"),
+        (f.bad_dump && ex.bad_dump, "bad dump"),
+        (f.alt && ex.alt, "alt"),
+    ]
+    .into_iter()
+    .find_map(|(hit, n)| hit.then_some(n))
+}
+
+/// Release name without its `(Disc N)` / `(Disk N)` / `(Side X)` tag.
+fn strip_disc(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    let mut rest = name;
+    while let Some(i) = rest.find('(') {
+        let end = rest[i..].find(')').map_or(rest.len(), |e| i + e + 1);
+        let tag = rest[i + 1..end.saturating_sub(1).max(i + 1)].to_ascii_lowercase();
+        out.push_str(&rest[..i]);
+        if !["disc ", "disk ", "side "]
+            .iter()
+            .any(|p| tag.starts_with(p))
+        {
+            out.push_str(&rest[i..end]);
+        }
+        rest = &rest[end..];
+    }
+    out.push_str(rest);
+    out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+#[cfg(test)]
+#[path = "g1r_tests.rs"]
+mod tests;

@@ -49,7 +49,7 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
 ### F3 – 1G1R-Engine
 - Gruppierung: normalisierter Titel (Tags entfernt, Artikel/Satzzeichen vereinheitlicht) + System.
 - Optional: echte Parent/Clone-Infos aus No-Intro-DATs (Import) → überschreibt Heuristik.
-- Scoring nach konfigurierbaren Prioritäten: Regionen (z. B. EU > DE > USA > World > JP), Sprachen, neueste Rev,
+- Scoring nach konfigurierbaren Prioritäten: Regionen (Default EU > World > USA > DE > JP), Sprachen, neueste Rev,
   Ausschlüsse (Beta, Proto, Demo, Kiosk, Unl, Pirate, BIOS, Virtual Console …).
 - Ausgabe: pro Game genau ein Pick + Liste der verworfenen Kandidaten mit Begründung.
 

@@ -38,6 +38,11 @@ impl Store {
         )
     }
 
+    /// All entries of one system.
+    pub fn by_system(&self, system: &str) -> Result<Vec<Record>> {
+        self.query("system = ?1", &[&system])
+    }
+
     /// Entry count per system, sorted by system name.
     pub fn system_counts(&self) -> Result<Vec<(String, u64)>> {
         let mut st = self
