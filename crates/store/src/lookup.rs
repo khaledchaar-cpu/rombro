@@ -29,6 +29,15 @@ impl Store {
         )
     }
 
+    /// Entries whose serial starts with `prefix`, optionally restricted to one system.
+    pub fn by_serial_prefix(&self, prefix: &str, system: Option<&str>) -> Result<Vec<Record>> {
+        // Range scan (uses the serial index, unlike LIKE); serials are printable ASCII.
+        self.query(
+            "serial >= ?1 AND serial < ?1 || '~' AND (?2 IS NULL OR system = ?2)",
+            &[&prefix, &system],
+        )
+    }
+
     /// Entry count per system, sorted by system name.
     pub fn system_counts(&self) -> Result<Vec<(String, u64)>> {
         let mut st = self

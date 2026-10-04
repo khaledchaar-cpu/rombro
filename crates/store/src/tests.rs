@@ -176,3 +176,67 @@ fn identify_confirms_by_sha1() {
     };
     assert!(matches!(s.identify(&bar).unwrap(), Match::CrcOnly(v) if v[0].name == "Bar (Europe)"));
 }
+
+#[test]
+fn identify_disc_by_hash_then_serial() {
+    use crate::{DiscMatch, Match};
+    use rombro_core::disc::{DiscId, DiscKind, Platform};
+    use rombro_core::{Hashes, ScannedDisc, ScannedRom};
+    let dir = tempfile::tempdir().unwrap();
+    fixture(dir.path());
+    write_rdb(
+        &dir.path().join("Sony - PlayStation 2.rdb"),
+        &[map(&[
+            ("name", F::S("Multi (USA) (Disc 1)")),
+            ("serial", F::S("SLUS-20001-0")),
+        ])],
+    );
+    let mut s = Store::open_in_memory().unwrap();
+    s.sync_rdbs(dir.path()).unwrap();
+    let track = |crc, sha1| ScannedRom {
+        path: "t.bin".into(),
+        member: None,
+        hashes: Hashes {
+            size: 1024,
+            crc,
+            sha1,
+            md5: None,
+        },
+        header: None,
+        headerless: None,
+    };
+    let disc = |tracks, id: Option<(Platform, &str)>| ScannedDisc {
+        path: "d.cue".into(),
+        kind: DiscKind::Cue,
+        id: id.map(|(platform, s)| DiscId {
+            platform,
+            serial: s.into(),
+        }),
+        tracks,
+        missing: vec![],
+    };
+    // Audio track unknown, data track verified.
+    let d = disc(
+        vec![track(5, [0; 20]), track(0xdead_beef, [1; 20])],
+        Some((Platform::Ps1, "SLPS-00001")),
+    );
+    assert!(
+        matches!(s.identify_disc(&d).unwrap(), DiscMatch::Hash(Match::Verified(v)) if v[0].name == "Foo (USA)")
+    );
+    // No hash match: serial wins, restricted to the platform's system.
+    let d = disc(vec![track(5, [0; 20])], Some((Platform::Ps1, "SLPS-00001")));
+    assert!(
+        matches!(s.identify_disc(&d).unwrap(), DiscMatch::Serial(v) if v[0].name == "Baz (Japan)")
+    );
+    let d = disc(vec![], Some((Platform::Ps2, "SLPS-00001")));
+    assert_eq!(s.identify_disc(&d).unwrap(), DiscMatch::Unknown);
+    // Multi-disc suffix fallback.
+    let d = disc(vec![], Some((Platform::Ps2, "SLUS-20001")));
+    assert!(
+        matches!(s.identify_disc(&d).unwrap(), DiscMatch::Serial(v) if v[0].name == "Multi (USA) (Disc 1)")
+    );
+    assert_eq!(
+        s.identify_disc(&disc(vec![], None)).unwrap(),
+        DiscMatch::Unknown
+    );
+}
