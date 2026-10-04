@@ -1,0 +1,168 @@
+# ROMBRO – Spezifikation
+
+> Lebendes Dokument. Wird bei jeder neuen Erkenntnis aktualisiert (siehe CLAUDE.md → Workflow).
+> Stand: 2026-10-04 · Version: v1 (Curator) · v2 (Launcher) ist Ausblick.
+
+## 1. Vision
+ROMBRO liest alle RetroArch-Datenbanken (`.rdb`) aus, verifiziert neue ROM-Dateien per Hash/Serial und importiert sie
+in eine verwaltete Verzeichnisstruktur. Ergebnis: eine saubere, dublettenfreie Sammlung nach **1G1R** (One Game – One ROM).
+Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger Launcher (RetroArch-Cores).
+
+## 2. Kernbegriffe
+| Begriff | Bedeutung |
+|---|---|
+| **RDB** | RetroArch-Datenbank: Header `RARCHDB\0` + u64 Offset, danach MessagePack-Maps pro Eintrag |
+| **Entry** | Ein RDB-Datensatz (name, rom_name, size, crc, md5, sha1, serial, region, Metadaten) |
+| **Game** | Gruppe von Entries, die dasselbe Spiel darstellen (Regionen, Revisionen, Sprachen) |
+| **1G1R-Pick** | Der eine bevorzugte Entry pro Game nach User-Prioritäten |
+| **Library** | Verwaltetes Zielverzeichnis (Single Source of Truth im Filesystem) |
+| **Inbox** | Beliebige Quellverzeichnisse mit neuen/unsortierten Dateien |
+| **Plan** | Berechnete Liste von Datei-Operationen (Dry-Run), erst nach Bestätigung ausgeführt |
+
+## 3. Fakten zu den RDB-Daten (verifiziert)
+- Ort: `~/.config/retroarch/database/rdb/*.rdb` (Linux), 146 Dateien, ~150 MB. Pfad aus `retroarch.cfg` → `content_database_path`.
+- Ein Eintrag = eine MessagePack-Map, Keys als Strings; `crc`/`md5`/`sha1` als **Binärdaten** (bin8), nicht Hex-Strings.
+- Felder: `name, description, rom_name, size, crc, md5, sha1, serial, region, releaseyear, releasemonth, genre,
+  developer, publisher, franchise, users, esrb_rating, edge_rating, edge_issue, elspa_rating, rumble, analog,
+  enhancement_hw, origin` (nicht alle immer gesetzt).
+- SNES: 7762 Einträge, Hashes nahezu vollständig. PS1: 13524 Einträge, **jeder** mit `serial`, Hashes pro Track.
+- Manche Einträge sind reine Metadaten (nur serial/crc ohne name) → beim Laden mergen bzw. separat behandeln.
+- Keine Parent/Clone-Info in RDB → Game-Gruppierung muss aus den No-Intro/Redump-Namen abgeleitet werden.
+- Name-Konvention: `Titel (Region) (Sprachen) (Rev X) (Flags)`, z. B. `(USA)`, `(Europe) (En,Fr,De)`, `(Beta)`, `(Proto)`, `(Unl)`, `[b]`.
+
+## 4. Funktionsumfang v1
+### F1 – Datenbank-Engine
+- RDB-Parser (eigener, zero-copy MessagePack-Leser, kein externer Crate nötig) → In-Memory-Index + persistenter Cache.
+- Indizes: `crc+size`, `sha1`, `md5`, `serial` → Entry; `system` → Entries.
+- Inkrementell: Re-Import nur bei geänderter mtime/Größe der `.rdb`.
+- Ziel: alle 146 RDBs < 2 s kalt, < 100 ms warm (Cache).
+
+### F2 – Scanner & Verifikation
+- Rekursiver Scan der Inbox(es), parallel (rayon), Streaming-Hashing (CRC32 + SHA1 in einem Durchlauf).
+- Container: `.zip`, `.7z` (Inhalt hashen; bei ZIP CRC aus Header als Schnelltest), später `.chd` (SHA1 aus Header).
+- Header-Handling: iNES/FDS/A7800/Lynx-Header strippen und beide Varianten prüfen; SNES-Copier-Header (512 B).
+- Disc-Images: `.cue/.bin`, `.gdi`, `.iso`, `.m3u`; Serial aus Disc lesen (PS1/PS2/Saturn/SegaCD/PSP).
+- System-Erkennung: primär per Hash-Treffer; Fallback Dateiendung + Ordnername.
+- Ergebnis je Datei: `Verified(entry)` | `Unknown` | `BadDump/Hack (per Name-Flags)` | `Duplicate(of)`.
+
+### F3 – 1G1R-Engine
+- Gruppierung: normalisierter Titel (Tags entfernt, Artikel/Satzzeichen vereinheitlicht) + System.
+- Optional: echte Parent/Clone-Infos aus No-Intro-DATs (Import) → überschreibt Heuristik.
+- Scoring nach konfigurierbaren Prioritäten: Regionen (z. B. EU > DE > USA > World > JP), Sprachen, neueste Rev,
+  Ausschlüsse (Beta, Proto, Demo, Kiosk, Unl, Pirate, BIOS, Virtual Console …).
+- Ausgabe: pro Game genau ein Pick + Liste der verworfenen Kandidaten mit Begründung.
+
+### F4 – Library & Import
+- Zielstruktur (Standard, konfigurierbar per Template):
+  ```
+  <library>/<System>/<Name>.<ext>                       # Cartridge
+  <library>/<System>/<Name>/<Name> (Disc N).<ext> + .m3u # Multi-Disc
+  <library>/_quarantine/<System>/...                     # Unknown/BadDump
+  <library>/_trash/<timestamp>/...                       # verworfene Dubletten (reversibel)
+  ```
+- Dateinamen = RDB-`name` (Thumbnail-kompatibel: `&*/:<>?\|` → `_`).
+- Operationen: move | copy | hardlink | reflink; optional (ent)zippen.
+- Immer: Plan → Dry-Run-Anzeige → Ausführen. Jede Ausführung schreibt ein **Journal** → Undo möglich.
+- Library-Audit: bestehende Library prüfen, falsch benannte/doppelte/nicht-1G1R-Dateien finden und Plan erzeugen.
+- Export: RetroArch-Playlists (`.lpl`, JSON) pro System, inkl. CRC → sofort nutzbar in RetroArch.
+
+### F5 – GUI
+- Dashboard: Systeme als Kacheln, Vollständigkeit, letzte Imports.
+- Inbox-View: Scan-Ergebnisse live (Streaming), Filter nach Status, Plan-Vorschau als Diff.
+- Library-View: virtualisierte Tabelle (100k+ Zeilen flüssig), Detail-Panel mit Metadaten + Thumbnail.
+- 1G1R-Regeln-Editor (Drag&Drop Prioritäten).
+- Command-Palette (Ctrl/Cmd+K), vollständige Tastaturbedienung.
+
+### F6 – Gamification (optional, abschaltbar)
+- Vollständigkeit pro System (gegen 1G1R-Set, nicht gegen alle Varianten).
+- KPIs: Anzahl Games, verifizierte Quote, Dubletten entfernt, gesparter Speicher, Regionen-Mix, Genres, Jahrzehnte.
+- Achievements (z. B. „Full Set: Virtual Boy“, „Clean Sweep: 0 Unknowns“), XP/Level, Streaks.
+- Optionale Ziele: Franchise komplettieren (Feld `franchise`).
+
+### F7 – Thumbnails (nice to have v1)
+- Download von `thumbnails.libretro.com` (Boxart/Snap/Title), lokaler Cache, Namensmapping wie RetroArch.
+
+## 5. Nicht-Ziele v1
+Emulation/Start von Spielen, Cloud-Sync, ScreenScraper-Integration, Netplay.
+
+## 6. v2-Ausblick – Launcher
+Core-Erkennung (`*.info`), Start via RetroArch-CLI (`retroarch -L core rom`), Spielzeit-Tracking, Favoriten,
+Controller-Navigation (Gamepad-UI-Modus), Savestate-Übersicht, RetroAchievements-Status.
+Architektur v1 muss das vorbereiten: GUI-Navigation per Fokus-System, Daten-Modell mit `play_stats`-Tabelle reservieren.
+
+## 7. Architektur
+```
+rombro/
+├─ crates/
+│  ├─ rdb/        # RDB/MessagePack-Parser, no deps, zero-copy        (lib)
+│  ├─ core/       # Domain: Hashing, Scanner, Naming, 1G1R, Planner    (lib)
+│  ├─ store/      # Persistenz: SQLite (rusqlite, WAL), Migrations     (lib)
+│  ├─ cli/        # `rombro` CLI – headless, für Tests & Power-User     (bin)
+│  └─ app/        # Tauri-2-Shell, Commands/Events → core              (bin)
+├─ ui/            # SolidJS + TypeScript + Vite, Cyberpunk-Design-System
+├─ .claude/skills/  # projektspezifische Skills
+└─ CLAUDE.md · SPEC.md · PROGRESS.md
+```
+**Stack-Entscheidungen**
+| Bereich | Wahl | Begründung |
+|---|---|---|
+| Sprache Core | Rust (edition 2024) | Performance, Cross-Platform, Sicherheit |
+| GUI-Shell | Tauri 2 | klein, nativ auf macOS/Linux/Windows, Rust-Backend |
+| Frontend | SolidJS + TS + Vite | feingranulare Reaktivität, kein VDOM, sehr schnell |
+| Styling | Vanilla CSS + Custom Properties | keine Runtime, volle Kontrolle für Cyberpunk-Effekte |
+| Tabellen | eigene Virtualisierung (TanStack Virtual) | 100k+ Zeilen |
+| Persistenz | SQLite (rusqlite, bundled) | robust, einzelne Datei, schnelle Queries |
+| Parallelität | rayon (CPU), crossbeam-channel (Streaming-Events) | |
+| Hashing | crc32fast, sha1 (asm), md-5 | SIMD |
+| Archive | zip, sevenz-rust2 | |
+| Fehler | thiserror (libs), anyhow (bins) | |
+| Logging | tracing | |
+| Tests | cargo test + insta (Snapshots), Fixtures unter `tests/fixtures` | |
+
+**Prinzipien:** Core ist GUI-agnostisch; CLI und App sind dünne Adapter. Alle Dateioperationen laufen über den
+Planner (nie direkt). Lange Jobs streamen Fortschritt über Events. Keine Blockierung des UI-Threads.
+
+**Daten-Modell (SQLite, Entwurf)**
+`rdb_source(id, path, mtime, size)` · `entry(id, system, name, rom_name, size, crc, md5, sha1, serial, region, meta_json)` ·
+`game(id, system, norm_title)` · `entry_game(entry_id, game_id)` · `file(id, path, size, mtime, crc, sha1, entry_id, status)` ·
+`journal(id, ts, plan_json, state)` · `settings(key, value)` · `achievement(id, unlocked_at)` · `play_stats` (v2, reserviert).
+
+## 8. UI/UX – Cyberpunk Design System
+- Dunkel als Default (Light-Theme optional), Hintergrund #07070d, Neon-Akzente: Cyan #00f0ff, Magenta #ff2bd6, Gelb #f5ff3b, Grün #39ff88 (OK), Rot #ff3b5c (Fehler).
+- Fonts: „Orbitron“/„Rajdhani“ für Headlines, „JetBrains Mono“ für Daten/Hashes.
+- Effekte sparsam & abschaltbar (`prefers-reduced-motion`): Glow, Scanlines, Glitch bei Statuswechsel, abgeschrägte Ecken (clip-path).
+- HUD-Ästhetik: Rahmen mit Eck-Markern, Terminal-artige Log-Streams, Fortschrittsbalken als Segmentanzeigen.
+- UX: Dry-Run immer sichtbar vor destruktiven Aktionen, Undo überall, Tastatur zuerst, < 100 ms Reaktionszeit.
+
+## 9. Performance-Ziele
+| Vorgang | Ziel |
+|---|---|
+| Kaltstart App | < 1 s bis interaktiv |
+| Alle RDBs laden (warm, Cache) | < 100 ms |
+| Scan 10k Cartridge-ROMs (SSD) | < 10 s |
+| Hash-Durchsatz | ≥ I/O-Limit (≥ 1 GB/s auf NVMe) |
+| UI-Scroll 100k Zeilen | 60 fps |
+
+## 10. Milestones
+Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar ist. Status in PROGRESS.md.
+
+| # | Milestone | Inhalt | Done wenn |
+|---|---|---|---|
+| M0 | Bootstrap | Cargo-Workspace, Crates-Skelett, CI-Skript (fmt/clippy/test), git | `cargo test` grün |
+| M1 | RDB-Parser | `crates/rdb`: MessagePack-Leser, Entry-Struct, Laden aller 146 RDBs, Benchmark | CLI `rombro db stats` listet Systeme+Counts |
+| M2 | Store & Index | SQLite-Schema, Migrations, Import/Cache der RDBs, Lookup-API | Lookup per crc/sha1/serial in < 1 ms |
+| M3 | Scanner & Hashing | Paralleler Scan, Hashing, ZIP/7z, Header-Stripping, Match | `rombro scan <dir>` zeigt Verified/Unknown |
+| M4 | Disc-Support | cue/bin, gdi, iso, m3u, Serial-Extraktion PS1/PS2/PSP/Saturn | Disc-Fixtures werden erkannt |
+| M5 | Naming & 1G1R | Tag-Parser für No-Intro-Namen, Gruppierung, Scoring, Regeln-Config | Snapshot-Tests für Picks |
+| M6 | Planner & Import | Plan/Dry-Run/Execute, Journal, Undo, Quarantäne, Audit, `.lpl`-Export | `rombro import --dry-run` + Undo getestet |
+| M7 | App-Shell | Tauri 2 + SolidJS-Gerüst, Design-Tokens, Layout, Command-Palette, IPC | App startet auf Linux mit Dashboard-Dummy |
+| M8 | GUI Kern | Dashboard, Inbox-View (Streaming), Plan-Diff, Library-Tabelle | Import-Flow komplett per GUI |
+| M9 | GUI Feinschliff | 1G1R-Regeln-Editor, Settings, Thumbnails, Effekte, Light-Theme | UX-Review bestanden |
+| M10 | Gamification | KPIs, Vollständigkeit, Achievements, XP | Dashboard zeigt KPIs |
+| M11 | Release | Packaging (AppImage/deb, dmg, msi), Pfad-Erkennung je OS, Doku | Builds für 3 OS via CI |
+
+## 11. Offene Fragen
+- Default-Regionspriorität (Vorschlag: Europe > Germany > World > USA > Japan).
+- ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
+- Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?
+- No-Intro-DAT-Import für echte Parent/Clone-Daten in v1 oder später?
