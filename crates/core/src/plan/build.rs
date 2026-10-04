@@ -1,7 +1,8 @@
 //! Building a plan: 1G1R per system, target paths, trash, quarantine, playlists.
 
 use super::{
-    Decision, Files, Game, Ident, Item, Mode, Op, Options, Plan, QUARANTINE_DIR, TRASH_DIR, lpl,
+    Decision, Files, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan, QUARANTINE_DIR,
+    TRASH_DIR, lpl,
 };
 use crate::{disc, g1r, naming};
 use std::collections::{BTreeMap, HashSet};
@@ -18,7 +19,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         claimed: HashSet::new(),
         lpl: BTreeMap::new(),
     };
-    let managed = [library.join(TRASH_DIR), library.join(QUARANTINE_DIR)];
+    let managed = [TRASH_DIR, QUARANTINE_DIR, PLAYLIST_DIR].map(|d| library.join(d));
     let items: Vec<&Item> = items
         .iter()
         .filter(|it| !managed.iter().any(|m| it.files.primary().starts_with(m)))

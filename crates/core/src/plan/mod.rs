@@ -122,3 +122,5 @@ pub struct Plan {
 /// Library sub-folders the planner manages itself; their content is never re-planned.
 pub const TRASH_DIR: &str = "_trash";
 pub const QUARANTINE_DIR: &str = "_quarantine";
+/// Default playlist folder inside the library.
+pub const PLAYLIST_DIR: &str = "_playlists";
