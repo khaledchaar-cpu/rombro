@@ -3,6 +3,7 @@
 
 mod commands;
 mod import;
+mod library;
 
 fn main() {
     tauri::Builder::default()
@@ -13,7 +14,8 @@ fn main() {
             commands::scan,
             import::plan_import,
             import::execute_plan,
-            import::undo_last
+            import::undo_last,
+            library::library_list
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

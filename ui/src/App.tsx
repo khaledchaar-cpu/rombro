@@ -6,6 +6,7 @@ import Dashboard from "./views/Dashboard";
 import Placeholder from "./views/Placeholder";
 import Inbox from "./views/Inbox";
 import Plan from "./views/Plan";
+import Library from "./views/Library";
 import { execute, plan, undo } from "./state/importStore";
 import { VIEWS, type ViewId } from "./views";
 
@@ -60,6 +61,9 @@ export default function App() {
           </Match>
           <Match when={view() === "inbox"}>
             <Inbox onPlanned={() => setView("plan")} />
+          </Match>
+          <Match when={view() === "library"}>
+            <Library />
           </Match>
           <Match when={view() === "plan"}>
             <Plan />

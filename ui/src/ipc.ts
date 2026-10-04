@@ -105,3 +105,24 @@ export function onImportProgress(cb: (p: ImportProgress) => void): Promise<Unlis
     cb({ phase: e.payload[0], ...e.payload[1] }),
   );
 }
+
+export interface LibraryRow {
+  path: string;
+  system: string;
+  name: string;
+  state: "known" | "ambiguous" | "unknown" | "skip";
+  files: number;
+}
+
+export async function libraryList(library: string): Promise<LibraryRow[]> {
+  if (!inTauri) {
+    return Array.from({ length: 5000 }, (_, i) => ({
+      path: `Nintendo - Game Boy/Game ${i} (Europe).zip`,
+      system: i % 7 ? "Nintendo - Game Boy" : "Sega - Mega Drive - Genesis",
+      name: `Game ${i} (Europe)`,
+      state: i % 97 ? "known" : "unknown",
+      files: 1,
+    }));
+  }
+  return invoke<LibraryRow[]>("library_list", { library });
+}
