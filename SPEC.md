@@ -162,6 +162,12 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 | M10 | Gamification | KPIs, Vollständigkeit, Achievements, XP | Dashboard zeigt KPIs |
 | M11 | Release | Packaging (AppImage/deb, dmg, msi), Pfad-Erkennung je OS, Doku | Builds für 3 OS via CI |
 
+## 11a. Entscheidungen
+- M2: Persistenter Cache = SQLite statt eigenem Binärformat. Kalt-Import ~3 s (einmalig, SQLite-Insert-bound),
+  warm 2 ms. Ziel „< 2 s kalt" gilt für das Parsen (52 ms); Import ggf. später im Hintergrund.
+- M2: Systemname = Dateiname der RDB ohne `.rdb`. Metadaten-only-Einträge ohne Treffer werden verworfen.
+- M2: DB-Pfad Default `$XDG_DATA_HOME/rombro/rombro.db` (Linux), Felder als Spalten statt `meta_json`.
+
 ## 11. Offene Fragen
 - Default-Regionspriorität (Vorschlag: Europe > Germany > World > USA > Japan).
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
