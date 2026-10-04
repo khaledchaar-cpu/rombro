@@ -21,6 +21,7 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
 
 ## 3. Fakten zu den RDB-Daten (verifiziert)
 - Ort: `~/.config/retroarch/database/rdb/*.rdb` (Linux), 146 Dateien, ~150 MB. Pfad aus `retroarch.cfg` → `content_database_path`.
+- Layout: Header (`RARCHDB\0` + **big-endian** u64 Offset auf Metadaten), Einträge bis `nil`, dann `{"count": n}`.
 - Ein Eintrag = eine MessagePack-Map, Keys als Strings; `crc`/`md5`/`sha1` als **Binärdaten** (bin8), nicht Hex-Strings.
 - Felder: `name, description, rom_name, size, crc, md5, sha1, serial, region, releaseyear, releasemonth, genre,
   developer, publisher, franchise, users, esrb_rating, edge_rating, edge_issue, elspa_rating, rumble, analog,
