@@ -40,7 +40,8 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | RDBs → SQLite | `cargo run -q --release -p rombro-cli -- db sync` |
 | Lookup | `cargo run -q --release -p rombro-cli -- db lookup <crc/sha1/md5/serial>` |
 | DB-Statistik | `cargo run -q --release -p rombro-cli -- db stats` |
-| Benchmarks | `cargo bench -q -p rombro-rdb` |
+| Benchmarks | `cargo bench -q -p rombro-rdb` / `-p rombro-core` |
+| Scan | `cargo run -q --release -p rombro-cli -- scan <dir> [--unknown]` |
 | Echte RDBs testen | `cargo test -q --release -p rombro-rdb -- --ignored` |
 | RDB-Ort (Linux) | `~/.config/retroarch/database/rdb/` (146 Dateien) |
 

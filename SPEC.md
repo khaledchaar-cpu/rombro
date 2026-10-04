@@ -168,6 +168,10 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - M2: Systemname = Dateiname der RDB ohne `.rdb`. Metadaten-only-Einträge ohne Treffer werden verworfen.
 - M2: DB-Pfad Default `$XDG_DATA_HOME/rombro/rombro.db` (Linux), Felder als Spalten statt `meta_json`.
 
+- M3: MD5 wird beim Scan nicht berechnet (4× langsamer); Verifikation über CRC+Größe → SHA1. Header-ROMs werden
+  zuerst headerless gematcht. Matching lebt in `rombro-store` (`identify`), Store → Core-Abhängigkeit.
+- M3: ZIP-Header-CRC als Schnelltest entfällt vorerst – SHA1 wird ohnehin gebraucht.
+
 ## 11. Offene Fragen
 - Default-Regionspriorität (Vorschlag: Europe > Germany > World > USA > Japan).
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
