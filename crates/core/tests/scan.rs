@@ -120,3 +120,19 @@ fn scans_discs_without_loose_tracks() {
     );
     assert_eq!(r.playlists[0].entries, vec![root.join("Game.cue")]);
 }
+
+#[test]
+fn reports_progress_per_file() {
+    let dir = tempfile::tempdir().unwrap();
+    for i in 0..3u8 {
+        fs::write(dir.path().join(format!("{i}.bin")), rom(64, i)).unwrap();
+    }
+    let calls = std::sync::Mutex::new(Vec::new());
+    let report = rombro_core::scan_with_progress(dir.path(), &|d, t| {
+        calls.lock().unwrap().push((d, t));
+    });
+    assert_eq!(report.roms.len(), 3);
+    let mut calls = calls.into_inner().unwrap();
+    calls.sort_unstable();
+    assert_eq!(calls, [(1, 3), (2, 3), (3, 3)]);
+}

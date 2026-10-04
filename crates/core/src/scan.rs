@@ -8,6 +8,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, BufReader, Read};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use walkdir::WalkDir;
 
 #[derive(Debug, thiserror::Error)]
@@ -70,6 +71,12 @@ pub struct ScanReport {
 /// Recursively scans `root` (a directory or single file) in parallel.
 /// Results are sorted by path and member for deterministic output.
 pub fn scan(root: &Path) -> ScanReport {
+    scan_with_progress(root, &|_, _| {})
+}
+
+/// Like [`scan`], but calls `progress(done, total)` after each file or disc
+/// is hashed. May be called concurrently from worker threads.
+pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(usize, usize) + Sync)) -> ScanReport {
     let mut report = ScanReport::default();
     let mut files = Vec::new();
     for e in WalkDir::new(root).follow_links(true) {
@@ -114,10 +121,16 @@ pub fn scan(root: &Path) -> ScanReport {
         }
     }
     files.retain(|p| !claimed.contains(p));
+    let total = files.len() + sheets.len();
+    let done = AtomicUsize::new(0);
+    let tick = || progress(done.fetch_add(1, Ordering::Relaxed) + 1, total);
     let discs: Vec<_> = sheets
         .into_par_iter()
         .map(|(path, kind, found, missing)| {
-            scan_disc(&path, kind, &found, missing).map_err(|error| ScanFailure { path, error })
+            let r = scan_disc(&path, kind, &found, missing)
+                .map_err(|error| ScanFailure { path, error });
+            tick();
+            r
         })
         .collect();
     for d in discs {
@@ -130,10 +143,12 @@ pub fn scan(root: &Path) -> ScanReport {
     let results: Vec<_> = files
         .par_iter()
         .map(|p| {
-            scan_file(p).map_err(|error| ScanFailure {
+            let r = scan_file(p).map_err(|error| ScanFailure {
                 path: p.clone(),
                 error,
-            })
+            });
+            tick();
+            r
         })
         .collect();
     for r in results {

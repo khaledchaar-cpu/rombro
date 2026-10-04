@@ -9,4 +9,6 @@ pub mod plan;
 pub mod scan;
 
 pub use hash::{Hashes, MultiHasher, hash_reader};
-pub use scan::{Playlist, ScanReport, ScannedDisc, ScannedRom, scan, scan_disc, scan_file};
+pub use scan::{
+    Playlist, ScanReport, ScannedDisc, ScannedRom, scan, scan_disc, scan_file, scan_with_progress,
+};
