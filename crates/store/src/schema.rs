@@ -34,6 +34,19 @@ const MIGRATIONS: &[&str] = &[
         users         INTEGER
     );
     CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
+    // v2: executed plans (undo) and user decisions for ambiguous matches
+    "CREATE TABLE journal (
+        id      INTEGER PRIMARY KEY,
+        ts      INTEGER NOT NULL,
+        library TEXT NOT NULL,
+        done    TEXT NOT NULL,
+        state   TEXT NOT NULL
+    );
+    CREATE TABLE resolution (
+        sha1   BLOB PRIMARY KEY,
+        system TEXT NOT NULL,
+        name   TEXT NOT NULL
+    );",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

@@ -8,7 +8,7 @@ mod ops;
 mod tests;
 
 pub use build::build;
-pub use ops::{Done, Execution, Op, execute, undo};
+pub use ops::{Done, Execution, Op, execute, journal_from_json, journal_to_json, undo};
 
 use crate::g1r::Rules;
 use std::path::PathBuf;

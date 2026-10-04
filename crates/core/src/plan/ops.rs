@@ -164,3 +164,12 @@ fn remove_dirs(dirs: &[PathBuf]) {
         let _ = fs::remove_dir(d);
     }
 }
+
+/// Serializes a journal (completed operations) for persistence.
+pub fn journal_to_json(done: &[Done]) -> String {
+    serde_json::to_string(done).unwrap_or_default()
+}
+
+pub fn journal_from_json(s: &str) -> Result<Vec<Done>, serde_json::Error> {
+    serde_json::from_str(s)
+}

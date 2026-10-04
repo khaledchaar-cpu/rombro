@@ -240,3 +240,85 @@ fn identify_disc_by_hash_then_serial() {
         DiscMatch::Unknown
     );
 }
+
+#[test]
+fn import_end_to_end_with_resolution_journal_and_undo() {
+    use rombro_core::MultiHasher;
+    use rombro_core::plan::{self, Decision, Ident, Mode, Options};
+    let hash = |data: &[u8]| {
+        let mut h = MultiHasher::new();
+        h.update(data);
+        h.finish()
+    };
+    let entry = |name: &'static str, h: &rombro_core::Hashes| {
+        map(&[
+            ("name", F::S(name)),
+            ("size", F::U(h.size as u32)),
+            ("crc", F::B(Box::leak(Box::new(h.crc.to_be_bytes())))),
+            ("sha1", F::B(Box::leak(Box::new(h.sha1)))),
+        ])
+    };
+    let (unique, shared) = (hash(b"unique rom"), hash(b"shared rom"));
+    let tmp = tempfile::tempdir().unwrap();
+    let (rdb, inbox, lib) = (
+        tmp.path().join("rdb"),
+        tmp.path().join("inbox"),
+        tmp.path().join("lib"),
+    );
+    for d in [&rdb, &inbox] {
+        std::fs::create_dir_all(d).unwrap();
+    }
+    write_rdb(
+        &rdb.join("Nintendo - SNES.rdb"),
+        &[
+            entry("Foo (Europe)", &unique),
+            entry("Bar (USA)", &shared),
+            entry("Baz (USA)", &shared),
+        ],
+    );
+    std::fs::write(inbox.join("foo.sfc"), b"unique rom").unwrap();
+    std::fs::write(inbox.join("amb.sfc"), b"shared rom").unwrap();
+    std::fs::write(inbox.join("junk.sfc"), b"junk").unwrap();
+
+    let mut s = Store::open_in_memory().unwrap();
+    s.sync_rdbs(&rdb).unwrap();
+    let opts = Options {
+        mode: Mode::Move,
+        rules: Default::default(),
+        stamp: "1".into(),
+        playlists: None,
+    };
+    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
+    let p = plan::build(&items, &lib, &opts);
+    assert_eq!((p.placed, p.quarantined), (1, 1));
+    assert!(
+        matches!(&p.decisions[..], [Decision::Ambiguous { candidates, .. }] if candidates.len() == 2)
+    );
+
+    // The user's choice is remembered and applied on the next scan.
+    s.set_resolution(&shared.sha1, "Nintendo - SNES", "Baz (USA)")
+        .unwrap();
+    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
+    assert!(
+        items
+            .iter()
+            .all(|i| !matches!(i.ident, Ident::Ambiguous(_)))
+    );
+    let p = plan::build(&items, &lib, &opts);
+    assert_eq!((p.placed, p.quarantined, p.decisions.len()), (2, 1, 0));
+
+    let ex = plan::execute(&p.ops);
+    assert!(ex.error.is_none());
+    assert!(lib.join("Nintendo - SNES/Baz (USA).sfc").is_file());
+    let lib_str = lib.to_string_lossy();
+    s.add_journal(0, &lib_str, &plan::journal_to_json(&ex.done))
+        .unwrap();
+
+    let j = s.last_journal().unwrap().unwrap();
+    let done = plan::journal_from_json(&j.done).unwrap();
+    assert!(plan::undo(&done).is_empty());
+    s.mark_undone(j.id).unwrap();
+    assert!(s.last_journal().unwrap().is_none());
+    assert!(!lib.exists());
+    assert_eq!(std::fs::read_dir(&inbox).unwrap().count(), 3);
+}
