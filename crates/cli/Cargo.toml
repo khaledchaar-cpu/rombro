@@ -12,6 +12,9 @@ workspace = true
 rombro-core.workspace = true
 rombro-store.workspace = true
 anyhow.workspace = true
+rombro-rdb.workspace = true
+clap.workspace = true
+rayon.workspace = true
 
 [[bin]]
 name = "rombro"
