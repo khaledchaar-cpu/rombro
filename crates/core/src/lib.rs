@@ -5,6 +5,7 @@ pub mod g1r;
 pub mod hash;
 pub mod header;
 pub mod naming;
+pub mod plan;
 pub mod scan;
 
 pub use hash::{Hashes, MultiHasher, hash_reader};
