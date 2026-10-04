@@ -184,6 +184,14 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   sondern legt eine offene Entscheidung an; Wahl des Users wird persistiert (Tabelle `resolution`:
   Datei-SHA1 → entry_id) und bei erneutem Scan wiederverwendet. M8: GUI-Ansicht „Zu klären“ mit Kandidaten.
 
+- M5: 1G1R-Score (lexikografisch): Region → bevorzugte Sprache (Default En, De) → Varianten-Malus (Alt, Digital/
+  Neuauflage/Edition, Virtual Console, Aftermarket) → neueste Rev/Version → mehr Sprachen. Hart ausgeschlossen
+  (Default): Beta, Proto, Demo, Kiosk, Sample, Unl, Pirate, BIOS, Hack, Übersetzung, Bad Dump.
+- M5: Gleichstand nach allen Kriterien → `needs_decision` (User entscheidet, wie bei mehrdeutigen Treffern).
+  Gleichnamige Einträge (Reprint mit identischem Dump, andere Serial) → `Reason::Duplicate`, nur einer gewählt.
+- M5: Gruppierung rein heuristisch über `group_key` (Artikel/Satzzeichen); Titel, die sich regional unterscheiden
+  (z. B. „Street Fighter II - The World Warrior (Japan)“), landen in eigenen Gruppen → Parent/Clone-DATs später.
+- M5: Multi-Disc-Release = Name ohne `(Disc|Disk|Side N)`; alle Discs des Picks werden zusammen gewählt.
 - Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
 
 ## 11. Offene Fragen
