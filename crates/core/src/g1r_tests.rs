@@ -90,13 +90,6 @@ fn custom_rules() {
 }
 
 #[test]
-fn strips_disc_tags() {
-    assert_eq!(strip_disc("FF7 (USA) (Disc 2)"), "FF7 (USA)");
-    assert_eq!(strip_disc("Game (Disk B) (Europe)"), "Game (Europe)");
-    assert_eq!(strip_disc("Game (Europe)"), "Game (Europe)");
-}
-
-#[test]
 fn ties_need_a_decision() {
     let names = [
         "Game (USA) (Capcom Town)",

@@ -80,7 +80,10 @@ pub fn select<'a, T>(
             .entry(naming::group_key(naming::parse(n).title))
             .or_default();
         if seen.insert(n) {
-            g.releases.entry(strip_disc(n)).or_default().push(it);
+            g.releases
+                .entry(naming::release_name(n))
+                .or_default()
+                .push(it);
         } else {
             g.dups.push(it);
         }
@@ -111,7 +114,8 @@ impl<T> Default for Group<'_, T> {
     }
 }
 
-type Score = (usize, usize, u8, Reverse<u32>);
+/// region, language, variant penalty, revision (newer first), language count (more first)
+type Score = (usize, usize, u8, Reverse<u32>, Reverse<usize>);
 
 fn pick_group<'a, T>(
     key: String,
@@ -148,6 +152,8 @@ fn pick_group<'a, T>(
             Reason::Variant
         } else if s.3 != best.3 {
             Reason::Revision
+        } else if s.4 != best.4 {
+            Reason::Language
         } else {
             Reason::TieBreak
         };
@@ -179,6 +185,7 @@ fn score(info: &NameInfo<'_>, rules: &Rules) -> Score {
         rank(&rules.languages, &info.languages),
         variant,
         Reverse(info.revision),
+        Reverse(info.languages.len()),
     )
 }
 
@@ -202,26 +209,6 @@ fn excluded_by(f: &Flags, ex: &Flags) -> Option<&'static str> {
     ]
     .into_iter()
     .find_map(|(hit, n)| hit.then_some(n))
-}
-
-/// Release name without its `(Disc N)` / `(Disk N)` / `(Side X)` tag.
-fn strip_disc(name: &str) -> String {
-    let mut out = String::with_capacity(name.len());
-    let mut rest = name;
-    while let Some(i) = rest.find('(') {
-        let end = rest[i..].find(')').map_or(rest.len(), |e| i + e + 1);
-        let tag = rest[i + 1..end.saturating_sub(1).max(i + 1)].to_ascii_lowercase();
-        out.push_str(&rest[..i]);
-        if !["disc ", "disk ", "side "]
-            .iter()
-            .any(|p| tag.starts_with(p))
-        {
-            out.push_str(&rest[i..end]);
-        }
-        rest = &rest[end..];
-    }
-    out.push_str(rest);
-    out.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 #[cfg(test)]
