@@ -172,8 +172,16 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   zuerst headerless gematcht. Matching lebt in `rombro-store` (`identify`), Store → Core-Abhängigkeit.
 - M3: ZIP-Header-CRC als Schnelltest entfällt vorerst – SHA1 wird ohnehin gebraucht.
 
+- M4: Disc-RDBs (PS1, SegaCD, Saturn, DC) listen **nur den Datentrack** (Track 1 bzw. 3) – Disc gilt als
+  verifiziert, sobald irgendein Track per Hash trifft. Sonst Serial-Fallback (`DiscMatch::Serial`, schwächer).
+- M4: Serial-Normalisierung `SLUS_005.94` → `SLUS-00594`; Sega `MK-81020` → zusätzlich `81020`; Multi-Disc-
+  Serials in der RDB teils mit Suffix (`SCUS-94163-0`) → Prefix-Fallback. Serials sind in der RDB nicht eindeutig.
+- M4: Sektorlayout per Sync-Pattern erkannt (2048 cooked / 2352 raw Mode1 bzw. Mode2-XA), nicht aus dem Cue.
+  Track-Dateien eines Sheets und `.m3u` werden nicht als lose ROMs gemeldet. Discs in ZIP/7z: noch nicht.
+
 ## 11. Offene Fragen
 - Default-Regionspriorität (Vorschlag: Europe > Germany > World > USA > Japan).
+- Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in welchem Milestone? (Vorschlag: CHD mit M6.)
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
 - Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?
 - No-Intro-DAT-Import für echte Parent/Clone-Daten in v1 oder später?

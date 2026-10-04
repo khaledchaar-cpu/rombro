@@ -6,8 +6,8 @@
 | M1 RDB-Parser | ✅ done |
 | M2 Store & Index | ✅ done |
 | M3 Scanner & Hashing | ✅ done |
-| M4 Disc-Support | ⏳ next |
-| M5 Naming & 1G1R | – |
+| M4 Disc-Support | ✅ done |
+| M5 Naming & 1G1R | ⏳ next |
 | M6 Planner & Import | – |
 | M7 App-Shell | – |
 | M8 GUI Kern | – |
@@ -16,17 +16,18 @@
 | M11 Release | – |
 
 ## Aktuell
-M3 fertig: `rombro-core` mit `hash` (CRC32+SHA1 in einem Durchlauf, MD5 optional), `header` (iNES, FDS, Lynx,
-A7800, SNES-Copier 512 B), `scan` (walkdir + rayon, ZIP/7z-Member, headerless-Variante im selben Pass).
-`rombro-store::Store::identify(&Hashes)` → `Verified | CrcOnly | Unknown` (crc+size, SHA1/MD5-Bestätigung,
-widersprechende Kandidaten verworfen). CLI `rombro scan <dir> [--db] [--unknown]` inkl. Duplikat-Erkennung.
-Perf: Hashing 1,96 GiB/s/Kern (mit MD5 nur 0,53); 10k Dateien/2,3 GB (warm) in 0,11 s. Echter NDS-ZIP verifiziert.
+M4 fertig: `core::disc` – `sheet` (cue/gdi/m3u), `iso9660` (Sektorlayout per Sync, Root-Datei lesen,
+`testimg` für synthetische Images), `serial` (PS1/PS2 `SYSTEM.CNF`, PSP `UMD_DATA.BIN`, Saturn/SegaCD/DC-Header).
+Scanner liefert `discs` (Tracks gehasht, `missing`) + `playlists`; Track-Dateien nicht doppelt.
+`Store::identify_disc` → `Hash(Match)` | `Serial(records)` | `Unknown`; `by_serial_prefix` für Multi-Disc.
+CLI `scan` zeigt Discs (OK/CRC/SERIAL/UNKNOWN + Serial). Smoke-Test mit synthetischem PS1/PSP-Image gegen echte DB ok;
+echte Disc-Images liegen auf dem System keine.
 
-## Nächste Schritte (M4 Disc-Support)
-1. SPEC F2 (Disc-Zeile) lesen. `core::disc`: `.cue` parsen (Tracks → bin), `.gdi`, `.m3u`, `.iso`.
-2. Serial-Extraktion: PS1/PS2 (`SYSTEM.CNF` im ISO9660), PSP (`UMD_DATA.BIN`/`PARAM.SFO`), Saturn/SegaCD (Header).
-3. Match per `by_serial`; Track-Hashes per crc; Disc-Fixtures synthetisch (Mini-ISO9660) erzeugen.
-4. Scanner: Track-Dateien eines Cue nicht doppelt als Einzel-ROMs melden.
+## Nächste Schritte (M5 Naming & 1G1R)
+1. SPEC F3 (1G1R) + Naming-Abschnitt lesen. Titel-Normalisierung (Tags, Artikel, Satzzeichen) in `core::naming`.
+2. No-Intro/Redump-Tags parsen (Region, Sprachen, Rev/v, Beta/Proto/Demo, [b]/Hack) → Flags.
+3. Gruppierung + Auswahl nach Regionspriorität (offene Frage Default!) → Tests mit realen Namen aus der DB.
+4. Ziel-Pfade nach SPEC-Schema (inkl. Multi-Disc + `.m3u`).
 
 ## Stolpersteine
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
@@ -35,6 +36,7 @@ Perf: Hashing 1,96 GiB/s/Kern (mit MD5 nur 0,53); 10k Dateien/2,3 GB (warm) in 0
 - `clippy.toml`: `allow-unwrap-in-tests = true`.
 - MD5 vervierfacht Hash-Zeit → im Scanner aus; `identify` fällt dann für MD5-only-Einträge auf `CrcOnly` zurück.
 - `scripts/check.sh | tail` maskiert den Exit-Code – vor Commit ohne Pipe prüfen.
+- Disc-RDBs enthalten nur den Datentrack; Serial-Treffer sind mehrdeutig (FF7 Disc 1–3 teilen `SCUS-94163*`).
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log
@@ -43,3 +45,4 @@ Perf: Hashing 1,96 GiB/s/Kern (mit MD5 nur 0,53); 10k Dateien/2,3 GB (warm) in 0
 - 2026-10-04: M1 RDB-Parser abgeschlossen.
 - 2026-10-04: M2 Store & Index abgeschlossen.
 - 2026-10-04: M3 Scanner & Hashing abgeschlossen.
+- 2026-10-04: M4 Disc-Support abgeschlossen.
