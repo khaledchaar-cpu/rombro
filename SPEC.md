@@ -184,8 +184,9 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   sondern legt eine offene Entscheidung an; Wahl des Users wird persistiert (Tabelle `resolution`:
   Datei-SHA1 → entry_id) und bei erneutem Scan wiederverwendet. M8: GUI-Ansicht „Zu klären“ mit Kandidaten.
 
+- Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
+
 ## 11. Offene Fragen
-- Default-Regionspriorität (Vorschlag: Europe > Germany > World > USA > Japan).
 - Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in welchem Milestone? (Vorschlag: CHD mit M6.)
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
 - Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?
