@@ -43,6 +43,8 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Benchmarks | `cargo bench -q -p rombro-rdb` / `-p rombro-core` |
 | Scan | `cargo run -q --release -p rombro-cli -- scan <dir> [--unknown]` |
 | 1G1R prüfen | `cargo run -q --release -p rombro-cli -- g1r "<System>" [--filter <text>]` |
+| Import / Audit | `cargo run -q --release -p rombro-cli -- import <inbox> <lib> --dry-run` / `audit <lib>` |
+| Undo / Resolve | `… -- undo` / `… -- resolve <file> [n]` |
 | Echte RDBs testen | `cargo test -q --release -p rombro-rdb -- --ignored` |
 | RDB-Ort (Linux) | `~/.config/retroarch/database/rdb/` (146 Dateien) |
 

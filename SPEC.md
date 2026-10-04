@@ -192,10 +192,19 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - M5: Gruppierung rein heuristisch über `group_key` (Artikel/Satzzeichen); Titel, die sich regional unterscheiden
   (z. B. „Street Fighter II - The World Warrior (Japan)“), landen in eigenen Gruppen → Parent/Clone-DATs später.
 - M5: Multi-Disc-Release = Name ohne `(Disc|Disk|Side N)`; alle Discs des Picks werden zusammen gewählt.
+- M6: Import = Library + Inbox gemeinsam scannen und planen (Audit = Import ohne Inbox). Library-Dateien werden
+  immer verschoben; Inbox per Modus move/copy/hardlink (Reflink noch nicht). Alle von 1G1R verworfenen Releases
+  (auch Beta/Hack etc.) → `_trash/<unix-ts>/` – nur im Move-Modus bzw. für Library-Dateien; Kopien bleiben liegen.
+  Unbekannte → `_quarantine/<Dateiname>` (System unbekannt). Tie/Ambiguous/Konflikt → Item bleibt unangetastet.
+- M6: Discs: Tracks werden umbenannt (`<Name>.bin` bzw. `<Name> (Track N).bin`), Cue/GDI-Text wird angepasst
+  (Write-Op mit gesichertem Altinhalt). Multi-Disc → Ordner + `.m3u`. Archive mit mehreren ROMs werden übersprungen.
+- M6: Playlists `.lpl` (v1.5, `core_path: DETECT`) nach `<library>/_playlists/<System>.lpl` (konfigurierbar).
+- M6: Journal = JSON der ausgeführten Ops inkl. angelegter Ordner und überschriebener Inhalte; `undo` revertiert
+  den letzten Lauf. Ausführung stoppt beim ersten Fehler, Teilfortschritt wird trotzdem journalisiert.
 - Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
 
 ## 11. Offene Fragen
-- Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in welchem Milestone? (Vorschlag: CHD mit M6.)
+- Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in M6 nicht umgesetzt; Vorschlag: eigener Schritt nach M8.
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
 - Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?
 - No-Intro-DAT-Import für echte Parent/Clone-Daten in v1 oder später?
