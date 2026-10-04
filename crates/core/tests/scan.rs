@@ -45,7 +45,7 @@ fn scans_plain_zip_7z_and_headers() {
     assert!(report.failures.is_empty(), "{:?}", report.failures);
     assert_eq!(report.roms.len(), 4, "{:#?}", report.roms);
 
-    let h = |d: &[u8]| hash_reader(d, None).unwrap().0;
+    let h = |d: &[u8]| hash_reader(d, None, false).unwrap().0;
     let find = |name: &str| {
         report
             .roms

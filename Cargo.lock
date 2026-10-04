@@ -942,6 +942,7 @@ name = "rombro-core"
 version = "0.1.0"
 dependencies = [
  "crc32fast",
+ "criterion",
  "md-5",
  "rayon",
  "rombro-rdb",

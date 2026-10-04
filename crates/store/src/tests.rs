@@ -158,7 +158,7 @@ fn identify_confirms_by_sha1() {
         size: 1024,
         crc: 0xdead_beef,
         sha1: [1; 20],
-        md5: [2; 16],
+        md5: Some([2; 16]),
     };
     assert!(matches!(s.identify(&foo).unwrap(), Match::Verified(v) if v[0].name == "Foo (USA)"));
     let bad = Hashes {
@@ -172,7 +172,7 @@ fn identify_confirms_by_sha1() {
         size: 99,
         crc: 1,
         sha1: [0; 20],
-        md5: [0; 16],
+        md5: None,
     };
     assert!(matches!(s.identify(&bar).unwrap(), Match::CrcOnly(v) if v[0].name == "Bar (Europe)"));
 }

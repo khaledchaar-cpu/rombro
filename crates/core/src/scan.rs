@@ -160,7 +160,7 @@ fn hash_rom<R: Read>(mut r: R, size: u64, ext: &str) -> io::Result<RomHashes> {
         }
     }
     let header = header::detect(&probe[..n], size, ext);
-    let (full, headerless) = hash_reader((&probe[..n]).chain(r), header.map(Header::size))?;
+    let (full, headerless) = hash_reader((&probe[..n]).chain(r), header.map(Header::size), false)?;
     Ok((full, header, headerless))
 }
 

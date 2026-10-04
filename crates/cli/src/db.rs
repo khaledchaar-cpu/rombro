@@ -44,7 +44,7 @@ fn default_dir() -> Result<PathBuf> {
     Ok(PathBuf::from(home).join(".config/retroarch/database/rdb"))
 }
 
-fn open_store(db: Option<PathBuf>) -> Result<Store> {
+pub(crate) fn open_store(db: Option<PathBuf>) -> Result<Store> {
     let path = match db {
         Some(p) => p,
         None => {

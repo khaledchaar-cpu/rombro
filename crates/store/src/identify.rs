@@ -6,7 +6,7 @@ use rombro_core::Hashes;
 /// How a ROM was matched.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Match {
-    /// SHA1 (or MD5, when the entry has no SHA1) confirmed.
+    /// SHA1 (or MD5, when the entry has no SHA1 and MD5 was computed) confirmed.
     Verified(Vec<Record>),
     /// CRC32 + size match; the entry has no stronger hash to confirm with.
     CrcOnly(Vec<Record>),
@@ -23,8 +23,11 @@ impl Store {
             match (&r.sha1, &r.md5) {
                 (Some(s), _) if s.as_slice() != h.sha1 => {}
                 (Some(_), _) => verified.push(r),
-                (None, Some(m)) if m.as_slice() != h.md5 => {}
-                (None, Some(_)) => verified.push(r),
+                (None, Some(m)) => match h.md5 {
+                    Some(x) if m.as_slice() != x => {}
+                    Some(_) => verified.push(r),
+                    None => weak.push(r),
+                },
                 (None, None) => weak.push(r),
             }
         }
