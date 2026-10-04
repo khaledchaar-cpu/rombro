@@ -75,3 +75,48 @@ fn broken_archive_is_reported() {
     assert!(report.roms.is_empty());
     assert_eq!(report.failures.len(), 1);
 }
+
+#[test]
+fn scans_discs_without_loose_tracks() {
+    use rombro_core::disc::iso9660::testimg;
+    use rombro_core::disc::{DiscKind, Platform};
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path();
+
+    // PS1: raw mode-2 data track + audio track, referenced with different case.
+    let ps1 = testimg::iso(&[("SYSTEM.CNF;1", b"BOOT = cdrom:\\SLUS_005.94;1\r\n")]);
+    fs::write(root.join("Game (Track 1).bin"), testimg::raw(&ps1, 2)).unwrap();
+    fs::write(root.join("Game (Track 2).bin"), rom(2352 * 4, 9)).unwrap();
+    fs::write(
+        root.join("Game.cue"),
+        "FILE \"game (track 1).bin\" BINARY\n  TRACK 01 MODE2/2352\n\
+         FILE \"Game (Track 2).bin\" BINARY\n  TRACK 02 AUDIO\nFILE \"gone.bin\" BINARY\n",
+    )
+    .unwrap();
+    // PS2 cooked ISO.
+    let ps2 = testimg::iso(&[("SYSTEM.CNF;1", b"BOOT2 = cdrom0:\\SLES_509.33;1\n")]);
+    fs::write(root.join("ps2.iso"), &ps2).unwrap();
+    fs::write(root.join("Set.m3u"), "Game.cue\n").unwrap();
+    fs::write(root.join("loose.gb"), rom(1024, 4)).unwrap();
+
+    let r = scan(root);
+    assert!(r.failures.is_empty(), "{:?}", r.failures);
+    assert_eq!(r.roms.len(), 1, "only loose.gb is a plain rom");
+    assert_eq!(r.discs.len(), 2);
+    let cue = &r.discs[0];
+    assert_eq!(cue.kind, DiscKind::Cue);
+    assert_eq!(cue.tracks.len(), 2);
+    assert_eq!(cue.missing, vec![root.join("gone.bin")]);
+    let id = cue.id.as_ref().unwrap();
+    assert_eq!(
+        (id.platform, id.serial.as_str()),
+        (Platform::Ps1, "SLUS-00594")
+    );
+    let iso = &r.discs[1];
+    assert_eq!(iso.id.as_ref().unwrap().serial, "SLES-50933");
+    assert_eq!(
+        iso.tracks[0].hashes,
+        hash_reader(&ps2[..], None, false).unwrap().0
+    );
+    assert_eq!(r.playlists[0].entries, vec![root.join("Game.cue")]);
+}

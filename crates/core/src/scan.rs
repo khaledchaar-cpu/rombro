@@ -1,8 +1,10 @@
 //! Parallel directory scan: hashes plain files and archive members (ZIP, 7z).
 
+use crate::disc::{self, DiscId, DiscKind};
 use crate::hash::{Hashes, hash_reader};
 use crate::header::{self, Header};
 use rayon::prelude::*;
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, BufReader, Read};
 use std::path::{Path, PathBuf};
@@ -39,9 +41,29 @@ pub struct ScanFailure {
     pub error: ScanError,
 }
 
+/// A disc image (`.cue`/`.gdi` sheet with its tracks, or a single `.iso`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ScannedDisc {
+    pub path: PathBuf,
+    pub kind: DiscKind,
+    pub id: Option<DiscId>,
+    pub tracks: Vec<ScannedRom>,
+    /// Tracks referenced by the sheet but not found on disk.
+    pub missing: Vec<PathBuf>,
+}
+
+/// An `.m3u` playlist (multi-disc set).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Playlist {
+    pub path: PathBuf,
+    pub entries: Vec<PathBuf>,
+}
+
 #[derive(Debug, Default)]
 pub struct ScanReport {
     pub roms: Vec<ScannedRom>,
+    pub discs: Vec<ScannedDisc>,
+    pub playlists: Vec<Playlist>,
     pub failures: Vec<ScanFailure>,
 }
 
@@ -60,6 +82,51 @@ pub fn scan(root: &Path) -> ScanReport {
             }),
         }
     }
+    // Disc sheets claim their track files so they are not reported as loose ROMs.
+    let mut sheets = Vec::new();
+    let mut claimed = HashSet::new();
+    for p in &files {
+        let ext = ext_of(p);
+        if ext == "m3u" {
+            match disc::read_text(p) {
+                Ok(t) => report.playlists.push(Playlist {
+                    path: p.clone(),
+                    entries: disc::sheet::parse_m3u(&t, p.parent().unwrap_or(root)),
+                }),
+                Err(e) => report.failures.push(ScanFailure {
+                    path: p.clone(),
+                    error: e.into(),
+                }),
+            }
+            claimed.insert(p.clone());
+        } else if let Some(kind) = DiscKind::from_ext(&ext) {
+            match disc::tracks(p, kind) {
+                Ok((found, missing)) => {
+                    claimed.insert(p.clone());
+                    claimed.extend(found.iter().cloned());
+                    sheets.push((p.clone(), kind, found, missing));
+                }
+                Err(e) => report.failures.push(ScanFailure {
+                    path: p.clone(),
+                    error: e.into(),
+                }),
+            }
+        }
+    }
+    files.retain(|p| !claimed.contains(p));
+    let discs: Vec<_> = sheets
+        .into_par_iter()
+        .map(|(path, kind, found, missing)| {
+            scan_disc(&path, kind, &found, missing).map_err(|error| ScanFailure { path, error })
+        })
+        .collect();
+    for d in discs {
+        match d {
+            Ok(d) => report.discs.push(d),
+            Err(f) => report.failures.push(f),
+        }
+    }
+
     let results: Vec<_> = files
         .par_iter()
         .map(|p| {
@@ -78,8 +145,37 @@ pub fn scan(root: &Path) -> ScanReport {
     report
         .roms
         .sort_by(|a, b| (&a.path, &a.member).cmp(&(&b.path, &b.member)));
+    report.discs.sort_by(|a, b| a.path.cmp(&b.path));
+    report.playlists.sort_by(|a, b| a.path.cmp(&b.path));
     report.failures.sort_by(|a, b| a.path.cmp(&b.path));
     report
+}
+
+/// Hashes every track of a disc and reads its serial.
+pub fn scan_disc(
+    path: &Path,
+    kind: DiscKind,
+    tracks: &[PathBuf],
+    missing: Vec<PathBuf>,
+) -> Result<ScannedDisc, ScanError> {
+    let mut hashed = Vec::with_capacity(tracks.len());
+    for t in tracks {
+        let (hashes, _) = hash_reader(BufReader::new(File::open(t)?), None, false)?;
+        hashed.push(ScannedRom {
+            path: t.clone(),
+            member: None,
+            hashes,
+            header: None,
+            headerless: None,
+        });
+    }
+    Ok(ScannedDisc {
+        path: path.to_path_buf(),
+        kind,
+        id: disc::identify(tracks)?,
+        tracks: hashed,
+        missing,
+    })
 }
 
 /// Scans one file; archives yield one entry per member.
