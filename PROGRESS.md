@@ -2,8 +2,8 @@
 
 | Milestone | Status |
 |---|---|
-| M0 Bootstrap | ⏳ next |
-| M1 RDB-Parser | – |
+| M0 Bootstrap | ✅ done |
+| M1 RDB-Parser | ⏳ next |
 | M2 Store & Index | – |
 | M3 Scanner & Hashing | – |
 | M4 Disc-Support | – |
@@ -16,12 +16,15 @@
 | M11 Release | – |
 
 ## Aktuell
-Projekt aufgesetzt: CLAUDE.md, SPEC.md, PROGRESS.md. Toolchain vorhanden: cargo 1.99, node 26.
+M0 fertig: Workspace `crates/{rdb,core,store,cli,app}` (Paketnamen `rombro-*`, CLI-Binary `rombro`),
+`scripts/check.sh` (fmt, clippy -D warnings, test; scheitert korrekt bei Testfehlern).
 
-## Nächste Schritte (M0)
-1. Cargo-Workspace mit `crates/{rdb,core,store,cli,app}` (app erst als Platzhalter).
-2. `scripts/check.sh` (fmt --check, clippy -D warnings, test).
-3. `.gitignore`, erster Commit.
+## Nächste Schritte (M1 RDB-Parser)
+1. `crates/rdb`: minimaler MessagePack-Leser (map, str, bin, uint, nil) über `&[u8]`, zero-copy.
+2. `Entry`-Struct + `RdbFile::open(path)` → Iterator über Entries; Header `RARCHDB\0` prüfen.
+3. Unit-Tests mit synthetisch erzeugter Mini-RDB; Integrationstest gegen echte RDBs nur wenn vorhanden (ignored).
+4. CLI `rombro db stats [--path]`: Systeme + Eintragszahlen, Ladezeit; Benchmark aller 146 RDBs.
 
 ## Log
 - 2026-10-04: Projekt-Dokumente erstellt, RDB-Format verifiziert (siehe SPEC §3).
+- 2026-10-04: M0 Bootstrap abgeschlossen.

@@ -1,0 +1,13 @@
+[package]
+name = "rombro-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rombro-rdb.workspace = true
+thiserror.workspace = true

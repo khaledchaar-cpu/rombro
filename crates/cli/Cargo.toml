@@ -1,0 +1,18 @@
+[package]
+name = "rombro-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rombro-core.workspace = true
+rombro-store.workspace = true
+anyhow.workspace = true
+
+[[bin]]
+name = "rombro"
+path = "src/main.rs"
