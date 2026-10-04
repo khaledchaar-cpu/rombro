@@ -10,22 +10,23 @@
 | M5 Naming & 1G1R | ✅ done |
 | M6 Planner & Import | ✅ done |
 | M7 App-Shell | ✅ done |
-| M8 GUI Kern | ⏳ next |
+| M8 GUI Kern | 🔶 in progress |
 | M9 GUI Feinschliff | – |
 | M10 Gamification | – |
 | M11 Release | – |
 
 ## Aktuell
-M7 fertig: `crates/app` (Tauri 2, Commands `db_stats`, `scan` + Event `scan://progress`), `ui/` (Solid + Vite,
-`tokens.css`, Sidebar/Topbar, Command-Palette Ctrl+K, Ctrl+1–5 Views, Dashboard mit DB-KPIs + Quick-Scan,
-Segment-Progressbar, Effekte abschaltbar). `ipc.ts` liefert Mock-Daten außerhalb von Tauri. Core: `scan_with_progress`.
-`rombro_store::default_path()` (CLI + App).
+M8 Teil 1: IPC `plan_import` (Event `import://progress`, Plan wird in App-State gecacht), `execute_plan`
+(journalisiert), `undo_last`, `library_list`. UI: Inbox-View (Ordnerwahl via plugin-dialog, Modus, Audit/Plan),
+Plan-View (KPIs, virtualisierte Op-Liste, Entscheidungen nach Typ gefiltert, Execute/Undo, auch in Ctrl+K),
+Library-Tabelle (virtualisiert, Filter, Sortierung). State in `ui/src/state/importStore.ts`, Library-Pfad in localStorage.
+Noch nicht im echten Tauri-Fenster durchgeklickt (nur tsc/build + Mock).
 
-## Nächste Schritte (M8 GUI Kern)
-1. Inbox-View: Ordnerwahl (tauri-plugin-dialog), Scan streamen, Ergebnisliste virtualisiert (TanStack Virtual).
-2. Plan-Diff-View: `plan::build` per IPC, Dry-Run-Anzeige, Execute + Undo.
-3. Library-Tabelle; Dashboard echte KPIs.
-4. Offen aus M6: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, TBD-Queue-Aktionen, 1G1R-Regel-Config, Journal-Liste.
+## Nächste Schritte (M8 Rest)
+1. `pnpm tauri dev` manuell: Import-Flow mit Kopie-Fixtures durchspielen (nie echte Sammlung).
+2. TBD-Queue-Aktionen in Plan-View: Ambiguous auflösen (`set_resolution` per IPC), Rejected behalten/löschen.
+3. Dashboard echte KPIs (Library-Zusammenfassung, letzter Journal-Lauf), Journal-Liste.
+4. Offen aus M6: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 
 ## Stolpersteine
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
@@ -40,6 +41,7 @@ Segment-Progressbar, Effekte abschaltbar). `ipc.ts` liefert Mock-Daten außerhal
 - Resolution speichert (system, name) statt entry_id – IDs ändern sich bei `db sync`.
 - Tauri-Rust-Crate und `@tauri-apps/api` müssen gleiche Minor haben (aktuell 2.11) – sonst Fehler beim `tauri dev`.
 - `pnpm tauri` setzt `TAURI_APP_PATH=../crates/app`; Fortschritts-Events nur alle 64 Dateien.
+- App-IPC-Fehler sind Strings; Plan-DTOs (`OpView`/`DecisionView`) leben in `crates/app/src/import.rs`.
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log
