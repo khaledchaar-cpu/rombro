@@ -7,13 +7,18 @@ body {
   overflow: hidden;
   user-select: none;
 }
-body::after { /* scanlines */
+body::before { /* faint perspective grid + corner glows */
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg, #fff 0 1px, transparent 1px 3px);
-  opacity: var(--scanline-opacity);
+  background:
+    radial-gradient(ellipse at 100% 0%, var(--glow-magenta), transparent 45%),
+    radial-gradient(ellipse at 0% 100%, var(--glow-cyan), transparent 45%),
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 40px 40px;
+  mask-image: linear-gradient(to bottom, transparent, #000 30%);
+  opacity: var(--bg-fx-opacity);
 }
 h1, h2, h3 { font-family: var(--font-head); font-weight: 600; letter-spacing: 0.08em; margin: 0; }
 button {

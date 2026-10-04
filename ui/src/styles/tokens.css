@@ -36,18 +36,23 @@
   --topbar-h: 48px;
 
   --glow: 0 0 6px color-mix(in srgb, var(--accent) 60%, transparent);
-  --scanline-opacity: 0.06;
+  --grid-line: color-mix(in srgb, var(--cyan) 5%, transparent);
+  --glow-cyan: color-mix(in srgb, var(--cyan) 7%, transparent);
+  --glow-magenta: color-mix(in srgb, var(--magenta) 8%, transparent);
+  --bg-fx-opacity: 1;
+  --edge: linear-gradient(90deg, var(--cyan), var(--magenta) 60%, transparent);
+  --chroma: -1px 0 color-mix(in srgb, var(--magenta) 70%, transparent), 1px 0 color-mix(in srgb, var(--cyan) 70%, transparent);
   --dur: 120ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur: 0ms;
-    --scanline-opacity: 0;
   }
 }
 
 :root[data-effects="off"] {
   --glow: none;
-  --scanline-opacity: 0;
+  --bg-fx-opacity: 0;
+  --chroma: none;
 }
