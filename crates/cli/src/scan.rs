@@ -1,7 +1,7 @@
 use crate::db::open_store;
 use anyhow::Result;
 use rombro_core::ScannedRom;
-use rombro_store::{DiscMatch, Match, Store};
+use rombro_store::{DiscMatch, Match, Record, Store, candidates};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
@@ -20,7 +20,7 @@ pub fn run(dir: PathBuf, db: Option<PathBuf>, unknown_only: bool) -> Result<()> 
         .sum();
 
     let mut seen: HashMap<[u8; 20], String> = HashMap::new();
-    let (mut verified, mut weak, mut unknown, mut dups) = (0, 0, 0, 0);
+    let (mut verified, mut weak, mut unknown, mut dups, mut ambiguous) = (0, 0, 0, 0, 0);
     for rom in &report.roms {
         let label = display(rom);
         let (m, headerless) = identify(&store, rom)?;
@@ -40,11 +40,11 @@ pub fn run(dir: PathBuf, db: Option<PathBuf>, unknown_only: bool) -> Result<()> 
             }
             Match::Verified(r) => {
                 verified += 1;
-                format!("OK      [{}] {}", r[0].system, r[0].name)
+                describe("OK", r, &mut ambiguous)
             }
             Match::CrcOnly(r) => {
                 weak += 1;
-                format!("CRC     [{}] {}", r[0].system, r[0].name)
+                describe("CRC", r, &mut ambiguous)
             }
         };
         if !matches!(m, Match::Unknown) {
@@ -52,7 +52,11 @@ pub fn run(dir: PathBuf, db: Option<PathBuf>, unknown_only: bool) -> Result<()> 
         }
         if !unknown_only || matches!(m, Match::Unknown) {
             let hdr = if headerless { " (headerless)" } else { "" };
-            println!("{status}{hdr}  {label}");
+            let (head, rest) = status.split_once('\n').unwrap_or((&status, ""));
+            println!("{head}{hdr}  {label}");
+            if !rest.is_empty() {
+                println!("{rest}");
+            }
         }
     }
     let mut disc_unknown = 0;
@@ -62,20 +66,20 @@ pub fn run(dir: PathBuf, db: Option<PathBuf>, unknown_only: bool) -> Result<()> 
                 .map(|id| format!(" <{}>", id.serial))
                 .unwrap_or_default();
         let status = match store.identify_disc(d)? {
-            DiscMatch::Hash(Match::Verified(r)) => {
-                format!("OK      [{}] {}", r[0].system, r[0].name)
-            }
-            DiscMatch::Hash(Match::CrcOnly(r)) => {
-                format!("CRC     [{}] {}", r[0].system, r[0].name)
-            }
-            DiscMatch::Serial(r) => format!("SERIAL  [{}] {}", r[0].system, r[0].name),
+            DiscMatch::Hash(Match::Verified(r)) => describe("OK", &r, &mut ambiguous),
+            DiscMatch::Hash(Match::CrcOnly(r)) => describe("CRC", &r, &mut ambiguous),
+            DiscMatch::Serial(r) => describe("SERIAL", &r, &mut ambiguous),
             DiscMatch::Hash(Match::Unknown) | DiscMatch::Unknown => {
                 disc_unknown += 1;
                 "UNKNOWN ".to_owned()
             }
         };
         if !unknown_only || status.starts_with("UNKNOWN") {
-            println!("{status}{serial}  {}", d.path.display());
+            let (head, rest) = status.split_once('\n').unwrap_or((&status, ""));
+            println!("{head}{serial}  {}", d.path.display());
+            if !rest.is_empty() {
+                println!("{rest}");
+            }
             for m in &d.missing {
                 println!("        missing track: {}", m.display());
             }
@@ -87,7 +91,7 @@ pub fn run(dir: PathBuf, db: Option<PathBuf>, unknown_only: bool) -> Result<()> 
     let mb = bytes as f64 / 1e6;
     println!(
         "\n{} roms ({mb:.1} MB) in {hashed:.2?} ({:.0} MB/s): {verified} verified, {weak} crc-only, \
-         {dups} duplicates, {unknown} unknown; {} discs ({disc_unknown} unknown), \
+         {dups} duplicates, {unknown} unknown, {ambiguous} ambiguous (need a decision); {} discs ({disc_unknown} unknown), \
          {} playlists, {} errors",
         report.roms.len(),
         mb / hashed.as_secs_f64().max(1e-9),
@@ -107,6 +111,20 @@ fn identify(store: &Store, rom: &ScannedRom) -> Result<(Match, bool)> {
         }
     }
     Ok((store.identify(&rom.hashes)?, false))
+}
+
+/// One-line status; ambiguous matches list every candidate on the following lines.
+fn describe(tag: &str, records: &[Record], ambiguous: &mut usize) -> String {
+    let c = candidates(records);
+    if c.len() == 1 {
+        return format!("{tag:<8}[{}] {}", c[0].system, c[0].name);
+    }
+    *ambiguous += 1;
+    let mut s = format!("{:<8}{} candidates ({tag})", "AMBIG", c.len());
+    for r in &c {
+        s.push_str(&format!("\n          ? [{}] {}", r.system, r.name));
+    }
+    s
 }
 
 fn display(rom: &ScannedRom) -> String {

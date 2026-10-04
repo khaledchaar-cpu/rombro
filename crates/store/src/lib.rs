@@ -10,7 +10,7 @@ mod schema;
 mod tests;
 
 pub use disc::DiscMatch;
-pub use identify::Match;
+pub use identify::{Match, candidates};
 pub use import::SyncReport;
 pub use record::Record;
 

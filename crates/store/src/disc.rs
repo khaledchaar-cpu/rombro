@@ -33,11 +33,10 @@ impl Store {
         };
         let system = Some(id.platform.system());
         for key in id.lookup_keys() {
+            // Multi-disc sets are sometimes stored as `SCUS-94163-0`, `-1`, ...; include them
+            // so an ambiguous serial surfaces all candidates.
             let mut hits = self.by_serial(&key, system)?;
-            if hits.is_empty() {
-                // Multi-disc sets are sometimes stored as `SCUS-94163-0`, `-1`, ...
-                hits = self.by_serial_prefix(&format!("{key}-"), system)?;
-            }
+            hits.extend(self.by_serial_prefix(&format!("{key}-"), system)?);
             if !hits.is_empty() {
                 return Ok(DiscMatch::Serial(hits));
             }

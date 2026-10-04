@@ -23,6 +23,8 @@ Scanner liefert `discs` (Tracks gehasht, `missing`) + `playlists`; Track-Dateien
 CLI `scan` zeigt Discs (OK/CRC/SERIAL/UNKNOWN + Serial). Smoke-Test mit synthetischem PS1/PSP-Image gegen echte DB ok;
 echte Disc-Images liegen auf dem System keine.
 
+Mehrdeutige Treffer → `AMBIG` mit Kandidatenliste (`store::candidates`); Entscheidungs-Flow für M6/M8 in SPEC 11a.
+
 ## Nächste Schritte (M5 Naming & 1G1R)
 1. SPEC F3 (1G1R) + Naming-Abschnitt lesen. Titel-Normalisierung (Tags, Artikel, Satzzeichen) in `core::naming`.
 2. No-Intro/Redump-Tags parsen (Region, Sprachen, Rev/v, Beta/Proto/Demo, [b]/Hack) → Flags.

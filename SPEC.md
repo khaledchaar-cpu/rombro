@@ -178,6 +178,11 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   Serials in der RDB teils mit Suffix (`SCUS-94163-0`) → Prefix-Fallback. Serials sind in der RDB nicht eindeutig.
 - M4: Sektorlayout per Sync-Pattern erkannt (2048 cooked / 2352 raw Mode1 bzw. Mode2-XA), nicht aus dem Cue.
   Track-Dateien eines Sheets und `.m3u` werden nicht als lose ROMs gemeldet. Discs in ZIP/7z: noch nicht.
+- **Mehrdeutige Zuordnungen (User-Wunsch):** Liefert ein Treffer (Hash oder Serial) mehrere verschiedene Spiele
+  (`store::candidates` > 1, dedupliziert nach System+Name), wird nie still der erste genommen. Status „ambiguous“
+  + Kandidatenliste. CLI zeigt `AMBIG` mit allen Kandidaten. M6: Planner importiert Ambiguous nicht automatisch,
+  sondern legt eine offene Entscheidung an; Wahl des Users wird persistiert (Tabelle `resolution`:
+  Datei-SHA1 → entry_id) und bei erneutem Scan wiederverwendet. M8: GUI-Ansicht „Zu klären“ mit Kandidaten.
 
 ## 11. Offene Fragen
 - Default-Regionspriorität (Vorschlag: Europe > Germany > World > USA > Japan).

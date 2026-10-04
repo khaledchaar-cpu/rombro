@@ -45,3 +45,35 @@ impl Store {
         })
     }
 }
+
+/// Distinct games among match records (same system + name counts once), in input order.
+/// More than one means the match is ambiguous and the user has to decide.
+pub fn candidates(records: &[Record]) -> Vec<&Record> {
+    let mut out: Vec<&Record> = Vec::new();
+    for r in records {
+        if !out.iter().any(|o| o.system == r.system && o.name == r.name) {
+            out.push(r);
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn candidates_dedup_by_system_and_name() {
+        let r = |system: &str, name: &str| Record {
+            system: system.into(),
+            name: name.into(),
+            ..Record::default()
+        };
+        let recs = [r("A", "x"), r("A", "x"), r("B", "x"), r("A", "y")];
+        let c: Vec<_> = candidates(&recs)
+            .iter()
+            .map(|r| (&*r.system, &*r.name))
+            .collect();
+        assert_eq!(c, [("A", "x"), ("B", "x"), ("A", "y")]);
+    }
+}
