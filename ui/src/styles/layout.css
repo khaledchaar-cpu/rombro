@@ -71,10 +71,10 @@
   margin-bottom: var(--sp-3);
 }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-4); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: var(--sp-4); }
 .wide { grid-column: 1 / -1; }
 .kpi { font: 600 var(--fs-xl) var(--font-head); color: var(--accent); text-shadow: var(--glow); }
-.small { font-size: var(--fs-xs); }
+.small { font-size: var(--fs-xs); overflow-wrap: anywhere; }
 .err { color: var(--err); }
 .rows { list-style: none; margin: 0; padding: 0; }
 .rows li { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px dashed var(--line); }
