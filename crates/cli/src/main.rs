@@ -44,7 +44,7 @@ enum Cmd {
         #[arg(long)]
         db: Option<PathBuf>,
     },
-    /// Import an inbox into the library (1G1R, renaming, trash, quarantine, playlists)
+    /// Import an inbox into the library (1G1R, renaming, quarantine, playlists)
     Import {
         inbox: PathBuf,
         library: PathBuf,

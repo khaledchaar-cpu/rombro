@@ -32,7 +32,6 @@ fn opts(mode: Mode) -> Options {
     Options {
         mode,
         rules: Default::default(),
-        stamp: "1".into(),
         playlists: None,
     }
 }
@@ -50,7 +49,7 @@ fn tree(root: &Path) -> Vec<String> {
 }
 
 #[test]
-fn import_trash_quarantine_and_undo() {
+fn import_quarantine_queue_and_undo() {
     let tmp = TempDir::new().unwrap();
     let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
     let items = [
@@ -64,19 +63,17 @@ fn import_trash_quarantine_and_undo() {
     ];
     let before = tree(tmp.path());
     let plan = build(&items, &lib, &opts(Mode::Move));
-    assert_eq!((plan.placed, plan.trashed, plan.quarantined), (1, 1, 1));
-    assert!(plan.decisions.is_empty());
+    assert_eq!((plan.placed, plan.quarantined), (1, 1));
+    assert!(
+        matches!(&plan.decisions[..], [Decision::Rejected { name, kept: Some(k), .. }] if name == "Mario (USA)" && k == "Mario (Europe)")
+    );
     assert_eq!(tree(tmp.path()), before, "planning must not touch the disk");
 
     let ex = execute(&plan.ops);
     assert!(ex.error.is_none());
     assert_eq!(
         tree(&lib),
-        [
-            "Nintendo - SNES/Mario (Europe).sfc",
-            "_quarantine/x.bin",
-            "_trash/1/a.sfc"
-        ]
+        ["Nintendo - SNES/Mario (Europe).sfc", "_quarantine/x.bin"]
     );
     assert!(undo(&ex.done).is_empty());
     assert_eq!(tree(tmp.path()), before);

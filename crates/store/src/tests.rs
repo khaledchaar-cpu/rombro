@@ -285,7 +285,6 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
     let opts = Options {
         mode: Mode::Move,
         rules: Default::default(),
-        stamp: "1".into(),
         playlists: None,
     };
     let items = s.items(&rombro_core::scan(&inbox), false).unwrap();

@@ -79,8 +79,6 @@ pub struct Item {
 pub struct Options {
     pub mode: Mode,
     pub rules: Rules,
-    /// Name of this run's trash folder (`_trash/<stamp>`).
-    pub stamp: String,
     /// Directory for RetroArch playlists; `None` disables the export.
     pub playlists: Option<PathBuf>,
 }
@@ -96,6 +94,14 @@ pub enum Decision {
     Tie {
         system: String,
         releases: Vec<String>,
+    },
+    /// Not picked by 1G1R; stays in place until the user decides (keep, delete, ...).
+    Rejected {
+        path: PathBuf,
+        name: String,
+        /// The release picked instead (none if every release of the game is excluded).
+        kept: Option<String>,
+        reason: String,
     },
     Skipped {
         path: PathBuf,
@@ -115,12 +121,10 @@ pub struct Plan {
     /// Items already correctly placed.
     pub unchanged: usize,
     pub placed: usize,
-    pub trashed: usize,
     pub quarantined: usize,
 }
 
 /// Library sub-folders the planner manages itself; their content is never re-planned.
-pub const TRASH_DIR: &str = "_trash";
 pub const QUARANTINE_DIR: &str = "_quarantine";
 /// Default playlist folder inside the library.
 pub const PLAYLIST_DIR: &str = "_playlists";

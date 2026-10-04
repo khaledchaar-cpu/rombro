@@ -59,7 +59,6 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
   <library>/<System>/<Name>.<ext>                       # Cartridge
   <library>/<System>/<Name>/<Name> (Disc N).<ext> + .m3u # Multi-Disc
   <library>/_quarantine/<System>/...                     # Unknown/BadDump
-  <library>/_trash/<timestamp>/...                       # verworfene Dubletten (reversibel)
   ```
 - Dateinamen = RDB-`name` (Thumbnail-kompatibel: `&*/:<>?\|` → `_`).
 - Operationen: move | copy | hardlink | reflink; optional (ent)zippen.
@@ -193,9 +192,10 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   (z. B. „Street Fighter II - The World Warrior (Japan)“), landen in eigenen Gruppen → Parent/Clone-DATs später.
 - M5: Multi-Disc-Release = Name ohne `(Disc|Disk|Side N)`; alle Discs des Picks werden zusammen gewählt.
 - M6: Import = Library + Inbox gemeinsam scannen und planen (Audit = Import ohne Inbox). Library-Dateien werden
-  immer verschoben; Inbox per Modus move/copy/hardlink (Reflink noch nicht). Alle von 1G1R verworfenen Releases
-  (auch Beta/Hack etc.) → `_trash/<unix-ts>/` – nur im Move-Modus bzw. für Library-Dateien; Kopien bleiben liegen.
-  Unbekannte → `_quarantine/<Dateiname>` (System unbekannt). Tie/Ambiguous/Konflikt → Item bleibt unangetastet.
+  immer verschoben; Inbox per Modus move/copy/hardlink (Reflink noch nicht). Von 1G1R verworfene Releases
+  (auch Beta/Hack etc.) werden **nicht** getrasht (User, 2026-10-05), sondern bleiben liegen und landen in der
+  **TBD-Queue** (`Decision::Rejected` mit Grund + gewähltem Release); der User entscheidet später (M8: GUI).
+  Unbekannte → `_quarantine/<Dateiname>` (System unbekannt). Tie/Ambiguous/Konflikt/Rejected → Item bleibt unangetastet.
 - M6: Discs: Tracks werden umbenannt (`<Name>.bin` bzw. `<Name> (Track N).bin`), Cue/GDI-Text wird angepasst
   (Write-Op mit gesichertem Altinhalt). Multi-Disc → Ordner + `.m3u`. Archive mit mehreren ROMs werden übersprungen.
 - M6: Playlists `.lpl` (v1.5, `core_path: DETECT`) nach `<library>/_playlists/<System>.lpl` (konfigurierbar).

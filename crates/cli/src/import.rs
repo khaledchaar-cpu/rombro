@@ -30,7 +30,6 @@ pub fn run(a: Args) -> Result<()> {
     let opts = Options {
         mode: a.mode,
         rules: Default::default(),
-        stamp: ts.to_string(),
         playlists: (!a.no_playlists)
             .then(|| a.playlists.unwrap_or_else(|| library.join(PLAYLIST_DIR))),
     };
@@ -42,11 +41,10 @@ pub fn run(a: Args) -> Result<()> {
         println!("{}", decision(d));
     }
     println!(
-        "\n{} items: {} to place, {} unchanged, {} to trash, {} to quarantine, {} need attention; {} operations",
+        "\n{} items: {} to place, {} unchanged, {} to quarantine, {} need attention; {} operations",
         items.len(),
         p.placed,
         p.unchanged,
-        p.trashed,
         p.quarantined,
         p.decisions.len(),
         p.ops.len()
@@ -169,6 +167,18 @@ fn decision(d: &Decision) -> String {
         Decision::Tie { system, releases } => {
             format!("TIE     [{system}] {}", releases.join(" | "))
         }
+        Decision::Rejected {
+            path,
+            name,
+            kept,
+            reason,
+        } => match kept {
+            Some(k) => format!(
+                "TBD     {} [{name}] not 1G1R ({reason}); kept: {k}",
+                path.display()
+            ),
+            None => format!("TBD     {} [{name}] excluded ({reason})", path.display()),
+        },
         Decision::Skipped { path, reason } => format!("SKIP    {} ({reason})", path.display()),
         Decision::Conflict { path, target } => {
             format!("CONFLICT {} -> {} exists", path.display(), target.display())
