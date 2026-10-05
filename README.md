@@ -43,7 +43,7 @@ and drop everything into a clean, RetroArch-ready library – with undo for ever
 ## Install
 
 Download the bundle for your OS from the [releases page](https://github.com/khaledchaar-cpu/rombro/releases) (AppImage/deb, dmg, msi/exe).
-The `rombro` CLI ships next to it as a separate binary.
+The `rombro` CLI ships next to it as a separate binary (`rombro-<os>-<arch>`).
 
 The bundles are **not code-signed**, so the OS warns on first launch:
 
