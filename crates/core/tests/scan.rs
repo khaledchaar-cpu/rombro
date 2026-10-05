@@ -185,3 +185,19 @@ fn hashes_archives_as_a_whole() {
     assert_eq!(report.archives[0].hashes, whole);
     assert_eq!(report.archives[0].member, None);
 }
+
+#[test]
+fn ignores_os_clutter_and_empty_files() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path();
+    fs::write(root.join("game.bin"), rom(64, 1)).unwrap();
+    fs::write(root.join(".DS_Store"), b"junk").unwrap();
+    fs::write(root.join("._game.bin"), b"junk").unwrap();
+    fs::write(root.join("Thumbs.db"), b"junk").unwrap();
+    fs::create_dir(root.join("hi")).unwrap();
+    fs::write(root.join("hi/.keep"), b"").unwrap();
+    let report = scan(root);
+    let paths: Vec<_> = report.roms.iter().map(|r| r.path.clone()).collect();
+    assert_eq!(paths, vec![root.join("game.bin")]);
+    assert!(report.failures.is_empty());
+}

@@ -83,6 +83,17 @@ pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(usize, usize) + Sync))
     scan_cached(root, &HashCache::default(), progress)
 }
 
+/// OS clutter and empty placeholders (`.keep`) are never ROMs; they are left where they are.
+/// Empty files would otherwise match RDB entries that carry the empty-file hash.
+fn is_ignored(e: &walkdir::DirEntry) -> bool {
+    let name = e.file_name().to_string_lossy();
+    let junk = matches!(
+        name.to_ascii_lowercase().as_str(),
+        ".ds_store" | "thumbs.db" | "desktop.ini" | ".directory"
+    ) || name.starts_with("._");
+    junk || e.metadata().is_ok_and(|m| m.len() == 0)
+}
+
 /// Like [`scan_with_progress`], but reuses `cache` for files whose size and mtime are unchanged.
 pub fn scan_cached(
     root: &Path,
@@ -93,7 +104,7 @@ pub fn scan_cached(
     let mut files = Vec::new();
     for e in WalkDir::new(root).follow_links(true) {
         match e {
-            Ok(e) if e.file_type().is_file() => files.push(e.into_path()),
+            Ok(e) if e.file_type().is_file() && !is_ignored(&e) => files.push(e.into_path()),
             Ok(_) => {}
             Err(err) => report.failures.push(ScanFailure {
                 path: err.path().unwrap_or(root).to_path_buf(),
