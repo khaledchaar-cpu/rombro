@@ -83,6 +83,29 @@ export function CompletenessPanel() {
   );
 }
 
+/** Franchise goals: started franchises with at least 3 games on the owned systems, closest first. */
+export function FranchisePanel() {
+  const goals = () => stats()?.kpis.franchises.slice(0, 12) ?? [];
+  return (
+    <Panel title="Franchise goals">
+      <ul class="complete">
+        <For each={goals()} fallback={<li class="dim">No franchise started yet.</li>}>
+          {(f) => (
+            <li>
+              <div class="row">
+                <span class="ellipsis">{f.franchise}</span>
+                <span class="spacer" />
+                <span class="mono small">{f.owned}/{f.total}</span>
+              </div>
+              <Segments value={f.owned} max={f.total} count={Math.min(f.total, 20)} />
+            </li>
+          )}
+        </For>
+      </ul>
+    </Panel>
+  );
+}
+
 export function AchievementsPanel() {
   const list = createMemo(() =>
     [...(stats()?.achievements ?? [])].sort((a, b) => Number(b[0].unlocked) - Number(a[0].unlocked) || (b[1] ?? 0) - (a[1] ?? 0)),

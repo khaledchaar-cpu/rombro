@@ -3,6 +3,7 @@
 use crate::{Result, Store};
 use rombro_core::g1r::select;
 use rombro_core::gamify::{self, Achievement, Inputs, Kpis, Level, Owned};
+use rombro_core::naming;
 use rombro_core::plan::{Op, TRASH_DIR, journal_from_json};
 use rusqlite::params;
 use serde::Serialize;
@@ -37,6 +38,7 @@ impl Store {
             by_system.entry(s).or_default().push(n);
         }
         let mut systems = Vec::new();
+        let mut franchises: BTreeMap<String, (u64, u64)> = BTreeMap::new();
         let mut meta: HashMap<(&str, &str), Meta> = HashMap::new();
         for (system, names) in &by_system {
             let mut entries = self.by_system(system)?;
@@ -47,6 +49,24 @@ impl Store {
                 .map(|g| g.key)
                 .collect();
             systems.push(gamify::progress(system, names.iter().copied(), &keys));
+            let owned_keys: HashSet<String> = names
+                .iter()
+                .map(|n| naming::group_key(naming::parse(n).title))
+                .collect();
+            let mut seen: HashSet<(&str, String)> = HashSet::new();
+            for r in &entries {
+                let Some(f) = r.franchise.as_deref().filter(|f| !f.is_empty()) else {
+                    continue;
+                };
+                let key = naming::group_key(naming::parse(&r.name).title);
+                if keys.contains(&key) && seen.insert((f, key.clone())) {
+                    let c = franchises.entry(f.to_owned()).or_default();
+                    c.1 += 1;
+                    if owned_keys.contains(&key) {
+                        c.0 += 1;
+                    }
+                }
+            }
             let wanted: HashSet<&str> = names.iter().copied().collect();
             for r in entries {
                 if let Some(n) = wanted.get(r.name.as_str()) {
@@ -72,6 +92,7 @@ impl Store {
             unknown,
             ambiguous,
             today: now.div_euclid(86_400),
+            franchises: gamify::franchise_goals(franchises),
             ..Inputs::default()
         };
         for (j, state) in self.journals(usize::MAX >> 1)? {

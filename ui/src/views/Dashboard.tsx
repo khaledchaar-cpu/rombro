@@ -3,7 +3,7 @@ import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import { LibraryPanel, RunsPanel } from "./DashboardHistory";
 import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
-import { AchievementsPanel, CompletenessPanel, ProgressPanel } from "./DashboardProgress";
+import { AchievementsPanel, CompletenessPanel, FranchisePanel, ProgressPanel } from "./DashboardProgress";
 import { gamifyEnabled } from "../state/gamify";
 import { dbStats, dbSync, pickDir, onScanProgress, scan, type ScanSummary } from "../ipc";
 
@@ -58,6 +58,7 @@ export default function Dashboard(props: { onReview: () => void; onLibrary: () =
       <Show when={gamifyEnabled()}>
         <ProgressPanel />
         <CompletenessPanel />
+        <FranchisePanel />
         <AchievementsPanel />
       </Show>
       <Panel title="Database">

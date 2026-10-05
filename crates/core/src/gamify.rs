@@ -28,8 +28,42 @@ pub struct Inputs {
     pub runs: u64,
     /// Unix days (ts / 86400) with at least one executed run.
     pub run_days: Vec<i64>,
+    pub franchises: Vec<FranchiseProgress>,
     /// Today as unix day.
     pub today: i64,
+}
+
+/// Franchise completion across the owned systems (SPEC F6, optional goals).
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct FranchiseProgress {
+    pub franchise: String,
+    /// Distinct (system, 1G1R group) games of the franchise owned.
+    pub owned: u64,
+    /// Franchise games in the 1G1R sets of the owned systems.
+    pub total: u64,
+}
+
+/// Smallest franchise that counts as a goal.
+pub const FRANCHISE_MIN: u64 = 3;
+
+/// Turns `franchise → (owned, total)` into goals: started, at least [`FRANCHISE_MIN`] games,
+/// sorted by completion (closest first).
+pub fn franchise_goals(counts: BTreeMap<String, (u64, u64)>) -> Vec<FranchiseProgress> {
+    let mut v: Vec<FranchiseProgress> = counts
+        .into_iter()
+        .filter(|(_, (o, t))| *o > 0 && *t >= FRANCHISE_MIN)
+        .map(|(franchise, (owned, total))| FranchiseProgress {
+            franchise,
+            owned,
+            total,
+        })
+        .collect();
+    v.sort_by(|a, b| {
+        (b.owned * a.total)
+            .cmp(&(a.owned * b.total))
+            .then_with(|| a.franchise.cmp(&b.franchise))
+    });
+    v
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -51,6 +85,7 @@ pub struct Kpis {
     pub trashed_bytes: u64,
     pub runs: u64,
     pub systems: Vec<SystemProgress>,
+    pub franchises: Vec<FranchiseProgress>,
     /// Region tag → games.
     pub regions: BTreeMap<String, u64>,
     pub genres: BTreeMap<String, u64>,
@@ -89,6 +124,7 @@ pub fn kpis(owned: &[Owned<'_>], systems: Vec<SystemProgress>, inp: &Inputs) -> 
         trashed_bytes: inp.trashed_bytes,
         runs: inp.runs,
         systems,
+        franchises: inp.franchises.clone(),
         streak: streak(&inp.run_days, inp.today),
         ..Kpis::default()
     };
@@ -232,6 +268,20 @@ pub fn achievements(k: &Kpis) -> Vec<Achievement> {
             ));
         }
     }
+    for f in &k.franchises {
+        if f.owned >= f.total {
+            v.push(ach(
+                format!("franchise:{}", f.franchise),
+                format!("Franchise: {}", f.franchise),
+                format!(
+                    "Own every {} game on your systems ({})",
+                    f.franchise, f.total
+                ),
+                50 * f.total,
+                true,
+            ));
+        }
+    }
     v
 }
 
@@ -333,5 +383,30 @@ mod tests {
         let l = level(&k, &a);
         assert_eq!(l.xp, 20 + 20 + 250 + 50 + 502);
         assert_eq!(l.level, 2);
+    }
+
+    #[test]
+    fn franchise_goals_filter_sort_and_unlock() {
+        let counts = BTreeMap::from([
+            ("Mario".to_string(), (3, 3)),
+            ("Zelda".to_string(), (1, 4)),
+            ("Metroid".to_string(), (2, 4)),
+            ("Unstarted".to_string(), (0, 5)),
+            ("Tiny".to_string(), (2, 2)),
+        ]);
+        let goals = franchise_goals(counts);
+        let names: Vec<_> = goals.iter().map(|f| f.franchise.as_str()).collect();
+        assert_eq!(names, ["Mario", "Metroid", "Zelda"]);
+        let k = Kpis {
+            franchises: goals,
+            ..Kpis::default()
+        };
+        let a = achievements(&k);
+        let f: Vec<_> = a
+            .iter()
+            .filter(|a| a.id.starts_with("franchise:"))
+            .collect();
+        assert_eq!(f.len(), 1);
+        assert_eq!((f[0].id.as_str(), f[0].xp), ("franchise:Mario", 150));
     }
 }

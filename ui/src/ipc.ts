@@ -235,10 +235,11 @@ export async function thumbsOnlineSet(on: boolean): Promise<void> {
   return invoke("thumbs_online_set", { on });
 }
 
+export interface FranchiseProgress { franchise: string; owned: number; total: number }
 export interface SystemProgress { system: string; owned: number; total: number }
 export interface Kpis {
   games: number; unknown: number; ambiguous: number; trashed: number; trashed_bytes: number; runs: number; streak: number;
-  systems: SystemProgress[];
+  systems: SystemProgress[]; franchises: FranchiseProgress[];
   regions: Record<string, number>; genres: Record<string, number>; decades: Record<string, number>;
 }
 export interface Achievement { id: string; title: string; description: string; xp: number; unlocked: boolean }
@@ -253,6 +254,7 @@ export async function gamifyStats(games: [string, string][], unknown: number, am
       kpis: {
         games: games.length, unknown, ambiguous, trashed: 12, trashed_bytes: 734_003_200, runs: 3, streak: 2,
         systems: [{ system: "Nintendo - Game Boy", owned: 40, total: 520 }, { system: "Nintendo - Virtual Boy", owned: 22, total: 22 }],
+        franchises: [{ franchise: "Mario", owned: 7, total: 9 }, { franchise: "Zelda", owned: 2, total: 5 }],
         regions: { Europe: 30, USA: 25, Japan: 7 }, genres: { Action: 20, Puzzle: 8 }, decades: { 1990: 50, 2000: 12 },
       },
       level: { level: 3, xp: 1234, floor: 900, next: 1600 },
