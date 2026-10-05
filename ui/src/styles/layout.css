@@ -44,6 +44,12 @@
 .topbar h2 { font-size: var(--fs-md); color: var(--text); }
 .topbar { border-image: var(--edge) 1; border-bottom-width: 1px; border-bottom-style: solid; }
 .palette-trigger { display: flex; gap: var(--sp-2); align-items: center; }
+.topbar { gap: var(--sp-3); user-select: none; }
+.topbar h2 { flex: 1; }
+.win-controls { display: flex; gap: var(--sp-1); margin-right: calc(-1 * var(--sp-2)); }
+.win-controls button { background: none; color: var(--text-dim); width: 32px; height: 28px; padding: 0; }
+.win-controls button:hover { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.win-controls .close:hover { color: var(--err); box-shadow: inset 0 0 0 1px var(--err); }
 
 .content { grid-area: main; overflow: auto; padding: var(--sp-4); }
 
