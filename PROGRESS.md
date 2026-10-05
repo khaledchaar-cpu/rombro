@@ -14,19 +14,19 @@
 | M9 GUI Feinschliff | ✅ done |
 | M10 Gamification | ✅ done (Sichtprüfung offen) |
 | M11 Release | ✅ done (CI ungetestet, kein Remote) |
+| M12 Übertragen & Container | ✅ done (nur synthetisch getestet) |
 
 ## Aktuell
-M11 abgeschlossen: `core::paths` (Daten-/Cache-Dir per `dirs`, RetroArch-RDB-Erkennung Linux/Flatpak/Snap/macOS/Windows,
-Override `ROMBRO_RDB_DIR`), CLI `db sync` ohne Pfad nutzt Auto-Erkennung, App-Command `db_sync` + Dashboard-Buttons
-„Sync RDBs“/„Choose folder…“. `.github/workflows/ci.yml`: Checks + Bundles (AppImage/deb, dmg, msi/nsis) + CLI,
-Tag `v*` → Draft-Release. README, LICENSE, Bundle-Metadaten. Lokal verifiziert: `.deb`-Build (5,9 MiB).
-
-F6-Reste erledigt: Trash-Größe (KPI), Achievement-Toast, Franchise-Ziele (Panel + Achievement `franchise:<Name>`).
+M12 abgeschlossen: Modus **Reflink** (`reflink-copy`, fällt ohne CoW-FS auf Copy zurück; CLI/App/UI).
+**Multi-ROM-Archive**: jedes ROM ein Item (`Files::Member`), `Op::Extract` entpackt einzeln; Archiv → `_trash/`,
+sobald alle Member erledigt sind (nur Library oder Modus Move). **Discs in zip/7z** (`Files::ArchivedSheet`):
+Erkennung per Track-Hash, Tracks umbenannt entpackt, Sheet neu geschrieben. **CHD**: `disc::chd::ChdTrack` streamt den
+ersten Datentrack (Hash + Serial), Ablage als `<Name>.chd`. Planner aufgeteilt (`plan/build/{place,archives}.rs`, `plan/sheet.rs`).
 
 ## Nächste Schritte
-1. Remote anlegen, pushen, CI-Lauf auf allen 3 OS prüfen (bisher nur lokal Linux gebaut); Signierung macOS/Windows fehlt.
-2. Sichtprüfung im Tauri-Fenster: Gamification-Panels (inkl. Franchise, Toast, Trash-Größe), Sync-Buttons, Dashboard-Layout; Laufzeit mit großer Library.
-3. Übertragen: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive.
+1. Mit echten Dateien prüfen: CHD (chdman-erzeugt, cdlz/cdfl), 7z mit cue/bin, Multi-ROM-Zips (bisher nur synthetisch).
+2. Remote anlegen, pushen, CI-Lauf auf allen 3 OS prüfen; Signierung macOS/Windows fehlt.
+3. Sichtprüfung im Tauri-Fenster (Gamification, Sync-Buttons, neue Op-Tags `clone`/`extract`, Reflink-Option).
 4. v2 Launcher (SPEC §6).
 
 ## Stolpersteine
@@ -56,6 +56,10 @@ F6-Reste erledigt: Trash-Größe (KPI), Achievement-Toast, Franchise-Ziele (Pane
 - `pnpm tauri`-Script setzt Env per Shell-Syntax → in CI Env-Vars über `env:` + `pnpm exec tauri`.
 - Trash-Größe = `stat` der Trash-Ziele aus den Journalen; nach Leeren des Trashs 0 (zählt Belegung, nicht Historie).
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
+- Archiv-Items: `Op::Extract.from` = Archiv, Member-Name separat; im Builder liefert `name_source()` den Member-Namen.
+- Disc-Archive: kein Serial-Fallback (Tracks liegen nur gepackt vor); mehrere Sheets im Archiv → Skip.
+- CHD-Frames sind 2448 Byte (2352 + Subcode), Tracks auf 4 Frames gepaddet (GD: `PAD:`), `PGTYPE:V…` = Pregap gespeichert.
+- Kein `chdman` lokal → Test baut unkomprimierte CHD v5 selbst (`crates/core/tests/chd.rs`).
 
 ## Log
 - 2026-10-04: Projekt-Dokumente erstellt, RDB-Format verifiziert (siehe SPEC §3).
