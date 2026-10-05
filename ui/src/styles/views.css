@@ -12,6 +12,7 @@
 .btn.ghost { color: var(--text-dim); background: transparent; box-shadow: inset 0 0 0 1px var(--line-strong); clip-path: none; }
 .btn.ghost:not(:disabled):hover { color: var(--text); }
 .btn.ghost.active { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), var(--glow); }
+.btn.danger { background: var(--err); color: var(--bg); }
 
 .kpis { display: flex; flex-wrap: wrap; gap: var(--sp-6); margin-bottom: var(--sp-3); }
 

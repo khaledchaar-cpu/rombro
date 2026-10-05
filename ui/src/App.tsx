@@ -57,7 +57,7 @@ export default function App() {
       <main class="content">
         <Switch fallback={<Placeholder title={title()} />}>
           <Match when={view() === "dashboard"}>
-            <Dashboard />
+            <Dashboard onReview={() => setView("plan")} />
           </Match>
           <Match when={view() === "inbox"}>
             <Inbox onPlanned={() => setView("plan")} />

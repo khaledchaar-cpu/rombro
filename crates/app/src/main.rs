@@ -18,6 +18,8 @@ fn main() {
             import::undo_last,
             decide::resolve_ambiguous,
             decide::set_verdict,
+            decide::trash_list,
+            decide::trash_empty,
             library::library_list
         ])
         .run(tauri::generate_context!())

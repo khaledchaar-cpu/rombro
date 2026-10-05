@@ -1,11 +1,12 @@
 import { createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
+import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
 import { dbStats, onScanProgress, scan, type ScanSummary } from "../ipc";
 
 const fmt = new Intl.NumberFormat("en-US");
 
-export default function Dashboard() {
+export default function Dashboard(props: { onReview: () => void }) {
   const [stats] = createResource(dbStats);
   const [dir, setDir] = createSignal("");
   const [progress, setProgress] = createSignal({ done: 0, total: 0 });
@@ -57,6 +58,9 @@ export default function Dashboard() {
           </For>
         </ul>
       </Panel>
+
+      <OpenDecisionsPanel onReview={props.onReview} />
+      <TrashPanel />
 
       <Panel title="Quick scan" class="wide">
         <form class="row" onSubmit={(e) => (e.preventDefault(), run())}>

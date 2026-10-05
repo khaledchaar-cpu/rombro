@@ -6,6 +6,7 @@ pub mod lpl;
 mod ops;
 #[cfg(test)]
 mod tests;
+pub mod trash;
 
 pub use build::build;
 pub use ops::{Done, Execution, Op, execute, journal_from_json, journal_to_json, undo};

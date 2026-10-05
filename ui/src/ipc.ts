@@ -143,3 +143,16 @@ export async function libraryList(library: string): Promise<LibraryRow[]> {
   }
   return invoke<LibraryRow[]>("library_list", { library });
 }
+
+export interface TrashFile { path: string; bytes: number }
+
+export async function trashList(library: string): Promise<TrashFile[]> {
+  if (!inTauri) return [{ path: "Tetris (Japan).gb", bytes: 65536 }, { path: "Mario (Beta).sfc", bytes: 1048576 }];
+  return invoke<TrashFile[]>("trash_list", { library });
+}
+
+/** Permanently deletes the trash folder; returns the number of deleted files. */
+export async function trashEmpty(library: string): Promise<number> {
+  if (!inTauri) return 0;
+  return invoke<number>("trash_empty", { library });
+}

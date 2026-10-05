@@ -21,6 +21,20 @@ export const [busy, setBusy] = createSignal(false);
 /** Decisions taken in the current plan (path → label); applied on the next plan. */
 export const [decided, setDecided] = createSignal<Map<string, string>>(new Map());
 let lastWithInbox = true;
+
+/** Decisions left open by the last plan (kind → count), remembered for the Dashboard. */
+export interface OpenDecisions { ts: number; kinds: Record<string, number> }
+const loadOpen = (): OpenDecisions | undefined => {
+  try { return JSON.parse(load("rombro.open")) as OpenDecisions; } catch { return undefined; }
+};
+export const [openDecisions, setOpenDecisions] = createSignal<OpenDecisions | undefined>(loadOpen());
+function rememberOpen(p: PlanView) {
+  const kinds: Record<string, number> = {};
+  for (const d of p.decisions) kinds[d.kind] = (kinds[d.kind] ?? 0) + 1;
+  const o = { ts: Date.now(), kinds };
+  setOpenDecisions(o);
+  save("rombro.open", JSON.stringify(o));
+}
 export const [status, setStatus] = createSignal<{ ok: boolean; text: string }>();
 
 async function guard<T>(f: () => Promise<T>): Promise<T | undefined> {
@@ -44,6 +58,7 @@ export const buildPlan = (withInbox: boolean) =>
     lastWithInbox = withInbox;
     const p = await planImport(withInbox ? inbox() || null : null, library(), mode());
     setPlan(p);
+    rememberOpen(p);
     return p;
   });
 
