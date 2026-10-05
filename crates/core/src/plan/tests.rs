@@ -65,6 +65,9 @@ fn import_quarantine_queue_and_undo() {
     let before = tree(tmp.path());
     let plan = build(&items, &lib, &opts(Mode::Move));
     assert_eq!((plan.placed, plan.quarantined), (1, 1));
+    assert_eq!(plan.why.len(), plan.ops.len());
+    assert!(plan.why.iter().any(|w| w == "1G1R pick"));
+    assert!(plan.why.iter().any(|w| w.starts_with("unknown")));
     assert!(
         matches!(&plan.decisions[..], [Decision::Rejected { name, kept: Some(k), .. }] if name == "Mario (USA)" && k == "Mario (Europe)")
     );

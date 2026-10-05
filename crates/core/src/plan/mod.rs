@@ -133,6 +133,8 @@ pub enum Decision {
 #[derive(Debug, Default)]
 pub struct Plan {
     pub ops: Vec<Op>,
+    /// Why each op is planned (parallel to `ops`).
+    pub why: Vec<String>,
     pub decisions: Vec<Decision>,
     /// Items already correctly placed.
     pub unchanged: usize,

@@ -28,11 +28,12 @@ function OpList() {
           {(row) => {
             const op = ops()[row.index];
             return (
-              <div class="vrow mono small" style={{ transform: `translateY(${row.start}px)`, height: `${ROW_H}px` }}>
+              <div class="vrow oprow mono small" style={{ transform: `translateY(${row.start}px)`, height: `${ROW_H}px` }}>
                 <span class={`tag tag-${op.kind}`}>{op.kind}</span>
                 <span class="dim ellipsis" title={op.from ?? ""}>{op.from ?? ""}</span>
                 <span class="arrow">→</span>
                 <span class="ellipsis" title={op.to}>{rel(op.to)}</span>
+                <span class="ellipsis why" title={op.why}>{op.why}</span>
               </div>
             );
           }}

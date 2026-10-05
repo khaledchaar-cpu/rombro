@@ -43,7 +43,7 @@ export function onScanProgress(cb: (p: ScanProgress) => void): Promise<UnlistenF
 }
 
 export type Mode = "move" | "copy" | "hardlink";
-export interface OpView { kind: "move" | "copy" | "link" | "write"; from: string | null; to: string }
+export interface OpView { kind: "move" | "copy" | "link" | "write"; from: string | null; to: string; why: string }
 export interface DecisionView {
   kind: "ambiguous" | "tie" | "rejected" | "skipped" | "conflict";
   path: string;
@@ -72,6 +72,7 @@ function mockPlan(library: string): PlanView {
     kind: i % 50 === 0 ? "write" : "move",
     from: i % 50 === 0 ? null : `/inbox/rom_${i}.zip`,
     to: `${library}/Nintendo - Game Boy/Game ${i} (Europe).zip`,
+    why: i % 50 === 0 ? "RetroArch playlist" : "1G1R pick",
   }));
   return {
     items: 2100, placed: 1960, unchanged: 100, quarantined: 12, discarded: 0, ops,

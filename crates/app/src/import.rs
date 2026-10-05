@@ -35,6 +35,7 @@ pub struct OpView {
     kind: &'static str,
     from: Option<String>,
     to: String,
+    why: String,
 }
 
 #[derive(Serialize)]
@@ -138,7 +139,12 @@ pub async fn plan_import(
         unchanged: p.unchanged,
         quarantined: p.quarantined,
         discarded: p.discarded,
-        ops: p.ops.iter().map(op_view).collect(),
+        ops: p
+            .ops
+            .iter()
+            .zip(&p.why)
+            .map(|(o, w)| op_view(o, w))
+            .collect(),
         decisions: p.decisions.iter().map(decision_view).collect(),
     };
     *pending.0.lock().map_err(err)? = Some((library, p.ops));
@@ -215,7 +221,7 @@ fn s(p: &Path) -> String {
     p.display().to_string()
 }
 
-fn op_view(op: &Op) -> OpView {
+fn op_view(op: &Op, why: &str) -> OpView {
     let kind = match op {
         Op::Move { .. } => "move",
         Op::Copy { .. } => "copy",
@@ -226,6 +232,7 @@ fn op_view(op: &Op) -> OpView {
         kind,
         from: op.source().map(s),
         to: s(op.target()),
+        why: why.to_owned(),
     }
 }
 

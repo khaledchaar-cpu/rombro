@@ -23,6 +23,8 @@
   gap: var(--sp-2); align-items: center; padding: 0 var(--sp-2);
   border-bottom: 1px dashed var(--line);
 }
+.oprow { grid-template-columns: 56px minmax(0, 1fr) 16px minmax(0, 1.2fr) minmax(0, 0.8fr); }
+.why { color: var(--text-dim); font-family: var(--font-ui); }
 .arrow { color: var(--text-dim); }
 
 .tag {
@@ -41,7 +43,7 @@
 
 @media (max-width: 640px) {
   .vrow { grid-template-columns: 48px minmax(0, 1fr); }
-  .vrow .arrow, .vrow > :nth-child(2) { display: none; }
+  .vrow .arrow, .vrow > :nth-child(2), .vrow .why { display: none; }
 }
 
 .ltable .lrow { display: grid; grid-template-columns: 80px minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1.2fr); gap: var(--sp-2); padding: 0 var(--sp-2); }

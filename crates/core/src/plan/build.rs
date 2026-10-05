@@ -18,6 +18,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         plan: Plan::default(),
         claimed: HashSet::new(),
         lpl: BTreeMap::new(),
+        why: String::new(),
     };
     let managed = [QUARANTINE_DIR, PLAYLIST_DIR, TRASH_DIR].map(|d| library.join(d));
     let items: Vec<&Item> = items
@@ -33,7 +34,10 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 path: it.files.primary().clone(),
                 candidates: c.clone(),
             }),
-            Ident::Unknown => b.quarantine(it),
+            Ident::Unknown => {
+                b.why = "unknown: no database match".into();
+                b.quarantine(it)
+            }
             Ident::Skip(reason) => b.plan.decisions.push(Decision::Skipped {
                 path: it.files.primary().clone(),
                 reason: reason.clone(),
@@ -81,6 +85,11 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                     }
                 }
             }
+            b.why = match (tie, picked.len()) {
+                (true, _) => "1G1R pick (preferred by you)".into(),
+                (_, n) if n > 1 => format!("1G1R pick, {n} discs"),
+                _ => "1G1R pick".into(),
+            };
             b.release(system, &picked);
             let kept = picked.first().map(|(_, g)| g.name.clone());
             for ((it, g), reason) in &rejected {
@@ -88,10 +97,12 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 match opts.verdicts.get(&key) {
                     // A duplicate would claim the pick's own target; only discarding makes sense.
                     Some(Verdict::Keep) if *reason != g1r::Reason::Duplicate => {
+                        b.why = format!("kept by you (1G1R: {reason:?})");
                         b.release(system, &[&(*it, *g)]);
                         continue;
                     }
                     Some(Verdict::Discard) => {
+                        b.why = format!("discarded by you (1G1R: {reason:?})");
                         b.discard(it);
                         continue;
                     }
@@ -118,6 +129,8 @@ struct Builder<'a> {
     /// Targets claimed by earlier ops of this plan.
     claimed: HashSet<PathBuf>,
     lpl: BTreeMap<String, Vec<lpl::Entry>>,
+    /// Reason attached to the ops added next.
+    why: String,
 }
 
 impl Builder<'_> {
@@ -141,6 +154,7 @@ impl Builder<'_> {
                 text.push('\n');
             }
             if placed.len() == media.len() {
+                self.why = "multi-disc playlist".into();
                 self.write(m3u.clone(), text);
             }
             m3u
@@ -260,6 +274,12 @@ impl Builder<'_> {
         }
         self.claimed
             .extend(ops.iter().map(|op| op.target().to_path_buf()));
+        let why = if it.in_library && self.why.starts_with("1G1R") {
+            format!("{} – rename to naming scheme", self.why)
+        } else {
+            self.why.clone()
+        };
+        self.plan.why.extend(ops.iter().map(|_| why.clone()));
         self.plan.ops.extend(ops);
         true
     }
@@ -270,6 +290,7 @@ impl Builder<'_> {
             return;
         }
         self.claimed.insert(path.clone());
+        self.plan.why.push(self.why.clone());
         self.plan.ops.push(Op::Write { path, contents });
     }
 
@@ -277,6 +298,7 @@ impl Builder<'_> {
         let Some(dir) = self.opts.playlists.clone() else {
             return;
         };
+        self.why = "RetroArch playlist".into();
         for (system, entries) in std::mem::take(&mut self.lpl) {
             let path = dir.join(format!("{}.lpl", naming::sanitize_file_name(&system)));
             self.write(path, lpl::render(&system, &entries));
