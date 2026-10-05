@@ -1,5 +1,5 @@
 // Gamification switch (stored in the database) and stats derived from the loaded library rows.
-import { createResource, createSignal } from "solid-js";
+import { createResource, createRoot, createSignal } from "solid-js";
 import { gamifyEnabledGet, gamifyEnabledSet, gamifyStats } from "../ipc";
 import { libraryRows } from "./libraryStore";
 
@@ -13,17 +13,19 @@ export async function setGamifyEnabled(on: boolean) {
 }
 
 /** Recomputed whenever the library rows change (only while enabled). */
-export const [stats] = createResource(
-  () => (enabled() ? libraryRows() : false),
-  (rows) => {
-    const games: [string, string][] = [];
-    let unknown = 0;
-    let ambiguous = 0;
-    for (const r of rows) {
-      if (r.state === "known") games.push([r.system, r.name]);
-      else if (r.state === "unknown") unknown++;
-      else if (r.state === "ambiguous") ambiguous++;
-    }
-    return gamifyStats(games, unknown, ambiguous);
-  },
+export const [stats] = createRoot(() =>
+  createResource(
+    () => (enabled() ? libraryRows() : false),
+    (rows) => {
+      const games: [string, string][] = [];
+      let unknown = 0;
+      let ambiguous = 0;
+      for (const r of rows) {
+        if (r.state === "known") games.push([r.system, r.name]);
+        else if (r.state === "unknown") unknown++;
+        else if (r.state === "ambiguous") ambiguous++;
+      }
+      return gamifyStats(games, unknown, ambiguous);
+    },
+  ),
 );

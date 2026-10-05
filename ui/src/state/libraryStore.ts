@@ -1,5 +1,5 @@
 // Library rows from the persistent file index; loaded at app start and refreshed after execute/undo.
-import { createMemo, createSignal } from "solid-js";
+import { createMemo, createRoot, createSignal } from "solid-js";
 import { libraryList, sessionGet, type LibraryRow, type Mode } from "../ipc";
 
 export interface LibrarySummary {
@@ -41,25 +41,31 @@ export async function initLibrary() {
   let stored = session?.library ?? null;
   if (!stored) {
     // one-time migration: the path used to live in localStorage
-    try { stored = localStorage.getItem("rombro.library"); } catch { /* storage unavailable */ }
+    try {
+      stored = localStorage.getItem("rombro.library");
+    } catch {
+      /* storage unavailable */
+    }
   }
   if (stored && !library()) setLibrary(stored);
   await refreshLibrary();
 }
 
-export const librarySummary = createMemo<LibrarySummary | undefined>(() => {
-  const rows = libraryRows();
-  if (!loadedAt()) return undefined;
-  const states: Record<string, number> = {};
-  const systems = new Map<string, number>();
-  for (const r of rows) {
-    states[r.state] = (states[r.state] ?? 0) + 1;
-    if (r.system) systems.set(r.system, (systems.get(r.system) ?? 0) + 1);
-  }
-  return {
-    ts: loadedAt(),
-    total: rows.length,
-    states,
-    systems: [...systems].sort((a, b) => b[1] - a[1]),
-  };
-});
+export const librarySummary = createRoot(() =>
+  createMemo<LibrarySummary | undefined>(() => {
+    const rows = libraryRows();
+    if (!loadedAt()) return undefined;
+    const states: Record<string, number> = {};
+    const systems = new Map<string, number>();
+    for (const r of rows) {
+      states[r.state] = (states[r.state] ?? 0) + 1;
+      if (r.system) systems.set(r.system, (systems.get(r.system) ?? 0) + 1);
+    }
+    return {
+      ts: loadedAt(),
+      total: rows.length,
+      states,
+      systems: [...systems].sort((a, b) => b[1] - a[1]),
+    };
+  }),
+);

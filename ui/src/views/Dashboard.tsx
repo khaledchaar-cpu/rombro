@@ -3,13 +3,28 @@ import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import { LibraryPanel, RunsPanel } from "./DashboardHistory";
 import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
-import { AchievementsPanel, CompletenessPanel, FranchisePanel, ProgressPanel } from "./DashboardProgress";
+import {
+  AchievementsPanel,
+  CompletenessPanel,
+  FranchisePanel,
+  ProgressPanel,
+} from "./DashboardProgress";
 import { gamifyEnabled } from "../state/gamify";
-import { dbStats, dbSync, pickDir, onScanProgress, scan, type ScanSummary } from "../ipc";
+import {
+  dbStats,
+  dbSync,
+  pickDir,
+  onScanProgress,
+  scan,
+  type ScanSummary,
+} from "../ipc";
 
 const fmt = new Intl.NumberFormat("en-US");
 
-export default function Dashboard(props: { onReview: () => void; onLibrary: () => void }) {
+export default function Dashboard(props: {
+  onReview: () => void;
+  onLibrary: () => void;
+}) {
   const [stats, { refetch }] = createResource(dbStats);
   const [syncMsg, setSyncMsg] = createSignal("");
   const [syncing, setSyncing] = createSignal(false);
@@ -21,7 +36,11 @@ export default function Dashboard(props: { onReview: () => void; onLibrary: () =
     setSyncMsg("syncing…");
     try {
       const r = await dbSync(d);
-      setSyncMsg(`${r.imported} imported · ${r.unchanged} unchanged · ${r.removed} removed`);
+      setSyncMsg(
+        r.imported + r.removed === 0
+          ? `Already up to date · ${r.unchanged} RDBs unchanged`
+          : `${r.imported} imported · ${r.unchanged} unchanged · ${r.removed} removed`,
+      );
       void refetch();
     } catch (e) {
       setSyncMsg(String(e));
@@ -51,7 +70,8 @@ export default function Dashboard(props: { onReview: () => void; onLibrary: () =
     }
   };
 
-  const top = () => [...(stats()?.systems ?? [])].sort((a, b) => b.count - a.count).slice(0, 8);
+  const top = () =>
+    [...(stats()?.systems ?? [])].sort((a, b) => b.count - a.count).slice(0, 8);
 
   return (
     <div class="grid">
@@ -62,7 +82,12 @@ export default function Dashboard(props: { onReview: () => void; onLibrary: () =
         <AchievementsPanel />
       </Show>
       <Panel title="Database">
-        <Show when={stats()} fallback={<p class="dim">{stats.error ? String(stats.error) : "loading…"}</p>}>
+        <Show
+          when={stats()}
+          fallback={
+            <p class="dim">{stats.error ? String(stats.error) : "loading…"}</p>
+          }
+        >
           {(s) => (
             <>
               <div class="kpi">{fmt.format(s().entries)}</div>
@@ -72,10 +97,18 @@ export default function Dashboard(props: { onReview: () => void; onLibrary: () =
           )}
         </Show>
         <div class="row">
-          <button class="btn" disabled={syncing()} onClick={() => void sync(false)}>
+          <button
+            class="btn"
+            disabled={syncing()}
+            onClick={() => void sync(false)}
+          >
             Sync RDBs
           </button>
-          <button class="btn ghost" disabled={syncing()} onClick={() => void sync(true)}>
+          <button
+            class="btn ghost"
+            disabled={syncing()}
+            onClick={() => void sync(true)}
+          >
             Choose folder…
           </button>
         </div>
@@ -125,8 +158,9 @@ export default function Dashboard(props: { onReview: () => void; onLibrary: () =
               <p class="err mono">{v}</p>
             ) : (
               <p class="mono">
-                {v.roms} roms · {v.discs} discs · {v.playlists} m3u · {v.failures} errors ·{" "}
-                {(v.bytes / 1e6).toFixed(1)} MB in {v.millis} ms
+                {v.roms} roms · {v.discs} discs · {v.playlists} m3u ·{" "}
+                {v.failures} errors · {(v.bytes / 1e6).toFixed(1)} MB in{" "}
+                {v.millis} ms
               </p>
             );
           }}
