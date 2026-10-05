@@ -1,9 +1,9 @@
 // Shared import state: Inbox view builds the plan, Plan view reviews and executes it.
 import { createSignal } from "solid-js";
-import { library, refreshLibrary } from "./libraryStore";
+import { inbox, library, mode, refreshLibrary } from "./libraryStore";
 import {
   executePlan, planImport, resolveAmbiguous, setVerdict, undoLast,
-  type Choice, type DecisionView, type ExecResult, type Mode, type PlanView, type Verdict,
+  type Choice, type DecisionView, type ExecResult, type PlanView, type Verdict,
 } from "../ipc";
 
 const load = (k: string) => {
@@ -13,9 +13,7 @@ const save = (k: string, v: string) => {
   try { localStorage.setItem(k, v); } catch { /* storage unavailable */ }
 };
 
-export { library, setLibrary } from "./libraryStore";
-export const [inbox, setInbox] = createSignal("");
-export const [mode, setMode] = createSignal<Mode>("move");
+export { inbox, library, mode, setInbox, setLibrary, setMode } from "./libraryStore";
 export const [plan, setPlan] = createSignal<PlanView>();
 export const [busy, setBusy] = createSignal(false);
 /** Unique per decision (a tie's `path` is its system, shared by all ties of that system). */

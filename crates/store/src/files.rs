@@ -24,24 +24,29 @@ fn prefix(root: &Path) -> String {
 }
 
 impl Store {
-    pub fn library(&self) -> Result<Option<PathBuf>> {
+    pub fn setting(&self, name: &str) -> Result<Option<String>> {
         Ok(self
             .conn
-            .query_row(
-                "SELECT value FROM settings WHERE key = ?1",
-                [LIBRARY_KEY],
-                |r| r.get::<_, String>(0),
-            )
-            .optional()?
-            .map(PathBuf::from))
+            .query_row("SELECT value FROM settings WHERE key = ?1", [name], |r| {
+                r.get(0)
+            })
+            .optional()?)
+    }
+
+    pub fn set_setting(&self, name: &str, value: &str) -> Result<()> {
+        self.conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?1, ?2)",
+            params![name, value],
+        )?;
+        Ok(())
+    }
+
+    pub fn library(&self) -> Result<Option<PathBuf>> {
+        Ok(self.setting(LIBRARY_KEY)?.map(PathBuf::from))
     }
 
     pub fn set_library(&self, path: &Path) -> Result<()> {
-        self.conn.execute(
-            "INSERT OR REPLACE INTO settings (key, value) VALUES (?1, ?2)",
-            params![LIBRARY_KEY, key(path)],
-        )?;
-        Ok(())
+        self.set_setting(LIBRARY_KEY, &key(path))
     }
 
     /// Cached hashes of all indexed files below `root`.

@@ -20,6 +20,16 @@ pub enum ModeArg {
     Hardlink,
 }
 
+impl ModeArg {
+    fn as_str(self) -> &'static str {
+        match self {
+            ModeArg::Move => "move",
+            ModeArg::Copy => "copy",
+            ModeArg::Hardlink => "hardlink",
+        }
+    }
+}
+
 impl From<ModeArg> for Mode {
     fn from(m: ModeArg) -> Self {
         match m {
@@ -106,6 +116,7 @@ pub async fn plan_import(
     let (p, items) = tauri::async_runtime::spawn_blocking(move || -> CmdResult<_> {
         let (store, _) = open_store()?;
         store.set_library(&lib).map_err(err)?;
+        store.set_setting("mode", mode.as_str()).map_err(err)?;
         let mut items = Vec::new();
         if lib.is_dir() {
             items = store
@@ -117,6 +128,9 @@ pub async fn plan_import(
             if !inbox.is_dir() {
                 return Err(format!("{} is not a directory", inbox.display()));
             }
+            store
+                .set_setting("inbox", &inbox.to_string_lossy())
+                .map_err(err)?;
             items.extend(
                 store
                     .items(&emit_scan(&store, &app, "inbox", &inbox)?, false)

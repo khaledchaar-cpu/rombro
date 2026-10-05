@@ -1,6 +1,6 @@
 // Library rows from the persistent file index; loaded at app start and refreshed after execute/undo.
 import { createMemo, createSignal } from "solid-js";
-import { libraryGet, libraryList, type LibraryRow } from "../ipc";
+import { libraryList, sessionGet, type LibraryRow, type Mode } from "../ipc";
 
 export interface LibrarySummary {
   ts: number;
@@ -30,9 +30,15 @@ export async function refreshLibrary() {
   }
 }
 
-/** Restores the stored library path and loads it. */
+export const [inbox, setInbox] = createSignal("");
+export const [mode, setMode] = createSignal<Mode>("move");
+
+/** Restores the last session (library, inbox, mode) and loads the library. */
 export async function initLibrary() {
-  let stored = await libraryGet().catch(() => null);
+  const session = await sessionGet().catch(() => null);
+  if (session?.inbox && !inbox()) setInbox(session.inbox);
+  if (session?.mode) setMode(session.mode);
+  let stored = session?.library ?? null;
   if (!stored) {
     // one-time migration: the path used to live in localStorage
     try { stored = localStorage.getItem("rombro.library"); } catch { /* storage unavailable */ }

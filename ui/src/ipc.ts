@@ -132,9 +132,12 @@ export interface LibraryRow {
   files: number;
 }
 
-export async function libraryGet(): Promise<string | null> {
-  if (!inTauri) return "/mock/library";
-  return invoke<string | null>("library_get");
+export interface Session { library: string | null; inbox: string | null; mode: Mode | null }
+
+/** Last used library, inbox and import mode (stored in the database). */
+export async function sessionGet(): Promise<Session> {
+  if (!inTauri) return { library: "/mock/library", inbox: "/mock/inbox", mode: "move" };
+  return invoke<Session>("session_get");
 }
 
 export async function libraryList(library?: string): Promise<LibraryRow[]> {

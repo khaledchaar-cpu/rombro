@@ -15,14 +15,23 @@ pub struct Row {
     files: usize,
 }
 
-/// The managed library path stored in the database (`None` until one is chosen).
+/// Last used paths and import mode, restored at app start.
+#[derive(Serialize)]
+pub struct Session {
+    library: Option<String>,
+    inbox: Option<String>,
+    mode: Option<String>,
+}
+
 #[tauri::command]
-pub async fn library_get() -> CmdResult<Option<String>> {
+pub async fn session_get() -> CmdResult<Session> {
     let (store, _) = open_store()?;
-    Ok(store
-        .library()
-        .map_err(err)?
-        .map(|p| p.display().to_string()))
+    let get = |k: &str| store.setting(k).map_err(err);
+    Ok(Session {
+        library: get("library")?,
+        inbox: get("inbox")?,
+        mode: get("mode")?,
+    })
 }
 
 /// Lists the library from the file index; only new or changed files are hashed.
