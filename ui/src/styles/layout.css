@@ -135,3 +135,47 @@
 .palette-list { list-style: none; margin: var(--sp-2) 0 0; padding: 0; max-height: 50vh; overflow: auto; }
 .palette-list li { display: flex; justify-content: space-between; padding: var(--sp-2) var(--sp-3); cursor: pointer; }
 .palette-list li.selected { background: var(--bg-sunken); color: var(--accent); border-left: 2px solid var(--accent); }
+
+/* Custom dropdown (components/Select.tsx) */
+.xsel {
+  display: flex; align-items: center; gap: var(--sp-2); min-width: 0;
+  padding: var(--sp-2) var(--sp-3); cursor: pointer; text-align: left;
+  font: 500 var(--fs-md) var(--font-ui); color: var(--text-dim);
+  background: var(--bg-sunken); border: 1px solid var(--line-strong);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  transition: border-color var(--dur), color var(--dur), box-shadow var(--dur);
+}
+.xsel > .ellipsis { flex: 1; }
+.xsel:hover, .xsel:focus-visible { border-color: var(--cyan); color: var(--text); outline: none; }
+.xsel.set { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 55%, var(--line-strong)); text-shadow: var(--glow); }
+.xsel.open { border-color: var(--cyan); box-shadow: inset 0 0 12px var(--glow-cyan); }
+.xsel-chev {
+  width: 7px; height: 7px; flex: none; margin-top: -3px;
+  border-right: 2px solid var(--cyan); border-bottom: 2px solid var(--cyan);
+  transform: rotate(45deg); transition: transform var(--dur);
+}
+.xsel.open .xsel-chev { transform: rotate(-135deg); margin-top: 3px; border-color: var(--magenta); }
+
+.xsel-pop {
+  position: fixed; z-index: 1000; margin: 0; padding: var(--sp-1) 0; list-style: none; overflow: auto;
+  background: color-mix(in srgb, var(--bg-raised) 94%, transparent);
+  border: 1px solid var(--cyan); border-top: 2px solid var(--magenta);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--cyan) 25%, transparent), 0 12px 32px #000a;
+  backdrop-filter: blur(6px);
+  font: 500 var(--fs-sm) var(--font-ui); color: var(--text);
+  animation: xsel-in var(--dur) ease-out;
+}
+.xsel-pop li {
+  display: flex; gap: var(--sp-3); align-items: center; cursor: pointer;
+  padding: 5px var(--sp-3); border-left: 2px solid transparent;
+}
+.xsel-pop li.hi {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--cyan) 18%, transparent), transparent);
+  border-left-color: var(--cyan); color: var(--cyan);
+}
+.xsel-pop li.sel { color: var(--magenta); }
+.xsel-pop li.sel::before { content: "▸"; margin-left: -10px; width: 8px; }
+.xsel-pop li > .ellipsis { flex: 1; }
+.xsel-hint { font: var(--fs-xs) var(--font-mono); color: var(--text-dim); }
+.xsel-pop li.hi .xsel-hint { color: var(--cyan); }
+@keyframes xsel-in { from { opacity: 0; transform: translateY(-4px); } }

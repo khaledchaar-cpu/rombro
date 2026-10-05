@@ -1,6 +1,12 @@
 // Filter bar for the Library table: text, system, state, region and added-date filters.
 import { createMemo, createSignal, For, Show, type Accessor } from "solid-js";
+import Select, { type Option } from "../components/Select";
 import type { LibraryRow } from "../ipc";
+
+const opts = (all: string, list: [string, number][]): Option<string>[] => [
+  { value: "", label: all },
+  ...list.map(([s, n]) => ({ value: s, label: s, hint: String(n) })),
+];
 
 const STATES = ["known", "ambiguous", "unknown", "skip"] as const;
 const AGES = [
@@ -55,17 +61,9 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
     return (
       <div class="filters">
         <input class="field" placeholder="Filter…" value={query()} onInput={(e) => setQuery(e.currentTarget.value)} />
-        <select class="field" value={system()} onChange={(e) => setSystem(e.currentTarget.value)}>
-          <option value="">All systems</option>
-          <For each={systems()}>{([s, n]) => <option value={s}>{s} ({n})</option>}</For>
-        </select>
-        <select class="field" value={region()} onChange={(e) => setRegion(e.currentTarget.value)}>
-          <option value="">All regions</option>
-          <For each={regions()}>{([s, n]) => <option value={s}>{s} ({n})</option>}</For>
-        </select>
-        <select class="field" value={age()} onChange={(e) => setAge(Number(e.currentTarget.value))}>
-          <For each={AGES}>{(a) => <option value={a.secs}>{a.label}</option>}</For>
-        </select>
+        <Select value={system()} onChange={setSystem} options={opts("All systems", systems())} />
+        <Select value={region()} onChange={setRegion} options={opts("All regions", regions())} />
+        <Select value={age()} onChange={setAge} options={AGES.map((a) => ({ value: a.secs, label: a.label }))} />
         <div class="chips">
           <For each={STATES}>
             {(s) => (
