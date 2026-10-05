@@ -1,0 +1,15 @@
+/* Settings view: 1G1R rules editor. */
+.settings { display: grid; gap: var(--sp-3); max-width: 720px; }
+.prio-list { list-style: none; margin: var(--sp-2) 0; padding: 0; display: grid; gap: var(--sp-1); }
+.prio-item {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2); box-shadow: inset 0 0 0 1px var(--line);
+}
+.prio-item.dragging { box-shadow: inset 0 0 0 1px var(--accent), var(--glow); }
+.prio-handle { cursor: grab; color: var(--text-dim); user-select: none; touch-action: none; padding: 0 var(--sp-1); }
+.prio-item.dragging .prio-handle { cursor: grabbing; color: var(--accent); }
+.prio-name { flex: 1; }
+.btn.sm { padding: 0 var(--sp-2); min-height: 0; }
+.flag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--sp-2); }
+.check { display: flex; align-items: center; gap: var(--sp-2); cursor: pointer; }
+.check input { accent-color: var(--accent); }

@@ -4,6 +4,7 @@ import Topbar from "./components/Topbar";
 import CommandPalette, { type Command } from "./components/CommandPalette";
 import Dashboard from "./views/Dashboard";
 import Placeholder from "./views/Placeholder";
+import Settings from "./views/Settings";
 import Inbox from "./views/Inbox";
 import Plan from "./views/Plan";
 import Library from "./views/Library";
@@ -71,6 +72,9 @@ export default function App() {
           </Match>
           <Match when={view() === "plan"}>
             <Plan />
+          </Match>
+          <Match when={view() === "settings"}>
+            <Settings />
           </Match>
         </Switch>
       </main>

@@ -1,0 +1,72 @@
+import { For, Show, createResource, createSignal } from "solid-js";
+import Panel from "../components/Panel";
+import PriorityList from "../components/PriorityList";
+import { FLAG_KEYS, type FlagKey, type Rules, rulesGet, rulesSet } from "../ipc";
+
+const FLAG_LABELS: Record<FlagKey, string> = {
+  beta: "Beta", proto: "Prototype", demo: "Demo", kiosk: "Kiosk", sample: "Sample",
+  unlicensed: "Unlicensed", pirate: "Pirate", bios: "BIOS", aftermarket: "Aftermarket",
+  virtual_console: "Virtual Console", rerelease: "Digital re-release", hack: "Hack",
+  translation: "Translation", bad_dump: "Bad dump", alt: "Alt dump",
+};
+
+export default function Settings() {
+  const [saved, { mutate }] = createResource(rulesGet);
+  const [draft, setDraft] = createSignal<Rules | null>(null);
+  const [msg, setMsg] = createSignal("");
+  const rules = () => draft() ?? saved();
+  const dirty = () => draft() !== null && JSON.stringify(draft()) !== JSON.stringify(saved());
+
+  const edit = (patch: Partial<Rules>) => {
+    const r = rules();
+    if (r) setDraft({ ...r, ...patch });
+  };
+  const save = async (r: Rules | null) => {
+    try {
+      mutate(await rulesSet(r));
+      setDraft(null);
+      setMsg(r ? "Saved – applies to the next plan." : "Reset to defaults.");
+    } catch (e) {
+      setMsg(`Error: ${e}`);
+    }
+  };
+
+  return (
+    <Show when={rules()} fallback={<p class="dim mono">loading…</p>}>
+      {(r) => (
+        <div class="settings">
+          <Panel title="1G1R · Region priority">
+            <p class="dim">Best first. Unlisted regions rank after all listed ones.</p>
+            <PriorityList items={r().regions} onChange={(regions) => edit({ regions })} placeholder="Add region, e.g. Australia" />
+          </Panel>
+          <Panel title="1G1R · Language priority">
+            <p class="dim">Tie-breaker after region.</p>
+            <PriorityList items={r().languages} onChange={(languages) => edit({ languages })} placeholder="Add language code, e.g. Fr" />
+          </Panel>
+          <Panel title="1G1R · Never pick">
+            <div class="flag-grid">
+              <For each={FLAG_KEYS}>
+                {(k) => (
+                  <label class="check">
+                    <input
+                      type="checkbox"
+                      checked={r().exclude[k]}
+                      onChange={(e) => edit({ exclude: { ...r().exclude, [k]: e.currentTarget.checked } })}
+                    />
+                    {FLAG_LABELS[k]}
+                  </label>
+                )}
+              </For>
+            </div>
+          </Panel>
+          <div class="row">
+            <button class="btn" disabled={!dirty()} onClick={() => save(rules()!)}>Save</button>
+            <button class="btn ghost" disabled={!dirty()} onClick={() => setDraft(null)}>Discard</button>
+            <button class="btn ghost" onClick={() => save(null)}>Reset to defaults</button>
+            <span class="dim mono">{msg()}</span>
+          </div>
+        </div>
+      )}
+    </Show>
+  );
+}

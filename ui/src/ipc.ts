@@ -177,3 +177,27 @@ export async function journalList(): Promise<JournalView[]> {
   if (!inTauri) return [{ id: 2, ts: Date.now() / 1000, library: "/lib", state: "done", ops: 82 }];
   return invoke<JournalView[]>("journal_list");
 }
+
+export const FLAG_KEYS = [
+  "beta", "proto", "demo", "kiosk", "sample", "unlicensed", "pirate", "bios", "aftermarket",
+  "virtual_console", "rerelease", "hack", "translation", "bad_dump", "alt",
+] as const;
+export type FlagKey = (typeof FLAG_KEYS)[number];
+export interface Rules { regions: string[]; languages: string[]; exclude: Record<FlagKey, boolean> }
+
+const mockRules = (): Rules => ({
+  regions: ["Europe", "World", "USA", "Germany", "Japan"],
+  languages: ["En", "De"],
+  exclude: Object.fromEntries(FLAG_KEYS.map((k) => [k, !["aftermarket", "virtual_console", "rerelease", "alt"].includes(k)])) as Rules["exclude"],
+});
+
+export async function rulesGet(): Promise<Rules> {
+  if (!inTauri) return mockRules();
+  return invoke<Rules>("rules_get");
+}
+
+/** Saves the rules; `null` resets to defaults. Returns the effective rules. */
+export async function rulesSet(rules: Rules | null): Promise<Rules> {
+  if (!inTauri) return rules ?? mockRules();
+  return invoke<Rules>("rules_set", { rules });
+}
