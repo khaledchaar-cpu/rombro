@@ -221,3 +221,45 @@ export async function thumbsOnlineSet(on: boolean): Promise<void> {
   if (!inTauri) return;
   return invoke("thumbs_online_set", { on });
 }
+
+export interface SystemProgress { system: string; owned: number; total: number }
+export interface Kpis {
+  games: number; unknown: number; ambiguous: number; trashed: number; runs: number; streak: number;
+  systems: SystemProgress[];
+  regions: Record<string, number>; genres: Record<string, number>; decades: Record<string, number>;
+}
+export interface Achievement { id: string; title: string; description: string; xp: number; unlocked: boolean }
+export interface Level { level: number; xp: number; floor: number; next: number }
+/** Achievements come as `[achievement, unlocked_at | null]`. */
+export interface Stats { kpis: Kpis; level: Level; achievements: [Achievement, number | null][]; new: string[] }
+
+/** KPIs, completeness and achievements for the identified library games; stores new unlocks. */
+export async function gamifyStats(games: [string, string][], unknown: number, ambiguous: number): Promise<Stats> {
+  if (!inTauri) {
+    return {
+      kpis: {
+        games: games.length, unknown, ambiguous, trashed: 12, runs: 3, streak: 2,
+        systems: [{ system: "Nintendo - Game Boy", owned: 40, total: 520 }, { system: "Nintendo - Virtual Boy", owned: 22, total: 22 }],
+        regions: { Europe: 30, USA: 25, Japan: 7 }, genres: { Action: 20, Puzzle: 8 }, decades: { 1990: 50, 2000: 12 },
+      },
+      level: { level: 3, xp: 1234, floor: 900, next: 1600 },
+      achievements: [
+        [{ id: "games-1", title: "First Blood", description: "Own 1 verified games", xp: 20, unlocked: true }, Date.now() / 1000],
+        [{ id: "games-100", title: "Collector", description: "Own 100 verified games", xp: 200, unlocked: false }, null],
+        [{ id: "full-set:Nintendo - Virtual Boy", title: "Full Set: Nintendo - Virtual Boy", description: "Own every game of the 1G1R set (22)", xp: 522, unlocked: true }, Date.now() / 1000],
+      ],
+      new: [],
+    };
+  }
+  return invoke<Stats>("gamify_stats", { games, unknown, ambiguous });
+}
+
+export async function gamifyEnabledGet(): Promise<boolean> {
+  if (!inTauri) return true;
+  return invoke<boolean>("gamify_enabled_get");
+}
+
+export async function gamifyEnabledSet(on: boolean): Promise<void> {
+  if (!inTauri) return;
+  return invoke("gamify_enabled_set", { on });
+}

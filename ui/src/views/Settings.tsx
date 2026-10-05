@@ -2,6 +2,7 @@ import { For, Show, createResource, createSignal } from "solid-js";
 import Panel from "../components/Panel";
 import PriorityList from "../components/PriorityList";
 import { FLAG_KEYS, type FlagKey, type Rules, rulesGet, rulesSet, thumbsOnlineGet, thumbsOnlineSet } from "../ipc";
+import { gamifyEnabled, setGamifyEnabled } from "../state/gamify";
 import { effects, setEffects, setTheme, theme } from "../state/appearance";
 
 const FLAG_LABELS: Record<FlagKey, string> = {
@@ -73,6 +74,12 @@ export default function Settings() {
                 Effects (glow, grid, chromatic edges)
               </label>
             </div>
+          </Panel>
+          <Panel title="Gamification">
+            <label class="check">
+              <input type="checkbox" checked={gamifyEnabled()} onChange={(e) => void setGamifyEnabled(e.currentTarget.checked)} />
+              Show KPIs, completeness and achievements on the dashboard
+            </label>
           </Panel>
           <Panel title="Thumbnails">
             <label class="check">

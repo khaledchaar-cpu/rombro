@@ -3,6 +3,7 @@
 
 mod commands;
 mod decide;
+mod gamify;
 mod import;
 mod library;
 mod settings;
@@ -29,7 +30,10 @@ fn main() {
             settings::rules_set,
             thumbs::thumbnail,
             thumbs::thumbs_online_get,
-            thumbs::thumbs_online_set
+            thumbs::thumbs_online_set,
+            gamify::gamify_stats,
+            gamify::gamify_enabled_get,
+            gamify::gamify_enabled_set
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

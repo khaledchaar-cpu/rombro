@@ -1,0 +1,104 @@
+// Dashboard gamification panels (SPEC F6): level/XP, KPIs, completeness per system, achievements.
+import { createMemo, For, Show } from "solid-js";
+import Panel from "../components/Panel";
+import Segments from "../components/Segments";
+import { stats } from "../state/gamify";
+
+const fmt = new Intl.NumberFormat("en-US");
+const pct = (a: number, b: number) => (b > 0 ? `${Math.floor((a / b) * 100)}%` : "–");
+const top = (m: Record<string, number>, n: number) => Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, n);
+
+export function ProgressPanel() {
+  return (
+    <Panel title="Progress" class="wide">
+      <Show when={stats()} fallback={<p class="dim">{stats.error ? String(stats.error) : "computing…"}</p>}>
+        {(s) => {
+          const k = () => s().kpis;
+          const l = () => s().level;
+          const verified = () => k().games + k().unknown + k().ambiguous;
+          return (
+            <>
+              <div class="kpis">
+                <div><div class="kpi">LV {l().level}</div><p class="dim small">{fmt.format(l().xp)} / {fmt.format(l().next)} XP</p></div>
+                <div><div class="kpi">{fmt.format(k().games)}</div><p class="dim small">verified games</p></div>
+                <div><div class="kpi">{pct(k().games, verified())}</div><p class="dim small">verified quota</p></div>
+                <div><div class="kpi">{k().streak}</div><p class="dim small">day streak</p></div>
+                <div><div class="kpi">{fmt.format(k().trashed)}</div><p class="dim small">files trashed</p></div>
+              </div>
+              <Segments value={l().xp - l().floor} max={l().next - l().floor} />
+              <div class="mix">
+                <Mix title="Regions" items={top(k().regions, 5)} />
+                <Mix title="Genres" items={top(k().genres, 5)} />
+                <Mix title="Decades" items={Object.entries(k().decades).map(([d, n]) => [`${d}s`, n] as [string, number])} />
+              </div>
+            </>
+          );
+        }}
+      </Show>
+    </Panel>
+  );
+}
+
+function Mix(props: { title: string; items: [string, number][] }) {
+  return (
+    <div>
+      <h3 class="dim small">{props.title}</h3>
+      <ul class="rows small">
+        <For each={props.items} fallback={<li class="dim">–</li>}>
+          {([k, n]) => (<li><span class="ellipsis">{k}</span><span class="mono">{fmt.format(n)}</span></li>)}
+        </For>
+      </ul>
+    </div>
+  );
+}
+
+export function CompletenessPanel() {
+  const systems = createMemo(() =>
+    [...(stats()?.kpis.systems ?? [])].sort((a, b) => b.owned / b.total - a.owned / a.total || b.owned - a.owned),
+  );
+  return (
+    <Panel title="Completeness (1G1R)">
+      <ul class="complete">
+        <For each={systems()} fallback={<li class="dim">No identified games yet.</li>}>
+          {(s) => (
+            <li>
+              <div class="row">
+                <span class="ellipsis">{s.system}</span>
+                <span class="spacer" />
+                <span class="mono small">{fmt.format(s.owned)}/{fmt.format(s.total)} · {pct(s.owned, s.total)}</span>
+              </div>
+              <Segments value={s.owned} max={s.total} count={20} />
+            </li>
+          )}
+        </For>
+      </ul>
+    </Panel>
+  );
+}
+
+export function AchievementsPanel() {
+  const list = createMemo(() =>
+    [...(stats()?.achievements ?? [])].sort((a, b) => Number(b[0].unlocked) - Number(a[0].unlocked) || (b[1] ?? 0) - (a[1] ?? 0)),
+  );
+  const isNew = (id: string) => stats()?.new.includes(id) ?? false;
+  const unlocked = () => list().filter(([a]) => a.unlocked).length;
+  return (
+    <Panel title={`Achievements ${unlocked()}/${list().length}`}>
+      <ul class="achs">
+        <For each={list()}>
+          {([a, at]) => (
+            <li classList={{ locked: !a.unlocked }} title={at ? `unlocked ${new Date(at * 1000).toLocaleString()}` : "locked"}>
+              <div class="row">
+                <span class="ellipsis">{a.title}</span>
+                <Show when={isNew(a.id)}><span class="tag tag-new">new</span></Show>
+                <span class="spacer" />
+                <span class="mono small">+{a.xp} XP</span>
+              </div>
+              <span class="dim small">{a.description}</span>
+            </li>
+          )}
+        </For>
+      </ul>
+    </Panel>
+  );
+}

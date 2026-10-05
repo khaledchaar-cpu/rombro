@@ -3,6 +3,8 @@ import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import { LibraryPanel, RunsPanel } from "./DashboardHistory";
 import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
+import { AchievementsPanel, CompletenessPanel, ProgressPanel } from "./DashboardProgress";
+import { gamifyEnabled } from "../state/gamify";
 import { dbStats, onScanProgress, scan, type ScanSummary } from "../ipc";
 
 const fmt = new Intl.NumberFormat("en-US");
@@ -35,6 +37,11 @@ export default function Dashboard(props: { onReview: () => void; onLibrary: () =
 
   return (
     <div class="grid">
+      <Show when={gamifyEnabled()}>
+        <ProgressPanel />
+        <CompletenessPanel />
+        <AchievementsPanel />
+      </Show>
       <Panel title="Database">
         <Show when={stats()} fallback={<p class="dim">{stats.error ? String(stats.error) : "loading…"}</p>}>
           {(s) => (
