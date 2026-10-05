@@ -1,11 +1,48 @@
+<div align="center">
+
 # ROMBRO
 
-ROM curator built on the RetroArch databases: verify files by hash, reduce sets to
-one game per region (1G1R), import an inbox into a clean library, undo every step.
+**Your ROM pile, curated.**
+Verify every file against the RetroArch databases, keep one copy per game,
+and drop everything into a clean, RetroArch-ready library – with undo for every step.
+
+[![ci](https://github.com/khaledchaar-cpu/rombro/actions/workflows/ci.yml/badge.svg)](https://github.com/khaledchaar-cpu/rombro/actions/workflows/ci.yml)
+![platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-0ff)
+![license](https://img.shields.io/badge/license-MIT-f0f)
+![built with](https://img.shields.io/badge/built%20with-Rust%20%2B%20Tauri-orange)
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+</div>
+
+## Features
+
+- 🔍 **Hash-verified** – CRC32/SHA-1 (and serials for discs) matched against all RetroArch RDBs, no guessing from file names.
+- 💿 **Discs & archives** – cue/bin, gdi, CHD, zip and 7z; multi-disc sets stay together, unknown archives are never torn apart.
+- 🌍 **1G1R** – one release per game, picked by your region and language order; betas, protos, demos & co. filtered out.
+- 🕹️ **Arcade aware** – FBNeo and MAME romsets keep their short names, CHDs travel along, BIOS sets land where the cores look.
+- 📦 **Safe import** – move, copy, hardlink or reflink; every run is a plan you review first, unknown files go to quarantine, nothing is ever deleted.
+- ↩️ **Undo everything** – each run is journaled and can be rolled back.
+- 🎮 **RetroArch-ready** – playlists and thumbnails are written for you.
+- 🏆 **Gamification** – XP, levels, streaks, completeness per system, franchise goals and achievements.
+- ⌨️ **Keyboard first** – command palette (`Ctrl K`) and a full CLI for scripting.
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/plan.png" alt="Import plan"></td>
+    <td><img src="docs/screenshots/library.png" alt="Library"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Review the plan before anything moves</sub></td>
+    <td align="center"><sub>Browse and filter the library</sub></td>
+  </tr>
+</table>
+
+<sub>Screenshots use mock data.</sub>
 
 ## Install
 
-Download the bundle for your OS from the releases page (AppImage/deb, dmg, msi/exe).
+Download the bundle for your OS from the [releases page](https://github.com/khaledchaar-cpu/rombro/releases) (AppImage/deb, dmg, msi/exe).
 The `rombro` CLI ships next to it as a separate binary.
 
 The bundles are **not code-signed**, so the OS warns on first launch:
@@ -73,4 +110,4 @@ Windows; pushing a `v*` tag creates a draft release.
 
 ## License
 
-MIT
+MIT – ROMBRO ships no ROMs or BIOS files. Use it only with games you own.
