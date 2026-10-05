@@ -96,8 +96,72 @@ pub fn hash_reader<R: Read>(
     Ok((full.finish(), stripped))
 }
 
+/// Hashes a byte-swapped N64 dump as is and normalized to big-endian (`.z64`, the order
+/// the databases use). `word` is 2 for `.v64` (pairs swapped) and 4 for `.n64` (little-endian).
+pub fn hash_n64<R: Read>(mut r: R, word: usize) -> io::Result<(Hashes, Hashes)> {
+    let (mut raw, mut norm) = (MultiHasher::new(), MultiHasher::new());
+    let mut buf = vec![0u8; BUF_SIZE];
+    loop {
+        // fill the buffer completely so words never straddle two reads
+        let mut n = 0;
+        while n < buf.len() {
+            match r.read(&mut buf[n..]) {
+                Ok(0) => break,
+                Ok(k) => n += k,
+                Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
+                Err(e) => return Err(e),
+            }
+        }
+        if n == 0 {
+            break;
+        }
+        raw.update(&buf[..n]);
+        let whole = n - n % word;
+        buf[..whole]
+            .chunks_exact_mut(word)
+            .for_each(<[u8]>::reverse);
+        norm.update(&buf[..n]);
+        if n < buf.len() {
+            break;
+        }
+    }
+    Ok((raw.finish(), norm.finish()))
+}
+
+/// Byte order of an N64 dump from its first word: `Some(word)` if it needs swapping.
+pub fn n64_swap(probe: &[u8]) -> Option<usize> {
+    match probe.get(..4)? {
+        [0x37, 0x80, 0x40, 0x12] => Some(2),
+        [0x40, 0x12, 0x37, 0x80] => Some(4),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn n64_byte_orders_normalize_to_z64() {
+        let z64: Vec<u8> = [0x80, 0x37, 0x12, 0x40]
+            .iter()
+            .copied()
+            .cycle()
+            .take(4096)
+            .collect();
+        let v64: Vec<u8> = z64.chunks(2).flat_map(|c| [c[1], c[0]]).collect();
+        let n64: Vec<u8> = z64
+            .chunks(4)
+            .flat_map(|c| [c[3], c[2], c[1], c[0]])
+            .collect();
+        let want = hash_reader(&z64[..], None, false).unwrap().0;
+        for (img, word) in [(&v64, 2), (&n64, 4)] {
+            assert_eq!(n64_swap(img), Some(word));
+            let (raw, norm) = hash_n64(&img[..], word).unwrap();
+            assert_eq!(norm, want);
+            assert_ne!(raw, want);
+        }
+        assert_eq!(n64_swap(&z64), None);
+    }
+
     use super::*;
 
     fn hex(b: &[u8]) -> String {

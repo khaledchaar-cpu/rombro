@@ -343,6 +343,13 @@ fn hash_rom<R: Read>(mut r: R, size: u64, ext: &str) -> io::Result<RomHashes> {
             Err(e) => return Err(e),
         }
     }
+    if matches!(ext, "n64" | "v64" | "z64")
+        && let Some(word) = crate::hash::n64_swap(&probe[..n])
+    {
+        // byte-swapped dump: the normalized hashes act like a stripped header for lookups
+        let (raw, norm) = crate::hash::hash_n64((&probe[..n]).chain(r), word)?;
+        return Ok((raw, None, Some(norm)));
+    }
     let header = header::detect(&probe[..n], size, ext);
     let (full, headerless) = hash_reader((&probe[..n]).chain(r), header.map(Header::size), false)?;
     Ok((full, header, headerless))
