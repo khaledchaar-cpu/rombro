@@ -1,16 +1,18 @@
 //! Building a plan: 1G1R per system, target paths, TBD queue, quarantine, playlists.
 
-use super::sheet::rewrite_sheet;
 use super::{
-    Decision, Files, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan, QUARANTINE_DIR,
-    TRASH_DIR, Verdict, lpl,
+    Decision, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan, QUARANTINE_DIR, TRASH_DIR,
+    Verdict, lpl,
 };
-use crate::{disc, g1r, naming};
+use crate::{g1r, naming};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
 mod archives;
+mod place;
+
+use place::quarantine_sources;
 
 /// Plans placing `items` into `library`. Nothing is touched on disk (reads only).
 /// Library items should come first so they win over identical inbox copies.
@@ -178,60 +180,11 @@ impl Builder<'_> {
             });
     }
 
-    /// Ops moving one item to its library path; returns the new primary path.
-    fn place(&mut self, it: &Item, g: &Game, multi: bool) -> Option<PathBuf> {
-        let target = |src: &Path| {
-            let rel = naming::target_path(&g.system, &g.name, &ext_of(src), multi);
-            self.library.join(rel)
-        };
-        let primary = target(&name_source(&it.files));
-        let mut ops = vec![self.transfer(it, it.files.primary(), &primary)];
-        if let Files::Sheet { sheet, tracks } = &it.files {
-            let base = naming::sanitize_file_name(&g.name);
-            let width = if tracks.len() > 9 { 2 } else { 1 };
-            let mut renames = Vec::new();
-            for (i, t) in tracks.iter().enumerate() {
-                let name = if tracks.len() == 1 {
-                    format!("{base}.{}", ext_of(t))
-                } else {
-                    format!("{base} (Track {:0width$}).{}", i + 1, ext_of(t))
-                };
-                renames.push((file_name(t), name.clone()));
-                ops.push(self.transfer(it, t, &primary.with_file_name(name)));
-            }
-            let text = match disc::read_text(sheet) {
-                Ok(t) => t,
-                Err(e) => {
-                    self.skip(it, format!("cannot read sheet: {e}"));
-                    return None;
-                }
-            };
-            let new = rewrite_sheet(&text, &renames);
-            if new != text {
-                ops.push(Op::Write {
-                    path: primary.clone(),
-                    contents: new,
-                });
-            }
-        }
-        ops.retain(|op| op.source() != Some(op.target()));
-        if ops.is_empty() {
-            self.plan.unchanged += 1;
-        } else if self.commit(it, ops) {
-            self.plan.placed += 1;
-        } else {
-            return None;
-        }
-        Some(primary)
-    }
-
     fn quarantine(&mut self, it: &Item) {
         let dir = self.library.join(QUARANTINE_DIR);
-        let ops = it
-            .files
-            .all()
-            .into_iter()
-            .map(|f| self.transfer(it, f, &dir.join(file_name(&name_source(&it.files)))))
+        let ops = quarantine_sources(&it.files)
+            .iter()
+            .map(|f| self.transfer(it, f, &dir.join(file_name(f))))
             .collect();
         if self.commit(it, ops) {
             self.plan.quarantined += 1;
@@ -242,7 +195,7 @@ impl Builder<'_> {
     fn discard(&mut self, it: &Item) {
         let dir = self.library.join(TRASH_DIR);
         // A member is discarded by not extracting it; the archive is trashed once emptied.
-        let members = matches!(it.files, Files::Member { .. });
+        let members = it.files.archive().is_some();
         let ops = it
             .files
             .all()
@@ -260,10 +213,11 @@ impl Builder<'_> {
 
     fn transfer(&self, it: &Item, from: &Path, to: &Path) -> Op {
         let (from, to) = (from.to_path_buf(), to.to_path_buf());
-        if let Files::Member { member, .. } = &it.files {
+        if let Some(archive) = it.files.archive() {
+            // `from` is the member name for archived items.
             return Op::Extract {
-                archive: from,
-                member: member.clone(),
+                archive: archive.clone(),
+                member: from.to_string_lossy().into_owned(),
                 to,
             };
         }
@@ -292,7 +246,7 @@ impl Builder<'_> {
         }
         self.claimed
             .extend(ops.iter().map(|op| op.target().to_path_buf()));
-        if let Files::Member { archive, .. } = &it.files {
+        if let Some(archive) = it.files.archive() {
             *self.members_done.entry(archive.clone()).or_default() += 1;
         }
         let why = if it.in_library && self.why.starts_with("1G1R") {
@@ -331,14 +285,6 @@ impl Builder<'_> {
             path: it.files.primary().clone(),
             reason,
         });
-    }
-}
-
-/// The path whose name/extension the library file takes (a member's own name for archives).
-fn name_source(files: &Files) -> PathBuf {
-    match files {
-        Files::Member { member, .. } => PathBuf::from(member),
-        f => f.primary().clone(),
     }
 }
 

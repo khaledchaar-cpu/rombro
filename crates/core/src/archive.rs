@@ -16,6 +16,13 @@ pub fn extract(archive: &Path, member: &str, to: &Path) -> io::Result<()> {
     res
 }
 
+/// Reads a (small) member into memory, e.g. a disc sheet.
+pub fn read_member(archive: &Path, member: &str) -> io::Result<Vec<u8>> {
+    let mut buf = Vec::new();
+    write_member(archive, member, &mut buf)?;
+    Ok(buf)
+}
+
 fn write_member(archive: &Path, member: &str, out: &mut impl Write) -> io::Result<()> {
     let ext = archive
         .extension()

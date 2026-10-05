@@ -11,7 +11,7 @@ impl Builder<'_> {
     pub(super) fn trash_emptied_archives(&mut self, items: &[&Item]) {
         let mut total: BTreeMap<&Path, (usize, bool)> = BTreeMap::new();
         for it in items {
-            if let Files::Member { archive, .. } = &it.files {
+            if let Some(archive) = it.files.archive() {
                 total.entry(archive).or_default().0 += 1;
                 total.entry(archive).or_default().1 = it.in_library;
             }

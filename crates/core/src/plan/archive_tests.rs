@@ -103,3 +103,44 @@ fn keeps_archive_with_open_decisions_or_in_copy_mode() {
     let plan = build(&one, &lib, &opts(Mode::Copy));
     assert_eq!(plan.ops.len(), 1);
 }
+
+#[test]
+fn extracts_archived_disc_with_renamed_tracks() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let set = inbox.join("disc.zip");
+    let cue = "FILE \"g 1.bin\" BINARY\n  TRACK 01 MODE2/2352\nFILE \"g 2.bin\" BINARY\n  TRACK 02 AUDIO\n";
+    fs::create_dir_all(&inbox).unwrap();
+    let mut w = zip::ZipWriter::new(File::create(&set).unwrap());
+    for (name, data) in [("d/g.cue", cue), ("d/g 1.bin", "one"), ("d/g 2.bin", "two")] {
+        w.start_file(name, zip::write::SimpleFileOptions::default())
+            .unwrap();
+        w.write_all(data.as_bytes()).unwrap();
+    }
+    w.finish().unwrap();
+    let items = [Item {
+        files: Files::ArchivedSheet {
+            archive: set.clone(),
+            sheet: "d/g.cue".into(),
+            tracks: vec!["d/g 1.bin".into(), "d/g 2.bin".into()],
+        },
+        ident: game("Game (Europe)"),
+        in_library: false,
+    }];
+    let ex = execute(&build(&items, &lib, &opts(Mode::Move)).ops);
+    assert!(ex.error.is_none(), "{:?}", ex.error);
+    assert_eq!(
+        tree(&lib),
+        [
+            "Nintendo - SNES/Game (Europe) (Track 1).bin",
+            "Nintendo - SNES/Game (Europe) (Track 2).bin",
+            "Nintendo - SNES/Game (Europe).cue",
+            "_trash/disc.zip"
+        ]
+    );
+    let new_cue = fs::read_to_string(lib.join("Nintendo - SNES/Game (Europe).cue")).unwrap();
+    assert!(new_cue.contains("FILE \"Game (Europe) (Track 2).bin\""));
+    assert!(undo(&ex.done).is_empty());
+    assert!(tree(&lib).is_empty());
+    assert_eq!(tree(&inbox), ["disc.zip"]);
+}

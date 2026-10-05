@@ -40,20 +40,36 @@ pub enum Files {
     },
     /// One ROM inside an archive holding several (extracted on import).
     Member { archive: PathBuf, member: String },
+    /// A disc stored in an archive: sheet member and its track members (in sheet order).
+    ArchivedSheet {
+        archive: PathBuf,
+        sheet: String,
+        tracks: Vec<String>,
+    },
 }
 
 impl Files {
     pub fn primary(&self) -> &PathBuf {
         match self {
-            Files::Single(p) | Files::Sheet { sheet: p, .. } | Files::Member { archive: p, .. } => {
-                p
-            }
+            Files::Single(p)
+            | Files::Sheet { sheet: p, .. }
+            | Files::Member { archive: p, .. }
+            | Files::ArchivedSheet { archive: p, .. } => p,
+        }
+    }
+
+    /// The archive this item is extracted from, if any.
+    pub fn archive(&self) -> Option<&PathBuf> {
+        match self {
+            Files::Member { archive, .. } | Files::ArchivedSheet { archive, .. } => Some(archive),
+            _ => None,
         }
     }
 
     pub fn all(&self) -> Vec<&PathBuf> {
         match self {
             Files::Single(p) | Files::Member { archive: p, .. } => vec![p],
+            Files::ArchivedSheet { archive, .. } => vec![archive],
             Files::Sheet { sheet, tracks } => std::iter::once(sheet).chain(tracks).collect(),
         }
     }
