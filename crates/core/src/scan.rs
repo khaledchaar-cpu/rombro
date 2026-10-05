@@ -1,5 +1,6 @@
 //! Parallel directory scan: hashes plain files and archive members (ZIP, 7z).
 
+use crate::cache::HashCache;
 use crate::disc::{self, DiscId, DiscKind};
 use crate::hash::{Hashes, hash_reader};
 use crate::header::{self, Header};
@@ -77,6 +78,15 @@ pub fn scan(root: &Path) -> ScanReport {
 /// Like [`scan`], but calls `progress(done, total)` after each file or disc
 /// is hashed. May be called concurrently from worker threads.
 pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(usize, usize) + Sync)) -> ScanReport {
+    scan_cached(root, &HashCache::default(), progress)
+}
+
+/// Like [`scan_with_progress`], but reuses `cache` for files whose size and mtime are unchanged.
+pub fn scan_cached(
+    root: &Path,
+    cache: &HashCache,
+    progress: &(dyn Fn(usize, usize) + Sync),
+) -> ScanReport {
     let mut report = ScanReport::default();
     let mut files = Vec::new();
     for e in WalkDir::new(root).follow_links(true) {
@@ -127,7 +137,7 @@ pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(usize, usize) + Sync))
     let discs: Vec<_> = sheets
         .into_par_iter()
         .map(|(path, kind, found, missing)| {
-            let r = scan_disc(&path, kind, &found, missing)
+            let r = scan_disc_cached(&path, kind, &found, missing, cache)
                 .map_err(|error| ScanFailure { path, error });
             tick();
             r
@@ -143,10 +153,13 @@ pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(usize, usize) + Sync))
     let results: Vec<_> = files
         .par_iter()
         .map(|p| {
-            let r = scan_file(p).map_err(|error| ScanFailure {
-                path: p.clone(),
-                error,
-            });
+            let r = cache
+                .get(p)
+                .map_or_else(|| scan_file(p), Ok)
+                .map_err(|error| ScanFailure {
+                    path: p.clone(),
+                    error,
+                });
             tick();
             r
         })
@@ -173,8 +186,22 @@ pub fn scan_disc(
     tracks: &[PathBuf],
     missing: Vec<PathBuf>,
 ) -> Result<ScannedDisc, ScanError> {
+    scan_disc_cached(path, kind, tracks, missing, &HashCache::default())
+}
+
+fn scan_disc_cached(
+    path: &Path,
+    kind: DiscKind,
+    tracks: &[PathBuf],
+    missing: Vec<PathBuf>,
+    cache: &HashCache,
+) -> Result<ScannedDisc, ScanError> {
     let mut hashed = Vec::with_capacity(tracks.len());
     for t in tracks {
+        if let Some(mut hit) = cache.get(t).filter(|h| h.len() == 1) {
+            hashed.append(&mut hit);
+            continue;
+        }
         let (hashes, _) = hash_reader(BufReader::new(File::open(t)?), None, false)?;
         hashed.push(ScannedRom {
             path: t.clone(),

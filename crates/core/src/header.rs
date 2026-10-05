@@ -4,7 +4,7 @@
 pub const PROBE_LEN: usize = 128;
 
 /// Known header kinds.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Header {
     Ines,
     Fds,

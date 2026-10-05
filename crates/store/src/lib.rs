@@ -2,6 +2,7 @@
 
 mod catalog;
 mod disc;
+mod files;
 mod identify;
 mod import;
 mod journal;
@@ -38,6 +39,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("rdb {0}: {1}")]
     Rdb(String, rombro_rdb::Error),
+    #[error("json: {0}")]
+    Json(#[from] serde_json::Error),
     #[error("database schema version {0} is newer than supported ({1})")]
     SchemaTooNew(i64, i64),
 }

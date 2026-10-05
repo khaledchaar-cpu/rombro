@@ -349,3 +349,39 @@ fn journals_newest_first_with_state() {
     assert_eq!((j[0].0.id, j[0].1.as_str()), (b, "undone"));
     assert_eq!((j[1].0.id, j[1].1.as_str()), (a, "done"));
 }
+
+#[test]
+fn file_index_follows_scan_execute_and_undo() {
+    use rombro_core::plan::{Op, execute, undo};
+    let dir = tempfile::tempdir().unwrap();
+    let (inbox, lib) = (dir.path().join("in"), dir.path().join("lib"));
+    std::fs::create_dir_all(&inbox).unwrap();
+    std::fs::create_dir_all(&lib).unwrap();
+    let src = inbox.join("a.gb");
+    std::fs::write(&src, [7u8; 512]).unwrap();
+    let store = Store::open_in_memory().unwrap();
+    store.set_library(&lib).unwrap();
+    assert_eq!(store.library().unwrap().as_deref(), Some(lib.as_path()));
+
+    store.save_scan(&inbox, &rombro_core::scan(&inbox)).unwrap();
+    assert!(store.hash_cache(&inbox).unwrap().get(&src).is_some());
+    assert!(store.hash_cache(&lib).unwrap().0.is_empty());
+
+    let to = lib.join("GB/a.gb");
+    let ex = execute(&[Op::Move {
+        from: src.clone(),
+        to: to.clone(),
+    }]);
+    store.index_executed(&ex.done).unwrap();
+    let hit = store.hash_cache(&lib).unwrap().get(&to).unwrap();
+    assert_eq!(hit[0].path, to);
+    assert!(store.hash_cache(&inbox).unwrap().0.is_empty());
+
+    assert!(undo(&ex.done).is_empty());
+    store.index_undone(&ex.done).unwrap();
+    assert!(store.hash_cache(&inbox).unwrap().get(&src).is_some());
+
+    std::fs::remove_file(&src).unwrap();
+    store.save_scan(&inbox, &rombro_core::scan(&inbox)).unwrap();
+    assert!(store.hash_cache(&inbox).unwrap().0.is_empty());
+}

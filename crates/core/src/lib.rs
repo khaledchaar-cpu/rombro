@@ -1,5 +1,6 @@
 //! rombro-core: domain logic (hashing, scanning, naming, 1G1R, planner).
 
+pub mod cache;
 pub mod disc;
 pub mod g1r;
 pub mod hash;
@@ -8,7 +9,9 @@ pub mod naming;
 pub mod plan;
 pub mod scan;
 
+pub use cache::{CachedRom, HashCache, Stamp};
 pub use hash::{Hashes, MultiHasher, hash_reader};
 pub use scan::{
-    Playlist, ScanReport, ScannedDisc, ScannedRom, scan, scan_disc, scan_file, scan_with_progress,
+    Playlist, ScanReport, ScannedDisc, ScannedRom, scan, scan_cached, scan_disc, scan_file,
+    scan_with_progress,
 };

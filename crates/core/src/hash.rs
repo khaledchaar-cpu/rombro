@@ -5,7 +5,7 @@ use sha1::{Digest, Sha1};
 use std::io::{self, Read};
 
 /// Digests of one byte stream.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Hashes {
     pub size: u64,
     pub crc: u32,

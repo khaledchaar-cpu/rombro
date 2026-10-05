@@ -53,6 +53,13 @@ const MIGRATIONS: &[&str] = &[
         verdict TEXT NOT NULL,
         PRIMARY KEY (system, name)
     );",
+    // v4: library index / hash cache (one row per file; ROM list as JSON)
+    "CREATE TABLE file (
+        path  TEXT PRIMARY KEY,
+        size  INTEGER NOT NULL,
+        mtime INTEGER NOT NULL,
+        roms  TEXT NOT NULL
+    );",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

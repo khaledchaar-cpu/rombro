@@ -136,3 +136,25 @@ fn reports_progress_per_file() {
     calls.sort_unstable();
     assert_eq!(calls, [(1, 3), (2, 3), (3, 3)]);
 }
+
+#[test]
+fn cached_scan_reuses_unchanged_files_only() {
+    use rombro_core::{CachedRom, HashCache, Stamp, scan_cached};
+    let dir = tempfile::tempdir().unwrap();
+    let (a, b) = (dir.path().join("a.gb"), dir.path().join("b.gb"));
+    fs::write(&a, rom(1024, 1)).unwrap();
+    fs::write(&b, rom(1024, 2)).unwrap();
+    let mut cache = HashCache::default();
+    for r in scan(dir.path()).roms {
+        let mut c = CachedRom::from_rom(&r);
+        c.hashes.crc = 0xdead_beef; // marker: proves the cached value is used
+        cache
+            .0
+            .insert(r.path.clone(), (Stamp::of(&r.path).unwrap(), vec![c]));
+    }
+    fs::write(&b, rom(2048, 3)).unwrap(); // size changes → rehash
+    let report = scan_cached(dir.path(), &cache, &|_, _| {});
+    assert_eq!(report.roms[0].hashes.crc, 0xdead_beef);
+    assert_ne!(report.roms[1].hashes.crc, 0xdead_beef);
+    assert_eq!(report.roms[1].hashes.size, 2048);
+}
