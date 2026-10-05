@@ -12,7 +12,7 @@ pub(crate) fn err(e: impl std::fmt::Display) -> String {
 }
 
 fn db_path() -> CmdResult<PathBuf> {
-    rombro_store::default_path().ok_or_else(|| "HOME not set".to_owned())
+    rombro_store::default_path().ok_or_else(|| "no data directory".to_owned())
 }
 
 pub(crate) fn open_store() -> CmdResult<(Store, PathBuf)> {

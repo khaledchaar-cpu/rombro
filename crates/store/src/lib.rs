@@ -23,14 +23,9 @@ pub use record::Record;
 use rusqlite::Connection;
 use std::path::{Path, PathBuf};
 
-/// Default database location: `$XDG_DATA_HOME/rombro/rombro.db`
-/// (falls back to `~/.local/share`). `None` if neither variable is set.
+/// Default database location (per OS, see [`rombro_core::paths::database`]).
 pub fn default_path() -> Option<PathBuf> {
-    let base = match std::env::var_os("XDG_DATA_HOME") {
-        Some(d) => PathBuf::from(d),
-        None => PathBuf::from(std::env::var_os("HOME")?).join(".local/share"),
-    };
-    Some(base.join("rombro/rombro.db"))
+    rombro_core::paths::database()
 }
 
 #[derive(Debug, thiserror::Error)]

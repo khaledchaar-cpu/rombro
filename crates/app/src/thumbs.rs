@@ -28,11 +28,8 @@ pub async fn thumbs_online_set(on: bool) -> CmdResult<()> {
 }
 
 fn cache_root() -> CmdResult<PathBuf> {
-    let base = match std::env::var_os("XDG_CACHE_HOME") {
-        Some(d) => PathBuf::from(d),
-        None => PathBuf::from(std::env::var_os("HOME").ok_or("HOME not set")?).join(".cache"),
-    };
-    Ok(base.join("rombro/thumbnails"))
+    let base = rombro_core::paths::cache().ok_or("no cache directory")?;
+    Ok(base.join("thumbnails"))
 }
 
 fn fetch(system: &str, name: &str, kind: Kind) -> CmdResult<Option<Vec<u8>>> {

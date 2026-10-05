@@ -10,13 +10,13 @@ use std::time::Instant;
 pub enum DbCmd {
     /// Show systems and entry counts of all RDB files
     Stats {
-        /// RDB directory (default: ~/.config/retroarch/database/rdb)
+        /// RDB directory (default: auto-detected RetroArch folder)
         #[arg(long)]
         path: Option<PathBuf>,
     },
     /// Import new/changed RDB files into the rombro database
     Sync {
-        /// RDB directory (default: ~/.config/retroarch/database/rdb)
+        /// RDB directory (default: auto-detected RetroArch folder)
         #[arg(long)]
         path: Option<PathBuf>,
         /// Database file (default: $XDG_DATA_HOME/rombro/rombro.db)
@@ -40,14 +40,14 @@ pub fn run(cmd: DbCmd) -> Result<()> {
 }
 
 fn default_dir() -> Result<PathBuf> {
-    let home = std::env::var_os("HOME").context("HOME not set")?;
-    Ok(PathBuf::from(home).join(".config/retroarch/database/rdb"))
+    rombro_core::paths::rdb_dir()
+        .context("RetroArch RDB folder not found (pass a path or set ROMBRO_RDB_DIR)")
 }
 
 pub(crate) fn open_store(db: Option<PathBuf>) -> Result<Store> {
     let path = match db {
         Some(p) => p,
-        None => rombro_store::default_path().context("HOME not set")?,
+        None => rombro_store::default_path().context("no data directory")?,
     };
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
