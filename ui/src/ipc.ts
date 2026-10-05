@@ -157,7 +157,7 @@ function mockPlan(library: string): PlanView {
       {
         kind: "rejected",
         path: "/inbox/Tetris (Japan).gb",
-        headline: "Other region than preferred",
+        headline: "Kept release has a preferred region",
         system: "Nintendo - Game Boy",
         detail: "Tetris (Japan)  →  kept: Tetris (World)",
         options: [{ system: "Nintendo - Game Boy", name: "Tetris (Japan)" }],

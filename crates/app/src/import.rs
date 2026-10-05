@@ -272,16 +272,16 @@ fn reason_text(reason: &str, kept: bool) -> String {
         .strip_prefix("Excluded(\"")
         .and_then(|r| r.strip_suffix("\")"))
     {
-        let all = if kept { "" } else { " – every release is" };
-        return format!("Excluded: {what}{all}");
+        let none = if kept { "" } else { " (no other release)" };
+        return format!("Filtered out as {what} – see Settings{none}");
     }
     match reason {
         "Duplicate" => "Same game as the kept file",
-        "Region" => "Other region than preferred",
-        "Language" => "Other language than preferred",
-        "Variant" => "Alternative version (re-release, alt dump)",
-        "Revision" => "Older revision",
-        "TieBreak" => "Lost tie-break",
+        "Region" => "Kept release has a preferred region",
+        "Language" => "Kept release has a preferred language",
+        "Variant" => "Alternative version (re-release, alt dump) – original kept",
+        "Revision" => "Newer revision kept",
+        "TieBreak" => "Equal releases – one kept",
         r => r,
     }
     .to_owned()
