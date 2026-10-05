@@ -58,7 +58,8 @@ fn tree(root: &Path) -> Vec<String> {
 }
 
 #[test]
-fn extracts_known_members_and_quarantines_rest() {
+fn archive_with_any_unknown_member_stays_whole() {
+    // e.g. a multi-disk game where only disk 2 matches: extracting it would leave a broken game
     let tmp = TempDir::new().unwrap();
     let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
     let set = inbox.join("set.zip");
@@ -67,16 +68,11 @@ fn extracts_known_members_and_quarantines_rest() {
         member(&set, "mario.sfc", game("Mario (Europe)")),
         member(&set, "x.bin", Ident::Unknown),
     ];
-    let ex = execute(&build(&items, &lib, &opts(Mode::Move)).ops);
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    assert_eq!((plan.placed, plan.quarantined), (0, 1));
+    let ex = execute(&plan.ops);
     assert!(ex.error.is_none());
-    assert_eq!(
-        tree(&lib),
-        ["Nintendo - SNES/Mario (Europe).sfc", "_quarantine/set.zip"]
-    );
-    assert_eq!(
-        fs::read(lib.join("Nintendo - SNES/Mario (Europe).sfc")).unwrap(),
-        b"mario.sfc"
-    );
+    assert_eq!(tree(&lib), ["_quarantine/set.zip"]);
     assert!(undo(&ex.done).is_empty());
     assert_eq!(tree(&inbox), ["set.zip"]);
     assert!(tree(&lib).is_empty());

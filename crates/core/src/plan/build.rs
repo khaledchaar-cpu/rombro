@@ -32,6 +32,23 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         .filter(|it| !managed.iter().any(|m| it.files.primary().starts_with(m)))
         .collect();
 
+    // Archives with any unknown member stay whole (e.g. multi-disk games where only some
+    // disks match): nothing is extracted, the archive goes to quarantine as is.
+    let mixed: HashSet<&Path> = items
+        .iter()
+        .filter(|it| matches!(it.ident, Ident::Unknown))
+        .filter_map(|it| it.files.archive().map(PathBuf::as_path))
+        .collect();
+    let items: Vec<&Item> = items
+        .into_iter()
+        .filter(|it| {
+            matches!(it.ident, Ident::Unknown)
+                || !it
+                    .files
+                    .archive()
+                    .is_some_and(|a| mixed.contains(a.as_path()))
+        })
+        .collect();
     let mut known: BTreeMap<&str, Vec<(&Item, &Game)>> = BTreeMap::new();
     let mut arcade_seen: HashSet<(&str, &str)> = HashSet::new();
     for &it in &items {
