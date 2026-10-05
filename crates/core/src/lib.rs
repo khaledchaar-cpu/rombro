@@ -1,5 +1,6 @@
 //! rombro-core: domain logic (hashing, scanning, naming, 1G1R, planner).
 
+pub mod archive;
 pub mod cache;
 pub mod disc;
 pub mod g1r;

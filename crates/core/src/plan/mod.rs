@@ -1,9 +1,12 @@
 //! Planner: turns identified files into a reviewable list of file operations (SPEC F4).
 //! Plan → dry run → execute (journal) → undo.
 
+#[cfg(test)]
+mod archive_tests;
 mod build;
 pub mod lpl;
 mod ops;
+mod sheet;
 #[cfg(test)]
 mod tests;
 pub mod trash;
@@ -35,18 +38,22 @@ pub enum Files {
         sheet: PathBuf,
         tracks: Vec<PathBuf>,
     },
+    /// One ROM inside an archive holding several (extracted on import).
+    Member { archive: PathBuf, member: String },
 }
 
 impl Files {
     pub fn primary(&self) -> &PathBuf {
         match self {
-            Files::Single(p) | Files::Sheet { sheet: p, .. } => p,
+            Files::Single(p) | Files::Sheet { sheet: p, .. } | Files::Member { archive: p, .. } => {
+                p
+            }
         }
     }
 
     pub fn all(&self) -> Vec<&PathBuf> {
         match self {
-            Files::Single(p) => vec![p],
+            Files::Single(p) | Files::Member { archive: p, .. } => vec![p],
             Files::Sheet { sheet, tracks } => std::iter::once(sheet).chain(tracks).collect(),
         }
     }

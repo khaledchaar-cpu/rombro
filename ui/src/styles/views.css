@@ -31,7 +31,7 @@
   font: 600 10px var(--font-head); letter-spacing: 0.1em; text-transform: uppercase;
   padding: 1px var(--sp-1); text-align: center; border: 1px solid currentColor; justify-self: start;
 }
-.tag-move, .tag-link, .tag-clone { color: var(--cyan); }
+.tag-move, .tag-link, .tag-clone, .tag-extract { color: var(--cyan); }
 .tag-copy, .tag-write { color: var(--ok); }
 .tag-ambiguous, .tag-tie { color: var(--yellow); }
 .tag-conflict { color: var(--err); }

@@ -1,11 +1,12 @@
 //! Building a plan: 1G1R per system, target paths, TBD queue, quarantine, playlists.
 
+use super::sheet::rewrite_sheet;
 use super::{
     Decision, Files, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan, QUARANTINE_DIR,
     TRASH_DIR, Verdict, lpl,
 };
 use crate::{disc, g1r, naming};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -19,6 +20,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         claimed: HashSet::new(),
         lpl: BTreeMap::new(),
         why: String::new(),
+        members_done: HashMap::new(),
     };
     let managed = [QUARANTINE_DIR, PLAYLIST_DIR, TRASH_DIR].map(|d| library.join(d));
     let items: Vec<&Item> = items
@@ -118,6 +120,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             }
         }
     }
+    b.trash_emptied_archives(&items);
     b.playlists();
     b.plan
 }
@@ -131,6 +134,8 @@ struct Builder<'a> {
     lpl: BTreeMap<String, Vec<lpl::Entry>>,
     /// Reason attached to the ops added next.
     why: String,
+    /// Members of multi-ROM archives handled so far (extracted, quarantined or discarded).
+    members_done: HashMap<PathBuf, usize>,
 }
 
 impl Builder<'_> {
@@ -177,7 +182,7 @@ impl Builder<'_> {
             let rel = naming::target_path(&g.system, &g.name, &ext_of(src), multi);
             self.library.join(rel)
         };
-        let primary = target(it.files.primary());
+        let primary = target(&name_source(&it.files));
         let mut ops = vec![self.transfer(it, it.files.primary(), &primary)];
         if let Files::Sheet { sheet, tracks } = &it.files {
             let base = naming::sanitize_file_name(&g.name);
@@ -224,7 +229,7 @@ impl Builder<'_> {
             .files
             .all()
             .into_iter()
-            .map(|f| self.transfer(it, f, &dir.join(file_name(f))))
+            .map(|f| self.transfer(it, f, &dir.join(file_name(&name_source(&it.files)))))
             .collect();
         if self.commit(it, ops) {
             self.plan.quarantined += 1;
@@ -234,6 +239,8 @@ impl Builder<'_> {
     /// Moves an item to the trash folder (always a move, even from the inbox).
     fn discard(&mut self, it: &Item) {
         let dir = self.library.join(TRASH_DIR);
+        // A member is discarded by not extracting it; the archive is trashed once emptied.
+        let members = matches!(it.files, Files::Member { .. });
         let ops = it
             .files
             .all()
@@ -242,6 +249,7 @@ impl Builder<'_> {
                 from: f.clone(),
                 to: dir.join(file_name(f)),
             })
+            .filter(|_| !members)
             .collect();
         if self.commit(it, ops) {
             self.plan.discarded += 1;
@@ -250,6 +258,13 @@ impl Builder<'_> {
 
     fn transfer(&self, it: &Item, from: &Path, to: &Path) -> Op {
         let (from, to) = (from.to_path_buf(), to.to_path_buf());
+        if let Files::Member { member, .. } = &it.files {
+            return Op::Extract {
+                archive: from,
+                member: member.clone(),
+                to,
+            };
+        }
         match (it.in_library, self.opts.mode) {
             (true, _) | (_, Mode::Move) => Op::Move { from, to },
             (_, Mode::Copy) => Op::Copy { from, to },
@@ -275,6 +290,9 @@ impl Builder<'_> {
         }
         self.claimed
             .extend(ops.iter().map(|op| op.target().to_path_buf()));
+        if let Files::Member { archive, .. } = &it.files {
+            *self.members_done.entry(archive.clone()).or_default() += 1;
+        }
         let why = if it.in_library && self.why.starts_with("1G1R") {
             format!("{} – rename to naming scheme", self.why)
         } else {
@@ -306,6 +324,35 @@ impl Builder<'_> {
         }
     }
 
+    /// Moves multi-ROM archives to the trash once every member was handled, unless the
+    /// inbox is only copied/linked from.
+    fn trash_emptied_archives(&mut self, items: &[&Item]) {
+        let mut total: BTreeMap<&Path, (usize, bool)> = BTreeMap::new();
+        for it in items {
+            if let Files::Member { archive, .. } = &it.files {
+                total.entry(archive).or_default().0 += 1;
+                total.entry(archive).or_default().1 = it.in_library;
+            }
+        }
+        self.why = "archive fully extracted".into();
+        for (archive, (n, in_library)) in total {
+            let done = self.members_done.get(archive).copied().unwrap_or(0);
+            if done < n || !(in_library || self.opts.mode == Mode::Move) {
+                continue;
+            }
+            let it = Item {
+                files: Files::Single(archive.to_path_buf()),
+                ident: Ident::Unknown,
+                in_library,
+            };
+            let op = Op::Move {
+                from: archive.to_path_buf(),
+                to: self.library.join(TRASH_DIR).join(file_name(archive)),
+            };
+            self.commit(&it, vec![op]);
+        }
+    }
+
     fn skip(&mut self, it: &Item, reason: String) {
         self.plan.decisions.push(Decision::Skipped {
             path: it.files.primary().clone(),
@@ -314,27 +361,12 @@ impl Builder<'_> {
     }
 }
 
-/// Replaces track file names in a sheet (case-insensitive, once per line).
-fn rewrite_sheet(text: &str, renames: &[(String, String)]) -> String {
-    let mut out = String::with_capacity(text.len());
-    for line in text.split_inclusive('\n') {
-        let lower = line.to_lowercase();
-        let hit = renames.iter().find_map(|(old, new)| {
-            lower
-                .find(&old.to_lowercase())
-                .filter(|_| lower.len() == line.len())
-                .map(|i| (i, old.len(), new))
-        });
-        match hit {
-            Some((i, len, new)) => {
-                out.push_str(&line[..i]);
-                out.push_str(new);
-                out.push_str(&line[i + len..]);
-            }
-            None => out.push_str(line),
-        }
+/// The path whose name/extension the library file takes (a member's own name for archives).
+fn name_source(files: &Files) -> PathBuf {
+    match files {
+        Files::Member { member, .. } => PathBuf::from(member),
+        f => f.primary().clone(),
     }
-    out
 }
 
 fn ext_of(p: &Path) -> String {
@@ -347,22 +379,4 @@ fn file_name(p: &Path) -> String {
     p.file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn rewrites_cue_file_lines() {
-        let cue = "FILE \"game (track 1).BIN\" BINARY\n  TRACK 01 MODE2/2352\nFILE \"Game (Track 2).bin\" BINARY\n";
-        let r = [
-            ("Game (Track 1).bin".into(), "New (Track 1).bin".into()),
-            ("Game (Track 2).bin".into(), "New (Track 2).bin".into()),
-        ];
-        assert_eq!(
-            rewrite_sheet(cue, &r),
-            "FILE \"New (Track 1).bin\" BINARY\n  TRACK 01 MODE2/2352\nFILE \"New (Track 2).bin\" BINARY\n"
-        );
-    }
 }

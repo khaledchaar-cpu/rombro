@@ -26,6 +26,12 @@ pub enum Op {
         from: PathBuf,
         to: PathBuf,
     },
+    /// Extracts one member of an archive into its own file.
+    Extract {
+        archive: PathBuf,
+        member: String,
+        to: PathBuf,
+    },
     /// Writes a text file; replaces an existing file (its content is journaled for undo).
     Write {
         path: PathBuf,
@@ -41,6 +47,7 @@ impl Op {
             | Op::Copy { to, .. }
             | Op::Hardlink { to, .. }
             | Op::Reflink { to, .. } => to,
+            Op::Extract { to, .. } => to,
             Op::Write { path, .. } => path,
         }
     }
@@ -51,6 +58,7 @@ impl Op {
             | Op::Copy { from, .. }
             | Op::Hardlink { from, .. }
             | Op::Reflink { from, .. } => Some(from),
+            Op::Extract { archive, .. } => Some(archive),
             Op::Write { .. } => None,
         }
     }
@@ -110,6 +118,11 @@ fn apply(op: &Op) -> io::Result<Done> {
         Op::Copy { from, to } => fs::copy(from, to).map(|_| ()),
         Op::Hardlink { from, to } => fs::hard_link(from, to),
         Op::Reflink { from, to } => reflink_copy::reflink_or_copy(from, to).map(|_| ()),
+        Op::Extract {
+            archive,
+            member,
+            to,
+        } => crate::archive::extract(archive, member, to),
         Op::Write { path, contents } => fs::write(path, contents),
     };
     if let Err(e) = res {
@@ -129,9 +142,13 @@ pub fn undo(done: &[Done]) -> Vec<(Op, io::Error)> {
     for d in done.iter().rev() {
         let res = match (&d.op, &d.replaced) {
             (Op::Move { from, to }, _) => create_parents(from).and_then(|_| move_file(to, from)),
-            (Op::Copy { to, .. } | Op::Hardlink { to, .. } | Op::Reflink { to, .. }, _) => {
-                fs::remove_file(to)
-            }
+            (
+                Op::Copy { to, .. }
+                | Op::Hardlink { to, .. }
+                | Op::Reflink { to, .. }
+                | Op::Extract { to, .. },
+                _,
+            ) => fs::remove_file(to),
             (Op::Write { path, .. }, Some(old)) => fs::write(path, old),
             (Op::Write { path, .. }, None) => fs::remove_file(path),
         };

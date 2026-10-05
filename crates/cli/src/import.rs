@@ -153,6 +153,13 @@ fn describe(op: &Op, lib: &Path) -> String {
         Op::Copy { from, to } => format!("COPY    {} -> {}", from.display(), rel(to, lib)),
         Op::Hardlink { from, to } => format!("LINK    {} -> {}", from.display(), rel(to, lib)),
         Op::Reflink { from, to } => format!("CLONE   {} -> {}", from.display(), rel(to, lib)),
+        Op::Extract {
+            archive,
+            member,
+            to,
+        } => {
+            format!("EXTRACT {}#{member} -> {}", archive.display(), rel(to, lib))
+        }
         Op::Write { path, .. } => format!("WRITE   {}", rel(path, lib)),
     }
 }

@@ -5,22 +5,25 @@ use rombro_core::plan::{Files, Game, Ident, Item};
 use rombro_core::{ScanReport, ScannedRom};
 
 impl Store {
-    /// Identifies every scanned ROM and disc. Archives holding several ROMs and discs with
-    /// missing tracks are skipped; ambiguous matches use a stored resolution if there is one.
+    /// Identifies every scanned ROM and disc. Each ROM of a multi-ROM archive becomes its own
+    /// item; discs with missing tracks are skipped; ambiguous matches use a stored resolution if there is one.
     pub fn items(&self, report: &ScanReport, in_library: bool) -> Result<Vec<Item>> {
         let mut out = Vec::new();
         for group in report.roms.chunk_by(|a, b| a.path == b.path) {
-            let rom = &group[0];
-            let ident = if group.len() > 1 {
-                Ident::Skip(format!("archive with {} ROMs", group.len()))
-            } else {
-                self.ident(&self.identify_rom(rom)?, &rom.hashes.sha1)?
-            };
-            out.push(Item {
-                files: Files::Single(rom.path.clone()),
-                ident,
-                in_library,
-            });
+            for rom in group {
+                let files = match (&rom.member, group.len()) {
+                    (Some(member), 2..) => Files::Member {
+                        archive: rom.path.clone(),
+                        member: member.clone(),
+                    },
+                    _ => Files::Single(rom.path.clone()),
+                };
+                out.push(Item {
+                    files,
+                    ident: self.ident(&self.identify_rom(rom)?, &rom.hashes.sha1)?,
+                    in_library,
+                });
+            }
         }
         for d in &report.discs {
             let ident = if !d.missing.is_empty() {

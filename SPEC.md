@@ -198,7 +198,10 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   **TBD-Queue** (`Decision::Rejected` mit Grund + gewähltem Release); der User entscheidet später (M8: GUI).
   Unbekannte → `_quarantine/<Dateiname>` (System unbekannt). Tie/Ambiguous/Konflikt/Rejected → Item bleibt unangetastet.
 - M6: Discs: Tracks werden umbenannt (`<Name>.bin` bzw. `<Name> (Track N).bin`), Cue/GDI-Text wird angepasst
-  (Write-Op mit gesichertem Altinhalt). Multi-Disc → Ordner + `.m3u`. Archive mit mehreren ROMs werden übersprungen.
+  (Write-Op mit gesichertem Altinhalt). Multi-Disc → Ordner + `.m3u`.
+- M12: Multi-ROM-Archive (zip/7z): jedes ROM ist ein eigenes Item und wird per `Op::Extract` entpackt in die Library
+  gelegt (Quarantäne ebenso, Discard = nicht entpacken). Sind alle Member erledigt und ist das Archiv in der Library
+  oder Modus=Move, wandert das Archiv nach `_trash/` (undo-bar); bei offenen Entscheidungen bleibt es liegen.
 - M6: Playlists `.lpl` (v1.5, `core_path: DETECT`) nach `<library>/_playlists/<System>.lpl` (konfigurierbar).
 - M6: Journal = JSON der ausgeführten Ops inkl. angelegter Ordner und überschriebener Inhalte; `undo` revertiert
   den letzten Lauf. Ausführung stoppt beim ersten Fehler, Teilfortschritt wird trotzdem journalisiert.

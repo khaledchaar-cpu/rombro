@@ -160,10 +160,49 @@ impl Store {
                 Op::Copy { from, to } | Op::Hardlink { from, to } | Op::Reflink { from, to } => {
                     self.relocate(from, to, false)?
                 }
+                Op::Extract {
+                    archive,
+                    member,
+                    to,
+                } => self.index_member(archive, member, to)?,
                 Op::Write { .. } => {}
             }
         }
         tx.commit()?;
+        Ok(())
+    }
+
+    /// Indexes a file extracted from an archive with the member's cached hashes.
+    fn index_member(&self, archive: &Path, member: &str, to: &Path) -> Result<()> {
+        let roms: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT roms FROM file WHERE path = ?1",
+                [key(archive)],
+                |r| r.get(0),
+            )
+            .optional()?;
+        let Some(roms) = roms else { return Ok(()) };
+        let roms: Vec<CachedRom> = serde_json::from_str(&roms)?;
+        let (Some(mut rom), Ok(st)) = (
+            roms.into_iter()
+                .find(|r| r.member.as_deref() == Some(member)),
+            Stamp::of(to),
+        ) else {
+            return Ok(());
+        };
+        rom.member = None;
+        self.conn.execute(
+            "INSERT OR REPLACE INTO file (path, size, mtime, roms, added)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                key(to),
+                st.size as i64,
+                st.mtime,
+                serde_json::to_string(&[rom])?,
+                Some(now())
+            ],
+        )?;
         Ok(())
     }
 
@@ -173,7 +212,10 @@ impl Store {
         for d in done.iter().rev() {
             match &d.op {
                 Op::Move { from, to } => self.relocate(to, from, true)?,
-                Op::Copy { to, .. } | Op::Hardlink { to, .. } | Op::Reflink { to, .. } => {
+                Op::Copy { to, .. }
+                | Op::Hardlink { to, .. }
+                | Op::Reflink { to, .. }
+                | Op::Extract { to, .. } => {
                     self.conn
                         .execute("DELETE FROM file WHERE path = ?1", [key(to)])?;
                 }

@@ -244,6 +244,7 @@ fn op_view(op: &Op, why: &str) -> OpView {
         Op::Copy { .. } => "copy",
         Op::Hardlink { .. } => "link",
         Op::Reflink { .. } => "clone",
+        Op::Extract { .. } => "extract",
         Op::Write { .. } => "write",
     };
     OpView {
