@@ -242,7 +242,7 @@ fn version_rank(v: &str) -> u32 {
     let mut it = v.split('.').map(|p| p.parse::<u32>().unwrap_or(0));
     let major = it.next().unwrap_or(0);
     let minor = it.next().unwrap_or(0);
-    major * 1000 + minor.min(999)
+    major.saturating_mul(1000).saturating_add(minor.min(999))
 }
 
 /// `1`, `A`, `-F` → rank (letters count from A = 1).

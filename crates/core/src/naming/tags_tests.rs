@@ -48,3 +48,9 @@ fn revisions_and_discs() {
     assert_eq!(parse("Game (USA)").disc, None);
     assert_eq!(parse("No tags").title, "No tags");
 }
+
+#[test]
+fn huge_version_does_not_overflow() {
+    parse("Game (Europe) (v20000101)");
+    parse("Game (v4294967295.5)");
+}
