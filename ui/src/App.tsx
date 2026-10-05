@@ -1,5 +1,4 @@
 import { createSignal, Match, onCleanup, onMount, Switch } from "solid-js";
-import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
 import CommandPalette, { type Command } from "./components/CommandPalette";
 import Dashboard from "./views/Dashboard";
@@ -53,8 +52,7 @@ export default function App() {
 
   return (
     <div class="shell">
-      <Sidebar view={view()} onSelect={setView} />
-      <Topbar title={title()} onPalette={() => setPalette(true)} />
+      <Topbar view={view()} onSelect={setView} onPalette={() => setPalette(true)} />
       <main class="content">
         <Switch fallback={<Placeholder title={title()} />}>
           <Match when={view() === "dashboard"}>

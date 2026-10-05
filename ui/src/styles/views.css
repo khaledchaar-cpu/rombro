@@ -85,7 +85,7 @@
 /* gamification */
 .mix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-4); margin-top: var(--sp-3); }
 .mix h3 { margin: 0 0 var(--sp-1); font: 600 var(--fs-xs) var(--font-head); letter-spacing: 0.1em; text-transform: uppercase; }
-.complete, .achs { list-style: none; margin: 0; padding: 0; max-height: 40vh; overflow: auto; }
+.complete, .achs { list-style: none; margin: 0; padding: 0; max-height: 40vh; overflow: hidden auto; }
 .complete li, .achs li { display: grid; gap: 2px; padding: var(--sp-1) 0; border-bottom: 1px dashed var(--line); }
 .complete .row, .achs .row { margin: 0; gap: var(--sp-2); }
 .achs li.locked { opacity: 0.45; }

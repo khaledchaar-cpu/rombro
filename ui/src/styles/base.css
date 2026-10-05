@@ -37,3 +37,7 @@ kbd {
   border: 1px solid var(--line-strong);
   color: var(--text-dim);
 }
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }

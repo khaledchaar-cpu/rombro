@@ -32,8 +32,7 @@
   --sp-6: 24px;
 
   --cut: 10px; /* bevel size for clipped corners */
-  --sidebar-w: 208px;
-  --topbar-h: 48px;
+  --topbar-h: 52px;
 
   --glow: 0 0 6px color-mix(in srgb, var(--accent) 60%, transparent);
   --grid-line: color-mix(in srgb, var(--cyan) 5%, transparent);
@@ -42,6 +41,7 @@
   --bg-fx-opacity: 1;
   --edge: linear-gradient(90deg, var(--cyan), var(--magenta) 60%, transparent);
   --chroma: -1px 0 color-mix(in srgb, var(--magenta) 70%, transparent), 1px 0 color-mix(in srgb, var(--cyan) 70%, transparent);
+  --scanline: color-mix(in srgb, #000 22%, transparent);
   --dur: 120ms;
 }
 
@@ -70,6 +70,7 @@
   --glow: 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent);
   --grid-line: color-mix(in srgb, var(--cyan) 8%, transparent);
   --bg-fx-opacity: 0.6;
+  --scanline: transparent;
   color-scheme: light;
 }
 
@@ -78,4 +79,5 @@
   --glow: none;
   --bg-fx-opacity: 0;
   --chroma: none;
+  --scanline: transparent;
 }
