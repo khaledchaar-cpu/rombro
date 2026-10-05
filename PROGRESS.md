@@ -23,7 +23,7 @@ Library-Tabelle (virtualisiert, Filter, Sortierung). State in `ui/src/state/impo
 Import-Flow am 2026-10-05 vom User im echten Tauri-Fenster getestet: ok.
 
 ## Nächste Schritte (M8 Rest)
-1. Versionskonflikt beheben: `tauri-plugin-dialog` 2.7.3 (Rust) vs. `@tauri-apps/plugin-dialog` 2.8.1 (npm).
+1. ~~Versionskonflikt~~ erledigt: npm `plugin-dialog` auf ~2.7.3 gepinnt (Rust-Seite durch MSRV 1.85 auf 2.7 begrenzt).
 2. TBD-Queue-Aktionen in Plan-View: Ambiguous auflösen (`set_resolution` per IPC), Rejected behalten/löschen.
 3. Dashboard echte KPIs (Library-Zusammenfassung, letzter Journal-Lauf), Journal-Liste.
 4. Offen aus M6: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
