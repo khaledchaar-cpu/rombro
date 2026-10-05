@@ -232,7 +232,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - M11: Pfaderkennung in `core::paths` (`dirs`-Crate); RDB-Ordner = erster Kandidat mit `.rdb`-Datei, Override per
   `ROMBRO_RDB_DIR`. CLI wird als separates Binary neben den Bundles ausgeliefert. Releases als Draft per Tag `v*`.
 - Archive mit unbekannten Membern (z. B. Arcade-Sets) werden nie zerlegt: bekannte Member werden entpackt, das Archiv geht danach als Ganzes nach `_quarantine/`.
-- **Arcade (FBNeo/MAME)**: Erkennung über CRC+Größe des *ganzen* Zips (RDB-Einträge beschreiben das Archiv, nicht Member). Nur exakte Treffer; Name passt, CRC nicht → Quarantäne mit Hinweis.
+- **Arcade (FBNeo/MAME)**: Erkennung über CRC+Größe des *ganzen* Zips (RDB-Einträge beschreiben das Archiv, nicht Member). Nur exakte Treffer; Name passt, CRC nicht → normale Quarantäne (RDB ist Single Point of Truth).
   - Mehrfachtreffer: FBNeo > MAME (neueste zuerst: MAME, 2016, 2015, 2010, 2003-Plus, 2003, 2000) > HBMAME. Ein Zip landet genau einmal in der Library (keine CRC-Dubletten).
   - Kurzname (`burningf.zip`) bleibt erhalten; Arcade ist von 1G1R ausgenommen (alle exakt passenden Sets/Clones bleiben).
   - BIOS-Zips (`neogeo.zip`, `pgm.zip`, …) → `<lib>/_bios/` im RetroArch-`system`-Layout (FBNeo: `_bios/fbneo/`), sonst komplett ignoriert (keine Anzeige, Statistik, Achievements).
@@ -240,7 +240,6 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 
 ## 11. Offene Fragen
 - BIOS-Unterordner für MAME-Cores (`_bios/mame`, `mame2003-plus`, …) ungeprüft – FBNeo (`fbneo/`) ist gesichert. Mit echtem RetroArch verifizieren.
-- Arcade „Name passt, CRC nicht“: Quarantäne-Hinweis auf falsche Romset-Version fehlt noch (landet als „unknown“).
 - Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in M6 nicht umgesetzt; Vorschlag: eigener Schritt nach M8.
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
 - Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?

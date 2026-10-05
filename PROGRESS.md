@@ -24,7 +24,7 @@ Erkennung per Track-Hash, Tracks umbenannt entpackt, Sheet neu geschrieben. **CH
 ersten Datentrack (Hash + Serial), Ablage als `<Name>.chd`. Planner aufgeteilt (`plan/build/{place,archives}.rs`, `plan/sheet.rs`).
 
 ## Nächste Schritte
-0. Arcade: Hinweis „Name passt, CRC nicht“; BIOS-Pfade der MAME-Cores in RetroArch verifizieren.
+0. Arcade: BIOS-Pfade der MAME-Cores in RetroArch verifizieren.
 1. Mit echten Dateien prüfen: CHD (chdman-erzeugt, cdlz/cdfl), 7z mit cue/bin, Multi-ROM-Zips (bisher nur synthetisch).
 2. Remote anlegen, pushen, CI-Lauf auf allen 3 OS prüfen; Signierung macOS/Windows fehlt.
 3. Sichtprüfung im Tauri-Fenster (Gamification, Sync-Buttons, neue Op-Tags `clone`/`extract`, Reflink-Option).
