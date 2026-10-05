@@ -287,6 +287,7 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
         rules: Default::default(),
         playlists: None,
         verdicts: Default::default(),
+        inbox: None,
     };
     let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
     let p = plan::build(&items, &lib, &opts);
@@ -428,4 +429,40 @@ fn gamify_completeness_meta_and_persisted_unlocks() {
         .find(|(a, _)| a.id == "clean-sweep")
         .unwrap();
     assert_eq!((clean.0.unlocked, clean.1), (true, Some(86_400 * 10)));
+}
+
+#[test]
+fn arcade_chip_inside_unknown_zip_is_not_identified() {
+    use rombro_core::MultiHasher;
+    use rombro_core::plan::Ident;
+    use std::io::Write;
+    let mut h = MultiHasher::new();
+    h.update(b"prom chip");
+    let chip = h.finish();
+    let tmp = tempfile::tempdir().unwrap();
+    let (rdb, inbox) = (tmp.path().join("rdb"), tmp.path().join("inbox"));
+    for d in [&rdb, &inbox] {
+        std::fs::create_dir_all(d).unwrap();
+    }
+    write_rdb(
+        &rdb.join("MAME.rdb"),
+        &[map(&[
+            ("name", F::S("Get Star (bootleg set 1)")),
+            ("crc", F::B(Box::leak(Box::new(chip.crc.to_be_bytes())))),
+            ("sha1", F::B(Box::leak(Box::new(chip.sha1)))),
+        ])],
+    );
+    let mut w = zip::ZipWriter::new(std::fs::File::create(inbox.join("alcon.zip")).unwrap());
+    for (name, data) in [("a.8b", &b"prom chip"[..]), ("b.6g", b"other chip")] {
+        w.start_file(name, zip::write::SimpleFileOptions::default())
+            .unwrap();
+        w.write_all(data).unwrap();
+    }
+    w.finish().unwrap();
+
+    let mut s = Store::open_in_memory().unwrap();
+    s.sync_rdbs(&rdb).unwrap();
+    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
+    assert!(!items.is_empty());
+    assert!(items.iter().all(|it| matches!(it.ident, Ident::Unknown)));
 }

@@ -23,8 +23,9 @@ pub fn run(a: Args) -> Result<()> {
     if library.is_dir() {
         items = store.items(&scan(&library), true)?;
     }
-    if let Some(inbox) = &a.inbox {
-        items.extend(store.items(&scan(&absolute(inbox)?), false)?);
+    let inbox = a.inbox.as_deref().map(absolute).transpose()?;
+    if let Some(inbox) = &inbox {
+        items.extend(store.items(&scan(inbox), false)?);
     }
     let ts = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
     let opts = Options {
@@ -33,6 +34,7 @@ pub fn run(a: Args) -> Result<()> {
         playlists: (!a.no_playlists)
             .then(|| a.playlists.unwrap_or_else(|| library.join(PLAYLIST_DIR))),
         verdicts: store.verdicts()?,
+        inbox,
     };
     let p = plan::build(&items, &library, &opts);
     for op in &p.ops {

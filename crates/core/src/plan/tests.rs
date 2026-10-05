@@ -34,6 +34,7 @@ fn opts(mode: Mode) -> Options {
         rules: Default::default(),
         playlists: None,
         verdicts: Default::default(),
+        inbox: None,
     }
 }
 
@@ -296,4 +297,23 @@ fn prefer_resolves_tie_and_rejects_the_rest() {
     let plan = build(&items, &lib, &o);
     assert!(plan.decisions.is_empty());
     assert_eq!((plan.placed, plan.discarded), (1, 1));
+}
+
+#[test]
+fn quarantine_keeps_inbox_subfolders_so_equal_names_do_not_clash() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let items = [
+        item(file(&inbox, "x.zip", "1"), Ident::Unknown, false),
+        item(file(&inbox, "old/x.zip", "2"), Ident::Unknown, false),
+    ];
+    let o = Options {
+        inbox: Some(inbox.clone()),
+        ..opts(Mode::Move)
+    };
+    let plan = build(&items, &lib, &o);
+    assert_eq!(plan.quarantined, 2);
+    assert!(plan.decisions.is_empty());
+    execute(&plan.ops);
+    assert_eq!(tree(&lib), ["_quarantine/old/x.zip", "_quarantine/x.zip"]);
 }

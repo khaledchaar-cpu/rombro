@@ -119,6 +119,8 @@ pub struct Options {
     pub playlists: Option<PathBuf>,
     /// User verdicts on releases 1G1R rejected, keyed by (system, name).
     pub verdicts: HashMap<(String, String), Verdict>,
+    /// Inbox root; quarantined files keep their path below it (no clashes on equal names).
+    pub inbox: Option<PathBuf>,
 }
 
 /// What to do with a release 1G1R rejected (TBD queue).

@@ -133,6 +133,7 @@ pub async fn plan_import(
                 .items(&emit_scan(&store, &app, "library", &lib)?, true)
                 .map_err(err)?;
         }
+        let mut inbox_root = None;
         if let Some(inbox) = inbox {
             let inbox = std::path::absolute(&inbox).map_err(err)?;
             if !inbox.is_dir() {
@@ -146,6 +147,7 @@ pub async fn plan_import(
                     .items(&emit_scan(&store, &app, "inbox", &inbox)?, false)
                     .map_err(err)?,
             );
+            inbox_root = Some(inbox);
         }
         let _ = app.emit(
             "import://progress",
@@ -156,6 +158,7 @@ pub async fn plan_import(
             rules: crate::settings::load_rules(&store)?,
             playlists: Some(lib.join(PLAYLIST_DIR)),
             verdicts: store.verdicts().map_err(err)?,
+            inbox: inbox_root,
         };
         Ok((plan::build(&items, &lib, &opts), items.len()))
     })

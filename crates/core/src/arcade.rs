@@ -21,6 +21,11 @@ pub fn rank(system: &str) -> usize {
         .unwrap_or(PRIORITY.len())
 }
 
+/// Whether `system` is an arcade database (entries hash whole romset archives).
+pub fn is_arcade(system: &str) -> bool {
+    rank(system) < PRIORITY.len()
+}
+
 /// BIOS and device sets that games load from; matched by short name or description.
 const BIOS_SETS: [&str; 18] = [
     "neogeo", "pgm", "skns", "bubsys", "cchip", "decocass", "isgsm", "midssio", "namcoc69",
@@ -83,5 +88,6 @@ mod tests {
         assert_eq!(bios_dir("FBNeo - Arcade Games"), Path::new("_bios/fbneo"));
         assert_eq!(bios_dir("MAME 2003-Plus"), Path::new("MAME 2003-Plus"));
         assert_eq!(bios_dir("Sony - PlayStation"), Path::new("_bios"));
+        assert!(is_arcade("MAME 2003-Plus") && !is_arcade("Sony - PlayStation"));
     }
 }

@@ -195,11 +195,21 @@ impl Builder<'_> {
         let dir = self.library.join(QUARANTINE_DIR);
         let ops = quarantine_sources(&it.files)
             .iter()
-            .map(|f| self.transfer(it, f, &dir.join(file_name(f))))
+            .map(|f| self.transfer(it, f, &dir.join(self.quarantine_rel(f))))
             .collect();
         if self.commit(it, ops) {
             self.plan.quarantined += 1;
         }
+    }
+
+    /// Path below `_quarantine/`: relative to the inbox (or library) root, else the bare name.
+    fn quarantine_rel(&self, f: &Path) -> PathBuf {
+        [self.opts.inbox.as_deref(), Some(self.library)]
+            .into_iter()
+            .flatten()
+            .find_map(|root| f.strip_prefix(root).ok())
+            .filter(|rel| !rel.as_os_str().is_empty())
+            .map_or_else(|| PathBuf::from(file_name(f)), Path::to_path_buf)
     }
 
     /// Puts a BIOS set where RetroArch's core looks for it.

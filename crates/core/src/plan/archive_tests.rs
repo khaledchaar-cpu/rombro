@@ -42,6 +42,7 @@ fn opts(mode: Mode) -> Options {
         rules: Default::default(),
         playlists: None,
         verdicts: Default::default(),
+        inbox: None,
     }
 }
 

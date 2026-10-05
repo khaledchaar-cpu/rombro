@@ -36,9 +36,14 @@ impl Store {
                     },
                     _ => Files::Single(rom.path.clone()),
                 };
+                let mut records = self.identify_rom(rom)?;
+                // a single chip matching an arcade entry is no game: arcade sets only match whole
+                if rom.member.is_some() {
+                    records.retain(|r| !arcade::is_arcade(&r.system));
+                }
                 out.push(Item {
                     files,
-                    ident: self.ident(&self.identify_rom(rom)?, &rom.hashes.sha1)?,
+                    ident: self.ident(&records, &rom.hashes.sha1)?,
                     in_library,
                 });
             }
