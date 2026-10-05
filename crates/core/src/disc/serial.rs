@@ -42,6 +42,19 @@ impl DiscId {
         if let Some(s) = self.serial.strip_prefix("MK-") {
             keys.push(s.to_owned());
         }
+        // Sega headers often omit the dash the databases use (`T40201N` vs `T-40201N`).
+        let letters = self
+            .serial
+            .bytes()
+            .take_while(u8::is_ascii_alphabetic)
+            .count();
+        if letters > 0 && self.serial[letters..].starts_with(|c: char| c.is_ascii_digit()) {
+            keys.push(format!(
+                "{}-{}",
+                &self.serial[..letters],
+                &self.serial[letters..]
+            ));
+        }
         keys
     }
 }
@@ -172,6 +185,11 @@ mod tests {
         let id = detect_bytes(testimg::raw(&sat, 1)).unwrap();
         assert_eq!(id.platform, Platform::Saturn);
         assert_eq!(id.lookup_keys(), ["MK-81020", "81020"]);
+        let dc = DiscId {
+            platform: id.platform,
+            serial: "T40201N".into(),
+        };
+        assert_eq!(dc.lookup_keys(), ["T40201N", "T-40201N"]);
 
         let mut scd = vec![0u8; 2048];
         scd[..14].copy_from_slice(b"SEGADISCSYSTEM");
