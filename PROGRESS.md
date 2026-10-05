@@ -14,21 +14,21 @@
 | M9 GUI Feinschliff | ✅ done |
 | M10 Gamification | ✅ done (Sichtprüfung offen) |
 | M11 Release | ✅ done (CI ungetestet, kein Remote) |
-| M12 Übertragen & Container | ✅ done (nur synthetisch getestet) |
+| M12 Übertragen & Container | ✅ done |
+| M12b Arcade & Sichtprüfung | ✅ done |
 
 ## Aktuell
-M12 abgeschlossen: Modus **Reflink** (`reflink-copy`, fällt ohne CoW-FS auf Copy zurück; CLI/App/UI).
-**Multi-ROM-Archive**: jedes ROM ein Item (`Files::Member`), `Op::Extract` entpackt einzeln; Archiv → `_trash/`,
-sobald alle Member erledigt sind (nur Library oder Modus Move). **Discs in zip/7z** (`Files::ArchivedSheet`):
-Erkennung per Track-Hash, Tracks umbenannt entpackt, Sheet neu geschrieben. **CHD**: `disc::chd::ChdTrack` streamt den
-ersten Datentrack (Hash + Serial), Ablage als `<Name>.chd`. Planner aufgeteilt (`plan/build/{place,archives}.rs`, `plan/sheet.rs`).
+M12b: **Arcade-Erkennung** (FBNeo/MAME über Hash des ganzen Zips, Kurzname bleibt, kein 1G1R, CHD-Ordner mit,
+BIOS → `_bios/<core>/`, sonst unsichtbar). Unbekannte Archive werden nie zerlegt (ganz in Quarantäne).
+UI: Fortschritt zeitbasiert mit Phase + Sekunden, klarere Rejected-Gründe (+ System), Sync-Feedback,
+Completeness-Layout. Echte CHDs (PSX) und Amiga-`.lha` erkannt; Import auf Testordner ausgeführt.
 
 ## Nächste Schritte
-0. Arcade: BIOS-Pfade der MAME-Cores in RetroArch verifizieren.
-1. Mit echten Dateien prüfen: CHD (chdman-erzeugt, cdlz/cdfl), 7z mit cue/bin, Multi-ROM-Zips (bisher nur synthetisch).
-2. Remote anlegen, pushen, CI-Lauf auf allen 3 OS prüfen; Signierung macOS/Windows fehlt.
-3. Sichtprüfung im Tauri-Fenster (Gamification, Sync-Buttons, neue Op-Tags `clone`/`extract`, Reflink-Option).
-4. v2 Launcher (SPEC §6).
+1. BIOS-Pfade der MAME-Cores in RetroArch verifizieren (`_bios/mame`, `mame2003-plus`, …; FBNeo gesichert).
+2. Sichtprüfung Rest: Gamification-Panels, Effects off.
+3. Echte 7z mit cue/bin und Multi-ROM-Zips (Konsole) testen.
+4. Remote anlegen, pushen, CI auf 3 OS; Signierung macOS/Windows.
+5. v2 Launcher (SPEC §6) – **erst ganz zum Schluss** (User-Wunsch).
 
 ## Stolpersteine
 - Arcade-RDB-Einträge (FBNeo/MAME) hashen das **ganze Zip** → `ScanReport.archives`; Treffer werden `Files::Set` (Kurzname, kein 1G1R, CHDs aus `<set>/`), BIOS → `Ident::Bios` → `_bios/<core>/`.
@@ -61,6 +61,8 @@ ersten Datentrack (Hash + Serial), Ablage als `<Name>.chd`. Planner aufgeteilt (
 - Archiv-Items: `Op::Extract.from` = Archiv, Member-Name separat; im Builder liefert `name_source()` den Member-Namen.
 - Disc-Archive: kein Serial-Fallback (Tracks liegen nur gepackt vor); mehrere Sheets im Archiv → Skip.
 - CHD-Frames sind 2448 Byte (2352 + Subcode), Tracks auf 4 Frames gepaddet (GD: `PAD:`), `PGTYPE:V…` = Pregap gespeichert.
+- Scan-Cache: Archive ohne Whole-Hash-Eintrag (`member: None`) werden neu gehasht (Migration ohne Schema-Änderung).
+- Fortschritt: `Throttle` (100 ms) statt alle N Dateien; Phase `planning` ohne Zähler.
 - Kein `chdman` lokal → Test baut unkomprimierte CHD v5 selbst (`crates/core/tests/chd.rs`).
 
 ## Log
@@ -77,4 +79,5 @@ ersten Datentrack (Hash + Serial), Ablage als `<Name>.chd`. Planner aufgeteilt (
 - 2026-10-05: M9 GUI Feinschliff abgeschlossen.
 - 2026-10-05: M10 Gamification abgeschlossen.
 - 2026-10-05: M11 Release abgeschlossen.
+- 2026-10-05: M12b Arcade-Erkennung & Sichtprüfungs-Fixes.
 - 2026-10-05: F6-Reste (Trash-Größe, Toast, Franchise-Ziele).
