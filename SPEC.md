@@ -216,6 +216,9 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   4. Planner nutzt den Index statt die Library jedes Mal neu zu hashen.
   Umsetzung: Index = Hash-Cache je Datei (Größe+mtime-ns), gilt auch für die Inbox; Fremddateien laufen wie bisher
   über den Library-Audit (in_library-Items) in den Plan.
+- M10: Vollständigkeit = besessene 1G1R-Gruppen (beliebiges Release der Gruppe) / Gruppen mit wählbarem Release
+  (aktuelle Regeln). XP = 10/Spiel + Achievement-XP; Level n ab 100·n² XP. Streak = aufeinanderfolgende Tage mit
+  ausgeführtem Lauf (endet heute oder gestern). „Verifiziert" = Status `known`. Gamification abschaltbar (DB-Setting).
 - Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
 
 ## 11. Offene Fragen

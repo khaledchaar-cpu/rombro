@@ -12,33 +12,23 @@
 | M7 App-Shell | ✅ done |
 | M8 GUI Kern | ✅ done |
 | M9 GUI Feinschliff | ✅ done |
-| M10 Gamification | – |
+| M10 Gamification | ✅ done (Sichtprüfung offen) |
 | M11 Release | – |
 
 ## Aktuell
-M8 abgeschlossen: Import-Flow (Inbox → Plan → Execute/Undo), Library-Tabelle, TBD-Queue in der Plan-View
-(Ambiguous auflösen, Tie via `prefer`, Rejected keep/trash, Re-plan, entschiedene Items rücken nach),
-Dashboard (Library-Zusammenfassung, offene Entscheidungen + Review, Trash mit endgültigem Leeren, Recent runs + Undo).
-Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohne ausführlichen Einzeltest.
+M10 abgeschlossen: `core::gamify` (KPIs, Vollständigkeit gegen 1G1R-Set pro System, Achievements, XP/Level, Streak),
+`Store::gamify` (lädt 1G1R-Sets + Genre/Jahr je besessenem System, zählt Läufe/Trash aus dem Journal, persistiert
+Unlocks in Tabelle `achievement`, Schema v6), App-Commands `gamify_stats`/`gamify_enabled_get|set`,
+Dashboard-Panels Progress/Completeness/Achievements (`views/DashboardProgress.tsx`, `state/gamify.ts`),
+Settings-Schalter „Gamification“ (DB-Setting `gamification`). Stats werden aus den geladenen Library-Zeilen berechnet.
 
-## Nächste Schritte (M9 GUI-Feinschliff)
-1. ✅ Persistenter Library-Index: Tabelle `file` (Pfad → Größe/mtime/ROM-Hashes als JSON) dient als Hash-Cache
-   für Library *und* Inbox (`scan_cached`), Execute/Undo verschieben Index-Zeilen mit (`index_executed/undone`),
-   Library-Pfad als Setting `library`, App lädt Library beim Start (`initLibrary`), „Rescan“ statt „Load“.
-   Offen: Startzeit mit großer echter Library prüfen.
-   Danach (User-Feedback): Inbox-Pfad/Modus in DB, Grund je Plan-Op (`Plan.why`), `.lpl` nie als ROM,
-   Library-Filter (System/Region/Status/Hinzugefügt; `file.added` in DB), eigene Dropdown-Komponente
-   `components/Select.tsx` (Cyberpunk-Stil, Portal) – vom User abgenommen.
-2. Manuelle Sichtprüfung der neuen Dashboard-Panels im Tauri-Fenster; Layout `.rows` mit 3 Spalten (Recent runs) prüfen.
-3. ✅ Settings-View: 1G1R-Regeln-Editor (Regionen/Sprachen per Drag (Pointer-Events) + ↑↓, Ausschluss-Flags),
-   gespeichert als JSON-Setting `rules`, Import nutzt sie (vom User getestet). Rahmenloses Fenster: Topbar ist
-   Drag-Region, eigene Neon-Fensterbuttons (abgenommen). CLI (`g1r`, `import`) nutzt jetzt die gespeicherten Regeln (`Store::rules`).
-4. ✅ Thumbnails (F7): `core::thumbnail` (RetroArch-Naming/URL/Cache-Layout), App-Command `thumbnail` (ureq,
-   Cache `~/.cache/rombro/thumbnails`, 404 → `.miss`-Marker, Bytes als `ipc::Response`), Library-Zeile anklicken →
-   Detail-Panel (Boxart/Title/Snap + Metadaten). Setting `thumbs_online` (Settings-Checkbox, Default an) + Quellenhinweis. Offen: Sichtprüfung im Tauri-Fenster.
-   ✅ Light-Theme + Effekte-Schalter: Settings „Appearance“ + Command-Palette, pro Gerät in localStorage
-   (`state/appearance.ts`), Tokens `:root[data-theme="light"]`. Vom User abgenommen (UX-Review bestanden).
-5. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
+## Nächste Schritte
+1. Sichtprüfung der Gamification-Panels im Tauri-Fenster (Browser-Check war nicht möglich) + Laufzeit mit großer Library
+   (1G1R-Select pro besessenem System bei jedem Library-Refresh).
+2. Offen aus F6: gesparter Speicher (Bytes) bei Trash, Franchise-Ziele, Toast bei neuem Achievement.
+3. Aus M9 offen: Sichtprüfung Dashboard-Layout/Thumbnails, Startzeit mit großer Library.
+4. Übertragen (vor/in M11): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive.
+5. M11 Release.
 
 ## Stolpersteine
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
@@ -62,6 +52,7 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
 - Virtuelle Listen: Zeilen per Accessor (`() => view()[i]`) lesen, sonst bleiben sie nach Filtern stale.
 - Thumbnail-Name: nur ``&*/:`<>?\|`` → `_` (nicht `"`), anders als `sanitize_file_name`.
 - `data-effects="off"`-Block muss in tokens.css **nach** den Theme-Blöcken stehen (gleiche Spezifität).
+- Achievements bleiben einmal erreicht freigeschaltet; dynamische (`full-set:<System>`) verschwinden aber aus der Liste, wenn die Bedingung wegfällt.
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log
@@ -76,3 +67,4 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
 - 2026-10-05: M7 App-Shell abgeschlossen.
 - 2026-10-05: M8 GUI Kern abgeschlossen.
 - 2026-10-05: M9 GUI Feinschliff abgeschlossen.
+- 2026-10-05: M10 Gamification abgeschlossen.
