@@ -231,6 +231,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 
 - M11: Pfaderkennung in `core::paths` (`dirs`-Crate); RDB-Ordner = erster Kandidat mit `.rdb`-Datei, Override per
   `ROMBRO_RDB_DIR`. CLI wird als separates Binary neben den Bundles ausgeliefert. Releases als Draft per Tag `v*`.
+- Archive mit unbekannten Membern (z. B. Arcade-Sets) werden nie zerlegt: bekannte Member werden entpackt, das Archiv geht danach als Ganzes nach `_quarantine/`.
 
 ## 11. Offene Fragen
 - Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in M6 nicht umgesetzt; Vorschlag: eigener Schritt nach M8.
