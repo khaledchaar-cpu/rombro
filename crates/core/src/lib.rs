@@ -8,6 +8,7 @@ pub mod header;
 pub mod naming;
 pub mod plan;
 pub mod scan;
+pub mod thumbnail;
 
 pub use cache::{CachedRom, HashCache, Stamp};
 pub use hash::{Hashes, MultiHasher, hash_reader};

@@ -6,6 +6,7 @@ mod decide;
 mod import;
 mod library;
 mod settings;
+mod thumbs;
 
 fn main() {
     tauri::Builder::default()
@@ -25,7 +26,8 @@ fn main() {
             library::session_get,
             library::library_list,
             settings::rules_get,
-            settings::rules_set
+            settings::rules_set,
+            thumbs::thumbnail
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

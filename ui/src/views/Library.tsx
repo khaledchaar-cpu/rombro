@@ -1,6 +1,7 @@
 import { createVirtualizer } from "@tanstack/solid-virtual";
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 import DirField from "../components/DirField";
+import GameDetail from "../components/GameDetail";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import { createLibraryFilter } from "./LibraryFilters";
@@ -32,6 +33,7 @@ export default function Library() {
     return f.sort((a, b) => (asc ? 1 : -1) * (a[key].localeCompare(b[key]) || a.name.localeCompare(b.name)));
   });
 
+  const [selected, setSelected] = createSignal<LibraryRow | null>(null);
   const toggle = (key: Key) => setSort((s) => ({ key, asc: s.key === key ? !s.asc : true }));
 
   let scroller!: HTMLDivElement;
@@ -78,7 +80,11 @@ export default function Library() {
                 {(it) => {
                   const r = () => view()[it.index] ?? EMPTY;
                   return (
-                    <div class="vrow lrow small" style={{ transform: `translateY(${it.start}px)`, height: `${ROW_H}px` }}>
+                    <div
+                      class="vrow lrow small"
+                      classList={{ sel: selected()?.path === r().path }}
+                      onClick={() => setSelected(r())}
+                      style={{ transform: `translateY(${it.start}px)`, height: `${ROW_H}px` }}>
                       <span class={`tag tag-${r().state}`}>{r().state}</span>
                       <span class="ellipsis dim" title={r().system}>{r().system}</span>
                       <span class="ellipsis" title={r().name}>{r().name}</span>
@@ -91,6 +97,7 @@ export default function Library() {
           </div>
         </div>
       </Panel>
+      <Show when={selected()}>{(row) => <GameDetail row={row()} />}</Show>
     </div>
   );
 }

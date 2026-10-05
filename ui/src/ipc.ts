@@ -201,3 +201,12 @@ export async function rulesSet(rules: Rules | null): Promise<Rules> {
   if (!inTauri) return rules ?? mockRules();
   return invoke<Rules>("rules_set", { rules });
 }
+
+export type ThumbKind = "boxart" | "title" | "snap";
+
+/** Object URL of a libretro thumbnail, or null if the server has none. Cached on disk by the backend. */
+export async function thumbnail(system: string, name: string, kind: ThumbKind): Promise<string | null> {
+  if (!inTauri) return null;
+  const buf = await invoke<ArrayBuffer>("thumbnail", { system, name, kind });
+  return buf.byteLength ? URL.createObjectURL(new Blob([buf], { type: "image/png" })) : null;
+}

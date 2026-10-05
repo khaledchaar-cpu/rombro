@@ -33,7 +33,10 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
 3. ✅ Settings-View: 1G1R-Regeln-Editor (Regionen/Sprachen per Drag (Pointer-Events) + ↑↓, Ausschluss-Flags),
    gespeichert als JSON-Setting `rules`, Import nutzt sie (vom User getestet). Rahmenloses Fenster: Topbar ist
    Drag-Region, eigene Neon-Fensterbuttons (abgenommen). Offen: CLI nutzt noch Default-Regeln.
-4. Rest M9: Thumbnails (F7) als Nächstes, dann Effekte, Light-Theme.
+4. ✅ Thumbnails (F7): `core::thumbnail` (RetroArch-Naming/URL/Cache-Layout), App-Command `thumbnail` (ureq,
+   Cache `~/.cache/rombro/thumbnails`, 404 → `.miss`-Marker, Bytes als `ipc::Response`), Library-Zeile anklicken →
+   Detail-Panel (Boxart/Title/Snap + Metadaten). Offen: Sichtprüfung im Tauri-Fenster.
+   Rest M9: Effekte, Light-Theme.
 5. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 
 ## Stolpersteine
@@ -56,6 +59,7 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
 - `pkill -f <muster>` in Bash killt die eigene Shell mit (Muster steht in der Kommandozeile) → `pgrep`/PID nutzen.
 - Index-Präfixsuche per `substr(path,1,n)`; Pfade als lossy UTF-8. Disc-ID wird bei Cache-Treffer neu gelesen (billig).
 - Virtuelle Listen: Zeilen per Accessor (`() => view()[i]`) lesen, sonst bleiben sie nach Filtern stale.
+- Thumbnail-Name: nur ``&*/:`<>?\|`` → `_` (nicht `"`), anders als `sanitize_file_name`.
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log

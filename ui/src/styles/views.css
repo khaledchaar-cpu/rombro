@@ -67,3 +67,16 @@
 .chip.on { opacity: 1; background: color-mix(in srgb, currentColor 15%, transparent); }
 .chip:disabled { opacity: 0.2; cursor: default; }
 @media (max-width: 640px) { .filters { grid-template-columns: 1fr; } }
+
+.lrow.vrow { cursor: pointer; }
+.lrow.vrow:hover { background: var(--bg-sunken); }
+.lrow.vrow.sel { outline: 1px solid var(--accent); outline-offset: -1px; }
+.detail { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--sp-4); }
+.thumbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
+.thumb { margin: 0; display: grid; gap: var(--sp-1); }
+.thumb img, .thumb-ph { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: var(--bg-sunken); border: 1px solid var(--line); }
+.thumb-ph { display: grid; place-items: center; }
+.meta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-1) var(--sp-3); margin: 0; align-content: start; }
+.meta dt { color: var(--text-dim); }
+.meta dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 720px) { .detail { grid-template-columns: 1fr; } }
