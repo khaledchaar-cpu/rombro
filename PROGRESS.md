@@ -20,17 +20,10 @@ M8 Teil 1: IPC `plan_import` (Event `import://progress`, Plan wird in App-State 
 (journalisiert), `undo_last`, `library_list`. UI: Inbox-View (Ordnerwahl via plugin-dialog, Modus, Audit/Plan),
 Plan-View (KPIs, virtualisierte Op-Liste, Entscheidungen nach Typ gefiltert, Execute/Undo, auch in Ctrl+K),
 Library-Tabelle (virtualisiert, Filter, Sortierung). State in `ui/src/state/importStore.ts`, Library-Pfad in localStorage.
-Noch nicht im echten Tauri-Fenster durchgeklickt (nur tsc/build + Mock).
-
-## User-ToDo (offen, Stand 2026-10-05) – zu Sessionbeginn nachfragen!
-1. Testordner mit **Kopien** anlegen: `~/rombro-test/inbox` (Mix: bekannte ROMs, cue/bin-Disc, unbekannte Datei,
-   zwei Regionen desselben Spiels) + leeres `~/rombro-test/lib`.
-2. `cd ui && pnpm tauri dev` → Inbox (Ctrl+2): Inbox/Library setzen, Modus Copy, „Plan import“.
-3. Plan prüfen (Zahlen, Zielpfade, Entscheidungen) → Execute → Library (Ctrl+3) „Load“ → Plan (Ctrl+4) „Undo last run“, `lib/` wieder leer?
-4. Rückmeldung an Claude: Fehler (Fenster/Terminal), Auffälligkeiten, ggf. Screenshots.
+Import-Flow am 2026-10-05 vom User im echten Tauri-Fenster getestet: ok.
 
 ## Nächste Schritte (M8 Rest)
-1. `pnpm tauri dev` manuell: Import-Flow mit Kopie-Fixtures durchspielen (nie echte Sammlung).
+1. Versionskonflikt beheben: `tauri-plugin-dialog` 2.7.3 (Rust) vs. `@tauri-apps/plugin-dialog` 2.8.1 (npm).
 2. TBD-Queue-Aktionen in Plan-View: Ambiguous auflösen (`set_resolution` per IPC), Rejected behalten/löschen.
 3. Dashboard echte KPIs (Library-Zusammenfassung, letzter Journal-Lauf), Journal-Liste.
 4. Offen aus M6: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
