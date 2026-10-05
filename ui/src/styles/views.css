@@ -80,3 +80,4 @@
 .meta dt { color: var(--text-dim); }
 .meta dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 720px) { .detail { grid-template-columns: 1fr; } }
+.credit { grid-column: 1 / -1; margin: 0; }

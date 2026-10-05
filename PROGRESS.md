@@ -35,7 +35,7 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
    Drag-Region, eigene Neon-Fensterbuttons (abgenommen). Offen: CLI nutzt noch Default-Regeln.
 4. ✅ Thumbnails (F7): `core::thumbnail` (RetroArch-Naming/URL/Cache-Layout), App-Command `thumbnail` (ureq,
    Cache `~/.cache/rombro/thumbnails`, 404 → `.miss`-Marker, Bytes als `ipc::Response`), Library-Zeile anklicken →
-   Detail-Panel (Boxart/Title/Snap + Metadaten). Offen: Sichtprüfung im Tauri-Fenster.
+   Detail-Panel (Boxart/Title/Snap + Metadaten). Setting `thumbs_online` (Settings-Checkbox, Default an) + Quellenhinweis. Offen: Sichtprüfung im Tauri-Fenster.
    Rest M9: Effekte, Light-Theme.
 5. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 

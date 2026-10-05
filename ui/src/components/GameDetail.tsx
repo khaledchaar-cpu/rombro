@@ -36,6 +36,7 @@ export default function GameDetail(props: { row: LibraryRow }) {
       <div class="detail">
         <div class="thumbs">
           <For each={KINDS}>{(k) => <Thumb row={props.row} kind={k.kind} label={k.label} />}</For>
+          <p class="dim small credit">Images: libretro-thumbnails</p>
         </div>
         <dl class="meta small">
           <dt>Name</dt><dd>{props.row.name || "–"}</dd>

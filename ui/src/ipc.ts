@@ -210,3 +210,14 @@ export async function thumbnail(system: string, name: string, kind: ThumbKind): 
   const buf = await invoke<ArrayBuffer>("thumbnail", { system, name, kind });
   return buf.byteLength ? URL.createObjectURL(new Blob([buf], { type: "image/png" })) : null;
 }
+
+/** Whether missing thumbnails are downloaded from libretro (default on). */
+export async function thumbsOnlineGet(): Promise<boolean> {
+  if (!inTauri) return true;
+  return invoke<boolean>("thumbs_online_get");
+}
+
+export async function thumbsOnlineSet(on: boolean): Promise<void> {
+  if (!inTauri) return;
+  return invoke("thumbs_online_set", { on });
+}

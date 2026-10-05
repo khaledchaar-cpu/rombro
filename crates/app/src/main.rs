@@ -27,7 +27,9 @@ fn main() {
             library::library_list,
             settings::rules_get,
             settings::rules_set,
-            thumbs::thumbnail
+            thumbs::thumbnail,
+            thumbs::thumbs_online_get,
+            thumbs::thumbs_online_set
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

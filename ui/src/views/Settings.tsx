@@ -1,7 +1,7 @@
 import { For, Show, createResource, createSignal } from "solid-js";
 import Panel from "../components/Panel";
 import PriorityList from "../components/PriorityList";
-import { FLAG_KEYS, type FlagKey, type Rules, rulesGet, rulesSet } from "../ipc";
+import { FLAG_KEYS, type FlagKey, type Rules, rulesGet, rulesSet, thumbsOnlineGet, thumbsOnlineSet } from "../ipc";
 
 const FLAG_LABELS: Record<FlagKey, string> = {
   beta: "Beta", proto: "Prototype", demo: "Demo", kiosk: "Kiosk", sample: "Sample",
@@ -15,6 +15,8 @@ export default function Settings() {
   const [draft, setDraft] = createSignal<Rules | null>(null);
   const [msg, setMsg] = createSignal("");
   const rules = () => draft() ?? saved();
+  const [online, { mutate: setOnline }] = createResource(thumbsOnlineGet);
+  const toggleOnline = async (on: boolean) => (await thumbsOnlineSet(on), setOnline(on));
   const dirty = () => draft() !== null && JSON.stringify(draft()) !== JSON.stringify(saved());
 
   const edit = (patch: Partial<Rules>) => {
@@ -58,6 +60,16 @@ export default function Settings() {
                 )}
               </For>
             </div>
+          </Panel>
+          <Panel title="Thumbnails">
+            <label class="check">
+              <input type="checkbox" checked={online() ?? true} onChange={(e) => void toggleOnline(e.currentTarget.checked)} />
+              Download missing thumbnails online
+            </label>
+            <p class="dim small">
+              Images: <span class="mono">libretro-thumbnails</span> (thumbnails.libretro.com) · © respective owners.
+              Already downloaded images stay available offline.
+            </p>
           </Panel>
           <div class="row">
             <button class="btn" disabled={!dirty()} onClick={() => save(rules()!)}>Save</button>
