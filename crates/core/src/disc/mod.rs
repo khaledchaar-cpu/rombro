@@ -1,5 +1,6 @@
 //! Disc images: sheets (`.cue`, `.gdi`), playlists (`.m3u`), `.iso`, and serial extraction.
 
+pub mod chd;
 pub mod iso9660;
 pub mod serial;
 pub mod sheet;
@@ -16,6 +17,7 @@ pub enum DiscKind {
     Cue,
     Gdi,
     Iso,
+    Chd,
 }
 
 impl DiscKind {
@@ -24,6 +26,7 @@ impl DiscKind {
             "cue" => Some(Self::Cue),
             "gdi" => Some(Self::Gdi),
             "iso" => Some(Self::Iso),
+            "chd" => Some(Self::Chd),
             _ => None,
         }
     }
@@ -34,7 +37,7 @@ impl DiscKind {
 pub fn tracks(path: &Path, kind: DiscKind) -> io::Result<(Vec<PathBuf>, Vec<PathBuf>)> {
     let dir = path.parent().unwrap_or(Path::new("."));
     let listed = match kind {
-        DiscKind::Iso => return Ok((vec![path.to_path_buf()], Vec::new())),
+        DiscKind::Iso | DiscKind::Chd => return Ok((vec![path.to_path_buf()], Vec::new())),
         DiscKind::Cue => sheet::parse_cue(&read_text(path)?, dir),
         DiscKind::Gdi => sheet::parse_gdi(&read_text(path)?, dir),
     };
@@ -51,15 +54,28 @@ pub fn tracks(path: &Path, kind: DiscKind) -> io::Result<(Vec<PathBuf>, Vec<Path
 /// Detects platform and serial from the first track that yields one.
 pub fn identify(tracks: &[PathBuf]) -> io::Result<Option<DiscId>> {
     for t in tracks {
-        let mut track = Track::open(BufReader::new(File::open(t)?))?;
-        if let Some(id) = serial::detect(&mut track)? {
-            return Ok(Some(id));
+        let id = if is_chd(t) {
+            match chd::ChdTrack::open(t)? {
+                Some(data) => serial::detect(&mut Track::open(BufReader::new(data))?)?,
+                None => None,
+            }
+        } else {
+            serial::detect(&mut Track::open(BufReader::new(File::open(t)?))?)?
+        };
+        if id.is_some() {
+            return Ok(id);
         }
     }
     Ok(None)
 }
 
 /// Sheets may contain non-UTF-8 names (Shift-JIS, Latin-1); decode lossily.
+/// CHD images are read through [`chd::ChdTrack`] instead of as plain files.
+pub fn is_chd(path: &Path) -> bool {
+    path.extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("chd"))
+}
+
 pub fn read_text(path: &Path) -> io::Result<String> {
     Ok(String::from_utf8_lossy(&fs::read(path)?).into_owned())
 }

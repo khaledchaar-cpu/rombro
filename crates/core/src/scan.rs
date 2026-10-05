@@ -205,7 +205,14 @@ fn scan_disc_cached(
             hashed.append(&mut hit);
             continue;
         }
-        let (hashes, _) = hash_reader(BufReader::new(File::open(t)?), None, false)?;
+        let (hashes, _) = if disc::is_chd(t) {
+            let data = disc::chd::ChdTrack::open(t)?.ok_or_else(|| {
+                io::Error::new(io::ErrorKind::InvalidData, "CHD without CD data track")
+            })?;
+            hash_reader(BufReader::new(data), None, false)?
+        } else {
+            hash_reader(BufReader::new(File::open(t)?), None, false)?
+        };
         hashed.push(ScannedRom {
             path: t.clone(),
             member: None,

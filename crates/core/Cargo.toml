@@ -9,6 +9,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+chd = "0.3.4"
 crc32fast = "1.5.2"
 dirs = "7.0.0"
 md-5 = "0.11.0"

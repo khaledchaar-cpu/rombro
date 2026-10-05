@@ -204,6 +204,8 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   oder Modus=Move, wandert das Archiv nach `_trash/` (undo-bar); bei offenen Entscheidungen bleibt es liegen.
 - M12: Discs in Archiven: Archiv mit `.cue`/`.gdi` = eine Disc (`Files::ArchivedSheet`), Erkennung nur per Track-Hash
   (kein Serial-Fallback), Tracks werden umbenannt entpackt, Sheet neu geschrieben. Mehrere Sheets im Archiv → Skip.
+- M12: CHD (`DiscKind::Chd`, Crate `chd`): erster Nicht-Audio-Track wird ohne Subcode gestreamt (`disc::chd::ChdTrack`,
+  Read+Seek) → Hash + Serial wie bei `.bin`. CHDs werden unverändert als `<Name>.chd` abgelegt; keine Konvertierung.
 - M6: Playlists `.lpl` (v1.5, `core_path: DETECT`) nach `<library>/_playlists/<System>.lpl` (konfigurierbar).
 - M6: Journal = JSON der ausgeführten Ops inkl. angelegter Ordner und überschriebener Inhalte; `undo` revertiert
   den letzten Lauf. Ausführung stoppt beim ersten Fehler, Teilfortschritt wird trotzdem journalisiert.

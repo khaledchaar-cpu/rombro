@@ -72,7 +72,7 @@ impl Store {
                     DiscKind::from_ext(&ext.to_string_lossy().to_lowercase())?,
                 ))
             })
-            .filter(|(_, k)| *k != DiscKind::Iso)
+            .filter(|(_, k)| matches!(k, DiscKind::Cue | DiscKind::Gdi))
             .collect();
         let Some(&(sheet, kind)) = sheets.first() else {
             return Ok(None);
