@@ -259,3 +259,28 @@ fn places_romsets_by_short_name_with_chds_and_bios_apart() {
         again.ops
     );
 }
+
+#[test]
+fn second_copy_of_a_romset_is_a_duplicate_not_a_conflict() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    zip(&inbox.join("720.zip"), &["a"]);
+    zip(&inbox.join("old/720.zip"), &["a"]);
+    let items: Vec<Item> = ["720.zip", "old/720.zip"]
+        .iter()
+        .map(|p| Item {
+            files: Files::Set {
+                archive: inbox.join(p),
+                chds: vec![],
+            },
+            ident: Ident::Known(arcade("MAME", "720 Degrees (rev 4)")),
+            in_library: false,
+        })
+        .collect();
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    assert_eq!(plan.placed, 1);
+    assert!(
+        matches!(&plan.decisions[..], [Decision::Rejected { path, reason, .. }]
+            if path == &inbox.join("old/720.zip") && reason == "Duplicate")
+    );
+}

@@ -33,12 +33,29 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         .collect();
 
     let mut known: BTreeMap<&str, Vec<(&Item, &Game)>> = BTreeMap::new();
+    let mut arcade_seen: HashSet<(&str, &str)> = HashSet::new();
     for &it in &items {
         match &it.ident {
             // Arcade sets are kept as-is: every exact match is its own release, no 1G1R.
+            // A second copy of the same set is a duplicate (library copies come first and win).
             Ident::Known(g) if matches!(it.files, Files::Set { .. }) => {
-                b.why = "arcade romset".into();
-                b.release(&g.system, &[&(it, g)]);
+                if arcade_seen.insert((g.system.as_str(), g.name.as_str())) {
+                    b.why = "arcade romset".into();
+                    b.release(&g.system, &[&(it, g)]);
+                } else if opts.verdicts.get(&(g.system.clone(), g.name.clone()))
+                    == Some(&Verdict::Discard)
+                {
+                    b.why = "discarded by you (duplicate set)".into();
+                    b.discard(it);
+                } else {
+                    b.plan.decisions.push(Decision::Rejected {
+                        path: it.files.primary().clone(),
+                        system: g.system.clone(),
+                        name: g.name.clone(),
+                        kept: Some(g.name.clone()),
+                        reason: format!("{:?}", g1r::Reason::Duplicate),
+                    });
+                }
             }
             Ident::Known(g) => known.entry(&g.system).or_default().push((it, g)),
             Ident::Bios(g) => {
