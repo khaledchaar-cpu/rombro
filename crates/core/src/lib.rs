@@ -3,6 +3,7 @@
 pub mod cache;
 pub mod disc;
 pub mod g1r;
+pub mod gamify;
 pub mod hash;
 pub mod header;
 pub mod naming;
