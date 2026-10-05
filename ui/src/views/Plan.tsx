@@ -26,14 +26,14 @@ function OpList() {
       <div style={{ height: `${v.getTotalSize()}px`, position: "relative" }}>
         <For each={v.getVirtualItems()}>
           {(row) => {
-            const op = ops()[row.index];
+            const op = () => ops()[row.index] ?? { kind: "move", from: null, to: "", why: "" };
             return (
               <div class="vrow oprow mono small" style={{ transform: `translateY(${row.start}px)`, height: `${ROW_H}px` }}>
-                <span class={`tag tag-${op.kind}`}>{op.kind}</span>
-                <span class="dim ellipsis" title={op.from ?? ""}>{op.from ?? ""}</span>
+                <span class={`tag tag-${op().kind}`}>{op().kind}</span>
+                <span class="dim ellipsis" title={op().from ?? ""}>{op().from ?? ""}</span>
                 <span class="arrow">→</span>
-                <span class="ellipsis" title={op.to}>{rel(op.to)}</span>
-                <span class="ellipsis why" title={op.why}>{op.why}</span>
+                <span class="ellipsis" title={op().to}>{rel(op().to)}</span>
+                <span class="ellipsis why" title={op().why}>{op().why}</span>
               </div>
             );
           }}

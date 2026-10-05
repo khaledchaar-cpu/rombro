@@ -4,12 +4,13 @@ import DirField from "../components/DirField";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import { createLibraryFilter } from "./LibraryFilters";
-import { onScanProgress } from "../ipc";
+import { onScanProgress, type LibraryRow } from "../ipc";
 import {
   library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary, setLibrary,
 } from "../state/libraryStore";
 
 const ROW_H = 26;
+const EMPTY: LibraryRow = { path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0 };
 type Key = "system" | "name" | "path" | "state";
 const COLS: { key: Key; label: string }[] = [
   { key: "state", label: "State" },
@@ -75,13 +76,13 @@ export default function Library() {
             <div style={{ height: `${v.getTotalSize()}px`, position: "relative" }}>
               <For each={v.getVirtualItems()}>
                 {(it) => {
-                  const r = view()[it.index];
+                  const r = () => view()[it.index] ?? EMPTY;
                   return (
                     <div class="vrow lrow small" style={{ transform: `translateY(${it.start}px)`, height: `${ROW_H}px` }}>
-                      <span class={`tag tag-${r.state}`}>{r.state}</span>
-                      <span class="ellipsis dim" title={r.system}>{r.system}</span>
-                      <span class="ellipsis" title={r.name}>{r.name}</span>
-                      <span class="ellipsis mono dim" title={r.path}>{r.path}</span>
+                      <span class={`tag tag-${r().state}`}>{r().state}</span>
+                      <span class="ellipsis dim" title={r().system}>{r().system}</span>
+                      <span class="ellipsis" title={r().name}>{r().name}</span>
+                      <span class="ellipsis mono dim" title={r().path}>{r().path}</span>
                     </div>
                   );
                 }}
