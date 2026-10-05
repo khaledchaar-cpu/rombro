@@ -46,7 +46,8 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Import / Audit | `cargo run -q --release -p rombro-cli -- import <inbox> <lib> --dry-run` / `audit <lib>` |
 | Undo / Resolve | `… -- undo` / `… -- resolve <file> [n]` |
 | Echte RDBs testen | `cargo test -q --release -p rombro-rdb -- --ignored` |
-| RDB-Ort (Linux) | `~/.config/retroarch/database/rdb/` (146 Dateien) |
+| RDB-Ort (Linux) | `~/.config/retroarch/database/rdb/` (146 Dateien), Erkennung: `core::paths` |
+| App-Bundle lokal | `cd ui && pnpm tauri build --bundles deb` |
 
 ## Code-Konventionen
 - Rust edition 2024, `cargo fmt`, `clippy -D warnings`. Libs: `thiserror`; Bins: `anyhow`. Kein `unwrap()` außerhalb Tests.

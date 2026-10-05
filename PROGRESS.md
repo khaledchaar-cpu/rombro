@@ -13,22 +13,20 @@
 | M8 GUI Kern | ✅ done |
 | M9 GUI Feinschliff | ✅ done |
 | M10 Gamification | ✅ done (Sichtprüfung offen) |
-| M11 Release | – |
+| M11 Release | ✅ done (CI ungetestet, kein Remote) |
 
 ## Aktuell
-M10 abgeschlossen: `core::gamify` (KPIs, Vollständigkeit gegen 1G1R-Set pro System, Achievements, XP/Level, Streak),
-`Store::gamify` (lädt 1G1R-Sets + Genre/Jahr je besessenem System, zählt Läufe/Trash aus dem Journal, persistiert
-Unlocks in Tabelle `achievement`, Schema v6), App-Commands `gamify_stats`/`gamify_enabled_get|set`,
-Dashboard-Panels Progress/Completeness/Achievements (`views/DashboardProgress.tsx`, `state/gamify.ts`),
-Settings-Schalter „Gamification“ (DB-Setting `gamification`). Stats werden aus den geladenen Library-Zeilen berechnet.
+M11 abgeschlossen: `core::paths` (Daten-/Cache-Dir per `dirs`, RetroArch-RDB-Erkennung Linux/Flatpak/Snap/macOS/Windows,
+Override `ROMBRO_RDB_DIR`), CLI `db sync` ohne Pfad nutzt Auto-Erkennung, App-Command `db_sync` + Dashboard-Buttons
+„Sync RDBs“/„Choose folder…“. `.github/workflows/ci.yml`: Checks + Bundles (AppImage/deb, dmg, msi/nsis) + CLI,
+Tag `v*` → Draft-Release. README, LICENSE, Bundle-Metadaten. Lokal verifiziert: `.deb`-Build (5,9 MiB).
 
 ## Nächste Schritte
-1. Sichtprüfung der Gamification-Panels im Tauri-Fenster (Browser-Check war nicht möglich) + Laufzeit mit großer Library
-   (1G1R-Select pro besessenem System bei jedem Library-Refresh).
-2. Offen aus F6: gesparter Speicher (Bytes) bei Trash, Franchise-Ziele, Toast bei neuem Achievement.
-3. Aus M9 offen: Sichtprüfung Dashboard-Layout/Thumbnails, Startzeit mit großer Library.
-4. Übertragen (vor/in M11): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive.
-5. M11 Release.
+1. Remote anlegen, pushen, CI-Lauf auf allen 3 OS prüfen (bisher nur lokal Linux gebaut); Signierung macOS/Windows fehlt.
+2. Sichtprüfung im Tauri-Fenster: Gamification-Panels, Sync-Buttons, Dashboard-Layout; Laufzeit mit großer Library.
+3. Offen aus F6: gesparter Speicher bei Trash, Franchise-Ziele, Toast bei neuem Achievement.
+4. Übertragen: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive.
+5. v2 Launcher (SPEC §6).
 
 ## Stolpersteine
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
@@ -53,6 +51,8 @@ Settings-Schalter „Gamification“ (DB-Setting `gamification`). Stats werden a
 - Thumbnail-Name: nur ``&*/:`<>?\|`` → `_` (nicht `"`), anders als `sanitize_file_name`.
 - `data-effects="off"`-Block muss in tokens.css **nach** den Theme-Blöcken stehen (gleiche Spezifität).
 - Achievements bleiben einmal erreicht freigeschaltet; dynamische (`full-set:<System>`) verschwinden aber aus der Liste, wenn die Bedingung wegfällt.
+- Pfade unter macOS/Windows weichen ab: DB liegt via `dirs::data_dir()` (Linux unverändert `$XDG_DATA_HOME`).
+- `pnpm tauri`-Script setzt Env per Shell-Syntax → in CI Env-Vars über `env:` + `pnpm exec tauri`.
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log
@@ -68,3 +68,4 @@ Settings-Schalter „Gamification“ (DB-Setting `gamification`). Stats werden a
 - 2026-10-05: M8 GUI Kern abgeschlossen.
 - 2026-10-05: M9 GUI Feinschliff abgeschlossen.
 - 2026-10-05: M10 Gamification abgeschlossen.
+- 2026-10-05: M11 Release abgeschlossen.

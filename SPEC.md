@@ -221,6 +221,9 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   ausgeführtem Lauf (endet heute oder gestern). „Verifiziert" = Status `known`. Gamification abschaltbar (DB-Setting).
 - Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
 
+- M11: Pfaderkennung in `core::paths` (`dirs`-Crate); RDB-Ordner = erster Kandidat mit `.rdb`-Datei, Override per
+  `ROMBRO_RDB_DIR`. CLI wird als separates Binary neben den Bundles ausgeliefert. Releases als Draft per Tag `v*`.
+
 ## 11. Offene Fragen
 - Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in M6 nicht umgesetzt; Vorschlag: eigener Schritt nach M8.
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
