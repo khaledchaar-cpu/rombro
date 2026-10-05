@@ -8,6 +8,9 @@ use rusqlite::params;
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+/// Genre and release year of an owned game.
+type Meta = (Option<String>, Option<u64>);
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Stats {
     pub kpis: Kpis,
@@ -34,7 +37,7 @@ impl Store {
             by_system.entry(s).or_default().push(n);
         }
         let mut systems = Vec::new();
-        let mut meta: HashMap<(&str, &str), (Option<String>, Option<u64>)> = HashMap::new();
+        let mut meta: HashMap<(&str, &str), Meta> = HashMap::new();
         for (system, names) in &by_system {
             let mut entries = self.by_system(system)?;
             entries.retain(|r| !r.name.is_empty());
