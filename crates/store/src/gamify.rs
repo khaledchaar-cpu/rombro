@@ -81,10 +81,14 @@ impl Store {
             inp.runs += 1;
             inp.run_days.push(j.ts.div_euclid(86_400));
             let done = journal_from_json(&j.done).unwrap_or_default();
-            inp.trashed += done
-                .iter()
-                .filter(|d| matches!(&d.op, Op::Move { to, .. } if to.components().any(|c| c.as_os_str() == TRASH_DIR)))
-                .count() as u64;
+            for d in &done {
+                if let Op::Move { to, .. } = &d.op
+                    && to.components().any(|c| c.as_os_str() == TRASH_DIR)
+                {
+                    inp.trashed += 1;
+                    inp.trashed_bytes += std::fs::metadata(to).map(|m| m.len()).unwrap_or(0);
+                }
+            }
         }
         let kpis = gamify::kpis(&games, systems, &inp);
         let mut achs = gamify::achievements(&kpis);

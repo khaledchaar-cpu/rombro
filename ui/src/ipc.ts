@@ -237,7 +237,7 @@ export async function thumbsOnlineSet(on: boolean): Promise<void> {
 
 export interface SystemProgress { system: string; owned: number; total: number }
 export interface Kpis {
-  games: number; unknown: number; ambiguous: number; trashed: number; runs: number; streak: number;
+  games: number; unknown: number; ambiguous: number; trashed: number; trashed_bytes: number; runs: number; streak: number;
   systems: SystemProgress[];
   regions: Record<string, number>; genres: Record<string, number>; decades: Record<string, number>;
 }
@@ -251,7 +251,7 @@ export async function gamifyStats(games: [string, string][], unknown: number, am
   if (!inTauri) {
     return {
       kpis: {
-        games: games.length, unknown, ambiguous, trashed: 12, runs: 3, streak: 2,
+        games: games.length, unknown, ambiguous, trashed: 12, trashed_bytes: 734_003_200, runs: 3, streak: 2,
         systems: [{ system: "Nintendo - Game Boy", owned: 40, total: 520 }, { system: "Nintendo - Virtual Boy", owned: 22, total: 22 }],
         regions: { Europe: 30, USA: 25, Japan: 7 }, genres: { Action: 20, Puzzle: 8 }, decades: { 1990: 50, 2000: 12 },
       },

@@ -22,6 +22,8 @@ pub struct Inputs {
     pub ambiguous: u64,
     /// Files moved to the trash by executed (not undone) runs.
     pub trashed: u64,
+    /// Bytes of trashed files still present (space freed once the trash is emptied).
+    pub trashed_bytes: u64,
     /// Executed (not undone) import runs.
     pub runs: u64,
     /// Unix days (ts / 86400) with at least one executed run.
@@ -45,6 +47,8 @@ pub struct Kpis {
     pub unknown: u64,
     pub ambiguous: u64,
     pub trashed: u64,
+    /// Bytes of trashed files still present (space freed once the trash is emptied).
+    pub trashed_bytes: u64,
     pub runs: u64,
     pub systems: Vec<SystemProgress>,
     /// Region tag → games.
@@ -82,6 +86,7 @@ pub fn kpis(owned: &[Owned<'_>], systems: Vec<SystemProgress>, inp: &Inputs) -> 
         unknown: inp.unknown,
         ambiguous: inp.ambiguous,
         trashed: inp.trashed,
+        trashed_bytes: inp.trashed_bytes,
         runs: inp.runs,
         systems,
         streak: streak(&inp.run_days, inp.today),

@@ -6,6 +6,12 @@ import { stats } from "../state/gamify";
 
 const fmt = new Intl.NumberFormat("en-US");
 const pct = (a: number, b: number) => (b > 0 ? `${Math.floor((a / b) * 100)}%` : "–");
+const bytes = (n: number) => {
+  const u = ["B", "KB", "MB", "GB", "TB"];
+  let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return `${n.toFixed(i ? 1 : 0)} ${u[i]}`;
+};
 const top = (m: Record<string, number>, n: number) => Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, n);
 
 export function ProgressPanel() {
@@ -24,6 +30,7 @@ export function ProgressPanel() {
                 <div><div class="kpi">{pct(k().games, verified())}</div><p class="dim small">verified quota</p></div>
                 <div><div class="kpi">{k().streak}</div><p class="dim small">day streak</p></div>
                 <div><div class="kpi">{fmt.format(k().trashed)}</div><p class="dim small">files trashed</p></div>
+                <div><div class="kpi">{bytes(k().trashed_bytes)}</div><p class="dim small">space in trash</p></div>
               </div>
               <Segments value={l().xp - l().floor} max={l().next - l().floor} />
               <div class="mix">
