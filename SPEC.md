@@ -201,6 +201,8 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - M6: Playlists `.lpl` (v1.5, `core_path: DETECT`) nach `<library>/_playlists/<System>.lpl` (konfigurierbar).
 - M6: Journal = JSON der ausgeführten Ops inkl. angelegter Ordner und überschriebener Inhalte; `undo` revertiert
   den letzten Lauf. Ausführung stoppt beim ersten Fehler, Teilfortschritt wird trotzdem journalisiert.
+- M8: TBD-Queue: Rejected → Verdict `keep` (zusätzlich einsortieren) oder `discard` (Move nach `<library>/_trash/`,
+  undo-bar, nie endgültig gelöscht). Persistiert pro (System, Name); wirkt beim nächsten Plan.
 - Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
 
 ## 11. Offene Fragen

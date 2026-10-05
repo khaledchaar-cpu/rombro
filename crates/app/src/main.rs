@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod decide;
 mod import;
 mod library;
 
@@ -15,6 +16,8 @@ fn main() {
             import::plan_import,
             import::execute_plan,
             import::undo_last,
+            decide::resolve_ambiguous,
+            decide::set_verdict,
             library::library_list
         ])
         .run(tauri::generate_context!())

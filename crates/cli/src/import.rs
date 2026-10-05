@@ -170,6 +170,7 @@ fn decision(d: &Decision) -> String {
         }
         Decision::Rejected {
             path,
+            system: _,
             name,
             kept,
             reason,

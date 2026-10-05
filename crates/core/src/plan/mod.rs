@@ -110,6 +110,7 @@ pub enum Decision {
     /// Not picked by 1G1R; stays in place until the user decides (keep, delete, ...).
     Rejected {
         path: PathBuf,
+        system: String,
         name: String,
         /// The release picked instead (none if every release of the game is excluded).
         kept: Option<String>,

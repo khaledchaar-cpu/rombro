@@ -41,7 +41,21 @@ pub struct DecisionView {
     kind: &'static str,
     path: String,
     detail: String,
-    options: Vec<String>,
+    /// Ambiguous: candidates; tie: releases; rejected: the release itself.
+    options: Vec<Choice>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Choice {
+    system: String,
+    name: String,
+}
+
+fn choice(system: &str, name: &str) -> Choice {
+    Choice {
+        system: system.to_owned(),
+        name: name.to_owned(),
+    }
 }
 
 #[derive(Serialize)]
@@ -50,6 +64,7 @@ pub struct PlanView {
     placed: usize,
     unchanged: usize,
     quarantined: usize,
+    discarded: usize,
     ops: Vec<OpView>,
     decisions: Vec<DecisionView>,
 }
@@ -113,6 +128,7 @@ pub async fn plan_import(
         placed: p.placed,
         unchanged: p.unchanged,
         quarantined: p.quarantined,
+        discarded: p.discarded,
         ops: p.ops.iter().map(op_view).collect(),
         decisions: p.decisions.iter().map(decision_view).collect(),
     };
@@ -210,14 +226,18 @@ fn decision_view(d: &Decision) -> DecisionView {
             String::new(),
             candidates
                 .iter()
-                .map(|g| format!("[{}] {}", g.system, g.name))
+                .map(|g| choice(&g.system, &g.name))
                 .collect(),
         ),
-        Decision::Tie { system, releases } => {
-            ("tie", system.clone(), String::new(), releases.clone())
-        }
+        Decision::Tie { system, releases } => (
+            "tie",
+            system.clone(),
+            String::new(),
+            releases.iter().map(|r| choice(system, r)).collect(),
+        ),
         Decision::Rejected {
             path,
+            system,
             name,
             kept,
             reason,
@@ -228,7 +248,7 @@ fn decision_view(d: &Decision) -> DecisionView {
                 Some(k) => format!("{name}: {reason}; kept {k}"),
                 None => format!("{name}: excluded ({reason})"),
             },
-            Vec::new(),
+            vec![choice(system, name)],
         ),
         Decision::Skipped { path, reason } => ("skipped", s(path), reason.clone(), Vec::new()),
         Decision::Conflict { path, target } => (

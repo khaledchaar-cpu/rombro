@@ -69,6 +69,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 }
                 b.plan.decisions.push(Decision::Rejected {
                     path: it.files.primary().clone(),
+                    system: (*system).to_owned(),
                     name: g.name.clone(),
                     kept: kept.clone(),
                     reason: format!("{reason:?}"),

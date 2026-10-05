@@ -24,7 +24,7 @@ Import-Flow am 2026-10-05 vom User im echten Tauri-Fenster getestet: ok.
 
 ## Nächste Schritte (M8 Rest)
 1. ~~Versionskonflikt~~ erledigt: npm `plugin-dialog` auf ~2.7.3 gepinnt (Rust-Seite durch MSRV 1.85 auf 2.7 begrenzt).
-2. TBD-Queue-Aktionen in Plan-View: Ambiguous auflösen (`set_resolution` per IPC), Rejected behalten/löschen.
+2. ~~TBD-Queue-Aktionen~~ erledigt: IPC `resolve_ambiguous`, `set_verdict` (keep/discard, Tabelle `verdict`), Buttons + „Re-plan“ in Plan-View. **Manueller Test im Tauri-Fenster steht aus.** Tie-Auflösung in der GUI fehlt noch.
 3. Dashboard echte KPIs (Library-Zusammenfassung, letzter Journal-Lauf), Journal-Liste.
 4. Offen aus M6: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 
@@ -42,6 +42,7 @@ Import-Flow am 2026-10-05 vom User im echten Tauri-Fenster getestet: ok.
 - Tauri-Rust-Crate und `@tauri-apps/api` müssen gleiche Minor haben (aktuell 2.11) – sonst Fehler beim `tauri dev`.
 - `pnpm tauri` setzt `TAURI_APP_PATH=../crates/app`; Fortschritts-Events nur alle 64 Dateien.
 - App-IPC-Fehler sind Strings; Plan-DTOs (`OpView`/`DecisionView`) leben in `crates/app/src/import.rs`.
+- Verdicts gelten pro (system, name); Discard verschiebt immer (auch bei Copy-Modus) nach `<lib>/_trash/`, undo-bar.
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log

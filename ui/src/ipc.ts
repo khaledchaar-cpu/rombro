@@ -48,13 +48,17 @@ export interface DecisionView {
   kind: "ambiguous" | "tie" | "rejected" | "skipped" | "conflict";
   path: string;
   detail: string;
-  options: string[];
+  /** ambiguous: candidates · tie: releases · rejected: the release itself */
+  options: Choice[];
 }
+export interface Choice { system: string; name: string }
+export type Verdict = "keep" | "discard";
 export interface PlanView {
   items: number;
   placed: number;
   unchanged: number;
   quarantined: number;
+  discarded: number;
   ops: OpView[];
   decisions: DecisionView[];
 }
@@ -68,10 +72,10 @@ function mockPlan(library: string): PlanView {
     to: `${library}/Nintendo - Game Boy/Game ${i} (Europe).zip`,
   }));
   return {
-    items: 2100, placed: 1960, unchanged: 100, quarantined: 12, ops,
+    items: 2100, placed: 1960, unchanged: 100, quarantined: 12, discarded: 0, ops,
     decisions: [
-      { kind: "ambiguous", path: "/inbox/x.bin", detail: "", options: ["[Sega - Saturn] A", "[Sega - Saturn] B"] },
-      { kind: "rejected", path: "/inbox/Tetris (Japan).gb", detail: "Tetris (Japan): region; kept Tetris (World)", options: [] },
+      { kind: "ambiguous", path: "/inbox/x.bin", detail: "", options: [{ system: "Sega - Saturn", name: "A" }, { system: "Sega - Saturn", name: "B" }] },
+      { kind: "rejected", path: "/inbox/Tetris (Japan).gb", detail: "Tetris (Japan): region; kept Tetris (World)", options: [{ system: "Nintendo - Game Boy", name: "Tetris (Japan)" }] },
       { kind: "conflict", path: "/inbox/y.gb", detail: "target exists: /lib/y.gb", options: [] },
     ],
   };
@@ -97,6 +101,17 @@ export async function executePlan(): Promise<ExecResult> {
 export async function undoLast(): Promise<number> {
   if (!inTauri) return 0;
   return invoke<number>("undo_last");
+}
+
+export async function resolveAmbiguous(path: string, c: Choice): Promise<void> {
+  if (!inTauri) return;
+  return invoke("resolve_ambiguous", { path, system: c.system, name: c.name });
+}
+
+/** `null` clears a stored verdict. */
+export async function setVerdict(c: Choice, verdict: Verdict | null): Promise<void> {
+  if (!inTauri) return;
+  return invoke("set_verdict", { system: c.system, name: c.name, verdict });
 }
 
 export function onImportProgress(cb: (p: ImportProgress) => void): Promise<UnlistenFn> {

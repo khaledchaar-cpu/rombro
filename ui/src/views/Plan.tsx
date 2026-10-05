@@ -2,7 +2,7 @@ import { createVirtualizer } from "@tanstack/solid-virtual";
 import { createMemo, createSignal, For, Show } from "solid-js";
 import Panel from "../components/Panel";
 import type { DecisionView } from "../ipc";
-import { busy, execute, library, plan, status, undo } from "../state/importStore";
+import { busy, decided, execute, judge, library, pick, plan, replan, status, undo } from "../state/importStore";
 
 const ROW_H = 26;
 
@@ -41,6 +41,32 @@ function OpList() {
   );
 }
 
+function Actions(props: { d: DecisionView }) {
+  const d = props.d;
+  if (d.kind === "ambiguous")
+    return (
+      <div class="row wrap">
+        <For each={d.options}>
+          {(c) => (
+            <button class="btn ghost small" disabled={busy()} onClick={() => pick(d, c)} title={c.system}>
+              {c.name}
+            </button>
+          )}
+        </For>
+      </div>
+    );
+  if (d.kind === "rejected" && d.options.length)
+    return (
+      <div class="row">
+        <button class="btn ghost small" disabled={busy()} onClick={() => judge(d, "keep")}>Keep</button>
+        <button class="btn ghost small" disabled={busy()} onClick={() => judge(d, "discard")}>Trash</button>
+      </div>
+    );
+  if (d.kind === "tie")
+    return <For each={d.options}>{(c) => <span class="dim small mono">? {c.name}</span>}</For>;
+  return null;
+}
+
 const KINDS: DecisionView["kind"][] = ["ambiguous", "tie", "conflict", "rejected", "skipped"];
 
 function Decisions() {
@@ -75,7 +101,9 @@ function Decisions() {
               <Show when={d.detail}>
                 <span class="dim small">{d.detail}</span>
               </Show>
-              <For each={d.options}>{(o) => <span class="dim small mono">? {o}</span>}</For>
+              <Show when={decided().get(d.path)} fallback={<Actions d={d} />}>
+                {(label) => <span class="ok small">{label()}</span>}
+              </Show>
             </li>
           )}
         </For>
@@ -107,11 +135,19 @@ export default function Plan() {
                 <div><div class="kpi">{p().placed}</div><span class="dim">to place</span></div>
                 <div><div class="kpi">{p().unchanged}</div><span class="dim">unchanged</span></div>
                 <div><div class="kpi">{p().quarantined}</div><span class="dim">quarantine</span></div>
+                <Show when={p().discarded}>
+                  <div><div class="kpi">{p().discarded}</div><span class="dim">to trash</span></div>
+                </Show>
                 <div><div class="kpi">{p().decisions.length}</div><span class="dim">need attention</span></div>
               </div>
               <div class="row">
                 <span class="dim small">dry run · {p().items} items scanned</span>
                 <span class="spacer" />
+                <Show when={decided().size}>
+                  <button class="btn ghost" disabled={busy()} onClick={replan}>
+                    Re-plan ({decided().size} decided)
+                  </button>
+                </Show>
                 <button class="btn" disabled={busy() || !p().ops.length} onClick={execute}>
                   {busy() ? "Executing" : "Execute"}
                 </button>
