@@ -157,7 +157,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 | M6 | Planner & Import | Plan/Dry-Run/Execute, Journal, Undo, Quarantäne, Audit, `.lpl`-Export | `rombro import --dry-run` + Undo getestet |
 | M7 | App-Shell | Tauri 2 + SolidJS-Gerüst, Design-Tokens, Layout, Command-Palette, IPC | App startet auf Linux mit Dashboard-Dummy |
 | M8 | GUI Kern | Dashboard, Inbox-View (Streaming), Plan-Diff, Library-Tabelle | Import-Flow komplett per GUI |
-| M9 | GUI Feinschliff | 1G1R-Regeln-Editor, Settings, Thumbnails, Effekte, Light-Theme | UX-Review bestanden |
+| M9 | GUI Feinschliff | Persistenter Library-Index (§10 M9), 1G1R-Regeln-Editor, Settings, Thumbnails, Effekte, Light-Theme | UX-Review bestanden |
 | M10 | Gamification | KPIs, Vollständigkeit, Achievements, XP | Dashboard zeigt KPIs |
 | M11 | Release | Packaging (AppImage/deb, dmg, msi), Pfad-Erkennung je OS, Doku | Builds für 3 OS via CI |
 
@@ -206,6 +206,14 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   einzige irreversible Aktion; ein Undo eines Laufs, dessen Dateien so gelöscht wurden, schlägt fehl). Persistiert pro (System, Name); wirkt beim nächsten Plan.
 - M8: 1G1R-Gleichstand → Verdict `prefer` auf ein Release (Name ohne Disc-Tag); das wird Pick, die übrigen
   landen als Rejected in der TBD-Queue (dort Keep/Trash).
+- M9 (User, 2026-10-05): Die Library ist eine von RomBro **kontinuierlich gemanagte** Sammlung und muss beim
+  App-Start sofort da sein (kein manuelles Laden). Umsetzung:
+  1. Library-Pfad als Einstellung in der DB (nicht localStorage); Schema erlaubt später mehrere Libraries.
+  2. Persistenter Index (Tabelle `file`, vgl. §Schema): wird von Execute und Undo direkt fortgeschrieben;
+     Library-View und Dashboard lesen nur aus der DB.
+  3. Rescan (Button, optional beim Start), inkrementell über Größe/mtime. Von außen hinzugefügte/umbenannte
+     Dateien werden wie Inbox-Items geplant; verschwundene Dateien fliegen aus dem Index.
+  4. Planner nutzt den Index statt die Library jedes Mal neu zu hashen.
 - Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
 
 ## 11. Offene Fragen

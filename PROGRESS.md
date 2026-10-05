@@ -22,9 +22,12 @@ Dashboard (Library-Zusammenfassung, offene Entscheidungen + Review, Trash mit en
 Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohne ausführlichen Einzeltest.
 
 ## Nächste Schritte (M9 GUI-Feinschliff)
-1. Manuelle Sichtprüfung der neuen Dashboard-Panels im Tauri-Fenster; Layout `.rows` mit 3 Spalten (Recent runs) prüfen.
-2. M9-Umfang aus SPEC lesen und planen.
-3. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
+1. **Zuerst: persistenter Library-Index** (SPEC §10 „M9 (User, 2026-10-05)“): Library-Pfad als DB-Setting,
+   Tabelle `file` als Index, Execute/Undo schreiben ihn fort, Library-View/Dashboard sofort aus der DB,
+   inkrementeller Rescan (Größe/mtime), Fremddateien wie Inbox behandeln, Planner nutzt Index.
+2. Manuelle Sichtprüfung der neuen Dashboard-Panels im Tauri-Fenster; Layout `.rows` mit 3 Spalten (Recent runs) prüfen.
+3. Restlichen M9-Umfang aus SPEC lesen und planen.
+4. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 
 ## Stolpersteine
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
