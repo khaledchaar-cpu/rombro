@@ -32,7 +32,11 @@ export async function refreshLibrary() {
 
 /** Restores the stored library path and loads it. */
 export async function initLibrary() {
-  const stored = await libraryGet().catch(() => null);
+  let stored = await libraryGet().catch(() => null);
+  if (!stored) {
+    // one-time migration: the path used to live in localStorage
+    try { stored = localStorage.getItem("rombro.library"); } catch { /* storage unavailable */ }
+  }
   if (stored && !library()) setLibrary(stored);
   await refreshLibrary();
 }
