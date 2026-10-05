@@ -57,7 +57,7 @@ fn tree(root: &Path) -> Vec<String> {
 }
 
 #[test]
-fn extracts_members_and_trashes_emptied_archive() {
+fn extracts_known_members_and_quarantines_rest() {
     let tmp = TempDir::new().unwrap();
     let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
     let set = inbox.join("set.zip");
@@ -70,11 +70,7 @@ fn extracts_members_and_trashes_emptied_archive() {
     assert!(ex.error.is_none());
     assert_eq!(
         tree(&lib),
-        [
-            "Nintendo - SNES/Mario (Europe).sfc",
-            "_quarantine/x.bin",
-            "_trash/set.zip"
-        ]
+        ["Nintendo - SNES/Mario (Europe).sfc", "_quarantine/set.zip"]
     );
     assert_eq!(
         fs::read(lib.join("Nintendo - SNES/Mario (Europe).sfc")).unwrap(),
@@ -83,6 +79,32 @@ fn extracts_members_and_trashes_emptied_archive() {
     assert!(undo(&ex.done).is_empty());
     assert_eq!(tree(&inbox), ["set.zip"]);
     assert!(tree(&lib).is_empty());
+}
+
+#[test]
+fn quarantines_unknown_archive_whole_and_trashes_emptied_one() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let (arcade, snes) = (inbox.join("arcade.zip"), inbox.join("snes.zip"));
+    zip(&arcade, &["a.prom", "b.rom"]);
+    zip(&snes, &["mario.sfc"]);
+    let items = [
+        member(&arcade, "a.prom", Ident::Unknown),
+        member(&arcade, "b.rom", Ident::Unknown),
+        member(&snes, "mario.sfc", game("Mario (Europe)")),
+    ];
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    assert!(plan.decisions.is_empty());
+    assert_eq!(plan.quarantined, 1);
+    assert!(execute(&plan.ops).error.is_none());
+    assert_eq!(
+        tree(&lib),
+        [
+            "Nintendo - SNES/Mario (Europe).sfc",
+            "_quarantine/arcade.zip",
+            "_trash/snes.zip"
+        ]
+    );
 }
 
 #[test]

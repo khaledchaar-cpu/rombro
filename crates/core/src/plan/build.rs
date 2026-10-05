@@ -40,6 +40,8 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 path: it.files.primary().clone(),
                 candidates: c.clone(),
             }),
+            // Unknown members stay packed; the whole archive is quarantined at the end.
+            Ident::Unknown if it.files.archive().is_some() => {}
             Ident::Unknown => {
                 b.why = "unknown: no database match".into();
                 b.quarantine(it)
@@ -124,7 +126,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             }
         }
     }
-    b.trash_emptied_archives(&items);
+    b.finish_archives(&items);
     b.playlists();
     b.plan
 }
@@ -180,7 +182,7 @@ impl Builder<'_> {
             });
     }
 
-    fn quarantine(&mut self, it: &Item) {
+    pub(super) fn quarantine(&mut self, it: &Item) {
         let dir = self.library.join(QUARANTINE_DIR);
         let ops = quarantine_sources(&it.files)
             .iter()
