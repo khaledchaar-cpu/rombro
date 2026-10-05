@@ -3,7 +3,7 @@ import { createMemo, createSignal, For, Show } from "solid-js";
 import Panel from "../components/Panel";
 import ScanProgress from "../components/ScanProgress";
 import type { DecisionView } from "../ipc";
-import { busy, decided, execute, judge, library, pick, plan, replan, status, undo } from "../state/importStore";
+import { busy, decided, decisionKey, execute, judge, library, pick, plan, prefer, replan, status, undo } from "../state/importStore";
 
 const ROW_H = 26;
 
@@ -66,7 +66,17 @@ function Actions(props: { d: DecisionView }) {
       </div>
     );
   if (d.kind === "tie")
-    return <For each={d.options}>{(c) => <span class="dim small mono">? {c.name}</span>}</For>;
+    return (
+      <div class="row wrap">
+        <For each={d.options}>
+          {(c) => (
+            <button class="btn ghost small" disabled={busy()} onClick={() => prefer(d, c)}>
+              {c.name}
+            </button>
+          )}
+        </For>
+      </div>
+    );
   return null;
 }
 
@@ -75,7 +85,7 @@ const KINDS: DecisionView["kind"][] = ["ambiguous", "tie", "conflict", "rejected
 function Decisions() {
   const [kind, setKind] = createSignal<DecisionView["kind"] | "all">("all");
   // Decided items drop out so the next one moves up under the cursor.
-  const all = () => (plan()?.decisions ?? []).filter((d) => !decided().has(d.path));
+  const all = () => (plan()?.decisions ?? []).filter((d) => !decided().has(decisionKey(d)));
   const counts = createMemo(() => {
     const c = new Map<string, number>();
     for (const d of all()) c.set(d.kind, (c.get(d.kind) ?? 0) + 1);

@@ -94,6 +94,8 @@ pub enum Verdict {
     Keep,
     /// Move it to `<library>/_trash` (undoable).
     Discard,
+    /// Resolves a 1G1R tie in favour of this release (keyed by release name, without disc tag).
+    Prefer,
 }
 
 /// Something the planner left untouched and the user should look at.
@@ -103,7 +105,7 @@ pub enum Decision {
         path: PathBuf,
         candidates: Vec<Game>,
     },
-    /// 1G1R tie: no rule decides between these releases.
+    /// 1G1R tie: no rule decides between these releases (release names, discs merged).
     Tie {
         system: String,
         releases: Vec<String>,

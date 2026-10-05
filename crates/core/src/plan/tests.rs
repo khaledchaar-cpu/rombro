@@ -265,3 +265,32 @@ fn keep_is_ignored_for_duplicates() {
     assert!(plan.decisions.is_empty());
     assert_eq!((plan.placed, plan.discarded), (1, 1));
 }
+
+#[test]
+fn prefer_resolves_tie_and_rejects_the_rest() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let items = [
+        item(
+            file(&inbox, "1.sfc", "1"),
+            game("Game (USA) (Capcom Town)"),
+            false,
+        ),
+        item(file(&inbox, "2.sfc", "2"), game("Game (USA)"), false),
+    ];
+    let mut o = opts(Mode::Move);
+    let key = |n: &str| (SYS.to_owned(), n.to_owned());
+    o.verdicts
+        .insert(key("Game (USA) (Capcom Town)"), Verdict::Prefer);
+    let plan = build(&items, &lib, &o);
+    assert_eq!(plan.placed, 1);
+    assert!(
+        matches!(&plan.decisions[..], [Decision::Rejected { name, kept: Some(k), .. }] if name == "Game (USA)" && k == "Game (USA) (Capcom Town)"),
+        "{:?}",
+        plan.decisions
+    );
+    o.verdicts.insert(key("Game (USA)"), Verdict::Discard);
+    let plan = build(&items, &lib, &o);
+    assert!(plan.decisions.is_empty());
+    assert_eq!((plan.placed, plan.discarded), (1, 1));
+}

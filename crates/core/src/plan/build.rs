@@ -42,19 +42,48 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     }
     for (system, list) in &known {
         for gp in g1r::select(list, |(_, g)| &g.name, &opts.rules) {
-            if gp.needs_decision {
-                let mut releases: Vec<String> =
-                    gp.picked.iter().map(|(_, g)| g.name.clone()).collect();
-                releases.extend(gp.rejected.iter().map(|((_, g), _)| g.name.clone()));
-                b.plan.decisions.push(Decision::Tie {
-                    system: (*system).to_owned(),
-                    releases,
+            let tie = gp.needs_decision;
+            let (mut picked, mut rejected) = (gp.picked, gp.rejected);
+            if tie {
+                let rel = |g: &Game| naming::release_name(&g.name);
+                let mut releases: Vec<String> = Vec::new();
+                for g in picked
+                    .iter()
+                    .map(|m| m.1)
+                    .chain(rejected.iter().map(|(m, _)| m.1))
+                {
+                    let r = rel(g);
+                    if !releases.contains(&r) {
+                        releases.push(r);
+                    }
+                }
+                let preferred = releases.iter().find(|r| {
+                    opts.verdicts.get(&((*system).to_owned(), (*r).clone()))
+                        == Some(&Verdict::Prefer)
                 });
-                continue;
+                let Some(preferred) = preferred.cloned() else {
+                    b.plan.decisions.push(Decision::Tie {
+                        system: (*system).to_owned(),
+                        releases,
+                    });
+                    continue;
+                };
+                let all: Vec<_> = picked
+                    .drain(..)
+                    .map(|m| (m, g1r::Reason::TieBreak))
+                    .chain(rejected.drain(..))
+                    .collect();
+                for (m, reason) in all {
+                    if rel(m.1) == preferred {
+                        picked.push(m);
+                    } else {
+                        rejected.push((m, reason));
+                    }
+                }
             }
-            b.release(system, &gp.picked);
-            let kept = gp.picked.first().map(|(_, g)| g.name.clone());
-            for ((it, g), reason) in &gp.rejected {
+            b.release(system, &picked);
+            let kept = picked.first().map(|(_, g)| g.name.clone());
+            for ((it, g), reason) in &rejected {
                 let key = ((*system).to_owned(), g.name.clone());
                 match opts.verdicts.get(&key) {
                     // A duplicate would claim the pick's own target; only discarding makes sense.

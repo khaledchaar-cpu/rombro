@@ -10,6 +10,7 @@ use std::path::PathBuf;
 pub enum VerdictArg {
     Keep,
     Discard,
+    Prefer,
 }
 
 /// Stores the user's pick (system, name) for the ambiguous file at `path`.
@@ -39,6 +40,7 @@ pub async fn set_verdict(
     let v = verdict.map(|v| match v {
         VerdictArg::Keep => Verdict::Keep,
         VerdictArg::Discard => Verdict::Discard,
+        VerdictArg::Prefer => Verdict::Prefer,
     });
     let (store, _) = open_store()?;
     store.set_verdict(&system, &name, v).map_err(err)

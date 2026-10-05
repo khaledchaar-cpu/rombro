@@ -204,6 +204,8 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - M8: TBD-Queue: Rejected → Verdict `keep` (zusätzlich einsortieren) oder `discard` (Move nach `<library>/_trash/`,
   undo-bar). Endgültig gelöscht wird nur per „Empty trash“ im Dashboard (2-Klick-Bestätigung,
   einzige irreversible Aktion; ein Undo eines Laufs, dessen Dateien so gelöscht wurden, schlägt fehl). Persistiert pro (System, Name); wirkt beim nächsten Plan.
+- M8: 1G1R-Gleichstand → Verdict `prefer` auf ein Release (Name ohne Disc-Tag); das wird Pick, die übrigen
+  landen als Rejected in der TBD-Queue (dort Keep/Trash).
 - Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
 
 ## 11. Offene Fragen

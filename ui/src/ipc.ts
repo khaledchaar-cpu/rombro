@@ -54,7 +54,7 @@ export interface DecisionView {
   can_keep: boolean;
 }
 export interface Choice { system: string; name: string }
-export type Verdict = "keep" | "discard";
+export type Verdict = "keep" | "discard" | "prefer";
 export interface PlanView {
   items: number;
   placed: number;

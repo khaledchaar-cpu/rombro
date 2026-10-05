@@ -77,6 +77,7 @@ impl Store {
                 let v = match v {
                     Verdict::Keep => "keep",
                     Verdict::Discard => "discard",
+                    Verdict::Prefer => "prefer",
                 };
                 self.conn.execute(
                     "INSERT OR REPLACE INTO verdict (system, name, verdict) VALUES (?1, ?2, ?3)",

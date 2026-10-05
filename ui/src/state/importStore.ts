@@ -18,7 +18,11 @@ export const [inbox, setInbox] = createSignal("");
 export const [mode, setMode] = createSignal<Mode>("move");
 export const [plan, setPlan] = createSignal<PlanView>();
 export const [busy, setBusy] = createSignal(false);
-/** Decisions taken in the current plan (path → label); applied on the next plan. */
+/** Unique per decision (a tie's `path` is its system, shared by all ties of that system). */
+export const decisionKey = (d: DecisionView) =>
+  d.kind === "tie" ? `tie:${d.path}:${d.options.map((o) => o.name).join("|")}` : `${d.kind}:${d.path}`;
+
+/** Decisions taken in the current plan (key → label); applied on the next plan. */
 export const [decided, setDecided] = createSignal<Map<string, string>>(new Map());
 let lastWithInbox = true;
 
@@ -82,18 +86,25 @@ export const undo = () =>
 /** Re-plans with the same inputs so recorded decisions take effect. */
 export const replan = () => buildPlan(lastWithInbox);
 
-const mark = (path: string, label: string) => setDecided((m) => new Map(m).set(path, label));
+const mark = (d: DecisionView, label: string) => setDecided((m) => new Map(m).set(decisionKey(d), label));
 
 /** Picks a candidate for an ambiguous match. */
 export const pick = (d: DecisionView, c: Choice) =>
   guard(async () => {
     await resolveAmbiguous(d.path, c);
-    mark(d.path, `→ ${c.name}`);
+    mark(d, `→ ${c.name}`);
   });
 
 /** Keeps or discards a release 1G1R rejected. */
 export const judge = (d: DecisionView, v: Verdict) =>
   guard(async () => {
     await setVerdict(d.options[0], v);
-    mark(d.path, v === "keep" ? "→ keep" : "→ trash");
+    mark(d, `→ ${v}`);
+  });
+
+/** Resolves a 1G1R tie in favour of release `c`. */
+export const prefer = (d: DecisionView, c: Choice) =>
+  guard(async () => {
+    await setVerdict(c, "prefer");
+    mark(d, `→ ${c.name}`);
   });
