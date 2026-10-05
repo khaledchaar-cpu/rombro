@@ -23,7 +23,7 @@ and drop everything into a clean, RetroArch-ready library – with undo for ever
 - 🕹️ **Arcade aware** – FBNeo and MAME romsets keep their short names, CHDs travel along, BIOS sets land where the cores look.
 - 📦 **Safe import** – move, copy, hardlink or reflink; every run is a plan you review first, unknown files go to quarantine, nothing is ever deleted.
 - ↩️ **Undo everything** – each run is journaled and can be rolled back.
-- 🎮 **RetroArch-ready** – playlists and thumbnails are written for you.
+- 🎮 **RetroArch-ready** – one folder per system plus playlists; box art from the libretro thumbnail server in the app.
 - 🏆 **Gamification** – XP, levels, streaks, completeness per system, franchise goals and achievements.
 - ⌨️ **Keyboard first** – command palette (`Ctrl K`) and a full CLI for scripting.
 
