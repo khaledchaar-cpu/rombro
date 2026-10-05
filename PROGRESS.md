@@ -27,10 +27,11 @@ Completeness-Layout. Echte CHDs (PSX) und Amiga-`.lha` erkannt; Import auf Testo
 1. Sichtprüfung: MAME-BIOS liegt jetzt neben den Romsets – in RetroArch mit Neo-Geo-Set gegenprüfen.
 2. Sichtprüfung Rest: Gamification-Panels, Effects off.
 3. Echte 7z mit cue/bin und Multi-ROM-Zips (Konsole) testen.
-4. Erster Release per Tag `v*` (unsigniert – keine Developer-Accounts; Signierung entfällt bis auf Weiteres).
+4. ~~Erster Release~~ v0.1.0 veröffentlicht (unsigniert). Release-Notes je Version unter `docs/releases/`.
 5. v2 Launcher (SPEC §6) – **erst ganz zum Schluss** (User-Wunsch).
 
 ## Stolpersteine
+- Release: CI erstellt nur einen Draft; Veröffentlichen (`gh release edit --draft=false`) macht der User. CLI-Assets heißen `rombro-<os>-<arch>`.
 - Arcade-RDB-Einträge (FBNeo/MAME) hashen das **ganze Zip** → `ScanReport.archives`; Treffer werden `Files::Set` (Kurzname, kein 1G1R, CHDs aus `<set>/`), BIOS → `Ident::Bios` → FBNeo `_bios/fbneo/`, MAME-Cores neben die Sets (`arcade::bios_dir`).
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
 - rusqlite braucht Feature `fallible_uint` für u64.
@@ -66,6 +67,7 @@ Completeness-Layout. Echte CHDs (PSX) und Amiga-`.lha` erkannt; Import auf Testo
 - Kein `chdman` lokal → Test baut unkomprimierte CHD v5 selbst (`crates/core/tests/chd.rs`).
 
 ## Log
+- 2026-10-05: v0.1.0 veröffentlicht; README mit Screenshots (`docs/screenshots/`, Mock-Daten via Headless-Chrome/CDP).
 - 2026-10-05: Öffentliches Repo github.com/khaledchaar-cpu/rombro, CI grün (Linux/macOS/Windows). Commit-Mail = GitHub-noreply.
 - 2026-10-04: Projekt-Dokumente erstellt, RDB-Format verifiziert (siehe SPEC §3).
 - 2026-10-04: M0 Bootstrap abgeschlossen.
