@@ -405,3 +405,27 @@ fn file_index_follows_scan_execute_and_undo() {
     store.save_scan(&inbox, &rombro_core::scan(&inbox)).unwrap();
     assert!(store.hash_cache(&inbox).unwrap().0.is_empty());
 }
+
+#[test]
+fn gamify_completeness_meta_and_persisted_unlocks() {
+    let dir = tempfile::tempdir().unwrap();
+    fixture(dir.path());
+    let mut s = Store::open_in_memory().unwrap();
+    s.sync_rdbs(dir.path()).unwrap();
+    let owned = [("Nintendo - SNES".to_string(), "Foo (USA)".to_string())];
+    let st = s.gamify(&owned, 0, 0, 86_400 * 10).unwrap();
+    let snes = &st.kpis.systems[0];
+    assert_eq!((snes.owned, snes.total), (1, 2));
+    assert_eq!(st.kpis.genres["Action"], 1);
+    assert!(st.new.contains(&"games-1".to_string()));
+    assert!(st.new.contains(&"clean-sweep".to_string()));
+    // unlocks persist even when the condition no longer holds
+    let st = s.gamify(&owned, 3, 0, 86_400 * 11).unwrap();
+    assert!(st.new.is_empty());
+    let clean = st
+        .achievements
+        .iter()
+        .find(|(a, _)| a.id == "clean-sweep")
+        .unwrap();
+    assert_eq!((clean.0.unlocked, clean.1), (true, Some(86_400 * 10)));
+}

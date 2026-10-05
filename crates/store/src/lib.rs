@@ -3,6 +3,7 @@
 mod catalog;
 mod disc;
 mod files;
+mod gamify;
 mod identify;
 mod import;
 mod journal;
@@ -13,6 +14,7 @@ mod schema;
 mod tests;
 
 pub use disc::DiscMatch;
+pub use gamify::Stats;
 pub use identify::{Match, candidates};
 pub use import::SyncReport;
 pub use journal::JournalEntry;

@@ -62,6 +62,8 @@ const MIGRATIONS: &[&str] = &[
     );",
     // v5: when a file entered its place (unix seconds); NULL for rows indexed before v5
     "ALTER TABLE file ADD COLUMN added INTEGER;",
+    // v6: unlocked achievements (unix seconds)
+    "CREATE TABLE achievement (id TEXT PRIMARY KEY, unlocked_at INTEGER NOT NULL);",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {
