@@ -23,6 +23,8 @@ fn prefix(root: &Path) -> String {
     s
 }
 
+const RULES_KEY: &str = "rules";
+
 fn now() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -45,6 +47,19 @@ impl Store {
             params![name, value],
         )?;
         Ok(())
+    }
+
+    /// Stored 1G1R rules (setting `rules`, JSON), or the defaults when none or unreadable.
+    pub fn rules(&self) -> Result<rombro_core::g1r::Rules> {
+        Ok(self
+            .setting(RULES_KEY)?
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default())
+    }
+
+    pub fn set_rules(&self, rules: &rombro_core::g1r::Rules) -> Result<()> {
+        let json = serde_json::to_string(rules).unwrap_or_default();
+        self.set_setting(RULES_KEY, &json)
     }
 
     pub fn library(&self) -> Result<Option<PathBuf>> {

@@ -1,6 +1,6 @@
 use crate::db::open_store;
 use anyhow::Result;
-use rombro_core::g1r::{Rules, select};
+use rombro_core::g1r::select;
 use std::path::PathBuf;
 
 /// Prints the 1G1R selection for one system; with a filter, every candidate and reason.
@@ -8,7 +8,7 @@ pub fn run(system: &str, filter: Option<&str>, db: Option<PathBuf>) -> Result<()
     let store = open_store(db)?;
     let mut entries = store.by_system(system)?;
     entries.retain(|r| !r.name.is_empty());
-    let picks = select(&entries, |r| &r.name, &Rules::default());
+    let picks = select(&entries, |r| &r.name, &store.rules()?);
     let filter = filter.map(str::to_lowercase);
     let (mut games, mut none, mut ties) = (0, 0, 0);
     for g in &picks {

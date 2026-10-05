@@ -29,7 +29,7 @@ pub fn run(a: Args) -> Result<()> {
     let ts = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
     let opts = Options {
         mode: a.mode,
-        rules: Default::default(),
+        rules: store.rules()?,
         playlists: (!a.no_playlists)
             .then(|| a.playlists.unwrap_or_else(|| library.join(PLAYLIST_DIR))),
         verdicts: store.verdicts()?,
