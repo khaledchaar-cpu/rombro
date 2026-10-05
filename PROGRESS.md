@@ -11,7 +11,7 @@
 | M6 Planner & Import | ✅ done |
 | M7 App-Shell | ✅ done |
 | M8 GUI Kern | ✅ done |
-| M9 GUI Feinschliff | – |
+| M9 GUI Feinschliff | ✅ done |
 | M10 Gamification | – |
 | M11 Release | – |
 
@@ -37,8 +37,7 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
    Cache `~/.cache/rombro/thumbnails`, 404 → `.miss`-Marker, Bytes als `ipc::Response`), Library-Zeile anklicken →
    Detail-Panel (Boxart/Title/Snap + Metadaten). Setting `thumbs_online` (Settings-Checkbox, Default an) + Quellenhinweis. Offen: Sichtprüfung im Tauri-Fenster.
    ✅ Light-Theme + Effekte-Schalter: Settings „Appearance“ + Command-Palette, pro Gerät in localStorage
-   (`state/appearance.ts`), Tokens `:root[data-theme="light"]`. Offen: Sichtprüfung Light-Theme im Tauri-Fenster
-   (hartkodierte Farben in CSS prüfen), danach UX-Review → M9 abschließen.
+   (`state/appearance.ts`), Tokens `:root[data-theme="light"]`. Vom User abgenommen (UX-Review bestanden).
 5. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 
 ## Stolpersteine
@@ -76,3 +75,4 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
 - 2026-10-05: M6 Planner & Import abgeschlossen.
 - 2026-10-05: M7 App-Shell abgeschlossen.
 - 2026-10-05: M8 GUI Kern abgeschlossen.
+- 2026-10-05: M9 GUI Feinschliff abgeschlossen.
