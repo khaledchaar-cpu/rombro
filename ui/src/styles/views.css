@@ -56,3 +56,15 @@
   .ltable .lrow { grid-template-columns: 72px minmax(0, 1fr); }
   .ltable .lrow > :nth-child(2), .ltable .lrow > :nth-child(4) { display: none; }
 }
+
+.filters {
+  display: grid; gap: var(--sp-2);
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+}
+.filters select.field { cursor: pointer; }
+.chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
+.chip { background: none; cursor: pointer; opacity: 0.5; padding: 2px var(--sp-2); }
+.chip.on { opacity: 1; background: color-mix(in srgb, currentColor 15%, transparent); }
+.chip:disabled { opacity: 0.2; cursor: default; }
+@media (max-width: 640px) { .filters { grid-template-columns: 1fr; } }
+.filters option { background: var(--bg-sunken); color: var(--text); }

@@ -13,6 +13,28 @@ pub struct Row {
     /// `known`, `ambiguous`, `unknown` or `skip`.
     state: &'static str,
     files: usize,
+    /// Region tags parsed from the name (e.g. `Europe`, `USA`).
+    regions: Vec<String>,
+    /// When the file arrived at its current place (unix seconds; inode change time on Unix).
+    added: i64,
+}
+
+fn added(p: &std::path::Path) -> i64 {
+    let Ok(m) = std::fs::metadata(p) else {
+        return 0;
+    };
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        m.ctime()
+    }
+    #[cfg(not(unix))]
+    {
+        m.modified()
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map_or(0, |d| d.as_secs() as i64)
+    }
 }
 
 /// Last used paths and import mode, restored at app start.
@@ -80,7 +102,14 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
                     Ident::Unknown => ("unknown", String::new(), String::new()),
                     Ident::Skip(r) => ("skip", String::new(), r),
                 };
+                let regions = rombro_core::naming::parse(&name)
+                    .regions
+                    .into_iter()
+                    .map(str::to_owned)
+                    .collect();
                 Row {
+                    added: added(p),
+                    regions,
                     path,
                     system,
                     name,

@@ -3,6 +3,7 @@ import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 import DirField from "../components/DirField";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
+import { createLibraryFilter } from "./LibraryFilters";
 import { onScanProgress } from "../ipc";
 import {
   library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary, setLibrary,
@@ -18,18 +19,15 @@ const COLS: { key: Key; label: string }[] = [
 ];
 
 export default function Library() {
-  const [query, setQuery] = createSignal("");
+  const filter = createLibraryFilter(rows);
   const [sort, setSort] = createSignal<{ key: Key; asc: boolean }>({ key: "system", asc: true });
   const [progress, setProgress] = createSignal({ done: 0, total: 0 });
   const unlisten = onScanProgress(setProgress);
   onCleanup(() => void unlisten.then((f) => f()));
 
   const view = createMemo(() => {
-    const q = query().toLowerCase();
     const { key, asc } = sort();
-    const f = q
-      ? rows().filter((r) => r.name.toLowerCase().includes(q) || r.path.toLowerCase().includes(q) || r.system.toLowerCase().includes(q))
-      : [...rows()];
+    const f = [...filter.filtered()];
     return f.sort((a, b) => (asc ? 1 : -1) * (a[key].localeCompare(b[key]) || a.name.localeCompare(b.name)));
   });
 
@@ -48,11 +46,11 @@ export default function Library() {
       <Panel title="Library" class="wide">
         <DirField label="Library" value={library()} onChange={(v) => (setLibrary(v), void refreshLibrary())} />
         <div class="row">
-          <input class="field" placeholder="Filter…" value={query()} onInput={(e) => setQuery(e.currentTarget.value)} />
           <button class="btn" disabled={busy() || !library()} onClick={refreshLibrary}>
             {busy() ? "Scanning" : "Rescan"}
           </button>
         </div>
+        <filter.Bar />
         <Show when={busy()}>
           <Segments value={progress().done} max={progress().total} />
         </Show>

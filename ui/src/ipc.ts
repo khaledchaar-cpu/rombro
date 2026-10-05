@@ -125,6 +125,9 @@ export function onImportProgress(cb: (p: ImportProgress) => void): Promise<Unlis
 }
 
 export interface LibraryRow {
+  regions: string[];
+  /** unix seconds */
+  added: number;
   path: string;
   system: string;
   name: string;
@@ -148,6 +151,8 @@ export async function libraryList(library?: string): Promise<LibraryRow[]> {
       name: `Game ${i} (Europe)`,
       state: i % 97 ? "known" : "unknown",
       files: 1,
+      regions: i % 3 ? ["Europe"] : ["USA", "Japan"],
+      added: Date.now() / 1000 - i * 3600,
     }));
   }
   return invoke<LibraryRow[]>("library_list", { library });
