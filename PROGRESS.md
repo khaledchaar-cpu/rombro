@@ -27,7 +27,7 @@ Completeness-Layout. Echte CHDs (PSX) und Amiga-`.lha` erkannt; Import auf Testo
 1. Sichtprüfung: MAME-BIOS liegt jetzt neben den Romsets – in RetroArch mit Neo-Geo-Set gegenprüfen.
 2. Sichtprüfung Rest: Gamification-Panels, Effects off.
 3. Echte 7z mit cue/bin und Multi-ROM-Zips (Konsole) testen.
-4. Signierung macOS/Windows; erster Release per Tag `v*`.
+4. Erster Release per Tag `v*` (unsigniert – keine Developer-Accounts; Signierung entfällt bis auf Weiteres).
 5. v2 Launcher (SPEC §6) – **erst ganz zum Schluss** (User-Wunsch).
 
 ## Stolpersteine
