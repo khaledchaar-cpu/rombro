@@ -10,23 +10,21 @@
 | M5 Naming & 1G1R | ✅ done |
 | M6 Planner & Import | ✅ done |
 | M7 App-Shell | ✅ done |
-| M8 GUI Kern | 🔶 in progress |
+| M8 GUI Kern | ✅ done |
 | M9 GUI Feinschliff | – |
 | M10 Gamification | – |
 | M11 Release | – |
 
 ## Aktuell
-M8 Teil 1: IPC `plan_import` (Event `import://progress`, Plan wird in App-State gecacht), `execute_plan`
-(journalisiert), `undo_last`, `library_list`. UI: Inbox-View (Ordnerwahl via plugin-dialog, Modus, Audit/Plan),
-Plan-View (KPIs, virtualisierte Op-Liste, Entscheidungen nach Typ gefiltert, Execute/Undo, auch in Ctrl+K),
-Library-Tabelle (virtualisiert, Filter, Sortierung). State in `ui/src/state/importStore.ts`, Library-Pfad in localStorage.
-Import-Flow am 2026-10-05 vom User im echten Tauri-Fenster getestet: ok.
+M8 abgeschlossen: Import-Flow (Inbox → Plan → Execute/Undo), Library-Tabelle, TBD-Queue in der Plan-View
+(Ambiguous auflösen, Tie via `prefer`, Rejected keep/trash, Re-plan, entschiedene Items rücken nach),
+Dashboard (Library-Zusammenfassung, offene Entscheidungen + Review, Trash mit endgültigem Leeren, Recent runs + Undo).
+Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohne ausführlichen Einzeltest.
 
-## Nächste Schritte (M8 Rest)
-1. ~~Versionskonflikt~~ erledigt: npm `plugin-dialog` auf ~2.7.3 gepinnt (Rust-Seite durch MSRV 1.85 auf 2.7 begrenzt).
-2. ~~TBD-Queue-Aktionen~~ erledigt: IPC `resolve_ambiguous`, `set_verdict` (keep/discard, Tabelle `verdict`), Buttons + „Re-plan“ in Plan-View. **Manueller Test im Tauri-Fenster steht aus.** Tie-Auflösung via Verdict `prefer` ebenfalls erledigt.
-3. Dashboard: ~~offene Entscheidungen (aus letztem Plan, localStorage) + „Review“, Trash-Panel (Liste, endgültig leeren mit 2-Klick)~~ erledigt, manueller Test aus. Library-Zusammenfassung (aus letztem Library-Scan, localStorage) und „Recent runs“ (IPC `journal_list`, Undo-Button) ebenfalls erledigt – manueller Test aus.
-4. Offen aus M6: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
+## Nächste Schritte (M9 GUI-Feinschliff)
+1. Manuelle Sichtprüfung der neuen Dashboard-Panels im Tauri-Fenster; Layout `.rows` mit 3 Spalten (Recent runs) prüfen.
+2. M9-Umfang aus SPEC lesen und planen.
+3. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 
 ## Stolpersteine
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
@@ -44,6 +42,8 @@ Import-Flow am 2026-10-05 vom User im echten Tauri-Fenster getestet: ok.
 - App-IPC-Fehler sind Strings; Plan-DTOs (`OpView`/`DecisionView`) leben in `crates/app/src/import.rs`.
 - Verdicts/Resolutions überleben Undo (gewollt) → zweiter Lauf zeigt weniger Entscheidungen. Keep wird bei `Duplicate` ignoriert (gleiches Ziel wie der Pick).
 - Verdicts gelten pro (system, name); Discard verschiebt immer (auch bei Copy-Modus) nach `<lib>/_trash/`, undo-bar.
+- Tie-Entscheidungen sind in der UI per `decisionKey` eindeutig (Tie-`path` ist das System).
+- `pkill -f <muster>` in Bash killt die eigene Shell mit (Muster steht in der Kommandozeile) → `pgrep`/PID nutzen.
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log
@@ -56,3 +56,4 @@ Import-Flow am 2026-10-05 vom User im echten Tauri-Fenster getestet: ok.
 - 2026-10-05: M5 Naming & 1G1R abgeschlossen.
 - 2026-10-05: M6 Planner & Import abgeschlossen.
 - 2026-10-05: M7 App-Shell abgeschlossen.
+- 2026-10-05: M8 GUI Kern abgeschlossen.
