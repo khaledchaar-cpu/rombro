@@ -55,6 +55,10 @@ pub struct OpView {
 pub struct DecisionView {
     kind: &'static str,
     path: String,
+    /// Rejected: the core reason in a few words; empty otherwise.
+    headline: String,
+    /// System the decision is about (empty if unknown).
+    system: String,
     detail: String,
     /// Ambiguous: candidates; tie: releases; rejected: the release itself.
     options: Vec<Choice>,
@@ -262,6 +266,27 @@ fn op_view(op: &Op, why: &str) -> OpView {
     }
 }
 
+/// Plain-words 1G1R reason (`reason` is the Debug form of `g1r::Reason`).
+fn reason_text(reason: &str, kept: bool) -> String {
+    if let Some(what) = reason
+        .strip_prefix("Excluded(\"")
+        .and_then(|r| r.strip_suffix("\")"))
+    {
+        let all = if kept { "" } else { " – every release is" };
+        return format!("Excluded: {what}{all}");
+    }
+    match reason {
+        "Duplicate" => "Same game as the kept file",
+        "Region" => "Other region than preferred",
+        "Language" => "Other language than preferred",
+        "Variant" => "Alternative version (re-release, alt dump)",
+        "Revision" => "Older revision",
+        "TieBreak" => "Lost tie-break",
+        r => r,
+    }
+    .to_owned()
+}
+
 fn decision_view(d: &Decision) -> DecisionView {
     let can_keep = matches!(d, Decision::Rejected { reason, .. } if reason != "Duplicate");
     let (kind, path, detail, options) = match d {
@@ -285,13 +310,13 @@ fn decision_view(d: &Decision) -> DecisionView {
             system,
             name,
             kept,
-            reason,
+            ..
         } => (
             "rejected",
             s(path),
             match kept {
-                Some(k) => format!("{name}: {reason}; kept {k}"),
-                None => format!("{name}: excluded ({reason})"),
+                Some(k) => format!("{name}  →  kept: {k}"),
+                None => format!("{name}  →  no release kept"),
             },
             vec![choice(system, name)],
         ),
@@ -303,9 +328,21 @@ fn decision_view(d: &Decision) -> DecisionView {
             Vec::new(),
         ),
     };
+    let (headline, system) = match d {
+        Decision::Rejected {
+            system,
+            reason,
+            kept,
+            ..
+        } => (reason_text(reason, kept.is_some()), system.clone()),
+        Decision::Tie { system, .. } => (String::new(), system.clone()),
+        _ => (String::new(), String::new()),
+    };
     DecisionView {
         kind,
         path,
+        headline,
+        system,
         detail,
         options,
         can_keep,

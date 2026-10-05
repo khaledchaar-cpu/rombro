@@ -39,7 +39,7 @@
 
 .decisions { list-style: none; margin: 0; padding: 0; max-height: 50vh; overflow: auto; }
 .decisions li { display: flex; flex-direction: column; gap: 2px; padding: var(--sp-2) 0; border-bottom: 1px dashed var(--line); }
-.decisions li .tag { align-self: flex-start; }
+.decisions li .dhead { gap: var(--sp-2); align-items: center; }
 
 @media (max-width: 640px) {
   .vrow { grid-template-columns: 72px minmax(0, 1fr); }

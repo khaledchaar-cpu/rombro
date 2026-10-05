@@ -92,6 +92,10 @@ export interface OpView {
 export interface DecisionView {
   kind: "ambiguous" | "tie" | "rejected" | "skipped" | "conflict";
   path: string;
+  /** rejected: core reason in a few words */
+  headline: string;
+  /** system the decision is about ("" if unknown) */
+  system: string;
   detail: string;
   /** ambiguous: candidates · tie: releases · rejected: the release itself */
   options: Choice[];
@@ -141,6 +145,8 @@ function mockPlan(library: string): PlanView {
       {
         kind: "ambiguous",
         path: "/inbox/x.bin",
+        headline: "",
+        system: "",
         detail: "",
         options: [
           { system: "Sega - Saturn", name: "A" },
@@ -151,13 +157,17 @@ function mockPlan(library: string): PlanView {
       {
         kind: "rejected",
         path: "/inbox/Tetris (Japan).gb",
-        detail: "Tetris (Japan): region; kept Tetris (World)",
+        headline: "Other region than preferred",
+        system: "Nintendo - Game Boy",
+        detail: "Tetris (Japan)  →  kept: Tetris (World)",
         options: [{ system: "Nintendo - Game Boy", name: "Tetris (Japan)" }],
         can_keep: true,
       },
       {
         kind: "conflict",
         path: "/inbox/y.gb",
+        headline: "",
+        system: "",
         detail: "target exists: /lib/y.gb",
         options: [],
         can_keep: false,
