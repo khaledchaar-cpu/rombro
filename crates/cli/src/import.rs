@@ -32,6 +32,7 @@ pub fn run(a: Args) -> Result<()> {
         rules: Default::default(),
         playlists: (!a.no_playlists)
             .then(|| a.playlists.unwrap_or_else(|| library.join(PLAYLIST_DIR))),
+        verdicts: store.verdicts()?,
     };
     let p = plan::build(&items, &library, &opts);
     for op in &p.ops {

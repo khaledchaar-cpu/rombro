@@ -47,6 +47,12 @@ const MIGRATIONS: &[&str] = &[
         system TEXT NOT NULL,
         name   TEXT NOT NULL
     );",
+    "CREATE TABLE verdict (
+        system  TEXT NOT NULL,
+        name    TEXT NOT NULL,
+        verdict TEXT NOT NULL,
+        PRIMARY KEY (system, name)
+    );",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

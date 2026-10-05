@@ -102,6 +102,7 @@ pub async fn plan_import(
             mode: mode.into(),
             rules: Default::default(),
             playlists: Some(lib.join(PLAYLIST_DIR)),
+            verdicts: store.verdicts().map_err(err)?,
         };
         Ok((plan::build(&items, &lib, &opts), items.len()))
     })

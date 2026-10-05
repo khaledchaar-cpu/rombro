@@ -1,7 +1,8 @@
 //! Building a plan: 1G1R per system, target paths, TBD queue, quarantine, playlists.
 
 use super::{
-    Decision, Files, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan, QUARANTINE_DIR, lpl,
+    Decision, Files, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan, QUARANTINE_DIR,
+    TRASH_DIR, Verdict, lpl,
 };
 use crate::{disc, g1r, naming};
 use std::collections::{BTreeMap, HashSet};
@@ -18,7 +19,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         claimed: HashSet::new(),
         lpl: BTreeMap::new(),
     };
-    let managed = [QUARANTINE_DIR, PLAYLIST_DIR].map(|d| library.join(d));
+    let managed = [QUARANTINE_DIR, PLAYLIST_DIR, TRASH_DIR].map(|d| library.join(d));
     let items: Vec<&Item> = items
         .iter()
         .filter(|it| !managed.iter().any(|m| it.files.primary().starts_with(m)))
@@ -54,6 +55,18 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             b.release(system, &gp.picked);
             let kept = gp.picked.first().map(|(_, g)| g.name.clone());
             for ((it, g), reason) in &gp.rejected {
+                let key = ((*system).to_owned(), g.name.clone());
+                match opts.verdicts.get(&key) {
+                    Some(Verdict::Keep) => {
+                        b.release(system, &[&(*it, *g)]);
+                        continue;
+                    }
+                    Some(Verdict::Discard) => {
+                        b.discard(it);
+                        continue;
+                    }
+                    None => {}
+                }
                 b.plan.decisions.push(Decision::Rejected {
                     path: it.files.primary().clone(),
                     name: g.name.clone(),
@@ -170,6 +183,23 @@ impl Builder<'_> {
             .collect();
         if self.commit(it, ops) {
             self.plan.quarantined += 1;
+        }
+    }
+
+    /// Moves an item to the trash folder (always a move, even from the inbox).
+    fn discard(&mut self, it: &Item) {
+        let dir = self.library.join(TRASH_DIR);
+        let ops = it
+            .files
+            .all()
+            .into_iter()
+            .map(|f| Op::Move {
+                from: f.clone(),
+                to: dir.join(file_name(f)),
+            })
+            .collect();
+        if self.commit(it, ops) {
+            self.plan.discarded += 1;
         }
     }
 

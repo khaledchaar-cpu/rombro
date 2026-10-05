@@ -33,6 +33,7 @@ fn opts(mode: Mode) -> Options {
         mode,
         rules: Default::default(),
         playlists: None,
+        verdicts: Default::default(),
     }
 }
 
@@ -208,4 +209,35 @@ fn multi_disc_cue_sets_get_folder_m3u_and_rewritten_sheets() {
     );
     let lpl = fs::read_to_string(lib.join("playlists/Sony - PlayStation.lpl")).unwrap();
     assert!(lpl.contains("\"label\": \"FF (USA)\""));
+}
+
+#[test]
+fn verdicts_keep_or_trash_rejected_releases() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let items = [
+        item(file(&inbox, "a.sfc", "a"), game("Mario (USA)"), false),
+        item(file(&inbox, "b.sfc", "b"), game("Mario (Europe)"), false),
+        item(file(&inbox, "c.sfc", "c"), game("Mario (Japan)"), false),
+    ];
+    let mut o = opts(Mode::Copy);
+    let key = |n: &str| (SYS.to_owned(), n.to_owned());
+    o.verdicts.insert(key("Mario (USA)"), Verdict::Keep);
+    o.verdicts.insert(key("Mario (Japan)"), Verdict::Discard);
+    let plan = build(&items, &lib, &o);
+    assert!(plan.decisions.is_empty());
+    assert_eq!((plan.placed, plan.discarded), (2, 1));
+    let ex = execute(&plan.ops);
+    assert!(ex.error.is_none());
+    assert_eq!(
+        tree(&lib),
+        [
+            "Nintendo - SNES/Mario (Europe).sfc",
+            "Nintendo - SNES/Mario (USA).sfc",
+            "_trash/c.sfc"
+        ]
+    );
+    assert_eq!(tree(&inbox), ["a.sfc", "b.sfc"], "discard always moves");
+    assert!(undo(&ex.done).is_empty());
+    assert_eq!(tree(&inbox), ["a.sfc", "b.sfc", "c.sfc"]);
 }

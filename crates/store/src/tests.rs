@@ -286,6 +286,7 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
         mode: Mode::Move,
         rules: Default::default(),
         playlists: None,
+        verdicts: Default::default(),
     };
     let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
     let p = plan::build(&items, &lib, &opts);
@@ -320,4 +321,19 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
     assert!(s.last_journal().unwrap().is_none());
     assert!(!lib.exists());
     assert_eq!(std::fs::read_dir(&inbox).unwrap().count(), 3);
+}
+
+#[test]
+fn verdicts_roundtrip() {
+    use rombro_core::plan::Verdict;
+    let s = Store::open_in_memory().unwrap();
+    s.set_verdict("Sys", "A", Some(Verdict::Keep)).unwrap();
+    s.set_verdict("Sys", "B", Some(Verdict::Keep)).unwrap();
+    s.set_verdict("Sys", "B", Some(Verdict::Discard)).unwrap();
+    s.set_verdict("Sys", "C", Some(Verdict::Keep)).unwrap();
+    s.set_verdict("Sys", "C", None).unwrap();
+    let v = s.verdicts().unwrap();
+    assert_eq!(v.len(), 2);
+    assert_eq!(v[&("Sys".into(), "A".into())], Verdict::Keep);
+    assert_eq!(v[&("Sys".into(), "B".into())], Verdict::Discard);
 }

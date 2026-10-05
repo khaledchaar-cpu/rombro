@@ -11,6 +11,7 @@ pub use build::build;
 pub use ops::{Done, Execution, Op, execute, journal_from_json, journal_to_json, undo};
 
 use crate::g1r::Rules;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// How files from the inbox get into the library. Files already in the library are always moved.
@@ -81,6 +82,17 @@ pub struct Options {
     pub rules: Rules,
     /// Directory for RetroArch playlists; `None` disables the export.
     pub playlists: Option<PathBuf>,
+    /// User verdicts on releases 1G1R rejected, keyed by (system, name).
+    pub verdicts: HashMap<(String, String), Verdict>,
+}
+
+/// What to do with a release 1G1R rejected (TBD queue).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Verdict {
+    /// Place it in the library next to the pick.
+    Keep,
+    /// Move it to `<library>/_trash` (undoable).
+    Discard,
 }
 
 /// Something the planner left untouched and the user should look at.
@@ -122,9 +134,12 @@ pub struct Plan {
     pub unchanged: usize,
     pub placed: usize,
     pub quarantined: usize,
+    pub discarded: usize,
 }
 
 /// Library sub-folders the planner manages itself; their content is never re-planned.
 pub const QUARANTINE_DIR: &str = "_quarantine";
 /// Default playlist folder inside the library.
 pub const PLAYLIST_DIR: &str = "_playlists";
+/// Releases the user discarded from the TBD queue.
+pub const TRASH_DIR: &str = "_trash";

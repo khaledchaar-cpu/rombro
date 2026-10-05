@@ -1,7 +1,9 @@
 //! Journal of executed plans (for undo) and persisted user resolutions.
 
 use crate::{Result, Store};
+use rombro_core::plan::Verdict;
 use rusqlite::{OptionalExtension, params};
+use std::collections::HashMap;
 
 /// A stored execution: the serialized completed operations of one plan.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -66,5 +68,53 @@ impl Store {
                 |r| Ok((r.get(0)?, r.get(1)?)),
             )
             .optional()?)
+    }
+
+    /// Stores (or with `None` clears) the user's verdict on a release 1G1R rejected.
+    pub fn set_verdict(&self, system: &str, name: &str, v: Option<Verdict>) -> Result<()> {
+        match v {
+            Some(v) => {
+                let v = match v {
+                    Verdict::Keep => "keep",
+                    Verdict::Discard => "discard",
+                };
+                self.conn.execute(
+                    "INSERT OR REPLACE INTO verdict (system, name, verdict) VALUES (?1, ?2, ?3)",
+                    params![system, name, v],
+                )?;
+            }
+            None => {
+                self.conn.execute(
+                    "DELETE FROM verdict WHERE system = ?1 AND name = ?2",
+                    params![system, name],
+                )?;
+            }
+        }
+        Ok(())
+    }
+
+    /// All stored verdicts, ready for `plan::Options::verdicts`.
+    pub fn verdicts(&self) -> Result<HashMap<(String, String), Verdict>> {
+        let mut st = self
+            .conn
+            .prepare("SELECT system, name, verdict FROM verdict")?;
+        let rows = st.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+            ))
+        })?;
+        let mut out = HashMap::new();
+        for row in rows {
+            let (system, name, v) = row?;
+            let v = if v == "keep" {
+                Verdict::Keep
+            } else {
+                Verdict::Discard
+            };
+            out.insert((system, name), v);
+        }
+        Ok(out)
     }
 }
