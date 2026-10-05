@@ -30,8 +30,10 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
    Library-Filter (System/Region/Status/Hinzugefügt; `file.added` in DB), eigene Dropdown-Komponente
    `components/Select.tsx` (Cyberpunk-Stil, Portal) – vom User abgenommen.
 2. Manuelle Sichtprüfung der neuen Dashboard-Panels im Tauri-Fenster; Layout `.rows` mit 3 Spalten (Recent runs) prüfen.
-3. Restlichen M9-Umfang aus SPEC lesen und planen.
-4. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
+3. ✅ Settings-View: 1G1R-Regeln-Editor (Regionen/Sprachen per Drag (Pointer-Events) + ↑↓, Ausschluss-Flags),
+   gespeichert als JSON-Setting `rules`, Import nutzt sie. Offen: Sichtprüfung im Tauri-Fenster.
+4. Rest M9: Thumbnails (F7), Effekte, Light-Theme.
+5. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 
 ## Stolpersteine
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
