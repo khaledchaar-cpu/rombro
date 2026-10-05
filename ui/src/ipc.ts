@@ -131,7 +131,12 @@ export interface LibraryRow {
   files: number;
 }
 
-export async function libraryList(library: string): Promise<LibraryRow[]> {
+export async function libraryGet(): Promise<string | null> {
+  if (!inTauri) return "/mock/library";
+  return invoke<string | null>("library_get");
+}
+
+export async function libraryList(library?: string): Promise<LibraryRow[]> {
   if (!inTauri) {
     return Array.from({ length: 5000 }, (_, i) => ({
       path: `Nintendo - Game Boy/Game ${i} (Europe).zip`,

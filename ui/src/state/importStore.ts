@@ -1,5 +1,6 @@
 // Shared import state: Inbox view builds the plan, Plan view reviews and executes it.
 import { createSignal } from "solid-js";
+import { library, refreshLibrary } from "./libraryStore";
 import {
   executePlan, planImport, resolveAmbiguous, setVerdict, undoLast,
   type Choice, type DecisionView, type ExecResult, type Mode, type PlanView, type Verdict,
@@ -12,8 +13,7 @@ const save = (k: string, v: string) => {
   try { localStorage.setItem(k, v); } catch { /* storage unavailable */ }
 };
 
-export const [library, setLibraryRaw] = createSignal(load("rombro.library"));
-export const setLibrary = (v: string) => (setLibraryRaw(v), save("rombro.library", v));
+export { library, setLibrary } from "./libraryStore";
 export const [inbox, setInbox] = createSignal("");
 export const [mode, setMode] = createSignal<Mode>("move");
 export const [plan, setPlan] = createSignal<PlanView>();
@@ -70,6 +70,7 @@ export const execute = () =>
   guard(async () => {
     const r: ExecResult = await executePlan();
     setPlan(undefined);
+    void refreshLibrary();
     setStatus(
       r.error
         ? { ok: false, text: `stopped after ${r.done} ops: ${r.error}` }
@@ -80,6 +81,7 @@ export const execute = () =>
 export const undo = () =>
   guard(async () => {
     const n = await undoLast();
+    void refreshLibrary();
     setStatus({ ok: true, text: n ? `reverted ${n} operations` : "nothing to undo" });
   });
 

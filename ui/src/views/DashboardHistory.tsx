@@ -1,16 +1,16 @@
-// Dashboard panels: library summary (from the last Library scan) and recent import runs.
+// Dashboard panels: library summary (from the file index) and recent import runs.
 import { createResource, For, Show } from "solid-js";
 import Panel from "../components/Panel";
 import { journalList } from "../ipc";
 import { busy, status, undo } from "../state/importStore";
-import { librarySummary } from "../state/librarySummary";
+import { librarySummary } from "../state/libraryStore";
 
 const fmt = new Intl.NumberFormat("en-US");
 
 export function LibraryPanel(props: { onOpen: () => void }) {
   return (
     <Panel title="Library">
-      <Show when={librarySummary()} fallback={<p class="dim">Not scanned yet – open the Library view.</p>}>
+      <Show when={librarySummary()} fallback={<p class="dim">No library yet – choose one in the Library view.</p>}>
         {(s) => (
           <>
             <div class="kpi">{fmt.format(s().total)}</div>

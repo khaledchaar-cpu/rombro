@@ -8,6 +8,7 @@ import Inbox from "./views/Inbox";
 import Plan from "./views/Plan";
 import Library from "./views/Library";
 import { execute, plan, undo } from "./state/importStore";
+import { initLibrary } from "./state/libraryStore";
 import { VIEWS, type ViewId } from "./views";
 
 export default function App() {
@@ -45,7 +46,10 @@ export default function App() {
       setView(v.id);
     }
   };
-  onMount(() => window.addEventListener("keydown", onKey));
+  onMount(() => {
+    window.addEventListener("keydown", onKey);
+    void initLibrary();
+  });
   onCleanup(() => window.removeEventListener("keydown", onKey));
 
   const title = () => VIEWS.find((v) => v.id === view())?.label ?? "";

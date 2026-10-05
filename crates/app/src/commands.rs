@@ -23,6 +23,18 @@ pub(crate) fn open_store() -> CmdResult<(Store, PathBuf)> {
     Ok((Store::open(&path).map_err(err)?, path))
 }
 
+/// Scans `root` incrementally via the persistent file index and updates the index.
+pub(crate) fn indexed_scan(
+    store: &Store,
+    root: &std::path::Path,
+    progress: &(dyn Fn(usize, usize) + Sync),
+) -> CmdResult<rombro_core::ScanReport> {
+    let cache = store.hash_cache(root).map_err(err)?;
+    let report = rombro_core::scan_cached(root, &cache, progress);
+    store.save_scan(root, &report).map_err(err)?;
+    Ok(report)
+}
+
 #[derive(Serialize)]
 pub struct SystemCount {
     system: String,

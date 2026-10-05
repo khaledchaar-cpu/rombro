@@ -1,7 +1,8 @@
 //! Import flow over IPC: plan (dry run) → execute → undo. The last plan is cached in app state so
 //! `execute` runs exactly what the user reviewed.
-use crate::commands::{CmdResult, PROGRESS_STEP, Progress, err, open_store};
+use crate::commands::{CmdResult, PROGRESS_STEP, Progress, err, indexed_scan, open_store};
 use rombro_core::plan::{self, Decision, Mode, Op, Options, PLAYLIST_DIR};
+use rombro_store::Store;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -78,8 +79,13 @@ pub struct ExecResult {
     error: Option<String>,
 }
 
-fn emit_scan(app: &AppHandle, phase: &'static str, dir: &Path) -> rombro_core::ScanReport {
-    rombro_core::scan_with_progress(dir, &|done, total| {
+fn emit_scan(
+    store: &Store,
+    app: &AppHandle,
+    phase: &'static str,
+    dir: &Path,
+) -> CmdResult<rombro_core::ScanReport> {
+    indexed_scan(store, dir, &|done, total| {
         if done % PROGRESS_STEP == 0 || done == total {
             let _ = app.emit("import://progress", (phase, Progress { done, total }));
         }
@@ -98,10 +104,11 @@ pub async fn plan_import(
     let lib = library.clone();
     let (p, items) = tauri::async_runtime::spawn_blocking(move || -> CmdResult<_> {
         let (store, _) = open_store()?;
+        store.set_library(&lib).map_err(err)?;
         let mut items = Vec::new();
         if lib.is_dir() {
             items = store
-                .items(&emit_scan(&app, "library", &lib), true)
+                .items(&emit_scan(&store, &app, "library", &lib)?, true)
                 .map_err(err)?;
         }
         if let Some(inbox) = inbox {
@@ -111,7 +118,7 @@ pub async fn plan_import(
             }
             items.extend(
                 store
-                    .items(&emit_scan(&app, "inbox", &inbox), false)
+                    .items(&emit_scan(&store, &app, "inbox", &inbox)?, false)
                     .map_err(err)?,
             );
         }
@@ -156,6 +163,7 @@ pub async fn execute_plan(pending: State<'_, Pending>) -> CmdResult<ExecResult> 
             None
         } else {
             let (store, _) = open_store()?;
+            store.index_executed(&ex.done).map_err(err)?;
             Some(
                 store
                     .add_journal(
@@ -195,6 +203,7 @@ pub async fn undo_last() -> CmdResult<usize> {
                 op.target().display()
             ));
         }
+        store.index_undone(&done).map_err(err)?;
         store.mark_undone(j.id).map_err(err)?;
         Ok(done.len())
     })

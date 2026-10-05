@@ -3,9 +3,10 @@ import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 import DirField from "../components/DirField";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
-import { libraryList, onScanProgress, type LibraryRow } from "../ipc";
-import { library, setLibrary } from "../state/importStore";
-import { rememberLibrary } from "../state/librarySummary";
+import { onScanProgress } from "../ipc";
+import {
+  library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary, setLibrary,
+} from "../state/libraryStore";
 
 const ROW_H = 26;
 type Key = "system" | "name" | "path" | "state";
@@ -17,29 +18,11 @@ const COLS: { key: Key; label: string }[] = [
 ];
 
 export default function Library() {
-  const [rows, setRows] = createSignal<LibraryRow[]>([]);
-  const [busy, setBusy] = createSignal(false);
-  const [error, setError] = createSignal("");
   const [query, setQuery] = createSignal("");
   const [sort, setSort] = createSignal<{ key: Key; asc: boolean }>({ key: "system", asc: true });
   const [progress, setProgress] = createSignal({ done: 0, total: 0 });
   const unlisten = onScanProgress(setProgress);
   onCleanup(() => void unlisten.then((f) => f()));
-
-  const load = async () => {
-    if (busy() || !library()) return;
-    setBusy(true);
-    setError("");
-    try {
-      const r = await libraryList(library());
-      setRows(r);
-      rememberLibrary(library(), r);
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const view = createMemo(() => {
     const q = query().toLowerCase();
@@ -63,11 +46,11 @@ export default function Library() {
   return (
     <div class="grid">
       <Panel title="Library" class="wide">
-        <DirField label="Library" value={library()} onChange={setLibrary} />
+        <DirField label="Library" value={library()} onChange={(v) => (setLibrary(v), void refreshLibrary())} />
         <div class="row">
           <input class="field" placeholder="Filter…" value={query()} onInput={(e) => setQuery(e.currentTarget.value)} />
-          <button class="btn" disabled={busy() || !library()} onClick={load}>
-            {busy() ? "Scanning" : "Load"}
+          <button class="btn" disabled={busy() || !library()} onClick={refreshLibrary}>
+            {busy() ? "Scanning" : "Rescan"}
           </button>
         </div>
         <Show when={busy()}>

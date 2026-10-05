@@ -21,6 +21,7 @@ fn main() {
             decide::set_verdict,
             decide::trash_list,
             decide::trash_empty,
+            library::library_get,
             library::library_list
         ])
         .run(tauri::generate_context!())
