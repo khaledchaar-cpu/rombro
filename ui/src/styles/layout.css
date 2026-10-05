@@ -262,3 +262,32 @@
   .panel-title::after, .logo:hover::before, .logo:hover::after { animation: none; }
 }
 :root[data-effects="off"] .panel-title::after { display: none; }
+
+.toasts {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  z-index: 50;
+}
+.toast {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 220px;
+  padding: var(--sp-3) var(--sp-4);
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  background: var(--bg-raised);
+  border: 1px solid var(--yellow);
+  box-shadow: var(--glow);
+  clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%);
+  animation: toast-in var(--dur) ease-out;
+}
+.toast strong { font-family: var(--font-head); color: var(--yellow); }
+@keyframes toast-in { from { transform: translateX(20px); opacity: 0; } }
