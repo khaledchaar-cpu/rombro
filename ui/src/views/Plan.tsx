@@ -1,6 +1,7 @@
 import { createVirtualizer } from "@tanstack/solid-virtual";
 import { createMemo, createSignal, For, Show } from "solid-js";
 import Panel from "../components/Panel";
+import ScanProgress from "../components/ScanProgress";
 import type { DecisionView } from "../ipc";
 import { busy, decided, execute, judge, library, pick, plan, replan, status, undo } from "../state/importStore";
 
@@ -58,7 +59,9 @@ function Actions(props: { d: DecisionView }) {
   if (d.kind === "rejected" && d.options.length)
     return (
       <div class="row">
-        <button class="btn ghost small" disabled={busy()} onClick={() => judge(d, "keep")}>Keep</button>
+        <Show when={d.can_keep}>
+          <button class="btn ghost small" disabled={busy()} onClick={() => judge(d, "keep")}>Keep</button>
+        </Show>
         <button class="btn ghost small" disabled={busy()} onClick={() => judge(d, "discard")}>Trash</button>
       </div>
     );
@@ -71,7 +74,8 @@ const KINDS: DecisionView["kind"][] = ["ambiguous", "tie", "conflict", "rejected
 
 function Decisions() {
   const [kind, setKind] = createSignal<DecisionView["kind"] | "all">("all");
-  const all = () => plan()?.decisions ?? [];
+  // Decided items drop out so the next one moves up under the cursor.
+  const all = () => (plan()?.decisions ?? []).filter((d) => !decided().has(d.path));
   const counts = createMemo(() => {
     const c = new Map<string, number>();
     for (const d of all()) c.set(d.kind, (c.get(d.kind) ?? 0) + 1);
@@ -101,9 +105,7 @@ function Decisions() {
               <Show when={d.detail}>
                 <span class="dim small">{d.detail}</span>
               </Show>
-              <Show when={decided().get(d.path)} fallback={<Actions d={d} />}>
-                {(label) => <span class="ok small">{label()}</span>}
-              </Show>
+              <Actions d={d} />
             </li>
           )}
         </For>
@@ -119,7 +121,10 @@ export default function Plan() {
         when={plan()}
         fallback={
           <Panel title="Plan" class="wide">
-            <p class="dim">No plan yet – build one in the Inbox view.</p>
+            <Show when={busy()} fallback={<p class="dim">No plan yet – build one in the Inbox view.</p>}>
+              <p>Planning – scanning library and inbox…</p>
+              <ScanProgress />
+            </Show>
             <Show when={status()}>{(s) => <p class={`mono ${s().ok ? "ok" : "err"}`}>{s().text}</p>}</Show>
             <button class="btn ghost" disabled={busy()} onClick={undo}>
               Undo last run

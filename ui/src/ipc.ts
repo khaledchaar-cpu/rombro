@@ -50,6 +50,8 @@ export interface DecisionView {
   detail: string;
   /** ambiguous: candidates · tie: releases · rejected: the release itself */
   options: Choice[];
+  /** rejected only: false for duplicates of the pick */
+  can_keep: boolean;
 }
 export interface Choice { system: string; name: string }
 export type Verdict = "keep" | "discard";
@@ -74,9 +76,9 @@ function mockPlan(library: string): PlanView {
   return {
     items: 2100, placed: 1960, unchanged: 100, quarantined: 12, discarded: 0, ops,
     decisions: [
-      { kind: "ambiguous", path: "/inbox/x.bin", detail: "", options: [{ system: "Sega - Saturn", name: "A" }, { system: "Sega - Saturn", name: "B" }] },
-      { kind: "rejected", path: "/inbox/Tetris (Japan).gb", detail: "Tetris (Japan): region; kept Tetris (World)", options: [{ system: "Nintendo - Game Boy", name: "Tetris (Japan)" }] },
-      { kind: "conflict", path: "/inbox/y.gb", detail: "target exists: /lib/y.gb", options: [] },
+      { kind: "ambiguous", path: "/inbox/x.bin", detail: "", options: [{ system: "Sega - Saturn", name: "A" }, { system: "Sega - Saturn", name: "B" }], can_keep: false },
+      { kind: "rejected", path: "/inbox/Tetris (Japan).gb", detail: "Tetris (Japan): region; kept Tetris (World)", options: [{ system: "Nintendo - Game Boy", name: "Tetris (Japan)" }], can_keep: true },
+      { kind: "conflict", path: "/inbox/y.gb", detail: "target exists: /lib/y.gb", options: [], can_keep: false },
     ],
   };
 }

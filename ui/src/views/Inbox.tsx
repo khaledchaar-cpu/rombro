@@ -1,8 +1,8 @@
-import { createSignal, For, onCleanup, Show } from "solid-js";
+import { For, Show } from "solid-js";
 import DirField from "../components/DirField";
 import Panel from "../components/Panel";
-import Segments from "../components/Segments";
-import { onImportProgress, type ImportProgress, type Mode } from "../ipc";
+import ScanProgress from "../components/ScanProgress";
+import type { Mode } from "../ipc";
 import { buildPlan, busy, inbox, library, mode, setInbox, setLibrary, setMode, status } from "../state/importStore";
 
 const MODES: { id: Mode; label: string }[] = [
@@ -12,12 +12,7 @@ const MODES: { id: Mode; label: string }[] = [
 ];
 
 export default function Inbox(props: { onPlanned: () => void }) {
-  const [progress, setProgress] = createSignal<ImportProgress>({ phase: "library", done: 0, total: 0 });
-  const unlisten = onImportProgress(setProgress);
-  onCleanup(() => void unlisten.then((f) => f()));
-
   const run = async (withInbox: boolean) => {
-    setProgress({ phase: "library", done: 0, total: 0 });
     if (await buildPlan(withInbox)) props.onPlanned();
   };
 
@@ -48,10 +43,7 @@ export default function Inbox(props: { onPlanned: () => void }) {
           </button>
         </div>
         <Show when={busy()}>
-          <Segments value={progress().done} max={progress().total} />
-          <p class="mono dim small">
-            scanning {progress().phase} {progress().done}/{progress().total}
-          </p>
+          <ScanProgress />
         </Show>
         <Show when={status()}>{(s) => <p class={`mono ${s().ok ? "ok" : "err"}`}>{s().text}</p>}</Show>
       </Panel>

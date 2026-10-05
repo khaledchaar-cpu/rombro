@@ -241,3 +241,27 @@ fn verdicts_keep_or_trash_rejected_releases() {
     assert!(undo(&ex.done).is_empty());
     assert_eq!(tree(&inbox), ["a.sfc", "b.sfc", "c.sfc"]);
 }
+
+#[test]
+fn keep_is_ignored_for_duplicates() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let items = [
+        item(file(&inbox, "a.sfc", "a"), game("Mario (Europe)"), false),
+        item(file(&inbox, "a2.sfc", "a"), game("Mario (Europe)"), false),
+    ];
+    let mut o = opts(Mode::Move);
+    o.verdicts
+        .insert((SYS.into(), "Mario (Europe)".into()), Verdict::Keep);
+    let plan = build(&items, &lib, &o);
+    assert!(
+        matches!(&plan.decisions[..], [Decision::Rejected { reason, .. }] if reason == "Duplicate"),
+        "{:?}",
+        plan.decisions
+    );
+    o.verdicts
+        .insert((SYS.into(), "Mario (Europe)".into()), Verdict::Discard);
+    let plan = build(&items, &lib, &o);
+    assert!(plan.decisions.is_empty());
+    assert_eq!((plan.placed, plan.discarded), (1, 1));
+}

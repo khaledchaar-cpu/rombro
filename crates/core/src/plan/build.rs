@@ -57,7 +57,8 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             for ((it, g), reason) in &gp.rejected {
                 let key = ((*system).to_owned(), g.name.clone());
                 match opts.verdicts.get(&key) {
-                    Some(Verdict::Keep) => {
+                    // A duplicate would claim the pick's own target; only discarding makes sense.
+                    Some(Verdict::Keep) if *reason != g1r::Reason::Duplicate => {
                         b.release(system, &[&(*it, *g)]);
                         continue;
                     }
@@ -65,7 +66,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                         b.discard(it);
                         continue;
                     }
-                    None => {}
+                    _ => {}
                 }
                 b.plan.decisions.push(Decision::Rejected {
                     path: it.files.primary().clone(),

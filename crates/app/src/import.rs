@@ -43,6 +43,8 @@ pub struct DecisionView {
     detail: String,
     /// Ambiguous: candidates; tie: releases; rejected: the release itself.
     options: Vec<Choice>,
+    /// Rejected only: keeping is possible (not a duplicate of the pick).
+    can_keep: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -219,6 +221,7 @@ fn op_view(op: &Op) -> OpView {
 }
 
 fn decision_view(d: &Decision) -> DecisionView {
+    let can_keep = matches!(d, Decision::Rejected { reason, .. } if reason != "Duplicate");
     let (kind, path, detail, options) = match d {
         Decision::Ambiguous { path, candidates } => (
             "ambiguous",
@@ -263,5 +266,6 @@ fn decision_view(d: &Decision) -> DecisionView {
         path,
         detail,
         options,
+        can_keep,
     }
 }
