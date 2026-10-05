@@ -32,11 +32,13 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
 2. Manuelle Sichtprüfung der neuen Dashboard-Panels im Tauri-Fenster; Layout `.rows` mit 3 Spalten (Recent runs) prüfen.
 3. ✅ Settings-View: 1G1R-Regeln-Editor (Regionen/Sprachen per Drag (Pointer-Events) + ↑↓, Ausschluss-Flags),
    gespeichert als JSON-Setting `rules`, Import nutzt sie (vom User getestet). Rahmenloses Fenster: Topbar ist
-   Drag-Region, eigene Neon-Fensterbuttons (abgenommen). Offen: CLI nutzt noch Default-Regeln.
+   Drag-Region, eigene Neon-Fensterbuttons (abgenommen). CLI (`g1r`, `import`) nutzt jetzt die gespeicherten Regeln (`Store::rules`).
 4. ✅ Thumbnails (F7): `core::thumbnail` (RetroArch-Naming/URL/Cache-Layout), App-Command `thumbnail` (ureq,
    Cache `~/.cache/rombro/thumbnails`, 404 → `.miss`-Marker, Bytes als `ipc::Response`), Library-Zeile anklicken →
    Detail-Panel (Boxart/Title/Snap + Metadaten). Setting `thumbs_online` (Settings-Checkbox, Default an) + Quellenhinweis. Offen: Sichtprüfung im Tauri-Fenster.
-   Rest M9: Effekte, Light-Theme.
+   ✅ Light-Theme + Effekte-Schalter: Settings „Appearance“ + Command-Palette, pro Gerät in localStorage
+   (`state/appearance.ts`), Tokens `:root[data-theme="light"]`. Offen: Sichtprüfung Light-Theme im Tauri-Fenster
+   (hartkodierte Farben in CSS prüfen), danach UX-Review → M9 abschließen.
 5. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 
 ## Stolpersteine
@@ -60,6 +62,7 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
 - Index-Präfixsuche per `substr(path,1,n)`; Pfade als lossy UTF-8. Disc-ID wird bei Cache-Treffer neu gelesen (billig).
 - Virtuelle Listen: Zeilen per Accessor (`() => view()[i]`) lesen, sonst bleiben sie nach Filtern stale.
 - Thumbnail-Name: nur ``&*/:`<>?\|`` → `_` (nicht `"`), anders als `sanitize_file_name`.
+- `data-effects="off"`-Block muss in tokens.css **nach** den Theme-Blöcken stehen (gleiche Spezifität).
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log
