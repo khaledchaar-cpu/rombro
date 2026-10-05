@@ -232,6 +232,11 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - M11: Pfaderkennung in `core::paths` (`dirs`-Crate); RDB-Ordner = erster Kandidat mit `.rdb`-Datei, Override per
   `ROMBRO_RDB_DIR`. CLI wird als separates Binary neben den Bundles ausgeliefert. Releases als Draft per Tag `v*`.
 - Archive mit unbekannten Membern (z. B. Arcade-Sets) werden nie zerlegt: bekannte Member werden entpackt, das Archiv geht danach als Ganzes nach `_quarantine/`.
+- **Arcade (FBNeo/MAME)**: Erkennung über CRC+Größe des *ganzen* Zips (RDB-Einträge beschreiben das Archiv, nicht Member). Nur exakte Treffer; Name passt, CRC nicht → Quarantäne mit Hinweis.
+  - Mehrfachtreffer: FBNeo > MAME (neueste zuerst: MAME, 2016, 2015, 2010, 2003-Plus, 2003, 2000) > HBMAME. Ein Zip landet genau einmal in der Library (keine CRC-Dubletten).
+  - Kurzname (`burningf.zip`) bleibt erhalten; Arcade ist von 1G1R ausgenommen (alle exakt passenden Sets/Clones bleiben).
+  - BIOS-Zips (`neogeo.zip`, `pgm.zip`, …) → `<lib>/_bios/` im RetroArch-`system`-Layout (FBNeo: `_bios/fbneo/`), sonst komplett ignoriert (keine Anzeige, Statistik, Achievements).
+  - MAME-CHDs: gleichnamiger Ordner neben erkanntem Zip (`kinst/kinst.chd`) wird ungeprüft mitgenommen; CHD ohne Zip → Quarantäne.
 
 ## 11. Offene Fragen
 - Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in M6 nicht umgesetzt; Vorschlag: eigener Schritt nach M8.
