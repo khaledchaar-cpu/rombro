@@ -15,7 +15,7 @@ pub struct Row {
     files: usize,
     /// Region tags parsed from the name (e.g. `Europe`, `USA`).
     regions: Vec<String>,
-    /// When the file arrived at its current place (unix seconds; inode change time on Unix).
+    /// When the file entered the library (unix seconds, from the index; file time as fallback).
     added: i64,
 }
 
@@ -79,6 +79,7 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
             }
         })?;
         let items = store.items(&report, true).map_err(err)?;
+        let added_db = store.added_times(&library).map_err(err)?;
         Ok(items
             .into_iter()
             // trash and playlists are managed by RomBro, not part of the collection
@@ -108,7 +109,7 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
                     .map(str::to_owned)
                     .collect();
                 Row {
-                    added: added(p),
+                    added: added_db.get(p).copied().unwrap_or_else(|| added(p)),
                     regions,
                     path,
                     system,

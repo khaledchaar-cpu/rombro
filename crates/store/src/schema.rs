@@ -60,6 +60,8 @@ const MIGRATIONS: &[&str] = &[
         mtime INTEGER NOT NULL,
         roms  TEXT NOT NULL
     );",
+    // v5: when a file entered its place (unix seconds); NULL for rows indexed before v5
+    "ALTER TABLE file ADD COLUMN added INTEGER;",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

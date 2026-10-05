@@ -23,6 +23,12 @@ fn prefix(root: &Path) -> String {
     s
 }
 
+fn now() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs() as i64)
+}
+
 impl Store {
     pub fn setting(&self, name: &str) -> Result<Option<String>> {
         Ok(self
@@ -88,24 +94,46 @@ impl Store {
         for t in report.discs.iter().flat_map(|d| &d.tracks) {
             files.push((&t.path, vec![CachedRom::from_rom(t)]));
         }
-        let tx = self.conn.unchecked_transaction()?;
         let pre = prefix(root);
-        tx.execute(
-            "DELETE FROM file WHERE substr(path, 1, ?2) = ?1",
-            params![pre, pre.chars().count() as i64],
-        )?;
+        let tx = self.conn.unchecked_transaction()?;
+        let old: Vec<String> = tx
+            .prepare_cached("SELECT path FROM file WHERE substr(path, 1, ?2) = ?1")?
+            .query_map(params![pre, pre.chars().count() as i64], |r| r.get(0))?
+            .collect::<rusqlite::Result<_>>()?;
+        let now = now();
+        let mut seen = std::collections::HashSet::new();
         {
-            let mut ins = tx.prepare_cached(
-                "INSERT OR REPLACE INTO file (path, size, mtime, roms) VALUES (?1, ?2, ?3, ?4)",
+            // existing rows keep their `added` time
+            let mut up = tx.prepare_cached(
+                "INSERT INTO file (path, size, mtime, roms, added) VALUES (?1, ?2, ?3, ?4, ?5)
+                 ON CONFLICT(path) DO UPDATE SET size = ?2, mtime = ?3, roms = ?4",
             )?;
             for (path, roms) in files {
                 let Ok(st) = Stamp::of(path) else { continue };
                 let json = serde_json::to_string(&roms)?;
-                ins.execute(params![key(path), st.size as i64, st.mtime, json])?;
+                let k = key(path);
+                up.execute(params![k, st.size as i64, st.mtime, json, now])?;
+                seen.insert(k);
+            }
+            let mut del = tx.prepare_cached("DELETE FROM file WHERE path = ?1")?;
+            for p in old.iter().filter(|p| !seen.contains(*p)) {
+                del.execute([p])?;
             }
         }
         tx.commit()?;
         Ok(())
+    }
+
+    /// `added` time per indexed file below `root` (rows from before v5 have none).
+    pub fn added_times(&self, root: &Path) -> Result<HashMap<PathBuf, i64>> {
+        let pre = prefix(root);
+        let mut stmt = self.conn.prepare_cached(
+            "SELECT path, added FROM file WHERE added IS NOT NULL AND substr(path, 1, ?2) = ?1",
+        )?;
+        let rows = stmt.query_map(params![pre, pre.chars().count() as i64], |r| {
+            Ok((PathBuf::from(r.get::<_, String>(0)?), r.get(1)?))
+        })?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
     }
 
     /// Carries index rows along with executed file operations.
@@ -142,21 +170,29 @@ impl Store {
     }
 
     /// Re-keys (or copies) the row of `from` to `to` with `to`'s current stamp.
+    /// Keeps `added` for moves inside the library; arrivals from elsewhere are added now.
     fn relocate(&self, from: &Path, to: &Path, remove: bool) -> Result<()> {
-        let roms: Option<String> = self
+        let row: Option<(String, Option<i64>)> = self
             .conn
-            .query_row("SELECT roms FROM file WHERE path = ?1", [key(from)], |r| {
-                r.get(0)
-            })
+            .query_row(
+                "SELECT roms, added FROM file WHERE path = ?1",
+                [key(from)],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
             .optional()?;
+        let inside = self
+            .library()?
+            .is_some_and(|l| from.starts_with(&l) && to.starts_with(&l));
         if remove {
             self.conn
                 .execute("DELETE FROM file WHERE path = ?1", [key(from)])?;
         }
-        if let (Some(roms), Ok(st)) = (roms, Stamp::of(to)) {
+        if let (Some((roms, added)), Ok(st)) = (row, Stamp::of(to)) {
+            let added = if inside { added } else { Some(now()) };
             self.conn.execute(
-                "INSERT OR REPLACE INTO file (path, size, mtime, roms) VALUES (?1, ?2, ?3, ?4)",
-                params![key(to), st.size as i64, st.mtime, roms],
+                "INSERT OR REPLACE INTO file (path, size, mtime, roms, added)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![key(to), st.size as i64, st.mtime, roms, added],
             )?;
         }
         Ok(())

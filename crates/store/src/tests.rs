@@ -375,6 +375,26 @@ fn file_index_follows_scan_execute_and_undo() {
     store.index_executed(&ex.done).unwrap();
     let hit = store.hash_cache(&lib).unwrap().get(&to).unwrap();
     assert_eq!(hit[0].path, to);
+    let added = store.added_times(&lib).unwrap()[&to];
+    assert!(added > 0);
+    // a rename inside the library keeps the time; a rescan does too
+    let renamed = lib.join("GB/b.gb");
+    store
+        .conn
+        .execute(
+            "UPDATE file SET added = 1 WHERE path = ?1",
+            [to.to_str().unwrap()],
+        )
+        .unwrap();
+    let ex2 = execute(&[Op::Move {
+        from: to.clone(),
+        to: renamed.clone(),
+    }]);
+    store.index_executed(&ex2.done).unwrap();
+    store.save_scan(&lib, &rombro_core::scan(&lib)).unwrap();
+    assert_eq!(store.added_times(&lib).unwrap()[&renamed], 1);
+    assert!(undo(&ex2.done).is_empty());
+    store.index_undone(&ex2.done).unwrap();
     assert!(store.hash_cache(&inbox).unwrap().0.is_empty());
 
     assert!(undo(&ex.done).is_empty());
