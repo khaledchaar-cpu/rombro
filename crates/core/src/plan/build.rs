@@ -10,6 +10,8 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+mod archives;
+
 /// Plans placing `items` into `library`. Nothing is touched on disk (reads only).
 /// Library items should come first so they win over identical inbox copies.
 pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
@@ -321,35 +323,6 @@ impl Builder<'_> {
         for (system, entries) in std::mem::take(&mut self.lpl) {
             let path = dir.join(format!("{}.lpl", naming::sanitize_file_name(&system)));
             self.write(path, lpl::render(&system, &entries));
-        }
-    }
-
-    /// Moves multi-ROM archives to the trash once every member was handled, unless the
-    /// inbox is only copied/linked from.
-    fn trash_emptied_archives(&mut self, items: &[&Item]) {
-        let mut total: BTreeMap<&Path, (usize, bool)> = BTreeMap::new();
-        for it in items {
-            if let Files::Member { archive, .. } = &it.files {
-                total.entry(archive).or_default().0 += 1;
-                total.entry(archive).or_default().1 = it.in_library;
-            }
-        }
-        self.why = "archive fully extracted".into();
-        for (archive, (n, in_library)) in total {
-            let done = self.members_done.get(archive).copied().unwrap_or(0);
-            if done < n || !(in_library || self.opts.mode == Mode::Move) {
-                continue;
-            }
-            let it = Item {
-                files: Files::Single(archive.to_path_buf()),
-                ident: Ident::Unknown,
-                in_library,
-            };
-            let op = Op::Move {
-                from: archive.to_path_buf(),
-                to: self.library.join(TRASH_DIR).join(file_name(archive)),
-            };
-            self.commit(&it, vec![op]);
         }
     }
 
