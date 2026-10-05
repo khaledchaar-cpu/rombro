@@ -13,7 +13,7 @@
 | M8 GUI Kern | ✅ done |
 | M9 GUI Feinschliff | ✅ done |
 | M10 Gamification | ✅ done (Sichtprüfung offen) |
-| M11 Release | ✅ done (CI ungetestet, kein Remote) |
+| M11 Release | ✅ done (CI grün auf 3 OS) |
 | M12 Übertragen & Container | ✅ done |
 | M12b Arcade & Sichtprüfung | ✅ done |
 
@@ -27,7 +27,7 @@ Completeness-Layout. Echte CHDs (PSX) und Amiga-`.lha` erkannt; Import auf Testo
 1. Sichtprüfung: MAME-BIOS liegt jetzt neben den Romsets – in RetroArch mit Neo-Geo-Set gegenprüfen.
 2. Sichtprüfung Rest: Gamification-Panels, Effects off.
 3. Echte 7z mit cue/bin und Multi-ROM-Zips (Konsole) testen.
-4. Remote anlegen, pushen, CI auf 3 OS; Signierung macOS/Windows.
+4. Signierung macOS/Windows; erster Release per Tag `v*`.
 5. v2 Launcher (SPEC §6) – **erst ganz zum Schluss** (User-Wunsch).
 
 ## Stolpersteine
@@ -66,6 +66,7 @@ Completeness-Layout. Echte CHDs (PSX) und Amiga-`.lha` erkannt; Import auf Testo
 - Kein `chdman` lokal → Test baut unkomprimierte CHD v5 selbst (`crates/core/tests/chd.rs`).
 
 ## Log
+- 2026-10-05: Öffentliches Repo github.com/khaledchaar-cpu/rombro, CI grün (Linux/macOS/Windows). Commit-Mail = GitHub-noreply.
 - 2026-10-04: Projekt-Dokumente erstellt, RDB-Format verifiziert (siehe SPEC §3).
 - 2026-10-04: M0 Bootstrap abgeschlossen.
 - 2026-10-04: M1 RDB-Parser abgeschlossen.

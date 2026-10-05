@@ -58,7 +58,8 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 
 ## Git
 - Conventional Commits: `feat(core): …`, `fix(rdb): …`, `chore(m2): wrap-up`.
-- Direkt auf `main` (Solo-Projekt), kleine Commits. Kein Push, solange kein Remote konfiguriert ist.
+- Direkt auf `main` (Solo-Projekt), kleine Commits. Remote: `origin` = github.com/khaledchaar-cpu/rombro (öffentlich), pushen nach grünem check.
+- Commit-Mail muss die GitHub-noreply-Adresse sein (Repo-`user.email` gesetzt), sonst lehnt GitHub den Push ab.
 
 ## Skills
 | Skill | Zweck |
