@@ -51,6 +51,29 @@
   }
 }
 
+:root[data-theme="light"] {
+  --bg: #eef0f7;
+  --bg-raised: #ffffff;
+  --bg-sunken: #e2e5ef;
+  --line: #d3d7e6;
+  --line-strong: #b4b9d0;
+  --text: #15172a;
+  --text-dim: #5a5e7c;
+
+  /* darker neon variants for contrast on light backgrounds */
+  --cyan: #0090a8;
+  --magenta: #c4109f;
+  --yellow: #8a7a00;
+  --ok: #138a4a;
+  --err: #d0213f;
+
+  --glow: 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent);
+  --grid-line: color-mix(in srgb, var(--cyan) 8%, transparent);
+  --bg-fx-opacity: 0.6;
+  color-scheme: light;
+}
+
+/* after the theme blocks so it wins over their effect tokens */
 :root[data-effects="off"] {
   --glow: none;
   --bg-fx-opacity: 0;

@@ -10,17 +10,12 @@ import Plan from "./views/Plan";
 import Library from "./views/Library";
 import { execute, plan, undo } from "./state/importStore";
 import { initLibrary } from "./state/libraryStore";
+import { effects, setEffects, setTheme, theme } from "./state/appearance";
 import { VIEWS, type ViewId } from "./views";
 
 export default function App() {
   const [view, setView] = createSignal<ViewId>("dashboard");
   const [palette, setPalette] = createSignal(false);
-  const [effects, setEffects] = createSignal(true);
-
-  const toggleEffects = () => {
-    setEffects(!effects());
-    document.documentElement.dataset.effects = effects() ? "on" : "off";
-  };
 
   const commands = (): Command[] => [
     ...VIEWS.map((v) => ({
@@ -31,7 +26,8 @@ export default function App() {
     })),
     ...(plan()?.ops.length ? [{ id: "exec", label: "Execute plan", run: () => void execute() }] : []),
     { id: "undo", label: "Undo last run", run: () => void undo() },
-    { id: "fx", label: `Effects: ${effects() ? "off" : "on"}`, run: toggleEffects },
+    { id: "fx", label: `Effects: ${effects() ? "off" : "on"}`, run: () => setEffects(!effects()) },
+    { id: "theme", label: `Theme: ${theme() === "dark" ? "light" : "dark"}`, run: () => setTheme(theme() === "dark" ? "light" : "dark") },
   ];
 
   const onKey = (e: KeyboardEvent) => {

@@ -2,6 +2,7 @@ import { For, Show, createResource, createSignal } from "solid-js";
 import Panel from "../components/Panel";
 import PriorityList from "../components/PriorityList";
 import { FLAG_KEYS, type FlagKey, type Rules, rulesGet, rulesSet, thumbsOnlineGet, thumbsOnlineSet } from "../ipc";
+import { effects, setEffects, setTheme, theme } from "../state/appearance";
 
 const FLAG_LABELS: Record<FlagKey, string> = {
   beta: "Beta", proto: "Prototype", demo: "Demo", kiosk: "Kiosk", sample: "Sample",
@@ -59,6 +60,18 @@ export default function Settings() {
                   </label>
                 )}
               </For>
+            </div>
+          </Panel>
+          <Panel title="Appearance">
+            <div class="row">
+              <label class="check">
+                <input type="checkbox" checked={theme() === "light"} onChange={(e) => setTheme(e.currentTarget.checked ? "light" : "dark")} />
+                Light theme
+              </label>
+              <label class="check">
+                <input type="checkbox" checked={effects()} onChange={(e) => setEffects(e.currentTarget.checked)} />
+                Effects (glow, grid, chromatic edges)
+              </label>
             </div>
           </Panel>
           <Panel title="Thumbnails">
