@@ -5,12 +5,30 @@ import { LibraryPanel, RunsPanel } from "./DashboardHistory";
 import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
 import { AchievementsPanel, CompletenessPanel, ProgressPanel } from "./DashboardProgress";
 import { gamifyEnabled } from "../state/gamify";
-import { dbStats, onScanProgress, scan, type ScanSummary } from "../ipc";
+import { dbStats, dbSync, pickDir, onScanProgress, scan, type ScanSummary } from "../ipc";
 
 const fmt = new Intl.NumberFormat("en-US");
 
 export default function Dashboard(props: { onReview: () => void; onLibrary: () => void }) {
-  const [stats] = createResource(dbStats);
+  const [stats, { refetch }] = createResource(dbStats);
+  const [syncMsg, setSyncMsg] = createSignal("");
+  const [syncing, setSyncing] = createSignal(false);
+
+  const sync = async (manual: boolean) => {
+    const d = manual ? await pickDir("RetroArch database/rdb folder") : null;
+    if (manual && !d) return;
+    setSyncing(true);
+    setSyncMsg("syncing…");
+    try {
+      const r = await dbSync(d);
+      setSyncMsg(`${r.imported} imported · ${r.unchanged} unchanged · ${r.removed} removed`);
+      void refetch();
+    } catch (e) {
+      setSyncMsg(String(e));
+    } finally {
+      setSyncing(false);
+    }
+  };
   const [dir, setDir] = createSignal("");
   const [progress, setProgress] = createSignal({ done: 0, total: 0 });
   const [busy, setBusy] = createSignal(false);
@@ -51,6 +69,17 @@ export default function Dashboard(props: { onReview: () => void; onLibrary: () =
               <p class="dim mono small">{s().db_path}</p>
             </>
           )}
+        </Show>
+        <div class="row">
+          <button class="btn" disabled={syncing()} onClick={() => void sync(false)}>
+            Sync RDBs
+          </button>
+          <button class="btn ghost" disabled={syncing()} onClick={() => void sync(true)}>
+            Choose folder…
+          </button>
+        </div>
+        <Show when={syncMsg()}>
+          <p class="dim small">{syncMsg()}</p>
         </Show>
       </Panel>
 

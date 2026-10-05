@@ -15,6 +15,7 @@ fn main() {
         .manage(import::Pending::default())
         .invoke_handler(tauri::generate_handler![
             commands::db_stats,
+            commands::db_sync,
             commands::scan,
             import::plan_import,
             import::execute_plan,

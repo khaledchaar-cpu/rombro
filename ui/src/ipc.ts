@@ -32,6 +32,19 @@ export async function dbStats(): Promise<DbStats> {
   return invoke<DbStats>("db_stats");
 }
 
+export interface SyncSummary {
+  dir: string;
+  imported: number;
+  unchanged: number;
+  removed: number;
+  entries: number;
+}
+
+export async function dbSync(dir: string | null): Promise<SyncSummary> {
+  if (!inTauri) return { dir: dir ?? "(mock)", imported: 0, unchanged: 146, removed: 0, entries: 0 };
+  return invoke<SyncSummary>("db_sync", { dir });
+}
+
 export async function scan(dir: string): Promise<ScanSummary> {
   if (!inTauri) return { roms: 0, discs: 0, playlists: 0, failures: 0, bytes: 0, millis: 0 };
   return invoke<ScanSummary>("scan", { dir });

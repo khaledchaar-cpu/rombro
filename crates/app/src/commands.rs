@@ -118,3 +118,35 @@ pub async fn scan(app: AppHandle, dir: PathBuf) -> CmdResult<ScanSummary> {
     .await
     .map_err(err)
 }
+
+#[derive(Serialize)]
+pub struct SyncSummary {
+    dir: String,
+    imported: usize,
+    unchanged: usize,
+    removed: usize,
+    entries: u64,
+}
+
+/// Imports RetroArch RDBs from `dir` (or the auto-detected folder) into the database.
+#[tauri::command]
+pub async fn db_sync(dir: Option<PathBuf>) -> CmdResult<SyncSummary> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let dir = match dir {
+            Some(d) => d,
+            None => rombro_core::paths::rdb_dir()
+                .ok_or("RetroArch database folder not found – pick it manually")?,
+        };
+        let (mut store, _) = open_store()?;
+        let r = store.sync_rdbs(&dir).map_err(err)?;
+        Ok(SyncSummary {
+            dir: dir.display().to_string(),
+            imported: r.imported,
+            unchanged: r.unchanged,
+            removed: r.removed,
+            entries: r.entries as u64,
+        })
+    })
+    .await
+    .map_err(err)?
+}
