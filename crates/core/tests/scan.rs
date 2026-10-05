@@ -134,7 +134,7 @@ fn reports_progress_per_file() {
     assert_eq!(report.roms.len(), 3);
     let mut calls = calls.into_inner().unwrap();
     calls.sort_unstable();
-    assert_eq!(calls, [(1, 3), (2, 3), (3, 3)]);
+    assert_eq!(calls, [(0, 3), (1, 3), (2, 3), (3, 3)]);
 }
 
 #[test]

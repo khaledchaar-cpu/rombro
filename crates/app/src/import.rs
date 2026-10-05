@@ -1,6 +1,6 @@
 //! Import flow over IPC: plan (dry run) → execute → undo. The last plan is cached in app state so
 //! `execute` runs exactly what the user reviewed.
-use crate::commands::{CmdResult, PROGRESS_STEP, Progress, err, indexed_scan, open_store};
+use crate::commands::{CmdResult, Progress, Throttle, err, indexed_scan, open_store};
 use rombro_core::plan::{self, Decision, Mode, Op, Options, PLAYLIST_DIR};
 use rombro_store::Store;
 use serde::{Deserialize, Serialize};
@@ -99,8 +99,11 @@ fn emit_scan(
     phase: &'static str,
     dir: &Path,
 ) -> CmdResult<rombro_core::ScanReport> {
+    // Announce the phase right away: walking a large tree takes a while before `total` is known.
+    let _ = app.emit("import://progress", (phase, Progress { done: 0, total: 0 }));
+    let throttle = Throttle::new();
     indexed_scan(store, dir, &|done, total| {
-        if done % PROGRESS_STEP == 0 || done == total {
+        if throttle.ready(done, total) {
             let _ = app.emit("import://progress", (phase, Progress { done, total }));
         }
     })
@@ -140,6 +143,10 @@ pub async fn plan_import(
                     .map_err(err)?,
             );
         }
+        let _ = app.emit(
+            "import://progress",
+            ("planning", Progress { done: 0, total: 0 }),
+        );
         let opts = Options {
             mode: mode.into(),
             rules: crate::settings::load_rules(&store)?,

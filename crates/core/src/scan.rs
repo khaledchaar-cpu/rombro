@@ -137,6 +137,7 @@ pub fn scan_cached(
     let total = files.len() + sheets.len();
     let done = AtomicUsize::new(0);
     let tick = || progress(done.fetch_add(1, Ordering::Relaxed) + 1, total);
+    progress(0, total);
     let discs: Vec<_> = sheets
         .into_par_iter()
         .map(|(path, kind, found, missing)| {

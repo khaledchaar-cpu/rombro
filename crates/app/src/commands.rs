@@ -84,8 +84,28 @@ pub struct ScanSummary {
     millis: u128,
 }
 
-/// Minimum number of files between two progress events (keeps IPC cheap).
-pub(crate) const PROGRESS_STEP: usize = 64;
+/// Minimum time between two progress events (keeps IPC cheap, stays live on big files).
+const PROGRESS_INTERVAL: std::time::Duration = std::time::Duration::from_millis(100);
+
+/// Rate-limits progress callbacks; the first and last tick always pass.
+pub(crate) struct Throttle(std::sync::Mutex<Option<Instant>>);
+
+impl Throttle {
+    pub(crate) fn new() -> Self {
+        Self(std::sync::Mutex::new(None))
+    }
+
+    pub(crate) fn ready(&self, done: usize, total: usize) -> bool {
+        let Ok(mut last) = self.0.lock() else {
+            return false;
+        };
+        let due = last.is_none_or(|t| t.elapsed() >= PROGRESS_INTERVAL);
+        if due || done == total {
+            *last = Some(Instant::now());
+        }
+        due || done == total
+    }
+}
 
 #[tauri::command]
 pub async fn scan(app: AppHandle, dir: PathBuf) -> CmdResult<ScanSummary> {
@@ -94,8 +114,9 @@ pub async fn scan(app: AppHandle, dir: PathBuf) -> CmdResult<ScanSummary> {
     }
     tauri::async_runtime::spawn_blocking(move || {
         let t = Instant::now();
+        let throttle = Throttle::new();
         let report = rombro_core::scan_with_progress(&dir, &|done, total| {
-            if done % PROGRESS_STEP == 0 || done == total {
+            if throttle.ready(done, total) {
                 // Event delivery is best effort; a closed window is not an error.
                 let _ = app.emit("scan://progress", Progress { done, total });
             }

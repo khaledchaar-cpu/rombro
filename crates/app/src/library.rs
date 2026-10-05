@@ -1,5 +1,5 @@
 //! Library table: every scanned unit in the library with its identification.
-use crate::commands::{CmdResult, PROGRESS_STEP, Progress, err, indexed_scan, open_store};
+use crate::commands::{CmdResult, Progress, Throttle, err, indexed_scan, open_store};
 use rombro_core::plan::{Ident, PLAYLIST_DIR, TRASH_DIR};
 use serde::Serialize;
 use std::path::PathBuf;
@@ -73,8 +73,9 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
             return Err(format!("{} is not a directory", library.display()));
         }
         store.set_library(&library).map_err(err)?;
+        let throttle = Throttle::new();
         let report = indexed_scan(&store, &library, &|done, total| {
-            if done % PROGRESS_STEP == 0 || done == total {
+            if throttle.ready(done, total) {
                 let _ = app.emit("scan://progress", Progress { done, total });
             }
         })?;
