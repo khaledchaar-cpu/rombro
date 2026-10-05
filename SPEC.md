@@ -214,6 +214,8 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   3. Rescan (Button, optional beim Start), inkrementell über Größe/mtime. Von außen hinzugefügte/umbenannte
      Dateien werden wie Inbox-Items geplant; verschwundene Dateien fliegen aus dem Index.
   4. Planner nutzt den Index statt die Library jedes Mal neu zu hashen.
+  Umsetzung: Index = Hash-Cache je Datei (Größe+mtime-ns), gilt auch für die Inbox; Fremddateien laufen wie bisher
+  über den Library-Audit (in_library-Items) in den Plan.
 - Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
 
 ## 11. Offene Fragen
