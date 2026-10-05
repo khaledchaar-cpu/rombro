@@ -3,15 +3,6 @@
   grid-template-rows: var(--topbar-h) 1fr;
   height: 100%;
 }
-.shell::after { /* CRT scanlines, disabled via --scanline */
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2000;
-  background: repeating-linear-gradient(to bottom, transparent 0 2px, var(--scanline) 2px 3px);
-}
-
 .topbar {
   position: relative;
   display: flex;
