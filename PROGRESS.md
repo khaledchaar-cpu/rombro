@@ -31,8 +31,9 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
    `components/Select.tsx` (Cyberpunk-Stil, Portal) – vom User abgenommen.
 2. Manuelle Sichtprüfung der neuen Dashboard-Panels im Tauri-Fenster; Layout `.rows` mit 3 Spalten (Recent runs) prüfen.
 3. ✅ Settings-View: 1G1R-Regeln-Editor (Regionen/Sprachen per Drag (Pointer-Events) + ↑↓, Ausschluss-Flags),
-   gespeichert als JSON-Setting `rules`, Import nutzt sie. Offen: Sichtprüfung im Tauri-Fenster.
-4. Rest M9: Thumbnails (F7), Effekte, Light-Theme.
+   gespeichert als JSON-Setting `rules`, Import nutzt sie (vom User getestet). Rahmenloses Fenster: Topbar ist
+   Drag-Region, eigene Neon-Fensterbuttons (abgenommen). Offen: CLI nutzt noch Default-Regeln.
+4. Rest M9: Thumbnails (F7) als Nächstes, dann Effekte, Light-Theme.
 5. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
 
 ## Stolpersteine
