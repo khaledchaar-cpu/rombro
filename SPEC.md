@@ -239,6 +239,9 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   - MAME-CHDs: gleichnamiger Ordner neben erkanntem Zip (`kinst/kinst.chd`) wird ungeprüft mitgenommen; CHD ohne Zip → Quarantäne.
 
 ## 11. Offene Fragen
+- Entschieden: Arcade-Treffer auf einzelne Chips in einem Zip zählen nicht (Arcade-RDBs hashen ganze Sets) → Zip bleibt ganz, ohne Set-Treffer in Quarantäne. Arcade-Sets nie durch Ausschlussfilter (Bootleg etc.).
+- Entschieden: Quarantäne übernimmt den Pfad relativ zum Inbox (`_quarantine/<unterordner>/<datei>`), damit gleiche Namen nicht kollidieren.
+- Entschieden: OS-Müll (`.DS_Store`, `._*`, `Thumbs.db`, `desktop.ini`) und leere Dateien werden beim Scan ignoriert und nie verschoben.
 - Entschieden: MAME-Cores (2000/2003/2003-Plus/aktuell) suchen BIOS nur im Romset-Ordner → BIOS-Zips liegen neben den Sets (`<System>/neogeo.zip`, in der UI ausgeblendet); nur FBNeo nutzt `_bios/fbneo/`.
 - Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in M6 nicht umgesetzt; Vorschlag: eigener Schritt nach M8.
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
