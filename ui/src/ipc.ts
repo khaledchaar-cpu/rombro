@@ -55,8 +55,8 @@ export function onScanProgress(cb: (p: ScanProgress) => void): Promise<UnlistenF
   return listen<ScanProgress>("scan://progress", (e) => cb(e.payload));
 }
 
-export type Mode = "move" | "copy" | "hardlink";
-export interface OpView { kind: "move" | "copy" | "link" | "write"; from: string | null; to: string; why: string }
+export type Mode = "move" | "copy" | "hardlink" | "reflink";
+export interface OpView { kind: "move" | "copy" | "link" | "clone" | "write"; from: string | null; to: string; why: string }
 export interface DecisionView {
   kind: "ambiguous" | "tie" | "rejected" | "skipped" | "conflict";
   path: string;

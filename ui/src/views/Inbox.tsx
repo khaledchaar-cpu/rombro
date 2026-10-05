@@ -9,6 +9,7 @@ const MODES: { id: Mode; label: string }[] = [
   { id: "move", label: "Move" },
   { id: "copy", label: "Copy" },
   { id: "hardlink", label: "Hardlink" },
+  { id: "reflink", label: "Reflink" },
 ];
 
 export default function Inbox(props: { onPlanned: () => void }) {

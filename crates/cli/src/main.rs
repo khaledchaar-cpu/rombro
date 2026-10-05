@@ -94,6 +94,7 @@ enum ModeArg {
     Move,
     Copy,
     Hardlink,
+    Reflink,
 }
 
 impl PlanOpts {
@@ -106,6 +107,7 @@ impl PlanOpts {
                 ModeArg::Move => rombro_core::plan::Mode::Move,
                 ModeArg::Copy => rombro_core::plan::Mode::Copy,
                 ModeArg::Hardlink => rombro_core::plan::Mode::Hardlink,
+                ModeArg::Reflink => rombro_core::plan::Mode::Reflink,
             },
             playlists: self.playlists,
             no_playlists: self.no_playlists,

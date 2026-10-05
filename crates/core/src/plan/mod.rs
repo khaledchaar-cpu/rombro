@@ -22,6 +22,7 @@ pub enum Mode {
     Move,
     Copy,
     Hardlink,
+    Reflink,
 }
 
 /// Files making up one importable unit.

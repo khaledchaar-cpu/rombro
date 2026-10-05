@@ -18,6 +18,7 @@ pub enum ModeArg {
     Move,
     Copy,
     Hardlink,
+    Reflink,
 }
 
 impl ModeArg {
@@ -26,6 +27,7 @@ impl ModeArg {
             ModeArg::Move => "move",
             ModeArg::Copy => "copy",
             ModeArg::Hardlink => "hardlink",
+            ModeArg::Reflink => "reflink",
         }
     }
 }
@@ -36,6 +38,7 @@ impl From<ModeArg> for Mode {
             ModeArg::Move => Mode::Move,
             ModeArg::Copy => Mode::Copy,
             ModeArg::Hardlink => Mode::Hardlink,
+            ModeArg::Reflink => Mode::Reflink,
         }
     }
 }
@@ -240,6 +243,7 @@ fn op_view(op: &Op, why: &str) -> OpView {
         Op::Move { .. } => "move",
         Op::Copy { .. } => "copy",
         Op::Hardlink { .. } => "link",
+        Op::Reflink { .. } => "clone",
         Op::Write { .. } => "write",
     };
     OpView {

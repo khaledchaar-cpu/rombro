@@ -21,6 +21,11 @@ pub enum Op {
         from: PathBuf,
         to: PathBuf,
     },
+    /// Copy-on-write clone; falls back to a plain copy where the file system can't reflink.
+    Reflink {
+        from: PathBuf,
+        to: PathBuf,
+    },
     /// Writes a text file; replaces an existing file (its content is journaled for undo).
     Write {
         path: PathBuf,
@@ -32,14 +37,20 @@ impl Op {
     /// The path this operation creates or overwrites.
     pub fn target(&self) -> &Path {
         match self {
-            Op::Move { to, .. } | Op::Copy { to, .. } | Op::Hardlink { to, .. } => to,
+            Op::Move { to, .. }
+            | Op::Copy { to, .. }
+            | Op::Hardlink { to, .. }
+            | Op::Reflink { to, .. } => to,
             Op::Write { path, .. } => path,
         }
     }
 
     pub fn source(&self) -> Option<&Path> {
         match self {
-            Op::Move { from, .. } | Op::Copy { from, .. } | Op::Hardlink { from, .. } => Some(from),
+            Op::Move { from, .. }
+            | Op::Copy { from, .. }
+            | Op::Hardlink { from, .. }
+            | Op::Reflink { from, .. } => Some(from),
             Op::Write { .. } => None,
         }
     }
@@ -98,6 +109,7 @@ fn apply(op: &Op) -> io::Result<Done> {
         Op::Move { from, to } => move_file(from, to),
         Op::Copy { from, to } => fs::copy(from, to).map(|_| ()),
         Op::Hardlink { from, to } => fs::hard_link(from, to),
+        Op::Reflink { from, to } => reflink_copy::reflink_or_copy(from, to).map(|_| ()),
         Op::Write { path, contents } => fs::write(path, contents),
     };
     if let Err(e) = res {
@@ -117,7 +129,9 @@ pub fn undo(done: &[Done]) -> Vec<(Op, io::Error)> {
     for d in done.iter().rev() {
         let res = match (&d.op, &d.replaced) {
             (Op::Move { from, to }, _) => create_parents(from).and_then(|_| move_file(to, from)),
-            (Op::Copy { to, .. } | Op::Hardlink { to, .. }, _) => fs::remove_file(to),
+            (Op::Copy { to, .. } | Op::Hardlink { to, .. } | Op::Reflink { to, .. }, _) => {
+                fs::remove_file(to)
+            }
             (Op::Write { path, .. }, Some(old)) => fs::write(path, old),
             (Op::Write { path, .. }, None) => fs::remove_file(path),
         };

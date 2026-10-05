@@ -193,7 +193,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   (z. B. „Street Fighter II - The World Warrior (Japan)“), landen in eigenen Gruppen → Parent/Clone-DATs später.
 - M5: Multi-Disc-Release = Name ohne `(Disc|Disk|Side N)`; alle Discs des Picks werden zusammen gewählt.
 - M6: Import = Library + Inbox gemeinsam scannen und planen (Audit = Import ohne Inbox). Library-Dateien werden
-  immer verschoben; Inbox per Modus move/copy/hardlink (Reflink noch nicht). Von 1G1R verworfene Releases
+  immer verschoben; Inbox per Modus move/copy/hardlink/reflink (Reflink fällt ohne CoW-FS auf Copy zurück). Von 1G1R verworfene Releases
   (auch Beta/Hack etc.) werden **nicht** getrasht (User, 2026-10-05), sondern bleiben liegen und landen in der
   **TBD-Queue** (`Decision::Rejected` mit Grund + gewähltem Release); der User entscheidet später (M8: GUI).
   Unbekannte → `_quarantine/<Dateiname>` (System unbekannt). Tie/Ambiguous/Konflikt/Rejected → Item bleibt unangetastet.

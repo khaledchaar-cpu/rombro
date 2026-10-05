@@ -152,6 +152,7 @@ fn describe(op: &Op, lib: &Path) -> String {
         Op::Move { from, to } => format!("MOVE    {} -> {}", from.display(), rel(to, lib)),
         Op::Copy { from, to } => format!("COPY    {} -> {}", from.display(), rel(to, lib)),
         Op::Hardlink { from, to } => format!("LINK    {} -> {}", from.display(), rel(to, lib)),
+        Op::Reflink { from, to } => format!("CLONE   {} -> {}", from.display(), rel(to, lib)),
         Op::Write { path, .. } => format!("WRITE   {}", rel(path, lib)),
     }
 }

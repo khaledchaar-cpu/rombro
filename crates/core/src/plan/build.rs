@@ -254,6 +254,7 @@ impl Builder<'_> {
             (true, _) | (_, Mode::Move) => Op::Move { from, to },
             (_, Mode::Copy) => Op::Copy { from, to },
             (_, Mode::Hardlink) => Op::Hardlink { from, to },
+            (_, Mode::Reflink) => Op::Reflink { from, to },
         }
     }
 
