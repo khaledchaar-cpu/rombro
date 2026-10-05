@@ -171,6 +171,8 @@ pub async fn plan_import(
             .ops
             .iter()
             .zip(&p.why)
+            // BIOS sets are placed silently; the user never sees them in the app
+            .filter(|(_, w)| w.as_str() != "BIOS")
             .map(|(o, w)| op_view(o, w))
             .collect(),
         decisions: p.decisions.iter().map(decision_view).collect(),

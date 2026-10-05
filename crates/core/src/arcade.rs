@@ -43,11 +43,14 @@ pub fn is_bios(rom_name: Option<&str>, name: &str) -> bool {
 }
 
 /// Library-relative folder where RetroArch's core for `system` finds BIOS sets.
-/// FBNeo reads `system/fbneo/`; the MAME cores only search the romset folder itself.
+/// FBNeo reads `system/fbneo/`, the MAME cores only search the romset folder itself,
+/// console cores read the `system` root.
 pub fn bios_dir(system: &str) -> std::path::PathBuf {
+    let root = std::path::Path::new(crate::plan::BIOS_DIR);
     match system {
-        "FBNeo - Arcade Games" => std::path::Path::new(crate::plan::BIOS_DIR).join("fbneo"),
-        other => other.into(),
+        "FBNeo - Arcade Games" => root.join("fbneo"),
+        s if s.starts_with("MAME") => s.into(),
+        _ => root.into(),
     }
 }
 
@@ -79,5 +82,6 @@ mod tests {
     fn bios_lands_where_each_core_looks() {
         assert_eq!(bios_dir("FBNeo - Arcade Games"), Path::new("_bios/fbneo"));
         assert_eq!(bios_dir("MAME 2003-Plus"), Path::new("MAME 2003-Plus"));
+        assert_eq!(bios_dir("Sony - PlayStation"), Path::new("_bios"));
     }
 }

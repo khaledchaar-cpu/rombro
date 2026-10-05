@@ -97,7 +97,7 @@ pub enum Ident {
     /// Several different games match; the user decides (SPEC §11a).
     Ambiguous(Vec<Game>),
     Unknown,
-    /// An arcade BIOS/device set: goes to the BIOS folder, ignored everywhere else.
+    /// A BIOS set (arcade or console `[BIOS]` entry): goes to the BIOS folder, ignored everywhere else.
     Bios(Game),
     /// Not handled by the planner (reason shown to the user).
     Skip(String),

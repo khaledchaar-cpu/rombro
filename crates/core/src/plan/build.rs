@@ -42,7 +42,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             }
             Ident::Known(g) => known.entry(&g.system).or_default().push((it, g)),
             Ident::Bios(g) => {
-                b.why = "arcade BIOS".into();
+                b.why = "BIOS".into();
                 b.bios(it, g);
             }
             Ident::Ambiguous(c) => b.plan.decisions.push(Decision::Ambiguous {

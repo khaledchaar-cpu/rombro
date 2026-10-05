@@ -213,10 +213,12 @@ impl Store {
         let c = candidates(records);
         Ok(match c.as_slice() {
             [] => Ident::Unknown,
+            [r] if r.name.starts_with("[BIOS]") => Ident::Bios(game(r)),
             [r] => Ident::Known(game(r)),
             _ => match self.resolution(sha1)? {
                 Some((system, name)) => {
                     match c.iter().find(|r| r.system == system && r.name == name) {
+                        Some(r) if r.name.starts_with("[BIOS]") => Ident::Bios(game(r)),
                         Some(r) => Ident::Known(game(r)),
                         None => Ident::Ambiguous(c.iter().map(|r| game(r)).collect()),
                     }
