@@ -1,6 +1,6 @@
 //! Library table: every scanned unit in the library with its identification.
 use crate::commands::{CmdResult, Progress, Throttle, err, indexed_scan, open_store};
-use rombro_core::plan::{Ident, PLAYLIST_DIR, TRASH_DIR};
+use rombro_core::plan::{BIOS_DIR, Ident, PLAYLIST_DIR, TRASH_DIR};
 use serde::Serialize;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter};
@@ -83,12 +83,13 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
         let added_db = store.added_times(&library).map_err(err)?;
         Ok(items
             .into_iter()
-            // trash and playlists are managed by RomBro, not part of the collection
+            // trash, playlists and BIOS sets are managed by RomBro, not part of the collection
             .filter(|it| {
                 let p = it.files.primary();
-                ![TRASH_DIR, PLAYLIST_DIR]
-                    .iter()
-                    .any(|d| p.starts_with(library.join(d)))
+                !matches!(it.ident, Ident::Bios(_))
+                    && ![TRASH_DIR, PLAYLIST_DIR, BIOS_DIR]
+                        .iter()
+                        .any(|d| p.starts_with(library.join(d)))
             })
             .map(|it| {
                 let p = it.files.primary();
@@ -103,6 +104,7 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
                     ),
                     Ident::Unknown => ("unknown", String::new(), String::new()),
                     Ident::Skip(r) => ("skip", String::new(), r),
+                    Ident::Bios(g) => ("skip", g.system, g.name), // filtered above
                 };
                 let regions = rombro_core::naming::parse(&name)
                     .regions

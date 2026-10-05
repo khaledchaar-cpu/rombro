@@ -166,3 +166,22 @@ fn retroarch_playlists_are_not_roms() {
     let report = scan(dir.path());
     assert!(report.roms.is_empty() && report.failures.is_empty());
 }
+
+#[test]
+fn hashes_archives_as_a_whole() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("set.zip");
+    let mut w = zip::ZipWriter::new(fs::File::create(&path).unwrap());
+    for name in ["a.rom", "b.rom"] {
+        w.start_file(name, zip::write::SimpleFileOptions::default())
+            .unwrap();
+        w.write_all(&rom(32, 1)).unwrap();
+    }
+    w.finish().unwrap();
+    let report = scan(dir.path());
+    assert_eq!(report.roms.len(), 2);
+    assert_eq!(report.archives.len(), 1);
+    let (whole, _) = hash_reader(fs::File::open(&path).unwrap(), None, false).unwrap();
+    assert_eq!(report.archives[0].hashes, whole);
+    assert_eq!(report.archives[0].member, None);
+}

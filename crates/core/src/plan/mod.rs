@@ -38,6 +38,12 @@ pub enum Files {
         sheet: PathBuf,
         tracks: Vec<PathBuf>,
     },
+    /// An arcade romset archive, identified as a whole; placed as-is under its own name,
+    /// together with the CHDs in the folder of the same name (`kinst.zip` + `kinst/*.chd`).
+    Set {
+        archive: PathBuf,
+        chds: Vec<PathBuf>,
+    },
     /// One ROM inside an archive holding several (extracted on import).
     Member { archive: PathBuf, member: String },
     /// A disc stored in an archive: sheet member and its track members (in sheet order).
@@ -52,6 +58,7 @@ impl Files {
     pub fn primary(&self) -> &PathBuf {
         match self {
             Files::Single(p)
+            | Files::Set { archive: p, .. }
             | Files::Sheet { sheet: p, .. }
             | Files::Member { archive: p, .. }
             | Files::ArchivedSheet { archive: p, .. } => p,
@@ -69,6 +76,7 @@ impl Files {
     pub fn all(&self) -> Vec<&PathBuf> {
         match self {
             Files::Single(p) | Files::Member { archive: p, .. } => vec![p],
+            Files::Set { archive, chds } => std::iter::once(archive).chain(chds).collect(),
             Files::ArchivedSheet { archive, .. } => vec![archive],
             Files::Sheet { sheet, tracks } => std::iter::once(sheet).chain(tracks).collect(),
         }
@@ -89,6 +97,8 @@ pub enum Ident {
     /// Several different games match; the user decides (SPEC §11a).
     Ambiguous(Vec<Game>),
     Unknown,
+    /// An arcade BIOS/device set: goes to the BIOS folder, ignored everywhere else.
+    Bios(Game),
     /// Not handled by the planner (reason shown to the user).
     Skip(String),
 }
@@ -171,5 +181,7 @@ pub struct Plan {
 pub const QUARANTINE_DIR: &str = "_quarantine";
 /// Default playlist folder inside the library.
 pub const PLAYLIST_DIR: &str = "_playlists";
+/// Arcade BIOS sets, laid out like RetroArch's `system` folder.
+pub const BIOS_DIR: &str = "_bios";
 /// Releases the user discarded from the TBD queue.
 pub const TRASH_DIR: &str = "_trash";

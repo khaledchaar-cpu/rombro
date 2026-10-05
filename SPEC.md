@@ -239,6 +239,8 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   - MAME-CHDs: gleichnamiger Ordner neben erkanntem Zip (`kinst/kinst.chd`) wird ungeprüft mitgenommen; CHD ohne Zip → Quarantäne.
 
 ## 11. Offene Fragen
+- BIOS-Unterordner für MAME-Cores (`_bios/mame`, `mame2003-plus`, …) ungeprüft – FBNeo (`fbneo/`) ist gesichert. Mit echtem RetroArch verifizieren.
+- Arcade „Name passt, CRC nicht“: Quarantäne-Hinweis auf falsche Romset-Version fehlt noch (landet als „unknown“).
 - Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in M6 nicht umgesetzt; Vorschlag: eigener Schritt nach M8.
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
 - Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?

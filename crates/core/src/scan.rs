@@ -64,6 +64,8 @@ pub struct Playlist {
 #[derive(Debug, Default)]
 pub struct ScanReport {
     pub roms: Vec<ScannedRom>,
+    /// Hashes of whole ZIP/7z files (`member: None`); arcade romsets are identified by these.
+    pub archives: Vec<ScannedRom>,
     pub discs: Vec<ScannedDisc>,
     pub playlists: Vec<Playlist>,
     pub failures: Vec<ScanFailure>,
@@ -159,6 +161,8 @@ pub fn scan_cached(
         .map(|p| {
             let r = cache
                 .get(p)
+                // Entries cached before archives were hashed as a whole lack that hash.
+                .filter(|roms| !is_archive(p) || roms.iter().any(|r| r.member.is_none()))
                 .map_or_else(|| scan_file(p), Ok)
                 .map_err(|error| ScanFailure {
                     path: p.clone(),
@@ -170,13 +174,22 @@ pub fn scan_cached(
         .collect();
     for r in results {
         match r {
-            Ok(roms) => report.roms.extend(roms),
+            Ok(roms) => {
+                for r in roms {
+                    if r.member.is_none() && is_archive(&r.path) {
+                        report.archives.push(r);
+                    } else {
+                        report.roms.push(r);
+                    }
+                }
+            }
             Err(f) => report.failures.push(f),
         }
     }
     report
         .roms
         .sort_by(|a, b| (&a.path, &a.member).cmp(&(&b.path, &b.member)));
+    report.archives.sort_by(|a, b| a.path.cmp(&b.path));
     report.discs.sort_by(|a, b| a.path.cmp(&b.path));
     report.playlists.sort_by(|a, b| a.path.cmp(&b.path));
     report.failures.sort_by(|a, b| a.path.cmp(&b.path));
@@ -231,24 +244,35 @@ fn scan_disc_cached(
     })
 }
 
-/// Scans one file; archives yield one entry per member.
+/// Scans one file; archives yield one entry per member plus one for the whole file
+/// (`member: None`).
 pub fn scan_file(path: &Path) -> Result<Vec<ScannedRom>, ScanError> {
-    match ext_of(path).as_str() {
-        "zip" => scan_zip(path),
-        "7z" => scan_7z(path),
-        ext => {
+    let ext = ext_of(path);
+    let members = match ext.as_str() {
+        "zip" => scan_zip(path)?,
+        "7z" => scan_7z(path)?,
+        _ => {
             let f = File::open(path)?;
             let size = f.metadata()?.len();
-            let (hashes, header, headerless) = hash_rom(BufReader::new(f), size, ext)?;
-            Ok(vec![ScannedRom {
+            let (hashes, header, headerless) = hash_rom(BufReader::new(f), size, &ext)?;
+            return Ok(vec![ScannedRom {
                 path: path.to_path_buf(),
                 member: None,
                 hashes,
                 header,
                 headerless,
-            }])
+            }]);
         }
-    }
+    };
+    let (hashes, _) = hash_reader(BufReader::new(File::open(path)?), None, false)?;
+    let whole = ScannedRom {
+        path: path.to_path_buf(),
+        member: None,
+        hashes,
+        header: None,
+        headerless: None,
+    };
+    Ok(std::iter::once(whole).chain(members).collect())
 }
 
 fn scan_zip(path: &Path) -> Result<Vec<ScannedRom>, ScanError> {
@@ -311,6 +335,10 @@ fn hash_rom<R: Read>(mut r: R, size: u64, ext: &str) -> io::Result<RomHashes> {
     let header = header::detect(&probe[..n], size, ext);
     let (full, headerless) = hash_reader((&probe[..n]).chain(r), header.map(Header::size), false)?;
     Ok((full, header, headerless))
+}
+
+fn is_archive(p: &Path) -> bool {
+    matches!(ext_of(p).as_str(), "zip" | "7z")
 }
 
 fn ext_of(p: &Path) -> String {

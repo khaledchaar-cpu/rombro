@@ -1,7 +1,7 @@
 use super::*;
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
 const SYS: &str = "Nintendo - SNES";
@@ -165,4 +165,96 @@ fn extracts_archived_disc_with_renamed_tracks() {
     assert!(undo(&ex.done).is_empty());
     assert!(tree(&lib).is_empty());
     assert_eq!(tree(&inbox), ["disc.zip"]);
+}
+
+fn arcade(system: &str, name: &str) -> Game {
+    Game {
+        system: system.into(),
+        name: name.into(),
+        crc: Some(1),
+    }
+}
+
+#[test]
+fn places_romsets_by_short_name_with_chds_and_bios_apart() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let fb = "FBNeo - Arcade Games";
+    let set = |name: &str, chds: Vec<PathBuf>| Files::Set {
+        archive: inbox.join(name),
+        chds,
+    };
+    zip(&inbox.join("burningf.zip"), &["a"]);
+    zip(&inbox.join("burningfh.zip"), &["b"]);
+    zip(&inbox.join("kinst.zip"), &["c"]);
+    zip(&inbox.join("neogeo.zip"), &["d"]);
+    fs::create_dir_all(inbox.join("kinst")).unwrap();
+    fs::write(inbox.join("kinst/kinst.chd"), b"hd").unwrap();
+    let items = [
+        Item {
+            files: set("burningf.zip", vec![]),
+            ident: Ident::Known(arcade(fb, "Burning Fight (NGM-018 ~ NGH-018)")),
+            in_library: false,
+        },
+        Item {
+            files: set("burningfh.zip", vec![]),
+            ident: Ident::Known(arcade(fb, "Burning Fight (NGH-018, US)")),
+            in_library: false,
+        },
+        Item {
+            files: set("kinst.zip", vec![inbox.join("kinst/kinst.chd")]),
+            ident: Ident::Known(arcade("MAME", "Killer Instinct (v1.5d)")),
+            in_library: false,
+        },
+        Item {
+            files: set("neogeo.zip", vec![]),
+            ident: Ident::Bios(arcade(fb, "Neo Geo")),
+            in_library: false,
+        },
+    ];
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    assert!(plan.decisions.is_empty(), "{:?}", plan.decisions);
+    assert!(execute(&plan.ops).error.is_none());
+    let files: Vec<String> = tree(&lib)
+        .into_iter()
+        .filter(|f| !f.starts_with("_playlists"))
+        .collect();
+    assert_eq!(
+        files,
+        [
+            "FBNeo - Arcade Games/burningf.zip",
+            "FBNeo - Arcade Games/burningfh.zip",
+            "MAME/kinst.zip",
+            "MAME/kinst/kinst.chd",
+            "_bios/fbneo/neogeo.zip"
+        ]
+    );
+    // re-planning the library changes nothing
+    let lib_items: Vec<Item> = items
+        .iter()
+        .map(|it| {
+            let mut it = it.clone();
+            let rel = |p: &Path| p.strip_prefix(&inbox).unwrap().to_path_buf();
+            it.files = match &it.files {
+                Files::Set { archive, chds } => Files::Set {
+                    archive: lib.join(match &it.ident {
+                        Ident::Bios(_) => Path::new("_bios/fbneo").join(rel(archive)),
+                        Ident::Known(g) => Path::new(&g.system).join(rel(archive)),
+                        _ => unreachable!(),
+                    }),
+                    chds: chds.iter().map(|c| lib.join("MAME").join(rel(c))).collect(),
+                },
+                f => f.clone(),
+            };
+            it.in_library = true;
+            it
+        })
+        .filter(|it| !matches!(it.ident, Ident::Bios(_)))
+        .collect();
+    let again = build(&lib_items, &lib, &opts(Mode::Move));
+    assert!(
+        again.ops.iter().all(|op| matches!(op, Op::Write { .. })),
+        "{:?}",
+        again.ops
+    );
 }

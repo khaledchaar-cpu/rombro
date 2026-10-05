@@ -3,7 +3,7 @@
 
 use crate::{Result, Store};
 use rombro_core::plan::{Done, Op};
-use rombro_core::{CachedRom, HashCache, ScanReport, Stamp};
+use rombro_core::{CachedRom, HashCache, ScanReport, ScannedRom, Stamp};
 use rusqlite::{OptionalExtension, params};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -100,10 +100,20 @@ impl Store {
     /// Replaces the index below `root` with the files of `report` (vanished files drop out).
     pub fn save_scan(&self, root: &Path, report: &ScanReport) -> Result<()> {
         let mut files: Vec<(&Path, Vec<CachedRom>)> = Vec::new();
+        let whole: HashMap<&Path, &ScannedRom> = report
+            .archives
+            .iter()
+            .map(|a| (a.path.as_path(), a))
+            .collect();
         for group in report.roms.chunk_by(|a, b| a.path == b.path) {
+            // Archives are kept with their whole-file hash so the cache can serve both.
+            let own = whole.get(group[0].path.as_path()).copied();
             files.push((
                 &group[0].path,
-                group.iter().map(CachedRom::from_rom).collect(),
+                own.into_iter()
+                    .chain(group)
+                    .map(CachedRom::from_rom)
+                    .collect(),
             ));
         }
         for t in report.discs.iter().flat_map(|d| &d.tracks) {

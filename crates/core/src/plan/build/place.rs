@@ -10,6 +10,10 @@ impl Builder<'_> {
     /// Ops moving one item to its library path; returns the new primary path.
     pub(super) fn place(&mut self, it: &Item, g: &Game, multi: bool) -> Option<PathBuf> {
         let target = |src: &Path| {
+            if matches!(it.files, Files::Set { .. }) {
+                // Emulators find romsets only by their short name.
+                return self.library.join(&g.system).join(file_name(src));
+            }
             let rel = naming::target_path(&g.system, &g.name, &ext_of(src), multi);
             self.library.join(rel)
         };
@@ -31,6 +35,15 @@ impl Builder<'_> {
                     tracks.iter().map(PathBuf::from).collect(),
                 )),
             ),
+            Files::Set { archive, chds } => {
+                let dir = primary.with_extension("");
+                let mut ops = vec![self.transfer(it, archive, &primary)];
+                ops.extend(
+                    chds.iter()
+                        .map(|c| self.transfer(it, c, &dir.join(file_name(c)))),
+                );
+                (ops, None)
+            }
             f => (vec![self.transfer(it, &name_source(f), &primary)], None),
         };
         if let Some((text, tracks)) = sheet {

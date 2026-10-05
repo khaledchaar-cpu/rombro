@@ -1,8 +1,8 @@
 //! Building a plan: 1G1R per system, target paths, TBD queue, quarantine, playlists.
 
 use super::{
-    Decision, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan, QUARANTINE_DIR, TRASH_DIR,
-    Verdict, lpl,
+    BIOS_DIR, Decision, Files, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan,
+    QUARANTINE_DIR, TRASH_DIR, Verdict, lpl,
 };
 use crate::{g1r, naming};
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -26,7 +26,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         why: String::new(),
         members_done: HashMap::new(),
     };
-    let managed = [QUARANTINE_DIR, PLAYLIST_DIR, TRASH_DIR].map(|d| library.join(d));
+    let managed = [QUARANTINE_DIR, PLAYLIST_DIR, TRASH_DIR, BIOS_DIR].map(|d| library.join(d));
     let items: Vec<&Item> = items
         .iter()
         .filter(|it| !managed.iter().any(|m| it.files.primary().starts_with(m)))
@@ -35,7 +35,16 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     let mut known: BTreeMap<&str, Vec<(&Item, &Game)>> = BTreeMap::new();
     for &it in &items {
         match &it.ident {
+            // Arcade sets are kept as-is: every exact match is its own release, no 1G1R.
+            Ident::Known(g) if matches!(it.files, Files::Set { .. }) => {
+                b.why = "arcade romset".into();
+                b.release(&g.system, &[&(it, g)]);
+            }
             Ident::Known(g) => known.entry(&g.system).or_default().push((it, g)),
+            Ident::Bios(g) => {
+                b.why = "arcade BIOS".into();
+                b.bios(it, g);
+            }
             Ident::Ambiguous(c) => b.plan.decisions.push(Decision::Ambiguous {
                 path: it.files.primary().clone(),
                 candidates: c.clone(),
@@ -190,6 +199,24 @@ impl Builder<'_> {
             .collect();
         if self.commit(it, ops) {
             self.plan.quarantined += 1;
+        }
+    }
+
+    /// Puts a BIOS set where RetroArch's core looks for it (relative to the `system` folder).
+    fn bios(&mut self, it: &Item, g: &Game) {
+        let from = it.files.primary();
+        let to = self
+            .library
+            .join(BIOS_DIR)
+            .join(crate::arcade::bios_dir(&g.system))
+            .join(file_name(from));
+        let ops = vec![self.transfer(it, from, &to)];
+        let ops = ops
+            .into_iter()
+            .filter(|op| op.source() != Some(op.target()))
+            .collect::<Vec<_>>();
+        if !ops.is_empty() {
+            self.commit(it, ops);
         }
     }
 

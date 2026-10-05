@@ -24,12 +24,14 @@ Erkennung per Track-Hash, Tracks umbenannt entpackt, Sheet neu geschrieben. **CH
 ersten Datentrack (Hash + Serial), Ablage als `<Name>.chd`. Planner aufgeteilt (`plan/build/{place,archives}.rs`, `plan/sheet.rs`).
 
 ## Nächste Schritte
+0. Arcade: Hinweis „Name passt, CRC nicht“; BIOS-Pfade der MAME-Cores in RetroArch verifizieren.
 1. Mit echten Dateien prüfen: CHD (chdman-erzeugt, cdlz/cdfl), 7z mit cue/bin, Multi-ROM-Zips (bisher nur synthetisch).
 2. Remote anlegen, pushen, CI-Lauf auf allen 3 OS prüfen; Signierung macOS/Windows fehlt.
 3. Sichtprüfung im Tauri-Fenster (Gamification, Sync-Buttons, neue Op-Tags `clone`/`extract`, Reflink-Option).
 4. v2 Launcher (SPEC §6).
 
 ## Stolpersteine
+- Arcade-RDB-Einträge (FBNeo/MAME) hashen das **ganze Zip** → `ScanReport.archives`; Treffer werden `Files::Set` (Kurzname, kein 1G1R, CHDs aus `<set>/`), BIOS → `Ident::Bios` → `_bios/<core>/`.
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
 - rusqlite braucht Feature `fallible_uint` für u64.
 - Bulk-Import (>4 Dateien) droppt Lookup-Indizes und baut sie danach neu (9 s → 3 s).

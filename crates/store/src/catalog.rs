@@ -1,17 +1,29 @@
 //! Turning a scan report into planner items (identification + stored resolutions).
 
 use crate::{DiscMatch, Match, Record, Result, Store, candidates};
+use rombro_core::arcade;
 use rombro_core::disc::{self, DiscKind};
 use rombro_core::plan::{Files, Game, Ident, Item};
 use rombro_core::{ScanReport, ScannedDisc, ScannedRom};
-use std::path::Path;
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
 
 impl Store {
     /// Identifies every scanned ROM and disc. Each ROM of a multi-ROM archive becomes its own
     /// item; discs with missing tracks are skipped; ambiguous matches use a stored resolution if there is one.
     pub fn items(&self, report: &ScanReport, in_library: bool) -> Result<Vec<Item>> {
         let mut out = Vec::new();
+        let mut sets = HashSet::new();
+        for whole in &report.archives {
+            if let Some(item) = self.romset(whole, in_library)? {
+                sets.insert(whole.path.as_path());
+                out.push(item);
+            }
+        }
         for group in report.roms.chunk_by(|a, b| a.path == b.path) {
+            if sets.contains(group[0].path.as_path()) {
+                continue;
+            }
             if let Some(item) = self.archived_disc(group, in_library)? {
                 out.push(item);
                 continue;
@@ -31,7 +43,20 @@ impl Store {
                 });
             }
         }
-        for d in &report.discs {
+        let attached: HashSet<&PathBuf> = out
+            .iter()
+            .filter_map(|it| match &it.files {
+                Files::Set { chds, .. } => Some(chds),
+                _ => None,
+            })
+            .flatten()
+            .collect();
+        let discs: Vec<&ScannedDisc> = report
+            .discs
+            .iter()
+            .filter(|d| !attached.contains(&d.path))
+            .collect();
+        for d in discs {
             let ident = if !d.missing.is_empty() {
                 Ident::Skip(format!("{} missing track(s)", d.missing.len()))
             } else {
@@ -58,6 +83,36 @@ impl Store {
             });
         }
         Ok(out)
+    }
+
+    /// An archive whose whole-file hash matches an entry (arcade romset): the best-ranked
+    /// system wins (FBNeo, newest MAME, …); BIOS sets get their own ident.
+    fn romset(&self, whole: &ScannedRom, in_library: bool) -> Result<Option<Item>> {
+        let mut records = match self.identify(&whole.hashes)? {
+            Match::Verified(r) | Match::CrcOnly(r) => r,
+            Match::Unknown => return Ok(None),
+        };
+        let best = records
+            .iter()
+            .map(|r| arcade::rank(&r.system))
+            .min()
+            .unwrap_or_default();
+        records.retain(|r| arcade::rank(&r.system) == best);
+        let bios = records
+            .iter()
+            .any(|r| arcade::is_bios(r.rom_name.as_deref(), &r.name));
+        let ident = match self.ident(&records, &whole.hashes.sha1)? {
+            Ident::Known(g) if bios => Ident::Bios(g),
+            i => i,
+        };
+        Ok(Some(Item {
+            files: Files::Set {
+                archive: whole.path.clone(),
+                chds: set_chds(&whole.path),
+            },
+            ident,
+            in_library,
+        }))
     }
 
     /// An archive holding a disc sheet becomes one disc item (identified by its track hashes;
@@ -178,4 +233,18 @@ fn game(r: &Record) -> Game {
         name: r.name.clone(),
         crc: r.crc,
     }
+}
+
+/// CHDs in the folder named like the romset (`kinst.zip` → `kinst/*.chd`), sorted.
+fn set_chds(archive: &Path) -> Vec<PathBuf> {
+    let Ok(dir) = std::fs::read_dir(archive.with_extension("")) else {
+        return Vec::new();
+    };
+    let mut chds: Vec<PathBuf> = dir
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("chd")))
+        .collect();
+    chds.sort();
+    chds
 }
