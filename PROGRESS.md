@@ -25,7 +25,10 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
 1. ✅ Persistenter Library-Index: Tabelle `file` (Pfad → Größe/mtime/ROM-Hashes als JSON) dient als Hash-Cache
    für Library *und* Inbox (`scan_cached`), Execute/Undo verschieben Index-Zeilen mit (`index_executed/undone`),
    Library-Pfad als Setting `library`, App lädt Library beim Start (`initLibrary`), „Rescan“ statt „Load“.
-   Offen: Tauri-Sichtprüfung (Startzeit mit echter Library, zweiter Rescan sollte nur stat-en).
+   Offen: Startzeit mit großer echter Library prüfen.
+   Danach (User-Feedback): Inbox-Pfad/Modus in DB, Grund je Plan-Op (`Plan.why`), `.lpl` nie als ROM,
+   Library-Filter (System/Region/Status/Hinzugefügt; `file.added` in DB), eigene Dropdown-Komponente
+   `components/Select.tsx` (Cyberpunk-Stil, Portal) – vom User abgenommen.
 2. Manuelle Sichtprüfung der neuen Dashboard-Panels im Tauri-Fenster; Layout `.rows` mit 3 Spalten (Recent runs) prüfen.
 3. Restlichen M9-Umfang aus SPEC lesen und planen.
 4. Übertragen aus M6/M8 (nach M9 einplanen): Reflink, Discs in Archiven/CHD, Multi-ROM-Archive, 1G1R-Regel-Config.
@@ -49,6 +52,7 @@ Letzte Panels (Tie-Buttons, Library-Panel, Recent runs) vom User freigegeben ohn
 - Tie-Entscheidungen sind in der UI per `decisionKey` eindeutig (Tie-`path` ist das System).
 - `pkill -f <muster>` in Bash killt die eigene Shell mit (Muster steht in der Kommandozeile) → `pgrep`/PID nutzen.
 - Index-Präfixsuche per `substr(path,1,n)`; Pfade als lossy UTF-8. Disc-ID wird bei Cache-Treffer neu gelesen (billig).
+- Virtuelle Listen: Zeilen per Accessor (`() => view()[i]`) lesen, sonst bleiben sie nach Filtern stale.
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log
