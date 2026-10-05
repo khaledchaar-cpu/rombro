@@ -24,14 +24,14 @@ UI: Fortschritt zeitbasiert mit Phase + Sekunden, klarere Rejected-Gründe (+ Sy
 Completeness-Layout. Echte CHDs (PSX) und Amiga-`.lha` erkannt; Import auf Testordner ausgeführt.
 
 ## Nächste Schritte
-1. BIOS-Pfade der MAME-Cores in RetroArch verifizieren (`_bios/mame`, `mame2003-plus`, …; FBNeo gesichert).
+1. Sichtprüfung: MAME-BIOS liegt jetzt neben den Romsets – in RetroArch mit Neo-Geo-Set gegenprüfen.
 2. Sichtprüfung Rest: Gamification-Panels, Effects off.
 3. Echte 7z mit cue/bin und Multi-ROM-Zips (Konsole) testen.
 4. Remote anlegen, pushen, CI auf 3 OS; Signierung macOS/Windows.
 5. v2 Launcher (SPEC §6) – **erst ganz zum Schluss** (User-Wunsch).
 
 ## Stolpersteine
-- Arcade-RDB-Einträge (FBNeo/MAME) hashen das **ganze Zip** → `ScanReport.archives`; Treffer werden `Files::Set` (Kurzname, kein 1G1R, CHDs aus `<set>/`), BIOS → `Ident::Bios` → `_bios/<core>/`.
+- Arcade-RDB-Einträge (FBNeo/MAME) hashen das **ganze Zip** → `ScanReport.archives`; Treffer werden `Files::Set` (Kurzname, kein 1G1R, CHDs aus `<set>/`), BIOS → `Ident::Bios` → FBNeo `_bios/fbneo/`, MAME-Cores neben die Sets (`arcade::bios_dir`).
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
 - rusqlite braucht Feature `fallible_uint` für u64.
 - Bulk-Import (>4 Dateien) droppt Lookup-Indizes und baut sie danach neu (9 s → 3 s).

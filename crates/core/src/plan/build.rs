@@ -202,12 +202,11 @@ impl Builder<'_> {
         }
     }
 
-    /// Puts a BIOS set where RetroArch's core looks for it (relative to the `system` folder).
+    /// Puts a BIOS set where RetroArch's core looks for it.
     fn bios(&mut self, it: &Item, g: &Game) {
         let from = it.files.primary();
         let to = self
             .library
-            .join(BIOS_DIR)
             .join(crate::arcade::bios_dir(&g.system))
             .join(file_name(from));
         let ops = vec![self.transfer(it, from, &to)];

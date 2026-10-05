@@ -42,20 +42,19 @@ pub fn is_bios(rom_name: Option<&str>, name: &str) -> bool {
         || n.contains("internal prom")
 }
 
-/// Folder below the BIOS root where RetroArch's core for `system` looks (`system/<dir>`).
-pub fn bios_dir(system: &str) -> &'static str {
+/// Library-relative folder where RetroArch's core for `system` finds BIOS sets.
+/// FBNeo reads `system/fbneo/`; the MAME cores only search the romset folder itself.
+pub fn bios_dir(system: &str) -> std::path::PathBuf {
     match system {
-        "FBNeo - Arcade Games" => "fbneo",
-        "MAME 2003-Plus" => "mame2003-plus",
-        "MAME 2003" => "mame2003",
-        "MAME 2000" => "mame2000",
-        _ => "mame",
+        "FBNeo - Arcade Games" => std::path::Path::new(crate::plan::BIOS_DIR).join("fbneo"),
+        other => other.into(),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn fbneo_beats_newest_mame_beats_older() {
@@ -74,5 +73,11 @@ mod tests {
             "Street Fighter III: New Generation (Asia 970204, NO CD, BIOS set 1)"
         ));
         assert!(!is_bios(Some("burningf.zip"), "Burning Fight"));
+    }
+
+    #[test]
+    fn bios_lands_where_each_core_looks() {
+        assert_eq!(bios_dir("FBNeo - Arcade Games"), Path::new("_bios/fbneo"));
+        assert_eq!(bios_dir("MAME 2003-Plus"), Path::new("MAME 2003-Plus"));
     }
 }
