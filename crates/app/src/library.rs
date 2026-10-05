@@ -1,6 +1,6 @@
 //! Library table: every scanned unit in the library with its identification.
 use crate::commands::{CmdResult, PROGRESS_STEP, Progress, err, indexed_scan, open_store};
-use rombro_core::plan::Ident;
+use rombro_core::plan::{Ident, PLAYLIST_DIR, TRASH_DIR};
 use serde::Serialize;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter};
@@ -50,6 +50,13 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
         let items = store.items(&report, true).map_err(err)?;
         Ok(items
             .into_iter()
+            // trash and playlists are managed by RomBro, not part of the collection
+            .filter(|it| {
+                let p = it.files.primary();
+                ![TRASH_DIR, PLAYLIST_DIR]
+                    .iter()
+                    .any(|d| p.starts_with(library.join(d)))
+            })
             .map(|it| {
                 let p = it.files.primary();
                 let path = p.strip_prefix(&library).unwrap_or(p).display().to_string();

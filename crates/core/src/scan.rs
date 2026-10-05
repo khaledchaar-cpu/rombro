@@ -104,7 +104,10 @@ pub fn scan_cached(
     let mut claimed = HashSet::new();
     for p in &files {
         let ext = ext_of(p);
-        if ext == "m3u" {
+        if ext == "lpl" {
+            // RetroArch playlists (written by RomBro itself) are not ROMs.
+            claimed.insert(p.clone());
+        } else if ext == "m3u" {
             match disc::read_text(p) {
                 Ok(t) => report.playlists.push(Playlist {
                     path: p.clone(),

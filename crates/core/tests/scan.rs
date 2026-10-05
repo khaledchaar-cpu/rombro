@@ -158,3 +158,11 @@ fn cached_scan_reuses_unchanged_files_only() {
     assert_ne!(report.roms[1].hashes.crc, 0xdead_beef);
     assert_eq!(report.roms[1].hashes.size, 2048);
 }
+
+#[test]
+fn retroarch_playlists_are_not_roms() {
+    let dir = tempfile::tempdir().unwrap();
+    fs::write(dir.path().join("Nintendo - Game Boy.lpl"), b"{}").unwrap();
+    let report = scan(dir.path());
+    assert!(report.roms.is_empty() && report.failures.is_empty());
+}
