@@ -78,6 +78,7 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
 - KPIs: Anzahl Games, verifizierte Quote, Dubletten entfernt, gesparter Speicher, Regionen-Mix, Genres, Jahrzehnte.
 - Achievements (z. B. „Full Set: Virtual Boy“, „Clean Sweep: 0 Unknowns“), XP/Level, Streaks.
 - Optionale Ziele: Franchise komplettieren (Feld `franchise`).
+  Entscheidung: gezählt über die 1G1R-Sets der Systeme, auf denen man schon Spiele besitzt; Ziel erst ab 1 eigenem und ≥ 3 Spielen.
 
 ### F7 – Thumbnails (nice to have v1)
 - Download von `thumbnails.libretro.com` (Boxart/Snap/Title), lokaler Cache, Namensmapping wie RetroArch.

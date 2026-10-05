@@ -21,12 +21,13 @@ Override `ROMBRO_RDB_DIR`), CLI `db sync` ohne Pfad nutzt Auto-Erkennung, App-Co
 „Sync RDBs“/„Choose folder…“. `.github/workflows/ci.yml`: Checks + Bundles (AppImage/deb, dmg, msi/nsis) + CLI,
 Tag `v*` → Draft-Release. README, LICENSE, Bundle-Metadaten. Lokal verifiziert: `.deb`-Build (5,9 MiB).
 
+F6-Reste erledigt: Trash-Größe (KPI), Achievement-Toast, Franchise-Ziele (Panel + Achievement `franchise:<Name>`).
+
 ## Nächste Schritte
 1. Remote anlegen, pushen, CI-Lauf auf allen 3 OS prüfen (bisher nur lokal Linux gebaut); Signierung macOS/Windows fehlt.
-2. Sichtprüfung im Tauri-Fenster: Gamification-Panels, Sync-Buttons, Dashboard-Layout; Laufzeit mit großer Library.
-3. Offen aus F6: gesparter Speicher bei Trash, Franchise-Ziele, Toast bei neuem Achievement.
-4. Übertragen: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive.
-5. v2 Launcher (SPEC §6).
+2. Sichtprüfung im Tauri-Fenster: Gamification-Panels (inkl. Franchise, Toast, Trash-Größe), Sync-Buttons, Dashboard-Layout; Laufzeit mit großer Library.
+3. Übertragen: Reflink, Discs in Archiven/CHD, Multi-ROM-Archive.
+4. v2 Launcher (SPEC §6).
 
 ## Stolpersteine
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
@@ -53,6 +54,7 @@ Tag `v*` → Draft-Release. README, LICENSE, Bundle-Metadaten. Lokal verifiziert
 - Achievements bleiben einmal erreicht freigeschaltet; dynamische (`full-set:<System>`) verschwinden aber aus der Liste, wenn die Bedingung wegfällt.
 - Pfade unter macOS/Windows weichen ab: DB liegt via `dirs::data_dir()` (Linux unverändert `$XDG_DATA_HOME`).
 - `pnpm tauri`-Script setzt Env per Shell-Syntax → in CI Env-Vars über `env:` + `pnpm exec tauri`.
+- Trash-Größe = `stat` der Trash-Ziele aus den Journalen; nach Leeren des Trashs 0 (zählt Belegung, nicht Historie).
 - Store hängt jetzt von Core ab (für `Hashes`); Core bleibt store-frei.
 
 ## Log
@@ -69,3 +71,4 @@ Tag `v*` → Draft-Release. README, LICENSE, Bundle-Metadaten. Lokal verifiziert
 - 2026-10-05: M9 GUI Feinschliff abgeschlossen.
 - 2026-10-05: M10 Gamification abgeschlossen.
 - 2026-10-05: M11 Release abgeschlossen.
+- 2026-10-05: F6-Reste (Trash-Größe, Toast, Franchise-Ziele).
