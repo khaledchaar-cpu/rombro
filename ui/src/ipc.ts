@@ -156,3 +156,10 @@ export async function trashEmpty(library: string): Promise<number> {
   if (!inTauri) return 0;
   return invoke<number>("trash_empty", { library });
 }
+
+export interface JournalView { id: number; ts: number; library: string; state: "done" | "undone"; ops: number }
+
+export async function journalList(): Promise<JournalView[]> {
+  if (!inTauri) return [{ id: 2, ts: Date.now() / 1000, library: "/lib", state: "done", ops: 82 }];
+  return invoke<JournalView[]>("journal_list");
+}

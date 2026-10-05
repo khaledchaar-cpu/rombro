@@ -5,6 +5,7 @@ import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import { libraryList, onScanProgress, type LibraryRow } from "../ipc";
 import { library, setLibrary } from "../state/importStore";
+import { rememberLibrary } from "../state/librarySummary";
 
 const ROW_H = 26;
 type Key = "system" | "name" | "path" | "state";
@@ -30,7 +31,9 @@ export default function Library() {
     setBusy(true);
     setError("");
     try {
-      setRows(await libraryList(library()));
+      const r = await libraryList(library());
+      setRows(r);
+      rememberLibrary(library(), r);
     } catch (e) {
       setError(String(e));
     } finally {

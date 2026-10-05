@@ -269,3 +269,33 @@ fn decision_view(d: &Decision) -> DecisionView {
         can_keep,
     }
 }
+
+#[derive(Serialize)]
+pub struct JournalView {
+    id: i64,
+    ts: i64,
+    library: String,
+    state: String,
+    ops: usize,
+}
+
+/// Recent executions for the Dashboard, newest first.
+#[tauri::command]
+pub async fn journal_list() -> CmdResult<Vec<JournalView>> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let (store, _) = open_store()?;
+        let list = store.journals(20).map_err(err)?;
+        Ok(list
+            .into_iter()
+            .map(|(j, state)| JournalView {
+                ops: plan::journal_from_json(&j.done).map_or(0, |d| d.len()),
+                id: j.id,
+                ts: j.ts,
+                library: j.library,
+                state,
+            })
+            .collect())
+    })
+    .await
+    .map_err(err)?
+}

@@ -337,3 +337,15 @@ fn verdicts_roundtrip() {
     assert_eq!(v[&("Sys".into(), "A".into())], Verdict::Keep);
     assert_eq!(v[&("Sys".into(), "B".into())], Verdict::Discard);
 }
+
+#[test]
+fn journals_newest_first_with_state() {
+    let s = Store::open_in_memory().unwrap();
+    let a = s.add_journal(1, "/lib", "[]").unwrap();
+    let b = s.add_journal(2, "/lib", "[]").unwrap();
+    s.mark_undone(b).unwrap();
+    let j = s.journals(10).unwrap();
+    assert_eq!(j.len(), 2);
+    assert_eq!((j[0].0.id, j[0].1.as_str()), (b, "undone"));
+    assert_eq!((j[1].0.id, j[1].1.as_str()), (a, "done"));
+}

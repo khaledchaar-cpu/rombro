@@ -24,6 +24,25 @@ impl Store {
         Ok(self.conn.last_insert_rowid())
     }
 
+    /// The `limit` most recent executions, newest first, with their state (`done` or `undone`).
+    pub fn journals(&self, limit: usize) -> Result<Vec<(JournalEntry, String)>> {
+        let mut st = self.conn.prepare(
+            "SELECT id, ts, library, done, state FROM journal ORDER BY id DESC LIMIT ?1",
+        )?;
+        let rows = st.query_map([limit as i64], |r| {
+            Ok((
+                JournalEntry {
+                    id: r.get(0)?,
+                    ts: r.get(1)?,
+                    library: r.get(2)?,
+                    done: r.get(3)?,
+                },
+                r.get(4)?,
+            ))
+        })?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
+
     /// Most recent execution that has not been undone.
     pub fn last_journal(&self) -> Result<Option<JournalEntry>> {
         Ok(self

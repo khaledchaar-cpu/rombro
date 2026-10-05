@@ -16,6 +16,7 @@ fn main() {
             import::plan_import,
             import::execute_plan,
             import::undo_last,
+            import::journal_list,
             decide::resolve_ambiguous,
             decide::set_verdict,
             decide::trash_list,
