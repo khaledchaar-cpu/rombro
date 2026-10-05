@@ -14,9 +14,15 @@ export default function Topbar(props: { title: string; onPalette: () => void }) 
       </button>
       <Show when={inTauri}>
         <div class="win-controls">
-          <button title="Minimize" onClick={() => void win().minimize()}>─</button>
-          <button title="Maximize" onClick={() => void win().toggleMaximize()}>□</button>
-          <button class="close" title="Close" onClick={() => void win().close()}>✕</button>
+          <button class="min" title="Minimize" onClick={() => void win().minimize()}>
+            <svg viewBox="0 0 12 12"><path d="M2 9h8" /></svg>
+          </button>
+          <button class="max" title="Maximize" onClick={() => void win().toggleMaximize()}>
+            <svg viewBox="0 0 12 12"><path d="M2 4V2h2M8 2h2v2M10 8v2H8M4 10H2V8" /></svg>
+          </button>
+          <button class="close" title="Close" onClick={() => void win().close()}>
+            <svg viewBox="0 0 12 12"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" /></svg>
+          </button>
         </div>
       </Show>
     </header>
