@@ -5,6 +5,7 @@ mod commands;
 mod decide;
 mod import;
 mod library;
+mod settings;
 
 fn main() {
     tauri::Builder::default()
@@ -22,7 +23,9 @@ fn main() {
             decide::trash_list,
             decide::trash_empty,
             library::session_get,
-            library::library_list
+            library::library_list,
+            settings::rules_get,
+            settings::rules_set
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

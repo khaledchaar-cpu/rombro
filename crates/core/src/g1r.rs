@@ -5,7 +5,8 @@ use std::cmp::Reverse;
 use std::collections::{BTreeMap, HashSet};
 
 /// Selection rules (configurable; defaults per SPEC §11a).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Rules {
     /// Preferred regions, best first. Unlisted regions rank after all listed ones.
     pub regions: Vec<String>,

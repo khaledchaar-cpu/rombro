@@ -139,7 +139,7 @@ pub async fn plan_import(
         }
         let opts = Options {
             mode: mode.into(),
-            rules: Default::default(),
+            rules: crate::settings::load_rules(&store)?,
             playlists: Some(lib.join(PLAYLIST_DIR)),
             verdicts: store.verdicts().map_err(err)?,
         };

@@ -103,3 +103,12 @@ fn ties_need_a_decision() {
     assert_eq!(picks[1].picked.len(), 1);
     assert_eq!(picks[1].rejected[0].1, Reason::Duplicate);
 }
+
+#[test]
+fn rules_json_fills_missing_fields_with_defaults() {
+    let r: Rules = serde_json::from_str(r#"{"regions":["Japan"]}"#).unwrap();
+    assert_eq!(r.regions, vec!["Japan".to_owned()]);
+    assert_eq!(r.languages, Rules::default().languages);
+    let back: Rules = serde_json::from_str(&serde_json::to_string(&r).unwrap()).unwrap();
+    assert_eq!(back, r);
+}

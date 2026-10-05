@@ -1,7 +1,8 @@
 //! Parser for No-Intro / Redump / TOSEC-style names: `Title (Region) (Langs) (Rev 1) (Beta) [h]`.
 
 /// Release flags that 1G1R rules can exclude or penalize.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Flags {
     pub beta: bool,
     pub proto: bool,
