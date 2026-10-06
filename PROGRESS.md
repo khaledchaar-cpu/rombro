@@ -36,6 +36,10 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
 0. M14b (2026-10-06): Core-Empfehlung (Batocera) + Auswahl + Installation beim Export, siehe SPEC 11a. CLI e2e in
    Scratch-RA verifiziert (4 Cores geladen/entpackt, Playlists mit Pfad, Undo). **Offen:** Sichtprüfung CorePicker in
    der App (Settings → RetroArch); installierten Core einmal headless in RetroArch starten.
+   Nachträge: Dashboard „Sync databases“ + Fortschritt (RDB/DAT), Export-Fortschritt (scan/download/write,
+   `PhaseProgress`), Plan-Panel „Left in inbox“ + „Move to trash“ (`plan::inbox`, Journal → `_trash/inbox-<ts>/`),
+   CLI-Import nutzt Hash-Cache. Inbox auf CIFS: erster Scan netzgebunden (~118 MB/s), danach Cache (0,2 s).
+   Sichtprüfung dieser UI-Teile ebenfalls offen (Chrome-Extension war nicht verbunden).
 1. ✅ Rules-Seite abgenommen (User, 2026-10-06). Alte Entscheidungen ohne gespeicherten Grund → „reason not recorded“.
 2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
    Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.
