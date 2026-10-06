@@ -19,6 +19,7 @@
 | M12c Echte Sammlung (Probelauf) | ✅ done |
 | M13 Regeln transparent & einstellbar | ✅ done (Rules-Seite abgenommen 2026-10-06; Entscheidungen zeigen Grund + Datum) |
 | M14 Arcade-DATs | ✅ done |
+| M14b Core-Wahl & -Installation | ✅ done (Sichtprüfung App offen) |
 
 ## Aktuell
 M14: `core::arcade::dat` (Logiqx/listxml-Parser, Prüfung über Zip-Verzeichnis), `archive::members`, Store-Tabellen
@@ -32,6 +33,9 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
 **Nächster Milestone: M15 Launcher-Basis** (SPEC §6) – Schnitt noch festlegen.
 
 ## Nächste Schritte
+0. M14b (2026-10-06): Core-Empfehlung (Batocera) + Auswahl + Installation beim Export, siehe SPEC 11a. CLI e2e in
+   Scratch-RA verifiziert (4 Cores geladen/entpackt, Playlists mit Pfad, Undo). **Offen:** Sichtprüfung CorePicker in
+   der App (Settings → RetroArch); installierten Core einmal headless in RetroArch starten.
 1. ✅ Rules-Seite abgenommen (User, 2026-10-06). Alte Entscheidungen ohne gespeicherten Grund → „reason not recorded“.
 2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
    Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.

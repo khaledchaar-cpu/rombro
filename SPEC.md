@@ -176,6 +176,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 | M10 | Gamification | KPIs, Vollständigkeit, Achievements, XP | Dashboard zeigt KPIs |
 | M11 | Release | Packaging (AppImage/deb, dmg, msi), Pfad-Erkennung je OS, Doku | Builds für 3 OS via CI |
 | M14 ✅ | Arcade-DATs | F8: DAT-Download/Import, Member-Prüfung, Systemwahl, Quarantäne-Begründung | 1943 → MAME 2003-Plus, startet in RetroArch |
+| M14b ✅ | Core-Wahl & -Installation | Empfehlung pro System, Auswahl (Regeln), Download fehlender Cores beim Export | 4 Cores in Scratch-RA installiert, Undo entfernt sie |
 
 ## 11a. Entscheidungen
 - M2: Persistenter Cache = SQLite statt eigenem Binärformat. Kalt-Import ~3 s (einmalig, SQLite-Insert-bound),
@@ -292,6 +293,16 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   das System nennt (wenigste Systeme gewinnt). BIOS: libretro `System.dat` (Snapshot in `crates/core/data/`) per SHA1
   gegen den Library-Index, Arcade-Zips per Name aus `_bios/`; `Op::Copy` nur wenn Ziel fehlt, abweichende Dateien
   bleiben (Konflikt-Hinweis); fehlende BIOS nur für Systeme mit Library-Ordner gemeldet.
+- Entschieden (User, 2026-10-06): Core-Wahl & -Installation beim RetroArch-Export (`retroarch::pick`).
+  Empfehlung pro RDB-System aus den **Batocera-x86_64-Defaults** (`batocera-launch/resources/defaults/config.yml`
+  + `config-x86_64.yml`), übersetzt in libretro-Kerne: `crates/core/src/retroarch/recommended.tsv`. Wo Batocera einen
+  Standalone-Emulator nutzt, der libretro-Port (N64 mupen64plus_next, PSP ppsspp, GC/Wii dolphin, PS2 pcsx2) bzw.
+  Alternative (Jaguar virtualjaguar, Quake II/III vitaquake2/3). Arcade nicht in der Tabelle: spezialisiertester Core.
+  Reihenfolge: User-Wahl (`rules.cores`, System → Core-ID) > Empfehlung > spezialisiertester installierter Core.
+  Auswahl: alle Cores, deren `.info` das System nennt (RetroArch liefert Infos aller Cores). Installation nur auf
+  Anforderung (`--install-cores` / Checkbox): `<core_updater_buildbot_cores_url>/<core>_libretro.so.zip` → Cache
+  `~/.cache/rombro/cores/`, dann `Op::Extract` in `libretro_directory` (Journal, Undo entfernt). Ohne Install bekommt
+  die Playlist den besten installierten Core, der gewünschte wird als fehlend gemeldet.
 - Entschieden (User, 2026-10-06): Kombinierte Sufami-Turbo-Images (`.smc/.sfc`: BIOS 256 KiB ×4 gespiegelt, dann
   1–2 Carts ab `0x100000`, Erkennung über `BANDAI SFC-ADX`) gelten als Pseudo-Archiv (`core::sufami`): Member
   `SuFami Turbo (Japan).sfc` + `Slot A/B.st` werden wie Zip-Member erkannt und extrahiert, das Original geht danach
