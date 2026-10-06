@@ -40,7 +40,7 @@ Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeig
 3. Prüfung in RetroArch: MAME-BIOS neben den Sets (BIOS-abhängiges Spiel, z. B. Neo Geo, startet mit MAME-Core
    und FBNeo aus der importierten Library).
    Vorbereitet (2026-10-06): `~/rombro-test/ra-lib` (Copy-Import Arcade-Testset), Playlist `ROMBRO Test.lpl`,
-   Cores fbneo + mame2016 vom Buildbot. User-`neogeo.zip` ist nicht DB-konform (4 Dateien fehlen, 2 anders
+   Cores fbneo + mame2016 + mame (0.289) vom Buildbot. User-`neogeo.zip` ist nicht DB-konform (4 Dateien fehlen, 2 anders
    benannt) → Quarantäne ist korrekt; für den Test manuell neben die Sets kopiert. Logik bleibt (User-Entscheidung).
 4. **M14 Arcade-DATs** (SPEC F8) – nächster Milestone. RetroArch-Test: FBNeo/MAME 2016 inkl. Neo-Geo-BIOS ok;
    `1943`/`1943kai` (0.78-Sets) scheitern in aktuellem MAME → Anlass für F8.
