@@ -240,13 +240,15 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 
 ## 11. Offene Fragen
 - Ziel (User): vollständige Sammlung im Sinne der RetroArch-Datenbanken. Andere Versionen, Derivate, Formate interessieren nicht, solange sie in keiner RDB stehen → Quarantäne ist richtig für Unbekanntes in erkannten System-Ordnern.
-- Entschieden: Gleicher Arcade-Kurzname, andere Version (z. B. `gradius3.zip` Japan/World): weicht auf das nächste System aus, das genau dieses Set listet; Sets mit den wenigsten Ausweich-Systemen wählen zuerst.
+- Entschieden: 1G1R auch für Arcade (User). Keine Parent/Clone-Infos in den RDBs → Gruppierung über den Titel vor der ersten Klammer, über alle DBs, die ein Set listen (Union-Find; `Gradius III: Densetsu…` findet über den MAME-Namen `Gradius III (Japan)` in die Gruppe). Auswahl: Regionen-Reihenfolge der Regeln → Original vor Bootleg/Hack/Proto → neueste Fassung (Name absteigend: Datum/Revision). Abgelehnte → Entscheidungen (wie Konsole). Code: `arcade/g1r.rs`.
+- Entschieden: Verschiedene Spiele mit gleichem Arcade-Kurznamen weichen auf das nächste System aus, das das Set listet; Sets mit den wenigsten Ausweich-Systemen wählen zuerst.
+- Entschieden: Multi-Disk-Archive (alle Member erkannt, ein System, Disk/Side-Tags) → Variante B: `<System>/<Zipname>/` mit Original-Membernamen + `.m3u`; Spielordner mit eigener `.m3u` in der Bibliothek gelten als fertig (kein Umbenennen nach DB-Namen).
 - Entschieden: GameCube/Wii-Container (`.rvz/.wia/.wbfs/.ciso`) und GC/Wii-ISOs werden über die Spiel-ID im Disc-Header erkannt (wie Serial-Fallback); Revision/Disc-Nr. aus dem Header wählen zwischen `(Rev n)`/`(Disc n)`. Keine Hash-Prüfung möglich.
 - Entschieden: BIOS-Ordner im Inbox (`bios`, `00bios`, `system`) bleiben wie sie sind; nur erkannte BIOS werden nach `_bios/` einsortiert.
 - Entschieden: Spielordner (DOS, ScummVM, Ports/Engines – Liste in `plan/build/folders.rs`): ein DB-Treffer identifiziert den Ordner, der Ordner wandert komplett nach `<System>/<Ordnername ohne .dos/.scummvm>/`. Name/System nie aus dem Treffer allein (Schlüsseldateien wie `dosbox.bat`, `ADL.DRV` sind geteilt). Endung entscheidet das System, sonst spezifischer Port vor DOS/ScummVM, sonst Mehrheit.
 - Entschieden: Unbekannte Dateien in Ordnern ohne jeden erkannten Eintrag bleiben unangetastet (Spielinstallationen, Frontend-Medien); nur Ordner mit Treffern und die Inbox-Wurzel werden in die Quarantäne gekehrt.
 - Entschieden: Archive mit unbekannten Membern werden nie teilweise entpackt (ganz in Quarantäne).
-- Entschieden: Arcade-Treffer auf einzelne Chips in einem Zip zählen nicht (Arcade-RDBs hashen ganze Sets) → Zip bleibt ganz, ohne Set-Treffer in Quarantäne. Arcade-Sets nie durch Ausschlussfilter (Bootleg etc.).
+- Entschieden: Arcade-Treffer auf einzelne Chips in einem Zip zählen nicht (Arcade-RDBs hashen ganze Sets) → Zip bleibt ganz, ohne Set-Treffer in Quarantäne.
 - Entschieden: Quarantäne übernimmt den Pfad relativ zum Inbox (`_quarantine/<unterordner>/<datei>`), damit gleiche Namen nicht kollidieren.
 - Entschieden: OS-Müll (`.DS_Store`, `._*`, `Thumbs.db`, `desktop.ini`) und leere Dateien werden beim Scan ignoriert und nie verschoben.
 - Entschieden: MAME-Cores (2000/2003/2003-Plus/aktuell) suchen BIOS nur im Romset-Ordner → BIOS-Zips liegen neben den Sets (`<System>/neogeo.zip`, in der UI ausgeblendet); nur FBNeo nutzt `_bios/fbneo/`.
