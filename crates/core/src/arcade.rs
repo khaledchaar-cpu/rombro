@@ -1,5 +1,7 @@
 //! Arcade romsets (FBNeo/MAME): identified as whole archives, kept under their short name.
 
+pub mod g1r;
+
 /// Arcade systems in placement priority (an archive matching several lands in the first).
 const PRIORITY: [&str; 9] = [
     "FBNeo - Arcade Games",

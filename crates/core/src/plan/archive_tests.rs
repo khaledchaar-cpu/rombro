@@ -196,7 +196,7 @@ fn places_romsets_by_short_name_with_chds_and_bios_apart() {
         },
         Item {
             files: set("burningfh.zip", vec![]),
-            ident: Ident::Known(arcade(fb, "Burning Fight (NGH-018, US)")),
+            ident: Ident::Known(arcade(fb, "Burning Fight Special (NGH-018, US)")),
             in_library: false,
         },
         Item {
@@ -296,9 +296,9 @@ fn second_version_under_the_same_short_name_falls_back_to_the_next_system() {
             files: Files::Set {
                 archive: inbox.join("a/gradius3.zip"),
                 chds: vec![],
-                alt: vec![arcade("MAME 2003-Plus", "Gradius III (Japan)")],
+                alt: vec![arcade("MAME 2003-Plus", "Other Game (Japan)")],
             },
-            ident: Ident::Known(arcade(fb, "Gradius III (Japan, version 3)")),
+            ident: Ident::Known(arcade(fb, "Other Game (Japan, version 3)")),
             in_library: false,
         },
         Item {
@@ -338,8 +338,11 @@ fn version_listed_in_one_system_only_gets_that_slot() {
     let items = [
         // listed first, but it could also go to MAME 2003-Plus
         Item {
-            files: set("a/pururun.zip", vec![arcade("MAME 2003-Plus", "Pururun")]),
-            ident: Ident::Known(arcade(fb, "Pururun (set 2)")),
+            files: set(
+                "a/pururun.zip",
+                vec![arcade("MAME 2003-Plus", "Pururun Two")],
+            ),
+            ident: Ident::Known(arcade(fb, "Pururun Two (set 2)")),
             in_library: false,
         },
         Item {
@@ -418,4 +421,38 @@ fn multi_disk_archive_becomes_one_game_folder_with_m3u() {
     assert!(again.decisions.is_empty());
     assert_eq!(again.unchanged, 1);
     assert!(again.ops.iter().all(|op| matches!(op, Op::Write { .. })));
+}
+
+#[test]
+fn arcade_1g1r_keeps_one_set_per_game() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    zip(&inbox.join("a/gradius3.zip"), &["japan"]);
+    zip(&inbox.join("b/gradius3.zip"), &["world"]);
+    let fb = "FBNeo - Arcade Games";
+    let set = |p: &str, alt| Files::Set {
+        archive: inbox.join(p),
+        chds: vec![],
+        alt,
+    };
+    let items = [
+        Item {
+            files: set(
+                "a/gradius3.zip",
+                vec![arcade("MAME 2003", "Gradius III (Japan)")],
+            ),
+            ident: Ident::Known(arcade(fb, "Gradius III: Densetsu kara Shinwa e (Japan)")),
+            in_library: false,
+        },
+        Item {
+            files: set("b/gradius3.zip", vec![]),
+            ident: Ident::Known(arcade(fb, "Gradius III (World, version R)")),
+            in_library: false,
+        },
+    ];
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    assert_eq!(plan.placed, 1);
+    assert!(matches!(&plan.decisions[..],
+        [Decision::Rejected { path, kept: Some(k), reason, .. }]
+            if path == &inbox.join("a/gradius3.zip") && k == "Gradius III (World, version R)" && reason == "Region"));
 }

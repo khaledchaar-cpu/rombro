@@ -298,35 +298,53 @@ impl Builder<'_> {
             .map_or_else(|| PathBuf::from(file_name(f)), Path::to_path_buf)
     }
 
-    /// Arcade sets are kept as-is: every exact match is its own release, no 1G1R. A second
-    /// copy of the same set is a duplicate (library copies come first and win). Sets with
-    /// the fewest fallback systems pick first, so versions listed in one system only get it.
+    /// Arcade sets: 1G1R per game (see [`crate::arcade::g1r`]); rejected sets go to the
+    /// decision queue like console releases. Library copies come first and win ties; sets
+    /// with the fewest fallback systems pick their slot first, so versions listed in one
+    /// system only still get it.
     fn arcade(&mut self, sets: &[(&Item, &Game)]) {
-        let alts = |it: &Item| match &it.files {
-            Files::Set { alt, .. } => alt.len(),
-            _ => 0,
-        };
+        fn alt(it: &Item) -> &[Game] {
+            match &it.files {
+                Files::Set { alt, .. } => alt,
+                _ => &[],
+            }
+        }
         let mut order: Vec<&(&Item, &Game)> = sets.iter().collect();
-        order.sort_by_key(|(it, _)| (!it.in_library, alts(it)));
-        let mut seen: HashSet<(&str, &str)> = HashSet::new();
-        for &&(it, g) in &order {
-            if seen.insert((g.system.as_str(), g.name.as_str())) {
-                self.why = "arcade romset".into();
-                let g = self.free_arcade_slot(it, g);
-                self.release(&g.system, &[&(it, g)]);
-            } else if self.opts.verdicts.get(&(g.system.clone(), g.name.clone()))
-                == Some(&Verdict::Discard)
-            {
-                self.why = "discarded by you (duplicate set)".into();
-                self.discard(it);
-            } else {
-                self.plan.decisions.push(Decision::Rejected {
+        order.sort_by_key(|(it, _)| (!it.in_library, alt(it).len()));
+        let names: Vec<Vec<&str>> = order
+            .iter()
+            .map(|(it, g)| {
+                std::iter::once(g.name.as_str())
+                    .chain(alt(it).iter().map(|a| a.name.as_str()))
+                    .collect()
+            })
+            .collect();
+        let picks = crate::arcade::g1r::select(&names, &self.opts.rules.regions);
+        for (&&(it, g), (reason, best)) in order.iter().zip(picks) {
+            let place = |b: &mut Self, why: String| {
+                b.why = why;
+                let g = b.free_arcade_slot(it, g);
+                b.release(&g.system, &[&(it, g)]);
+            };
+            let Some(reason) = reason else {
+                place(self, "arcade romset (1G1R pick)".into());
+                continue;
+            };
+            match self.opts.verdicts.get(&(g.system.clone(), g.name.clone())) {
+                Some(Verdict::Keep) if reason != g1r::Reason::Duplicate => {
+                    place(self, format!("kept by you (1G1R: {reason:?})"));
+                }
+                Some(Verdict::Discard) => {
+                    self.why = format!("discarded by you (1G1R: {reason:?})");
+                    self.discard(it);
+                }
+                _ => self.plan.decisions.push(Decision::Rejected {
                     path: it.files.primary().clone(),
                     system: g.system.clone(),
                     name: g.name.clone(),
-                    kept: Some(g.name.clone()),
-                    reason: format!("{:?}", g1r::Reason::Duplicate),
-                });
+                    kept: Some(order[best].1.name.clone()),
+                    reason: format!("{reason:?}"),
+                }),
             }
         }
     }
