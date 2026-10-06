@@ -539,3 +539,78 @@ fn game_folder_repairs_broken_scummvm_launcher() {
         "{\\rtf1\\ansi}"
     );
 }
+
+#[test]
+fn msu1_folder_moves_whole_with_its_chip_dump() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let dir = "snes-msu1/Mega Man X2 (USA) (MSU1)";
+    let rom = file(&inbox, &format!("{dir}/MMX2.sfc"), "rom");
+    // the marker file is empty, so the scan yields no item for it
+    file(&inbox, &format!("{dir}/MMX2.msu"), "");
+    let pcm = file(&inbox, &format!("{dir}/MMX2-1.pcm"), "pcm");
+    let chip = file(&inbox, &format!("{dir}/cx4.data.rom"), "cx4");
+    let items = [
+        item(rom, Ident::Unknown, false),
+        item(pcm, Ident::Unknown, false),
+        item(
+            chip,
+            Ident::Known(Game {
+                system: "Nintendo - Super Nintendo Entertainment System".into(),
+                name: "CX4 (World) (Enhancement Chip)".into(),
+                crc: Some(7),
+            }),
+            false,
+        ),
+    ];
+    let o = Options {
+        inbox: Some(inbox.clone()),
+        ..opts(Mode::Move)
+    };
+    let plan = build(&items, &lib, &o);
+    assert!(plan.decisions.is_empty());
+    execute(&plan.ops);
+    let game = "Nintendo - Super Nintendo Entertainment System (MSU-1)/Mega Man X2 (USA) (MSU1)";
+    let want: Vec<String> = ["MMX2-1.pcm", "MMX2.msu", "MMX2.sfc", "cx4.data.rom"]
+        .iter()
+        .map(|f| format!("{game}/{f}"))
+        .collect();
+    let got: Vec<String> = tree(&lib)
+        .into_iter()
+        .filter(|p| !p.starts_with("_playlists"))
+        .collect();
+    assert_eq!(got, want);
+    // a library audit leaves the placed folder alone
+    let lib_items: Vec<Item> = want
+        .iter()
+        .map(|p| item(lib.join(p), Ident::Unknown, true))
+        .collect();
+    let again = build(&lib_items, &lib, &opts(Mode::Move));
+    assert!(again.ops.iter().all(|op| matches!(op, Op::Write { .. })));
+}
+
+#[test]
+fn msu1_folder_without_marker_gets_one() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let rom = file(&inbox, "msu/Bubsy (MSU1)/Bubsy.sfc", "rom");
+    file(&inbox, "msu/Bubsy (MSU1)/Bubsy-3.pcm", "pcm");
+    let o = Options {
+        inbox: Some(inbox.clone()),
+        ..opts(Mode::Move)
+    };
+    execute(&build(&[item(rom, Ident::Unknown, false)], &lib, &o).ops);
+    let got: Vec<String> = tree(&lib)
+        .into_iter()
+        .filter(|p| !p.starts_with("_playlists"))
+        .collect();
+    let game = "Nintendo - Super Nintendo Entertainment System (MSU-1)/Bubsy (MSU1)";
+    assert_eq!(
+        got,
+        [
+            format!("{game}/Bubsy-3.pcm"),
+            format!("{game}/Bubsy.msu"),
+            format!("{game}/Bubsy.sfc")
+        ]
+    );
+}

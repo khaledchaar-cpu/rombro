@@ -14,6 +14,7 @@ pub enum Rule {
     MultiDiskArchive,
     GameFolder,
     ScummvmLauncher,
+    Msu1,
     ArchiveExtracted,
     Bios,
     Quarantine,
@@ -23,7 +24,7 @@ pub enum Rule {
 }
 
 impl Rule {
-    pub const ALL: [Rule; 14] = [
+    pub const ALL: [Rule; 15] = [
         Rule::G1rPick,
         Rule::ArcadeSet,
         Rule::ArcadeDat,
@@ -32,6 +33,7 @@ impl Rule {
         Rule::MultiDiskArchive,
         Rule::GameFolder,
         Rule::ScummvmLauncher,
+        Rule::Msu1,
         Rule::ArchiveExtracted,
         Rule::Bios,
         Rule::Quarantine,
@@ -50,6 +52,7 @@ impl Rule {
             Rule::MultiDiskArchive => "multi-disk-archive",
             Rule::GameFolder => "game-folder",
             Rule::ScummvmLauncher => "scummvm-launcher",
+            Rule::Msu1 => "msu1",
             Rule::ArchiveExtracted => "archive-extracted",
             Rule::Bios => "bios",
             Rule::Quarantine => "quarantine",
@@ -69,6 +72,7 @@ impl Rule {
             Rule::MultiDiskArchive => "Multi-disk archive",
             Rule::GameFolder => "Game folder",
             Rule::ScummvmLauncher => "ScummVM launcher repaired",
+            Rule::Msu1 => "MSU-1 game",
             Rule::ArchiveExtracted => "Archive extracted",
             Rule::Bios => "BIOS",
             Rule::Quarantine => "Quarantine",
@@ -113,6 +117,12 @@ impl Rule {
                 "A <id>.scummvm launcher must hold just the game id the core starts. Empty or junk \
                  ones (e.g. an empty RTF document) are identified by the id in their file name and \
                  rewritten to it; undo restores the old content."
+            }
+            Rule::Msu1 => {
+                "A folder with one .msu file and a SNES ROM is an MSU-1 game (patched ROM with \
+                 CD audio tracks). No database lists them; the folder moves as a whole to \
+                 'Nintendo - Super Nintendo Entertainment System (MSU-1)', chip dumps inside \
+                 included, and gets its own playlist."
             }
             Rule::ArchiveExtracted => {
                 "Once every member of a multi-ROM archive is placed, the archive itself is moved \

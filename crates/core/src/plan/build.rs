@@ -16,6 +16,7 @@ const UNKNOWN_TRASH: &str = "unknown";
 mod archives;
 mod folders;
 mod frontend;
+mod msu;
 mod named;
 pub use folders::FOLDER_SYSTEMS;
 pub use named::apply as name_only;
@@ -107,12 +108,23 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                     .is_some_and(|a| mixed.contains(a.as_path()))
         })
         .collect();
-    let folder_games = folders::find(
+    let mut folder_games = folders::find(
         &items,
         library,
         opts.inbox.as_deref(),
         &opts.rules.folder_systems,
     );
+    let roots: Vec<&Path> = [Some(library), opts.inbox.as_deref()]
+        .into_iter()
+        .flatten()
+        .collect();
+    // MSU-1 folders win over chip dumps inside them that a database knows
+    let msu = msu::find(&items, &roots);
+    folder_games.retain(|root, _| {
+        !msu.keys()
+            .any(|m| root.starts_with(m) || m.starts_with(root))
+    });
+    folder_games.extend(msu);
     let items: Vec<&Item> = items
         .into_iter()
         .filter(|it| {
@@ -124,6 +136,16 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         .collect();
     for (root, fg) in &folder_games {
         b.folder_game(root, fg);
+        if fg.rule == Rule::Msu1
+            && let Some(rel) = msu::missing_marker(root, &fg.key)
+        {
+            let target = library
+                .join(naming::sanitize_file_name(fg.system))
+                .join(naming::sanitize_file_name(&fg.name))
+                .join(rel);
+            b.why = Why::new(Rule::Msu1, "missing .msu marker added");
+            b.write(target, String::new());
+        }
     }
     // all items, for trashing archives whose members were all handled
     let archived = items.clone();

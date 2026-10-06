@@ -49,8 +49,9 @@ pub(super) struct FolderGame<'a> {
     pub system: &'a str,
     pub name: String,
     /// The match that best fits the folder name; the playlist entry points to it.
-    pub key: &'a Path,
+    pub key: PathBuf,
     pub crc: Option<u32>,
+    pub rule: Rule,
 }
 
 /// Game folders keyed by their root directory. Matches lying loose in a folder shared by
@@ -173,8 +174,9 @@ fn folder_game<'a>(root: &Path, ms: &[Match<'a>], systems: &'a [String]) -> Opti
         item: best.item,
         system,
         name: stem,
-        key: best.key,
+        key: best.key.to_path_buf(),
         crc: best.game.crc,
+        rule: Rule::GameFolder,
     })
 }
 
@@ -224,7 +226,7 @@ impl Builder<'_> {
             .library
             .join(naming::sanitize_file_name(fg.system))
             .join(naming::sanitize_file_name(&fg.name));
-        let key_rel = fg.key.strip_prefix(root).unwrap_or(fg.key);
+        let key_rel = fg.key.strip_prefix(root).unwrap_or(&fg.key);
         self.lpl
             .entry(fg.system.to_owned())
             .or_default()
@@ -254,7 +256,7 @@ impl Builder<'_> {
                 self.transfer(&it, e.path(), &target.join(rel))
             })
             .collect();
-        self.why = Why::new(Rule::GameFolder, "");
+        self.why = Why::new(fg.rule, "");
         if self.commit(&it, ops) {
             self.plan.placed += 1;
             self.repair_launchers(root, &target);
