@@ -504,3 +504,38 @@ fn incomplete_arcade_set_is_quarantined_with_reason() {
     assert!(execute(&plan.ops).error.is_none());
     assert_eq!(tree(&lib), ["_quarantine/1943.zip"]);
 }
+
+#[test]
+fn game_folder_repairs_broken_scummvm_launcher() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let launcher = file(&inbox, "Monkey 2.scummvm/monkey2.scummvm", "{\\rtf1\\ansi}");
+    file(&inbox, "Monkey 2.scummvm/MONKEY2.000", "data");
+    let items = [item(
+        launcher,
+        Ident::Known(Game {
+            system: "ScummVM".into(),
+            name: "Monkey Island 2: LeChuck's Revenge".into(),
+            crc: Some(1),
+        }),
+        false,
+    )];
+    let o = Options {
+        inbox: Some(inbox.clone()),
+        ..opts(Mode::Move)
+    };
+    let plan = build(&items, &lib, &o);
+    assert!(
+        plan.why
+            .iter()
+            .any(|w| w.rule == crate::rules::Rule::ScummvmLauncher)
+    );
+    let ex = execute(&plan.ops);
+    let fixed = lib.join("ScummVM/Monkey 2/monkey2.scummvm");
+    assert_eq!(fs::read_to_string(&fixed).unwrap(), "monkey2");
+    assert!(crate::plan::undo(&ex.done).is_empty());
+    assert_eq!(
+        fs::read_to_string(inbox.join("Monkey 2.scummvm/monkey2.scummvm")).unwrap(),
+        "{\\rtf1\\ansi}"
+    );
+}

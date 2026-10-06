@@ -235,6 +235,7 @@ impl Builder<'_> {
             });
         if root == target {
             self.plan.unchanged += 1;
+            self.repair_launchers(root, &target);
             return;
         }
         let it = Item {
@@ -256,6 +257,26 @@ impl Builder<'_> {
         self.why = Why::new(Rule::GameFolder, "");
         if self.commit(&it, ops) {
             self.plan.placed += 1;
+            self.repair_launchers(root, &target);
+        }
+    }
+
+    /// Writes the id into broken ScummVM launcher files of a game folder (at its target).
+    fn repair_launchers(&mut self, root: &Path, target: &Path) {
+        let fixes: Vec<_> = walkdir::WalkDir::new(root)
+            .sort_by_file_name()
+            .into_iter()
+            .flatten()
+            .filter(|e| e.file_type().is_file())
+            .filter_map(|e| {
+                let id = crate::scummvm::repaired_id_of(e.path())?;
+                let rel = e.path().strip_prefix(root).ok()?;
+                Some((target.join(rel), id))
+            })
+            .collect();
+        for (path, id) in fixes {
+            self.why = Why::new(Rule::ScummvmLauncher, "");
+            self.write(path, id);
         }
     }
 }

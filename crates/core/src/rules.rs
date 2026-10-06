@@ -13,6 +13,7 @@ pub enum Rule {
     MultiDisc,
     MultiDiskArchive,
     GameFolder,
+    ScummvmLauncher,
     ArchiveExtracted,
     Bios,
     Quarantine,
@@ -22,7 +23,7 @@ pub enum Rule {
 }
 
 impl Rule {
-    pub const ALL: [Rule; 13] = [
+    pub const ALL: [Rule; 14] = [
         Rule::G1rPick,
         Rule::ArcadeSet,
         Rule::ArcadeDat,
@@ -30,6 +31,7 @@ impl Rule {
         Rule::MultiDisc,
         Rule::MultiDiskArchive,
         Rule::GameFolder,
+        Rule::ScummvmLauncher,
         Rule::ArchiveExtracted,
         Rule::Bios,
         Rule::Quarantine,
@@ -47,6 +49,7 @@ impl Rule {
             Rule::MultiDisc => "multi-disc",
             Rule::MultiDiskArchive => "multi-disk-archive",
             Rule::GameFolder => "game-folder",
+            Rule::ScummvmLauncher => "scummvm-launcher",
             Rule::ArchiveExtracted => "archive-extracted",
             Rule::Bios => "bios",
             Rule::Quarantine => "quarantine",
@@ -65,6 +68,7 @@ impl Rule {
             Rule::MultiDisc => "Multi-disc playlist",
             Rule::MultiDiskArchive => "Multi-disk archive",
             Rule::GameFolder => "Game folder",
+            Rule::ScummvmLauncher => "ScummVM launcher repaired",
             Rule::ArchiveExtracted => "Archive extracted",
             Rule::Bios => "BIOS",
             Rule::Quarantine => "Quarantine",
@@ -104,6 +108,11 @@ impl Rule {
             Rule::GameFolder => {
                 "Systems played from folders (DOS, ScummVM, ports) are moved as whole folders, \
                  named after the folder, not the matched file."
+            }
+            Rule::ScummvmLauncher => {
+                "A <id>.scummvm launcher must hold just the game id the core starts. Empty or junk \
+                 ones (e.g. an empty RTF document) are identified by the id in their file name and \
+                 rewritten to it; undo restores the old content."
             }
             Rule::ArchiveExtracted => {
                 "Once every member of a multi-ROM archive is placed, the archive itself is moved \

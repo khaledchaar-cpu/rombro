@@ -197,6 +197,8 @@ pub fn scan_cached(
                 .get(p)
                 // Entries cached before archives were hashed as a whole lack that hash.
                 .filter(|roms| !is_archive(p) || roms.iter().any(|r| r.member.is_none()))
+                // tiny; cached entries predate launcher repair
+                .filter(|_| !ext_of(p).eq("scummvm"))
                 .map_or_else(|| scan_file(p), Ok)
                 .map_err(|error| ScanFailure {
                     path: p.clone(),
@@ -321,7 +323,11 @@ pub fn scan_file(path: &Path) -> Result<Vec<ScannedRom>, ScanError> {
         _ => {
             let f = File::open(path)?;
             let size = f.metadata()?.len();
-            let (hashes, header, headerless) = hash_rom(BufReader::new(f), size, &ext)?;
+            let (hashes, header, mut headerless) = hash_rom(BufReader::new(f), size, &ext)?;
+            if let Some(id) = crate::scummvm::repaired_id_of(path) {
+                // broken launcher: identify by the id it will be repaired to
+                headerless = Some(hash_reader(id.as_bytes(), None, false)?.0);
+            }
             return Ok(vec![ScannedRom {
                 path: path.to_path_buf(),
                 member: None,

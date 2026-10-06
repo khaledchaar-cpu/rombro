@@ -15,6 +15,7 @@ pub mod plan;
 pub mod retroarch;
 pub mod rules;
 pub mod scan;
+pub mod scummvm;
 pub mod sufami;
 pub mod thumbnail;
 
