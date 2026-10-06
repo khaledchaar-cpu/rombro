@@ -18,6 +18,8 @@ export const [plan, setPlan] = createSignal<PlanView>();
 /** Inbox files the last plan leaves alone; kept after executing so they can be cleared. */
 export const [leftovers, setLeftovers] = createSignal<PlanView["leftovers"]>([]);
 export const [busy, setBusy] = createSignal(false);
+/** When the current plan was built and whether it is a library-only audit. */
+export const [planned, setPlanned] = createSignal<{ at: Date; audit: boolean }>();
 /** Unique per decision (a tie's `path` is its system, shared by all ties of that system). */
 export const decisionKey = (d: DecisionView) =>
   d.kind === "tie" ? `tie:${d.path}:${d.options.map((o) => o.name).join("|")}` : `${d.kind}:${d.path}`;
@@ -65,6 +67,7 @@ export const buildPlan = (withInbox: boolean) =>
     lastWithInbox = withInbox;
     const p = await planImport(withInbox ? inbox() || null : null, library(), mode());
     setPlan(p);
+    setPlanned({ at: new Date(), audit: !withInbox });
     setLeftovers(p.leftovers);
     rememberOpen(p);
     return p;

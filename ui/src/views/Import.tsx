@@ -15,6 +15,7 @@ import {
   library,
   pick,
   plan,
+  planned,
   prefer,
   replan,
   status,
@@ -267,7 +268,8 @@ export default function Import() {
               </div>
               <div class="row">
                 <span class="dim small">
-                  dry run · {p().items} items scanned
+                  {planned()?.audit ? "audit" : "dry run"} · {p().items} items scanned
+                  {planned() ? ` · ${planned()!.at.toLocaleTimeString()}` : ""}
                 </span>
                 <span class="spacer" />
                 <Show when={decided().size}>
@@ -284,9 +286,22 @@ export default function Import() {
                 </button>
               </div>
             </Panel>
-            <Panel title="Operations" class="wide">
-              <OpList />
-            </Panel>
+            <Show
+              when={p().ops.length || p().decisions.length}
+              fallback={
+                <Panel title="Operations" class="wide">
+                  <p class="ok">
+                    {planned()?.audit
+                      ? "Library is clean – nothing to move, rename or trash."
+                      : "Nothing to do – the inbox adds nothing to the library."}
+                  </p>
+                </Panel>
+              }
+            >
+              <Panel title="Operations" class="wide">
+                <OpList />
+              </Panel>
+            </Show>
             <Show when={p().decisions.length}>
               <Panel title="Needs attention" class="wide">
                 <Decisions />
