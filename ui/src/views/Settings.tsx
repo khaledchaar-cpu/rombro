@@ -1,5 +1,6 @@
 import { createResource } from "solid-js";
 import Panel from "../components/Panel";
+import RetroArchPanel from "../components/RetroArchPanel";
 import { thumbsOnlineGet, thumbsOnlineSet } from "../ipc";
 import { gamifyEnabled, setGamifyEnabled } from "../state/gamify";
 import { effects, setEffects, setTheme, theme } from "../state/appearance";
@@ -37,6 +38,7 @@ export default function Settings() {
               Already downloaded images stay available offline.
             </p>
           </Panel>
+          <RetroArchPanel />
         </div>
   );
 }

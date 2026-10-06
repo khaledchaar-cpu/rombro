@@ -396,6 +396,42 @@ export async function thumbsOnlineSet(on: boolean): Promise<void> {
   return invoke("thumbs_online_set", { on });
 }
 
+export interface RetroArchExport {
+  playlist_dir: string;
+  system_dir: string;
+  cores: number;
+  /** core = installed core set as default; null = RetroArch asks. */
+  playlists: { system: string; core: string | null }[];
+  playlists_unchanged: number;
+  bios_copied: string[];
+  bios_present: number;
+  bios_conflicts: string[];
+  bios_missing: { system: string; path: string }[];
+  /** Operations executed; null for a preview. */
+  executed: number | null;
+}
+
+/** Plans (dryRun) or executes the export of playlists and BIOS files to RetroArch. */
+export async function retroarchExport(dryRun: boolean): Promise<RetroArchExport> {
+  if (!inTauri)
+    return {
+      playlist_dir: "~/.config/retroarch/playlists",
+      system_dir: "~/.config/retroarch/system",
+      cores: 4,
+      playlists: [
+        { system: "Nintendo - Super Nintendo Entertainment System", core: "Snes9x" },
+        { system: "Nintendo - Sufami Turbo", core: null },
+      ],
+      playlists_unchanged: 3,
+      bios_copied: ["STBIOS.bin", "fbneo/neogeo.zip"],
+      bios_present: 2,
+      bios_conflicts: [],
+      bios_missing: [{ system: "Sony - PlayStation", path: "scph5501.bin" }],
+      executed: dryRun ? null : 4,
+    };
+  return invoke<RetroArchExport>("retroarch_export", { dryRun });
+}
+
 export interface FranchiseProgress {
   franchise: string;
   owned: number;

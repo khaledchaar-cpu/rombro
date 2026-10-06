@@ -52,6 +52,9 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    (`[arcade-set: skipped MAME: …]`, `Files::Set.dat_note`); ~~Eltern-Set auch in der Library suchen~~ ✅ (Eltern zählen, wenn sie irgendwo im Scan oder in der Library liegen: `set_names`/`items_with`); ✅ `db stats` zeigt DAT-Versionen (`--db`).
 4b. ✅ (2026-10-06) Kombinierte Sufami-Turbo-Images → BIOS + Carts extrahiert (8 echte Dateien als Kopie: 7 Carts +
    BIOS SHA1-verifiziert, Undo bitgleich). Schema v9 erzwingt Rehash betroffener SNES-Dateien im Cache.
+4c. ✅ (2026-10-06) RetroArch-Export (Playlists mit Core, BIOS aus System.dat). Getestet mit Scratch-cfg:
+   ra-lib → 3 Playlists mit FBNeo/MAME 2016/MAME; Sufami-Kopie → `STBIOS.bin` SHA1-korrekt. App-Panel nicht visuell
+   geprüft. Idee: System.dat bei `db sync` aktualisieren; Core-Wahl pro System einstellbar.
 5. Sichtprüfung in der App (M10-Rest): Gamification-Panels mit echten Daten plausibel; Effects off in beiden Themes.
 6. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 

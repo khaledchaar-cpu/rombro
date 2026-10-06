@@ -1,6 +1,7 @@
 mod db;
 mod g1r;
 mod import;
+mod retroarch;
 mod rules;
 mod scan;
 
@@ -73,6 +74,8 @@ enum Cmd {
         db: Option<PathBuf>,
     },
     /// Revert the most recent import/audit execution
+    /// Export playlists (with matching core) and identified BIOS files to RetroArch
+    Retroarch(retroarch::Args),
     Undo {
         #[arg(long)]
         db: Option<PathBuf>,
@@ -148,6 +151,7 @@ fn main() -> anyhow::Result<()> {
             unignore,
             db,
         } => rules::run(set, &ignore, &unignore, db),
+        Cmd::Retroarch(a) => retroarch::run(a),
         Cmd::Undo { db } => import::undo(db),
         Cmd::Resolve { file, pick, db } => import::resolve(file, pick, db),
     }
