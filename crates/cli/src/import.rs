@@ -74,7 +74,10 @@ pub fn run(a: Args) -> Result<()> {
         .into_iter()
         .flatten()
         .collect();
-    let pruned = plan::prune_emptied(&ex.done, &roots);
+    let pruned = plan::prune_emptied(&ex.done, &roots)
+        + inbox
+            .as_deref()
+            .map_or(0, |i| plan::inbox::prune_emptied_trees(&ex.done, i));
     if pruned > 0 {
         println!("removed {pruned} emptied folders");
     }

@@ -1,7 +1,7 @@
 //! What a plan leaves in the inbox, and clearing it: leftovers move to
 //! `<library>/_trash/inbox-<stamp>/` (undoable; only emptying the trash deletes them).
 
-use super::{Op, Plan, TRASH_DIR};
+use super::{Done, Op, Plan, TRASH_DIR};
 use std::collections::HashSet;
 use std::fs;
 use std::io;
@@ -33,6 +33,29 @@ pub fn clear_ops(inbox: &Path, library: &Path, stamp: &str, files: &[PathBuf]) -
             })
         })
         .collect()
+}
+
+/// Removes the top-level inbox folders that `done` moved files out of and that hold no
+/// files anymore, including empty subfolders (frontend exports ship empty
+/// `media/*/default_images`). Returns how many folders were removed.
+pub fn prune_emptied_trees(done: &[Done], inbox: &Path) -> usize {
+    let tops: std::collections::BTreeSet<PathBuf> = done
+        .iter()
+        .filter_map(|d| match &d.op {
+            Op::Move { from, .. } => from.strip_prefix(inbox).ok()?.components().next(),
+            _ => None,
+        })
+        .map(|c| inbox.join(c))
+        .filter(|p| p.is_dir())
+        .collect();
+    let mut n = 0;
+    for top in tops {
+        n += prune_empty_dirs(&top);
+        if fs::remove_dir(&top).is_ok() {
+            n += 1;
+        }
+    }
+    n
 }
 
 /// Removes empty folders below `inbox` (never `inbox` itself); returns how many.
@@ -107,6 +130,24 @@ mod tests {
 
         assert!(crate::plan::undo(&r.done).is_empty());
         assert!(inbox.join("sdlpop/images/box.png").is_file());
+    }
+
+    #[test]
+    fn prunes_emptied_inbox_trees_with_empty_subfolders() {
+        let tmp = tempfile::tempdir().unwrap();
+        let inbox = tmp.path().join("inbox");
+        let src = inbox.join("gx4000/a.zip");
+        fs::create_dir_all(inbox.join("gx4000/media/video/default_videos")).unwrap();
+        fs::create_dir_all(inbox.join("other/empty")).unwrap();
+        fs::write(&src, b"zip").unwrap();
+        let ops = [Op::Move {
+            from: src,
+            to: tmp.path().join("a.zip"),
+        }];
+        let r = crate::plan::execute(&ops);
+        assert_eq!(prune_emptied_trees(&r.done, &inbox), 4);
+        assert!(!inbox.join("gx4000").exists());
+        assert!(inbox.join("other/empty").is_dir());
     }
 
     #[test]

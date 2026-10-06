@@ -250,6 +250,9 @@ pub async fn execute_plan(pending: State<'_, Pending>) -> CmdResult<ExecResult> 
                 .flatten()
                 .collect();
             plan::prune_emptied(&ex.done, &roots);
+            if let Some(inbox) = &inbox {
+                plan::inbox::prune_emptied_trees(&ex.done, inbox);
+            }
             Some(
                 store
                     .add_journal(
