@@ -442,7 +442,7 @@ fn gamify_completeness_meta_and_persisted_unlocks() {
 }
 
 #[test]
-fn arcade_chip_inside_unknown_zip_is_not_identified() {
+fn arcade_chip_inside_unknown_zip_or_loose_is_not_identified() {
     use rombro_core::MultiHasher;
     use rombro_core::plan::Ident;
     use std::io::Write;
@@ -469,11 +469,17 @@ fn arcade_chip_inside_unknown_zip_is_not_identified() {
         w.write_all(data).unwrap();
     }
     w.finish().unwrap();
+    // the same chip loose, as in a Daphne game folder
+    std::fs::write(inbox.join("M3ROM1.BIN"), b"prom chip").unwrap();
 
     let mut s = Store::open_in_memory().unwrap();
     s.sync_rdbs(&rdb).unwrap();
     let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
-    assert!(!items.is_empty());
+    assert!(
+        items
+            .iter()
+            .any(|it| it.files.primary().ends_with("M3ROM1.BIN"))
+    );
     assert!(items.iter().all(|it| matches!(it.ident, Ident::Unknown)));
 }
 

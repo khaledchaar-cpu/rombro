@@ -60,8 +60,13 @@ impl Store {
                     _ => Files::Single(rom.path.clone()),
                 };
                 let mut records = self.identify_rom(rom)?;
-                // a single chip matching an arcade entry is no game: arcade sets only match whole
-                if rom.member.is_some() {
+                // a single chip matching an arcade entry is no game: arcade sets only match
+                // whole, as archives (loose chips: e.g. a Daphne folder's `M3ROM1.BIN`)
+                let whole_set = rom.member.is_none()
+                    && rom.path.extension().is_some_and(|e| {
+                        e.eq_ignore_ascii_case("zip") || e.eq_ignore_ascii_case("7z")
+                    });
+                if !whole_set {
                     records.retain(|r| !arcade::is_arcade(&r.system));
                 }
                 out.push(Item {
