@@ -208,9 +208,15 @@ fn reports_bytes_while_hashing_a_disc() {
     let dir = tempfile::tempdir().unwrap();
     fs::write(dir.path().join("big.iso"), vec![0u8; 4 << 20]).unwrap();
     let calls = std::sync::Mutex::new(Vec::new());
-    rombro_core::scan_with_progress(dir.path(), &|p| calls.lock().unwrap().push(p));
+    rombro_core::scan_with_progress(dir.path(), &|p| {
+        let item = p.item.map(str::to_owned);
+        calls.lock().unwrap().push((p.done, p.bytes, item));
+    });
     let calls = calls.into_inner().unwrap();
-    assert!(calls.iter().any(|p| p.done == 0 && p.bytes > 0));
-    let last = calls.last().unwrap();
-    assert_eq!((last.done, last.bytes), (1, 4 << 20));
+    assert!(
+        calls
+            .iter()
+            .any(|(d, b, i)| *d == 0 && *b > 0 && i.as_deref() == Some("big.iso"))
+    );
+    assert_eq!(calls.last().unwrap(), &(1, 4 << 20, None));
 }

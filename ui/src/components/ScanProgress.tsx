@@ -16,7 +16,13 @@ export default function ScanProgress() {
     total: 0,
   });
   const [secs, setSecs] = createSignal(0);
-  const unlisten = onImportProgress(setP);
+  // Ticks between large files carry no item; keep the last one until the phase ends.
+  const [item, setItem] = createSignal<string>();
+  const unlisten = onImportProgress((next) => {
+    if (next.phase !== p().phase || next.done === next.total) setItem(undefined);
+    if (next.item) setItem(next.item);
+    setP(next);
+  });
   const started = Date.now();
   const timer = setInterval(
     () => setSecs(Math.floor((Date.now() - started) / 1000)),
@@ -43,6 +49,7 @@ export default function ScanProgress() {
         {LABELS[p().phase]}
         {count()} · {secs()}s
       </p>
+      {item() && <p class="mono dim small ellipsis">› {item()}</p>}
     </>
   );
 }

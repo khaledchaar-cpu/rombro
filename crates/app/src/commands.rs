@@ -27,7 +27,7 @@ pub(crate) fn open_store() -> CmdResult<(Store, PathBuf)> {
 pub(crate) fn indexed_scan(
     store: &Store,
     root: &std::path::Path,
-    progress: &(dyn Fn(rombro_core::ScanTick) + Sync),
+    progress: &(dyn Fn(rombro_core::ScanTick<'_>) + Sync),
 ) -> CmdResult<rombro_core::ScanReport> {
     let cache = store.hash_cache(root).map_err(err)?;
     let report = rombro_core::scan_cached(root, &cache, progress);

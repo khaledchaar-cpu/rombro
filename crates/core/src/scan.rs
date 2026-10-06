@@ -46,11 +46,14 @@ pub struct ScanFailure {
 /// Scan progress: items (files or discs) and the bytes they hold. Bytes advance evenly
 /// with the hashing work, so large discs do not stall the bar.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize)]
-pub struct ScanTick {
+pub struct ScanTick<'a> {
     pub done: usize,
     pub total: usize,
     pub bytes: u64,
     pub bytes_total: u64,
+    /// The large file being hashed right now, if this tick comes from inside one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub item: Option<&'a str>,
 }
 
 /// A disc image (`.cue`/`.gdi` sheet with its tracks, or a single `.iso`).
@@ -89,7 +92,7 @@ pub fn scan(root: &Path) -> ScanReport {
 
 /// Like [`scan`], but calls `progress` after each file or disc
 /// is hashed. May be called concurrently from worker threads.
-pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(ScanTick) + Sync)) -> ScanReport {
+pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(ScanTick<'_>) + Sync)) -> ScanReport {
     scan_cached(root, &HashCache::default(), progress)
 }
 
@@ -108,7 +111,7 @@ fn is_ignored(e: &walkdir::DirEntry) -> bool {
 pub fn scan_cached(
     root: &Path,
     cache: &HashCache,
-    progress: &(dyn Fn(ScanTick) + Sync),
+    progress: &(dyn Fn(ScanTick<'_>) + Sync),
 ) -> ScanReport {
     let mut report = ScanReport::default();
     let mut files = Vec::new();
@@ -171,7 +174,8 @@ pub fn scan_cached(
         .zip(sheet_sizes)
         .map(|((path, kind, found, missing), n)| {
             // discs are the large files: count while hashing so the bar keeps moving
-            let counter = Counter::new(&meter, n);
+            let name = path.file_name().map(|n| n.to_string_lossy().into_owned());
+            let counter = Counter::new(&meter, n, name.as_deref().unwrap_or_default());
             let r = scan_disc_cached(&path, kind, &found, missing, cache, &counter)
                 .map_err(|error| ScanFailure { path, error });
             meter.finish(n, counter.read());

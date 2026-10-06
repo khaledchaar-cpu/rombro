@@ -18,6 +18,8 @@ export interface ScanProgress {
   /** Bytes hashed so far (scan phases only). */
   bytes?: number;
   bytes_total?: number;
+  /** Large file being hashed right now. */
+  item?: string;
 }
 export interface ScanSummary {
   roms: number;
