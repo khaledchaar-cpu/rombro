@@ -38,7 +38,9 @@ mit plausiblen Gründen (fehlend, misnamed, Eltern fehlt, nicht im DAT).
    HDD-CHDs ohne CD-Track, 2 CHDs mit Dekompressionsfehler = vermutlich defekt, 2 Zips).
    Danach: bitgleiche Doppel → Duplikat in der TBD-Queue statt Konflikt (BIOS-Fälle verifiziert; Wolfenstein ist
    echter Konflikt: Shareware vs. Vollversion). CLI: `rules --ignore/--unignore <pfad>`.
-3. Prüfung in RetroArch: MAME-BIOS neben den Sets (BIOS-abhängiges Spiel, z. B. Neo Geo, startet mit MAME-Core
+3. ✅ (2026-10-06) Prüfung in RetroArch: `2020bb` (Neo Geo) läuft headless 300 Frames mit mame2016 und FBNeo,
+   jeweils mit `neogeo.zip` neben dem Set aus `ra-lib`.
+   Ursprünglich: MAME-BIOS neben den Sets (BIOS-abhängiges Spiel, z. B. Neo Geo, startet mit MAME-Core
    und FBNeo aus der importierten Library).
    Vorbereitet (2026-10-06): `~/rombro-test/ra-lib` (Copy-Import Arcade-Testset), Playlist `ROMBRO Test.lpl`,
    Cores fbneo + mame2016 + mame (0.289) vom Buildbot. User-`neogeo.zip` ist nicht DB-konform (4 Dateien fehlen, 2 anders
