@@ -13,6 +13,9 @@ pub enum DbCmd {
         /// RDB directory (default: auto-detected RetroArch folder)
         #[arg(long)]
         path: Option<PathBuf>,
+        /// Database file for the arcade DAT versions (default: $XDG_DATA_HOME/rombro/rombro.db)
+        #[arg(long)]
+        db: Option<PathBuf>,
     },
     /// Import new/changed RDB files into the rombro database
     Sync {
@@ -33,7 +36,7 @@ pub enum DbCmd {
 
 pub fn run(cmd: DbCmd) -> Result<()> {
     match cmd {
-        DbCmd::Stats { path } => stats(path.map_or_else(default_dir, Ok)?),
+        DbCmd::Stats { path, db } => stats(path.map_or_else(default_dir, Ok)?, db),
         DbCmd::Sync { path, db } => sync(path.map_or_else(default_dir, Ok)?, db),
         DbCmd::Lookup { key, db } => lookup(&key, db),
     }
@@ -121,7 +124,7 @@ struct Row {
     hashed: usize,
 }
 
-fn stats(dir: PathBuf) -> Result<()> {
+fn stats(dir: PathBuf, db: Option<PathBuf>) -> Result<()> {
     let start = Instant::now();
     let mut files: Vec<PathBuf> = std::fs::read_dir(&dir)
         .with_context(|| format!("reading {}", dir.display()))?
@@ -177,5 +180,37 @@ fn stats(dir: PathBuf) -> Result<()> {
         total,
         elapsed
     );
+    let dats = open_store(db)?.dats()?;
+    if !dats.is_empty() {
+        println!("\n{:<60} {:>17} {:>10}", "Arcade DAT", "Version", "Fetched");
+        for d in dats {
+            let day = d.fetched.div_euclid(86_400);
+            println!("{:<60} {:>17} {:>10}", d.system, d.version, civil(day));
+        }
+    }
     Ok(())
+}
+
+/// `YYYY-MM-DD` of a day count since the Unix epoch (Howard Hinnant's algorithm).
+fn civil(days: i64) -> String {
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = yoe + era * 400 + i64::from(m <= 2);
+    format!("{y:04}-{m:02}-{d:02}")
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn civil_dates() {
+        assert_eq!(super::civil(0), "1970-01-01");
+        assert_eq!(super::civil(20_732), "2026-10-06");
+        assert_eq!(super::civil(11_016), "2000-02-29");
+    }
 }
