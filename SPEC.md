@@ -68,7 +68,7 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
 
 ### F5 – GUI
 - Dashboard: Systeme als Kacheln, Vollständigkeit, letzte Imports.
-- Inbox-View: Scan-Ergebnisse live (Streaming), Filter nach Status, Plan-Vorschau als Diff.
+- Import-View (Inbox + Plan in einem Tab, 2026-10-06): Ordner/Modus oben, darunter Scan-Fortschritt, Plan-Vorschau als Diff, Entscheidungen, Inbox-Reste.
 - Library-View: virtualisierte Tabelle (100k+ Zeilen flüssig), Detail-Panel mit Metadaten + Thumbnail.
 - 1G1R-Regeln-Editor (Drag&Drop Prioritäten).
 - Command-Palette (Ctrl/Cmd+K), vollständige Tastaturbedienung.
