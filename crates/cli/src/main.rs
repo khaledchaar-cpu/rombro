@@ -63,6 +63,12 @@ enum Cmd {
         /// JSON file with rules to store
         #[arg(long)]
         set: Option<PathBuf>,
+        /// Never touch this path when planning (repeatable)
+        #[arg(long)]
+        ignore: Vec<PathBuf>,
+        /// Remove a path from the ignore list (repeatable)
+        #[arg(long)]
+        unignore: Vec<PathBuf>,
         #[arg(long)]
         db: Option<PathBuf>,
     },
@@ -136,7 +142,12 @@ fn main() -> anyhow::Result<()> {
             opts,
         } => import::run(opts.args(Some(inbox), library)),
         Cmd::Audit { library, opts } => import::run(opts.args(None, library)),
-        Cmd::Rules { set, db } => rules::run(set, db),
+        Cmd::Rules {
+            set,
+            ignore,
+            unignore,
+            db,
+        } => rules::run(set, &ignore, &unignore, db),
         Cmd::Undo { db } => import::undo(db),
         Cmd::Resolve { file, pick, db } => import::resolve(file, pick, db),
     }

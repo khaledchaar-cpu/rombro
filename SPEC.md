@@ -250,6 +250,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   - Regeländerung → Audit-Plan zur Prüfung, Ausführung undo-bar (nie automatisch).
   - Speicherung in der DB (wie Library-Pfad). CLI: `rules show` + „Warum“ in dry-run-Ausgabe; Setzen via GUI/Datei.
 - **BIOS-Erkennung nur per Hash (User, 2026-10-06):** BIOS-Sets mit unbekanntem Hash (z. B. eigenes `neogeo.zip`-Paket) werden *nicht* am Kurznamen erkannt → Quarantäne.
+- Bitgleiche Kopie an einem schon belegten/geplanten Ziel = 1G1R-Duplikat (TBD-Queue, `discard`-Verdict → `_trash`), nur abweichender Inhalt ist ein Konflikt (User, 2026-10-06). Gilt auch für BIOS.
 
 ## 11. Offene Fragen
 - Ziel (User): vollständige Sammlung im Sinne der RetroArch-Datenbanken. Andere Versionen, Derivate, Formate interessieren nicht, solange sie in keiner RDB stehen → Quarantäne ist richtig für Unbekanntes in erkannten System-Ordnern.

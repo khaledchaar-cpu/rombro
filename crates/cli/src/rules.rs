@@ -5,8 +5,30 @@ use rombro_core::g1r::Rules;
 use rombro_core::rules::Rule;
 use std::path::PathBuf;
 
-pub fn run(set: Option<PathBuf>, db: Option<PathBuf>) -> Result<()> {
+pub fn run(
+    set: Option<PathBuf>,
+    ignore: &[PathBuf],
+    unignore: &[PathBuf],
+    db: Option<PathBuf>,
+) -> Result<()> {
     let store = open_store(db)?;
+    if !ignore.is_empty() || !unignore.is_empty() {
+        let mut list = store.ignored()?;
+        for p in ignore {
+            let p = std::path::absolute(p)?;
+            if !list.contains(&p) {
+                list.push(p);
+            }
+        }
+        let gone: Vec<PathBuf> = unignore
+            .iter()
+            .map(std::path::absolute)
+            .collect::<std::io::Result<_>>()?;
+        list.retain(|p| !gone.contains(p));
+        store.set_ignored(&list)?;
+        println!("{} ignored path(s)", list.len());
+        return Ok(());
+    }
     if let Some(file) = set {
         let text = std::fs::read_to_string(&file)
             .with_context(|| format!("reading {}", file.display()))?;
@@ -25,7 +47,7 @@ pub fn run(set: Option<PathBuf>, db: Option<PathBuf>) -> Result<()> {
     println!("{}", serde_json::to_string_pretty(&store.rules()?)?);
     let ignored = store.ignored()?;
     if !ignored.is_empty() {
-        println!("\nignored paths:");
+        println!("\nignored paths (`--ignore` / `--unignore`):");
         for p in ignored {
             println!("  {}", p.display());
         }

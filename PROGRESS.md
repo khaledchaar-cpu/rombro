@@ -34,7 +34,8 @@ Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeig
    5.270 Quarantäne (wie M12c), 1.672 Entscheidungen, 39.635 Ops, 3 Konflikte (bitgleiche Doppel: 2 FBNeo-BIOS in
    `Commodore - C64/FBNeo - Arcade/` + `00bios`, Wolfenstein 3D in `ECWolf/` + `Ports/`), 18 Lesefehler (MAME-/CD-i-
    HDD-CHDs ohne CD-Track, 2 CHDs mit Dekompressionsfehler = vermutlich defekt, 2 Zips).
-   Offen: CLI kann ignorierte Pfade noch nicht setzen (nur GUI); bitgleiche Doppel als Duplikat statt Konflikt?
+   Danach: bitgleiche Doppel → Duplikat in der TBD-Queue statt Konflikt (BIOS-Fälle verifiziert; Wolfenstein ist
+   echter Konflikt: Shareware vs. Vollversion). CLI: `rules --ignore/--unignore <pfad>`.
 3. Prüfung in RetroArch: MAME-BIOS neben Sets, Gamification-Panels, Effects off.
 4. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 
