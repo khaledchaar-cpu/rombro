@@ -36,6 +36,9 @@ impl Builder<'_> {
                 ident: Ident::Unknown,
                 in_library: c.in_library,
             };
+            if c.unknown > 0 && self.left_alone(archive) {
+                continue;
+            }
             if c.unknown > 0 {
                 self.why = format!(
                     "unknown: {} archive member(s) without database match",

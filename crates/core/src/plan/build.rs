@@ -10,6 +10,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 mod archives;
+mod folders;
 mod place;
 
 use place::quarantine_sources;
@@ -25,6 +26,11 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         lpl: BTreeMap::new(),
         why: String::new(),
         members_done: HashMap::new(),
+        identified: items
+            .iter()
+            .filter(|it| !matches!(it.ident, Ident::Unknown))
+            .filter_map(|it| it.files.primary().parent().map(Path::to_path_buf))
+            .collect(),
     };
     let managed = [QUARANTINE_DIR, PLAYLIST_DIR, TRASH_DIR, BIOS_DIR].map(|d| library.join(d));
     let items: Vec<&Item> = items
@@ -49,6 +55,19 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                     .is_some_and(|a| mixed.contains(a.as_path()))
         })
         .collect();
+    let folder_games = folders::find(&items, library, opts.inbox.as_deref());
+    let items: Vec<&Item> = items
+        .into_iter()
+        .filter(|it| {
+            !it.files
+                .primary()
+                .ancestors()
+                .any(|a| folder_games.contains_key(a))
+        })
+        .collect();
+    for (root, fg) in &folder_games {
+        b.folder_game(root, fg);
+    }
     let mut known: BTreeMap<&str, Vec<(&Item, &Game)>> = BTreeMap::new();
     let mut arcade_seen: HashSet<(&str, &str)> = HashSet::new();
     for &it in &items {
@@ -85,6 +104,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             }),
             // Unknown members stay packed; the whole archive is quarantined at the end.
             Ident::Unknown if it.files.archive().is_some() => {}
+            Ident::Unknown if b.left_alone(it.files.primary()) => {}
             Ident::Unknown => {
                 b.why = "unknown: no database match".into();
                 b.quarantine(it)
@@ -185,6 +205,8 @@ struct Builder<'a> {
     why: String,
     /// Members of multi-ROM archives handled so far (extracted, quarantined or discarded).
     members_done: HashMap<PathBuf, usize>,
+    /// Folders holding at least one identified item; unknown files elsewhere are left alone.
+    identified: HashSet<PathBuf>,
 }
 
 impl Builder<'_> {
@@ -234,6 +256,14 @@ impl Builder<'_> {
         if self.commit(it, ops) {
             self.plan.quarantined += 1;
         }
+    }
+
+    /// Unknown files in folders without any identified item (game installs, frontend media,
+    /// unsupported formats) stay where they are; only the inbox/library root itself is swept.
+    fn left_alone(&self, p: &Path) -> bool {
+        let Some(dir) = p.parent() else { return false };
+        let is_root = Some(dir) == self.opts.inbox.as_deref() || dir == self.library;
+        !is_root && !self.identified.contains(dir)
     }
 
     /// Path below `_quarantine/`: relative to the inbox (or library) root, else the bare name.

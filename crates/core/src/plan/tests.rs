@@ -306,6 +306,7 @@ fn quarantine_keeps_inbox_subfolders_so_equal_names_do_not_clash() {
     let items = [
         item(file(&inbox, "x.zip", "1"), Ident::Unknown, false),
         item(file(&inbox, "old/x.zip", "2"), Ident::Unknown, false),
+        item(file(&inbox, "old/a.sfc", "a"), game("Mario (USA)"), false),
     ];
     let o = Options {
         inbox: Some(inbox.clone()),
@@ -315,5 +316,102 @@ fn quarantine_keeps_inbox_subfolders_so_equal_names_do_not_clash() {
     assert_eq!(plan.quarantined, 2);
     assert!(plan.decisions.is_empty());
     execute(&plan.ops);
-    assert_eq!(tree(&lib), ["_quarantine/old/x.zip", "_quarantine/x.zip"]);
+    assert_eq!(
+        tree(&lib),
+        [
+            "Nintendo - SNES/Mario (USA).sfc",
+            "_quarantine/old/x.zip",
+            "_quarantine/x.zip"
+        ]
+    );
+}
+
+#[test]
+fn unknown_files_in_folders_without_matches_stay_put() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let items = [
+        item(
+            file(&inbox, "Daphne/ace.daphne/ace.txt", "1"),
+            Ident::Unknown,
+            false,
+        ),
+        item(file(&inbox, "loose.bin", "2"), Ident::Unknown, false),
+    ];
+    let o = Options {
+        inbox: Some(inbox.clone()),
+        ..opts(Mode::Move)
+    };
+    let plan = build(&items, &lib, &o);
+    assert_eq!(plan.quarantined, 1);
+    execute(&plan.ops);
+    assert_eq!(tree(&lib), ["_quarantine/loose.bin"]);
+}
+
+#[test]
+fn game_folder_moves_whole_named_by_its_key_file() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let dos = |name: &str| {
+        Ident::Known(Game {
+            system: "DOS".into(),
+            name: name.into(),
+            crc: Some(1),
+        })
+    };
+    let items = [
+        item(
+            file(&inbox, "PC - DOS/Abuse.dos/ABUSE.EXE", "e"),
+            dos("Abuse (1995)"),
+            false,
+        ),
+        item(
+            file(&inbox, "PC - DOS/Abuse.dos/ADDON/x.lsp", "x"),
+            Ident::Unknown,
+            false,
+        ),
+        item(
+            file(&inbox, "PC - DOS/Doom/DOOM.EXE", "d"),
+            dos("Doom (1993)"),
+            false,
+        ),
+        item(
+            file(&inbox, "PC - DOS/Doom/data/a.wad", "w"),
+            Ident::Unknown,
+            false,
+        ),
+    ];
+    let o = Options {
+        inbox: Some(inbox.clone()),
+        ..opts(Mode::Move)
+    };
+    let plan = build(&items, &lib, &o);
+    assert_eq!((plan.placed, plan.quarantined), (2, 0));
+    assert!(plan.decisions.is_empty());
+    execute(&plan.ops);
+    assert_eq!(
+        tree(&lib),
+        [
+            "DOS/Abuse (1995)/ABUSE.EXE",
+            "DOS/Abuse (1995)/ADDON/x.lsp",
+            "DOS/Doom (1993)/DOOM.EXE",
+            "DOS/Doom (1993)/data/a.wad"
+        ]
+    );
+    // re-planning the library changes nothing
+    let lib_items = [
+        item(
+            lib.join("DOS/Abuse (1995)/ABUSE.EXE"),
+            dos("Abuse (1995)"),
+            true,
+        ),
+        item(
+            lib.join("DOS/Abuse (1995)/ADDON/x.lsp"),
+            Ident::Unknown,
+            true,
+        ),
+    ];
+    let again = build(&lib_items, &lib, &opts(Mode::Move));
+    assert!(again.ops.is_empty() && again.decisions.is_empty());
+    assert_eq!(again.unchanged, 1);
 }
