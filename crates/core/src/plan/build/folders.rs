@@ -31,11 +31,22 @@ pub(super) fn is_folder_system(system: &str) -> bool {
     FOLDER_SYSTEMS.contains(&system)
 }
 
-/// One game folder and the match that names it.
+/// A database match inside a game folder.
+struct Match<'a> {
+    item: &'a Item,
+    game: &'a Game,
+    key: &'a Path,
+}
+
+/// One game folder. Key files are often shared between games (`dosbox.bat`, Sierra drivers),
+/// so the folder keeps its own name; the system comes from its suffix or the matches.
 pub(super) struct FolderGame<'a> {
     pub item: &'a Item,
-    pub game: &'a Game,
+    pub system: &'a str,
+    pub name: String,
+    /// The match that best fits the folder name; the playlist entry points to it.
     pub key: &'a Path,
+    pub crc: Option<u32>,
 }
 
 /// Game folders keyed by their root directory. Matches lying loose in a folder shared by
@@ -45,16 +56,14 @@ pub(super) fn find<'a>(
     library: &Path,
     inbox: Option<&Path>,
 ) -> BTreeMap<PathBuf, FolderGame<'a>> {
-    let matched: Vec<FolderGame<'a>> = items
+    let matched: Vec<Match<'a>> = items
         .iter()
         .filter_map(|it| match (&it.ident, &it.files) {
-            (Ident::Known(g), Files::Single(p)) if is_folder_system(&g.system) => {
-                Some(FolderGame {
-                    item: it,
-                    game: g,
-                    key: p.as_path(),
-                })
-            }
+            (Ident::Known(g), Files::Single(p)) if is_folder_system(&g.system) => Some(Match {
+                item: it,
+                game: g,
+                key: p.as_path(),
+            }),
             _ => None,
         })
         .collect();
@@ -81,22 +90,73 @@ pub(super) fn find<'a>(
     }
     let shared = |d: &Path| children.get(d).is_some_and(|c| c.len() >= 2);
 
-    let mut out: BTreeMap<PathBuf, FolderGame<'a>> = BTreeMap::new();
+    let mut groups: BTreeMap<PathBuf, Vec<Match<'a>>> = BTreeMap::new();
     for m in matched {
         let Some(b) = base(m.key) else { continue };
-        let Some(root) = root_of(m.key, &b, b == library, &shared) else {
-            continue;
-        };
-        // several key files in one folder: the shallowest (then first by name) names the game
-        let rank = |k: &Path| (k.components().count(), k.to_path_buf());
-        match out.get(&root) {
-            Some(cur) if rank(cur.key) <= rank(m.key) => {}
-            _ => {
-                out.insert(root, m);
-            }
+        if let Some(root) = root_of(m.key, &b, b == library, &shared) {
+            groups.entry(root).or_default().push(m);
         }
     }
-    out
+    groups
+        .into_iter()
+        .filter_map(|(root, ms)| {
+            let fg = folder_game(&root, &ms)?;
+            Some((root, fg))
+        })
+        .collect()
+}
+
+fn folder_game<'a>(root: &Path, ms: &[Match<'a>]) -> Option<FolderGame<'a>> {
+    let dir = root.file_name()?.to_string_lossy();
+    let (stem, marker) = match dir.rsplit_once('.') {
+        Some((stem, ext)) if MARKERS.iter().any(|m| ext.eq_ignore_ascii_case(m)) => {
+            (stem.to_owned(), Some(ext.to_ascii_lowercase()))
+        }
+        _ => (dir.clone().into_owned(), None),
+    };
+    let by_marker = match marker.as_deref() {
+        Some("scummvm") => Some("ScummVM"),
+        Some("boom") => Some("DOOM"),
+        Some(_) => Some("DOS"),
+        None => None,
+    };
+    // otherwise the system most matches belong to (ties: FOLDER_SYSTEMS order)
+    let system = by_marker.or_else(|| {
+        FOLDER_SYSTEMS.iter().copied().max_by_key(|s| {
+            let n = ms.iter().filter(|m| m.game.system == *s).count();
+            (
+                n,
+                std::cmp::Reverse(FOLDER_SYSTEMS.iter().position(|x| x == s)),
+            )
+        })
+    })?;
+    let words = |s: &str| -> HashSet<String> {
+        s.split(|c: char| !c.is_alphanumeric())
+            .filter(|w| w.len() > 1)
+            .map(str::to_lowercase)
+            .collect()
+    };
+    let want = words(&stem);
+    let best = ms
+        .iter()
+        .filter(|m| m.game.system == system)
+        .chain(ms.iter())
+        .max_by_key(|m| {
+            let overlap = words(&m.game.name).intersection(&want).count();
+            (
+                overlap,
+                m.game.system == system,
+                std::cmp::Reverse(m.key.components().count()),
+                std::cmp::Reverse(m.key.to_path_buf()),
+            )
+        })?;
+    Some(FolderGame {
+        item: best.item,
+        system,
+        name: stem,
+        key: best.key,
+        crc: best.game.crc,
+    })
 }
 
 fn root_of(
@@ -141,19 +201,18 @@ fn root_of(
 impl Builder<'_> {
     /// Moves a game folder to `<System>/<Game>/`, keeping everything inside as it is.
     pub(super) fn folder_game(&mut self, root: &Path, fg: &FolderGame<'_>) {
-        let g = fg.game;
         let target = self
             .library
-            .join(naming::sanitize_file_name(&g.system))
-            .join(naming::sanitize_file_name(&naming::release_name(&g.name)));
+            .join(naming::sanitize_file_name(fg.system))
+            .join(naming::sanitize_file_name(&fg.name));
         let key_rel = fg.key.strip_prefix(root).unwrap_or(fg.key);
         self.lpl
-            .entry(g.system.clone())
+            .entry(fg.system.to_owned())
             .or_default()
             .push(lpl::Entry {
                 path: target.join(key_rel),
-                label: naming::release_name(&g.name),
-                crc: g.crc,
+                label: fg.name.clone(),
+                crc: fg.crc,
             });
         if root == target {
             self.plan.unchanged += 1;

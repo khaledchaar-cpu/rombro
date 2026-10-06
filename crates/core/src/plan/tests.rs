@@ -349,7 +349,7 @@ fn unknown_files_in_folders_without_matches_stay_put() {
 }
 
 #[test]
-fn game_folder_moves_whole_named_by_its_key_file() {
+fn game_folder_moves_whole_under_its_own_name() {
     let tmp = TempDir::new().unwrap();
     let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
     let dos = |name: &str| {
@@ -392,26 +392,53 @@ fn game_folder_moves_whole_named_by_its_key_file() {
     assert_eq!(
         tree(&lib),
         [
-            "DOS/Abuse (1995)/ABUSE.EXE",
-            "DOS/Abuse (1995)/ADDON/x.lsp",
-            "DOS/Doom (1993)/DOOM.EXE",
-            "DOS/Doom (1993)/data/a.wad"
+            "DOS/Abuse/ABUSE.EXE",
+            "DOS/Abuse/ADDON/x.lsp",
+            "DOS/Doom/DOOM.EXE",
+            "DOS/Doom/data/a.wad"
         ]
     );
     // re-planning the library changes nothing
     let lib_items = [
-        item(
-            lib.join("DOS/Abuse (1995)/ABUSE.EXE"),
-            dos("Abuse (1995)"),
-            true,
-        ),
-        item(
-            lib.join("DOS/Abuse (1995)/ADDON/x.lsp"),
-            Ident::Unknown,
-            true,
-        ),
+        item(lib.join("DOS/Abuse/ABUSE.EXE"), dos("Abuse (1995)"), true),
+        item(lib.join("DOS/Abuse/ADDON/x.lsp"), Ident::Unknown, true),
     ];
     let again = build(&lib_items, &lib, &opts(Mode::Move));
     assert!(again.ops.is_empty() && again.decisions.is_empty());
     assert_eq!(again.unchanged, 1);
+}
+
+#[test]
+fn game_folder_keeps_its_name_when_the_key_file_is_shared() {
+    // `dosbox.bat` matches another game; the folder name and suffix decide
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let known = |system: &str, name: &str| {
+        Ident::Known(Game {
+            system: system.into(),
+            name: name.into(),
+            crc: Some(1),
+        })
+    };
+    let items = [
+        item(
+            file(&inbox, "Bloodstone.dos/dosbox.bat", "b"),
+            known("DOS", "Battle Chess 4000 (1993)"),
+            false,
+        ),
+        item(
+            file(&inbox, "Sky.scummvm/SKY.EXE", "s"),
+            known("DOS", "Beneath a Steel Sky (1994)"),
+            false,
+        ),
+    ];
+    let o = Options {
+        inbox: Some(inbox.clone()),
+        ..opts(Mode::Move)
+    };
+    execute(&build(&items, &lib, &o).ops);
+    assert_eq!(
+        tree(&lib),
+        ["DOS/Bloodstone/dosbox.bat", "ScummVM/Sky/SKY.EXE"]
+    );
 }
