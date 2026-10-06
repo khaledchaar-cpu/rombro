@@ -129,9 +129,16 @@ fn folder_game<'a>(root: &Path, ms: &[Match<'a>], systems: &'a [String]) -> Opti
         Some(_) => Some("DOS"),
         None => None,
     };
+    // a folder already filed under a folder system (`<lib>/ScummVM/Game/`) stays there –
+    // keeps audits stable once the marker suffix is gone
+    let by_parent = root
+        .parent()
+        .and_then(Path::file_name)
+        .and_then(|p| systems.iter().find(|s| p == s.as_str()))
+        .map(String::as_str);
     // otherwise a port/engine database beats generic DOS/ScummVM (their DBs also list e.g.
     // Wolfenstein 3D), then the system most matches belong to
-    let system = by_marker.or_else(|| {
+    let system = by_marker.or(by_parent).or_else(|| {
         systems.iter().map(String::as_str).max_by_key(|s| {
             let n = ms.iter().filter(|m| m.game.system == *s).count();
             let specific = n > 0 && !matches!(*s, "DOS" | "ScummVM");

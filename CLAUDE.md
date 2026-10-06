@@ -44,6 +44,7 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Scan | `cargo run -q --release -p rombro-cli -- scan <dir> [--unknown]` |
 | 1G1R prüfen | `cargo run -q --release -p rombro-cli -- g1r "<System>" [--filter <text>]` |
 | Import / Audit | `cargo run -q --release -p rombro-cli -- import <inbox> <lib> --dry-run` / `audit <lib>` |
+| Testset bauen | `./scripts/make-testset.sh "<Sammlung>"` → `~/rombro-test`, dann `--db ~/rombro-test/test.db` |
 | Regeln zeigen/laden | `… -- rules [--set rules.json]` |
 | Undo / Resolve | `… -- undo` / `… -- resolve <file> [n]` |
 | Echte RDBs testen | `cargo test -q --release -p rombro-rdb -- --ignored` |

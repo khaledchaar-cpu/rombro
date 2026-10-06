@@ -468,5 +468,12 @@ fn game_folder_keeps_its_name_when_the_key_file_is_shared() {
     assert_eq!(
         tree(&lib),
         ["DOS/Bloodstone/dosbox.bat", "ScummVM/Sky/SKY.EXE"]
-    );
+    ); // auditing the library keeps the ScummVM folder although only DOS knows the file
+    let lib_items = [item(
+        lib.join("ScummVM/Sky/SKY.EXE"),
+        known("DOS", "Beneath a Steel Sky (1994)"),
+        true,
+    )];
+    let again = build(&lib_items, &lib, &opts(Mode::Move));
+    assert!(again.ops.is_empty(), "{:?}", again.ops);
 }

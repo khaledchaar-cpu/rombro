@@ -28,7 +28,9 @@ Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeig
 
 ## Nächste Schritte
 1. Rules-Seite: erster Eindruck ok (User, 2026-10-06), finale Bewertung im Alltag.
-2. Echter Import auf Testordner; erneuter Komplett-Probelauf (~2 h).
+2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
+   Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.
+   Offen: erneuter Komplett-Probelauf (~2 h); CLI kann ignorierte Pfade noch nicht setzen (nur GUI).
 3. Prüfung in RetroArch: MAME-BIOS neben Sets, Gamification-Panels, Effects off.
 4. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 
@@ -93,3 +95,4 @@ Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeig
 - 2026-10-05: F6-Reste (Trash-Größe, Toast, Franchise-Ziele).
 - Neue `Rules`-Felder brauchen Defaults im `Default`-Impl (`#[serde(default)]` nimmt die) – alte gespeicherte JSONs bleiben gültig.
 - Override-Exclude pro System gibt es nur im Backend/JSON, nicht in der UI.
+- Testset: `scripts/make-testset.sh "<Sammlung>"` → `~/rombro-test` (inbox, lib, DB-Kopie); immer mit `--db ~/rombro-test/test.db`, damit Testeinstellungen nicht in der echten DB landen.
