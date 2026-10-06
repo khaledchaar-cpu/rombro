@@ -59,7 +59,8 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
 6. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 
 ## Stolpersteine
-- RetroArch headless testen: `retroarch --appendconfig=<cfg mit video/audio/input_driver = "null"> -L <core.so> <zip> --max-frames=300 --verbose`
+- RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie
+  `--appendconfig`** – hat am 2026-10-06 die Null-Treiber in die echte `retroarch.cfg` gespeichert.
   (Exit 0 = läuft). Schreibt in `playlists/builtin/content_history.lpl` → Testeinträge danach entfernen.
 - quick-xml 0.41: `unescape_value` deprecated → `normalized_value(XmlVersion::Implicit1_0)`.
 - DOS/ScummVM-RDBs identifizieren über *eine* Datei, die oft zwischen Spielen geteilt ist (`dosbox.bat`, `ADL.DRV`) → Ordnername statt DB-Name.
