@@ -61,6 +61,9 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    Atomiswave/Naomi (2026-10-06): RDB nennt nur einen Key-Chip pro Spiel → ZIP mit diesem Chip = Set
    (`store::chipset`, `arcade::CHIP_KEYED`), vor der MAME-„not working“-Regel (Flycast, nicht MAME);
    `awbios`/`naomi`/`naomi2` → `_bios/dc/` (Export → `system/dc/`).
+   CHD-Pregap (2026-10-06): RDB hasht den Datentrack wie Redumps `.bin` inkl. Pregap; nicht gespeicherter Pregap
+   wird nachgebaut (Stille + 150 leere MODE1-Sektoren mit EDC/ECC, `disc::cdsector`, `ChdTrack::open_redump`).
+   PCE CD 1 → 16/28 erkannt; Migration v12 hasht CHDs neu.
 1. ✅ Rules-Seite abgenommen (User, 2026-10-06). Alte Entscheidungen ohne gespeicherten Grund → „reason not recorded“.
 2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
    Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.

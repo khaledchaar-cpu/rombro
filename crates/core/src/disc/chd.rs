@@ -9,6 +9,11 @@ use std::fs::File;
 use std::io::{self, BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 
+use super::cdsector;
+
+/// Pregap frames Redump writes as data sectors before a data track (the rest is silence).
+const DATA_PREGAP: u64 = 150;
+
 /// Bytes per stored CD frame: 2352 sector bytes + 96 subcode bytes.
 const FRAME: u64 = 2448;
 
@@ -20,6 +25,10 @@ struct TrackInfo {
     /// First frame of the track's data within the image.
     start: u64,
     frames: u64,
+    /// Pregap frames stored in the image right before `start` (skipped for reading).
+    stored_pregap: u64,
+    /// Pregap frames not stored in the image (Redump dumps carry them in the track file).
+    missing_pregap: u64,
 }
 
 impl TrackInfo {
@@ -66,6 +75,8 @@ fn layout(entries: &[String]) -> Vec<TrackInfo> {
             kind,
             start: start + skip,
             frames: frames - skip,
+            stored_pregap: skip,
+            missing_pregap: if pregap_stored { 0 } else { pregap },
         });
         start += frames + pad;
     }
@@ -81,6 +92,17 @@ pub struct ChdTrack {
     cmp: Vec<u8>,
     loaded: Option<u32>,
     pos: u64,
+    /// Bytes before the track data: its pregap as in a Redump `.bin` (see [`ChdTrack::open_redump`]).
+    lead: Lead,
+}
+
+/// The pregap in front of a track read as a Redump track file.
+#[derive(Default)]
+struct Lead {
+    /// Synthesized frames: `silent` zero sectors, then empty MODE1 sectors from `lba`.
+    synth: u64,
+    silent: u64,
+    lba: u32,
 }
 
 impl ChdTrack {
@@ -108,7 +130,33 @@ impl ChdTrack {
             cmp: Vec::new(),
             loaded: None,
             pos: 0,
+            lead: Lead::default(),
         }))
+    }
+
+    /// Like [`ChdTrack::open`], but the track reads like the `.bin` of a Redump cue dump, whose
+    /// hashes RetroArch's databases list: the pregap is included, and one CHD did not store is
+    /// rebuilt as Redump writes it (audio silence, then 150 empty MODE1 sectors). Not for
+    /// filesystem access: sector 0 is no longer the track's first data sector.
+    pub fn open_redump(path: &Path) -> io::Result<Option<Self>> {
+        let Some(mut t) = Self::open(path)? else {
+            return Ok(None);
+        };
+        let stored = t.track.stored_pregap;
+        let missing = t.track.missing_pregap;
+        if missing > 0 && t.track.kind == "MODE1_RAW" && !t.is_empty() {
+            let mut head = [0u8; 16];
+            t.read_exact(&mut head)?;
+            t.pos = 0;
+            if let Some(lba) = cdsector::header_lba(&head) {
+                t.lead.synth = missing;
+                t.lead.silent = missing.saturating_sub(DATA_PREGAP);
+                t.lead.lba = lba.saturating_sub(missing as u32);
+            }
+        }
+        t.track.start -= stored;
+        t.track.frames += stored;
+        Ok(Some(t))
     }
 
     /// Track number within the image (1-based).
@@ -117,7 +165,7 @@ impl ChdTrack {
     }
 
     pub fn len(&self) -> u64 {
-        self.track.frames * self.track.sector_len()
+        (self.lead.synth + self.track.frames) * self.track.sector_len()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -131,7 +179,21 @@ impl Read for ChdTrack {
         if self.pos >= self.len() || buf.is_empty() {
             return Ok(0);
         }
-        let (frame, off) = (self.pos / sector, self.pos % sector);
+        let synth = self.lead.synth * sector;
+        if self.pos < synth {
+            let (frame, off) = (self.pos / sector, (self.pos % sector) as usize);
+            let raw = if frame < self.lead.silent {
+                [0u8; cdsector::SECTOR]
+            } else {
+                cdsector::empty_mode1(self.lead.lba + frame as u32)
+            };
+            let n = buf.len().min(cdsector::SECTOR - off);
+            buf[..n].copy_from_slice(&raw[off..off + n]);
+            self.pos += n as u64;
+            return Ok(n);
+        }
+        let data_pos = self.pos - synth;
+        let (frame, off) = (data_pos / sector, data_pos % sector);
         let addr = (self.track.start + frame) * FRAME + off;
         let hunk = u32::try_from(addr / self.hunk_bytes).map_err(io::Error::other)?;
         if self.loaded != Some(hunk) {

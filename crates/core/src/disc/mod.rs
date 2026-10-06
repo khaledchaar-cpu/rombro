@@ -1,5 +1,6 @@
 //! Disc images: sheets (`.cue`, `.gdi`), playlists (`.m3u`), `.iso`, and serial extraction.
 
+pub mod cdsector;
 pub mod chd;
 pub mod iso9660;
 pub mod nintendo;

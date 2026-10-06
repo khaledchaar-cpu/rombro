@@ -90,6 +90,8 @@ const MIGRATIONS: &[&str] = &[
     // v11: driver status (sets the emulator can't run); drop DATs again for a fresh import
     "ALTER TABLE dat_set ADD COLUMN working INTEGER NOT NULL DEFAULT 1;
      DELETE FROM dat_set; DELETE FROM dat_source;",
+    // v12: CHD data tracks now hash with their pregap (Redump layout); rehash CHDs
+    "UPDATE file SET mtime = -1 WHERE lower(substr(path, -4)) = '.chd';",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

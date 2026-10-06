@@ -234,7 +234,7 @@ fn scan_disc_cached(
             // compressed container: no database hash exists; the header identifies the file
             hash_reader(File::open(t)?.take(1 << 16), None, false)?
         } else if disc::is_chd(t) {
-            let data = disc::chd::ChdTrack::open(t)?.ok_or_else(|| {
+            let data = disc::chd::ChdTrack::open_redump(t)?.ok_or_else(|| {
                 io::Error::new(io::ErrorKind::InvalidData, "CHD without CD data track")
             })?;
             hash_reader(BufReader::new(data), None, false)?
