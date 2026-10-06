@@ -1,5 +1,6 @@
 //! Arcade romsets (FBNeo/MAME): identified as whole archives, kept under their short name.
 
+pub mod dat;
 pub mod g1r;
 
 /// Arcade systems in placement priority (an archive matching several lands in the first).

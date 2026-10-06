@@ -23,6 +23,24 @@ pub fn read_member(archive: &Path, member: &str) -> io::Result<Vec<u8>> {
     Ok(buf)
 }
 
+/// Names and CRCs of a zip's files, read from its central directory (nothing is unpacked).
+pub fn members(zip: &Path) -> io::Result<Vec<(String, u32)>> {
+    let mut zip =
+        zip::ZipArchive::new(BufReader::new(File::open(zip)?)).map_err(io::Error::other)?;
+    let mut out = Vec::with_capacity(zip.len());
+    for i in 0..zip.len() {
+        let f = zip.by_index_raw(i).map_err(io::Error::other)?;
+        if f.is_file() {
+            let name = f.name();
+            out.push((
+                name.rsplit('/').next().unwrap_or(name).to_owned(),
+                f.crc32(),
+            ));
+        }
+    }
+    Ok(out)
+}
+
 fn write_member(archive: &Path, member: &str, out: &mut impl Write) -> io::Result<()> {
     let ext = archive
         .extension()
