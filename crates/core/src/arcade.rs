@@ -3,7 +3,7 @@
 pub mod g1r;
 
 /// Arcade systems in placement priority (an archive matching several lands in the first).
-const PRIORITY: [&str; 9] = [
+pub const PRIORITY: [&str; 9] = [
     "FBNeo - Arcade Games",
     "MAME",
     "MAME 2016",
@@ -21,6 +21,15 @@ pub fn rank(system: &str) -> usize {
         .iter()
         .position(|s| *s == system)
         .unwrap_or(PRIORITY.len())
+}
+
+/// Placement rank in a user-defined order; arcade systems missing from it rank after the
+/// listed ones (in default order), non-arcade systems last.
+pub fn rank_in(order: &[String], system: &str) -> usize {
+    order
+        .iter()
+        .position(|s| s == system)
+        .unwrap_or_else(|| order.len() + rank(system))
 }
 
 /// Whether `system` is an arcade database (entries hash whole romset archives).

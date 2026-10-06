@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 
 mod archives;
 mod folders;
+pub use folders::FOLDER_SYSTEMS;
 mod place;
 
 use place::quarantine_sources;
@@ -56,7 +57,12 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                     .is_some_and(|a| mixed.contains(a.as_path()))
         })
         .collect();
-    let folder_games = folders::find(&items, library, opts.inbox.as_deref());
+    let folder_games = folders::find(
+        &items,
+        library,
+        opts.inbox.as_deref(),
+        &opts.rules.folder_systems,
+    );
     let items: Vec<&Item> = items
         .into_iter()
         .filter(|it| {
@@ -129,7 +135,8 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     }
     b.arcade(&arcade);
     for (system, list) in &known {
-        for gp in g1r::select(list, |(_, g)| &g.name, &opts.rules) {
+        let rules = opts.rules.for_system(system);
+        for gp in g1r::select(list, |(_, g)| &g.name, &rules) {
             let tie = gp.needs_decision;
             let (mut picked, mut rejected) = (gp.picked, gp.rejected);
             if tie {
@@ -277,6 +284,9 @@ impl Builder<'_> {
     /// Unknown files in folders without any identified item (game installs, frontend media,
     /// unsupported formats) or in a BIOS folder stay where they are.
     fn left_alone(&self, p: &Path) -> bool {
+        if !self.opts.rules.quarantine {
+            return true;
+        }
         let Some(dir) = p.parent() else { return false };
         let is_root = Some(dir) == self.opts.inbox.as_deref() || dir == self.library;
         // a frontend's BIOS folder (`bios`, `00bios`, `system`) is kept as it is
@@ -323,7 +333,11 @@ impl Builder<'_> {
                     .collect()
             })
             .collect();
-        let picks = crate::arcade::g1r::select(&names, &self.opts.rules.regions);
+        let picks = if self.opts.rules.arcade_g1r {
+            crate::arcade::g1r::select(&names, &self.opts.rules.regions)
+        } else {
+            (0..names.len()).map(|i| (None, i)).collect()
+        };
         for (&&(it, g), (reason, best)) in order.iter().zip(picks) {
             let place = |b: &mut Self, why: Why| {
                 b.why = why;

@@ -6,12 +6,14 @@ mod archive_tests;
 mod build;
 pub mod lpl;
 mod ops;
+#[cfg(test)]
+mod rules_tests;
 mod sheet;
 #[cfg(test)]
 mod tests;
 pub mod trash;
 
-pub use build::build;
+pub use build::{FOLDER_SYSTEMS, build};
 pub use ops::{Done, Execution, Op, execute, journal_from_json, journal_to_json, undo};
 
 use crate::g1r::Rules;

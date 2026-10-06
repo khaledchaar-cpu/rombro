@@ -14,6 +14,45 @@ pub struct Rules {
     pub languages: Vec<String>,
     /// Releases with any of these flags are never picked.
     pub exclude: Flags,
+    /// Arcade databases in placement priority (a set matching several lands in the first).
+    pub arcade_order: Vec<String>,
+    /// 1G1R for arcade sets; off places every matching set.
+    pub arcade_g1r: bool,
+    /// Systems whose matches are key files inside a game folder (moved as a whole).
+    pub folder_systems: Vec<String>,
+    /// Move unknown files to `_quarantine`; off leaves them where they are.
+    pub quarantine: bool,
+    /// Per-system overrides of regions, languages and excluded flags.
+    pub systems: BTreeMap<String, SystemRules>,
+}
+
+/// Overrides for one system; `None` falls back to the global value.
+#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct SystemRules {
+    pub regions: Option<Vec<String>>,
+    pub languages: Option<Vec<String>>,
+    pub exclude: Option<Flags>,
+}
+
+impl Rules {
+    /// The rules in effect for `system` (global values with its overrides applied).
+    pub fn for_system(&self, system: &str) -> std::borrow::Cow<'_, Self> {
+        let Some(o) = self.systems.get(system) else {
+            return std::borrow::Cow::Borrowed(self);
+        };
+        let mut r = self.clone();
+        if let Some(v) = &o.regions {
+            r.regions.clone_from(v);
+        }
+        if let Some(v) = &o.languages {
+            r.languages.clone_from(v);
+        }
+        if let Some(v) = &o.exclude {
+            r.exclude = *v;
+        }
+        std::borrow::Cow::Owned(r)
+    }
 }
 
 impl Default for Rules {
@@ -36,6 +75,11 @@ impl Default for Rules {
                 bad_dump: true,
                 ..Flags::default()
             },
+            arcade_order: s(&crate::arcade::PRIORITY),
+            arcade_g1r: true,
+            folder_systems: s(&crate::plan::FOLDER_SYSTEMS),
+            quarantine: true,
+            systems: BTreeMap::new(),
         }
     }
 }

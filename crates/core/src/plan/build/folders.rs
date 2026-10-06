@@ -9,8 +9,9 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-/// Systems whose matches are key files inside a game folder.
-const FOLDER_SYSTEMS: [&str; 18] = [
+/// Systems whose matches are key files inside a game folder (default of
+/// [`crate::g1r::Rules::folder_systems`]).
+pub const FOLDER_SYSTEMS: [&str; 18] = [
     "DOS",
     "ScummVM",
     "DOOM",
@@ -33,10 +34,6 @@ const FOLDER_SYSTEMS: [&str; 18] = [
 
 /// Folder suffixes frontends use for game folders (`Abuse.dos/`); such a folder is the game.
 const MARKERS: [&str; 6] = ["dos", "pc", "scummvm", "exo", "boom", "wine"];
-
-pub(super) fn is_folder_system(system: &str) -> bool {
-    FOLDER_SYSTEMS.contains(&system)
-}
 
 /// A database match inside a game folder.
 struct Match<'a> {
@@ -62,12 +59,13 @@ pub(super) fn find<'a>(
     items: &[&'a Item],
     library: &Path,
     inbox: Option<&Path>,
+    systems: &'a [String],
 ) -> BTreeMap<PathBuf, FolderGame<'a>> {
     let matched: Vec<Match<'a>> = items
         .iter()
         .filter_map(|it| match (&it.ident, &it.files) {
             (Ident::Known(g), Files::Single(p) | Files::Set { archive: p, .. })
-                if is_folder_system(&g.system) =>
+                if systems.contains(&g.system) =>
             {
                 Some(Match {
                     item: it,
@@ -111,13 +109,13 @@ pub(super) fn find<'a>(
     groups
         .into_iter()
         .filter_map(|(root, ms)| {
-            let fg = folder_game(&root, &ms)?;
+            let fg = folder_game(&root, &ms, systems)?;
             Some((root, fg))
         })
         .collect()
 }
 
-fn folder_game<'a>(root: &Path, ms: &[Match<'a>]) -> Option<FolderGame<'a>> {
+fn folder_game<'a>(root: &Path, ms: &[Match<'a>], systems: &'a [String]) -> Option<FolderGame<'a>> {
     let dir = root.file_name()?.to_string_lossy();
     let (stem, marker) = match dir.rsplit_once('.') {
         Some((stem, ext)) if MARKERS.iter().any(|m| ext.eq_ignore_ascii_case(m)) => {
@@ -134,13 +132,13 @@ fn folder_game<'a>(root: &Path, ms: &[Match<'a>]) -> Option<FolderGame<'a>> {
     // otherwise a port/engine database beats generic DOS/ScummVM (their DBs also list e.g.
     // Wolfenstein 3D), then the system most matches belong to
     let system = by_marker.or_else(|| {
-        FOLDER_SYSTEMS.iter().copied().max_by_key(|s| {
+        systems.iter().map(String::as_str).max_by_key(|s| {
             let n = ms.iter().filter(|m| m.game.system == *s).count();
             let specific = n > 0 && !matches!(*s, "DOS" | "ScummVM");
             (
                 specific,
                 n,
-                std::cmp::Reverse(FOLDER_SYSTEMS.iter().position(|x| x == s)),
+                std::cmp::Reverse(systems.iter().position(|x| x == s)),
             )
         })
     })?;

@@ -325,6 +325,17 @@ export interface Rules {
   regions: string[];
   languages: string[];
   exclude: Record<FlagKey, boolean>;
+  arcade_order: string[];
+  arcade_g1r: boolean;
+  folder_systems: string[];
+  quarantine: boolean;
+  systems: Record<string, SystemRules>;
+}
+
+export interface SystemRules {
+  regions: string[] | null;
+  languages: string[] | null;
+  exclude: Record<FlagKey, boolean> | null;
 }
 
 const mockRules = (): Rules => ({
@@ -336,6 +347,11 @@ const mockRules = (): Rules => ({
       !["aftermarket", "virtual_console", "rerelease", "alt"].includes(k),
     ]),
   ) as Rules["exclude"],
+  arcade_order: ["FBNeo - Arcade Games", "MAME", "MAME 2016", "MAME 2015", "MAME 2010", "MAME 2003-Plus", "MAME 2003", "MAME 2000", "HBMAME"],
+  arcade_g1r: true,
+  folder_systems: ["DOS", "ScummVM", "DOOM", "Quake"],
+  quarantine: true,
+  systems: {},
 });
 
 export async function rulesGet(): Promise<Rules> {

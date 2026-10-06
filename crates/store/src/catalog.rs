@@ -97,23 +97,25 @@ impl Store {
             Match::Verified(r) | Match::CrcOnly(r) => r,
             Match::Unknown => return Ok(None),
         };
+        let order = self.rules()?.arcade_order;
+        let rank = |s: &str| arcade::rank_in(&order, s);
         let best = records
             .iter()
-            .map(|r| arcade::rank(&r.system))
+            .map(|r| rank(&r.system))
             .min()
             .unwrap_or_default();
         let mut alt: Vec<Game> = Vec::new();
         let mut others: Vec<&Record> = records
             .iter()
-            .filter(|r| arcade::rank(&r.system) != best && arcade::is_arcade(&r.system))
+            .filter(|r| rank(&r.system) != best && arcade::is_arcade(&r.system))
             .collect();
-        others.sort_by_key(|r| arcade::rank(&r.system));
+        others.sort_by_key(|r| rank(&r.system));
         for r in others {
             if alt.iter().all(|g| g.system != r.system) {
                 alt.push(game(r));
             }
         }
-        records.retain(|r| arcade::rank(&r.system) == best);
+        records.retain(|r| rank(&r.system) == best);
         let bios = records
             .iter()
             .any(|r| arcade::is_bios(r.rom_name.as_deref(), &r.name));
