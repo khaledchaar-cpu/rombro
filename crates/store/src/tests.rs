@@ -542,6 +542,11 @@ fn arcade_set_goes_to_first_core_whose_dat_it_completes() {
     .unwrap();
     s.import_dat("MAME 2003-Plus", "x", 0, &dat(old)).unwrap();
     assert!(matches!(ident(&s), Ident::Known(g) if g.system == "MAME 2003-Plus"));
+    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
+    let rombro_core::plan::Files::Set { dat_note, .. } = &items[0].files else {
+        panic!()
+    };
+    assert_eq!(dat_note, "skipped MAME: 1 missing (c.bin)");
 
     s.import_dat("MAME 2003-Plus", "x", 0, &dat(&[("a.bin", b"chip b")]))
         .unwrap();

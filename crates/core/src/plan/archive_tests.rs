@@ -182,6 +182,7 @@ fn places_romsets_by_short_name_with_chds_and_bios_apart() {
         archive: inbox.join(name),
         chds,
         alt: vec![],
+        dat_note: String::new(),
     };
     zip(&inbox.join("burningf.zip"), &["a"]);
     zip(&inbox.join("burningfh.zip"), &["b"]);
@@ -235,8 +236,14 @@ fn places_romsets_by_short_name_with_chds_and_bios_apart() {
             let mut it = it.clone();
             let rel = |p: &Path| p.strip_prefix(&inbox).unwrap().to_path_buf();
             it.files = match &it.files {
-                Files::Set { archive, chds, alt } => Files::Set {
+                Files::Set {
+                    archive,
+                    chds,
+                    alt,
+                    dat_note,
+                } => Files::Set {
                     alt: alt.clone(),
+                    dat_note: dat_note.clone(),
                     archive: lib.join(match &it.ident {
                         Ident::Bios(_) => Path::new("_bios/fbneo").join(rel(archive)),
                         Ident::Known(g) => Path::new(&g.system).join(rel(archive)),
@@ -272,6 +279,7 @@ fn second_copy_of_a_romset_is_a_duplicate_not_a_conflict() {
                 archive: inbox.join(p),
                 chds: vec![],
                 alt: vec![],
+                dat_note: String::new(),
             },
             ident: Ident::Known(arcade("MAME", "720 Degrees (rev 4)")),
             in_library: false,
@@ -298,6 +306,7 @@ fn second_version_under_the_same_short_name_falls_back_to_the_next_system() {
                 archive: inbox.join("a/gradius3.zip"),
                 chds: vec![],
                 alt: vec![arcade("MAME 2003-Plus", "Other Game (Japan)")],
+                dat_note: String::new(),
             },
             ident: Ident::Known(arcade(fb, "Other Game (Japan, version 3)")),
             in_library: false,
@@ -307,6 +316,7 @@ fn second_version_under_the_same_short_name_falls_back_to_the_next_system() {
                 archive: inbox.join("b/gradius3.zip"),
                 chds: vec![],
                 alt: vec![arcade("MAME 2015", "Gradius III (World)")],
+                dat_note: String::new(),
             },
             ident: Ident::Known(arcade(fb, "Gradius III (World, version R)")),
             in_library: false,
@@ -335,6 +345,7 @@ fn version_listed_in_one_system_only_gets_that_slot() {
         archive: inbox.join(p),
         chds: vec![],
         alt,
+        dat_note: String::new(),
     };
     let items = [
         // listed first, but it could also go to MAME 2003-Plus
@@ -435,6 +446,7 @@ fn arcade_1g1r_keeps_one_set_per_game() {
         archive: inbox.join(p),
         chds: vec![],
         alt,
+        dat_note: String::new(),
     };
     let items = [
         Item {

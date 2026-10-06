@@ -488,6 +488,7 @@ fn incomplete_arcade_set_is_quarantined_with_reason() {
             archive: set,
             chds: Vec::new(),
             alt: Vec::new(),
+            dat_note: String::new(),
         },
         ident: Ident::Incomplete("MAME: 1 missing (c.bin)".into()),
         in_library: false,

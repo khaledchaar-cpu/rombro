@@ -48,6 +48,8 @@ pub enum Files {
         /// Further arcade systems listing this exact set, best first: used when another
         /// version of the same short name already takes the preferred system's slot.
         alt: Vec<Game>,
+        /// DAT check outcome when better-ranked cores were skipped (shown as rule detail).
+        dat_note: String,
     },
     /// One ROM inside an archive holding several (extracted on import).
     Member { archive: PathBuf, member: String },

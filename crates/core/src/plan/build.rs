@@ -353,7 +353,11 @@ impl Builder<'_> {
                 b.release(&g.system, &[&(it, g)]);
             };
             let Some(reason) = reason else {
-                place(self, Why::new(Rule::ArcadeSet, ""));
+                let note = match &it.files {
+                    Files::Set { dat_note, .. } => dat_note.clone(),
+                    _ => String::new(),
+                };
+                place(self, Why::new(Rule::ArcadeSet, note));
                 continue;
             };
             match self.opts.verdicts.get(&(g.system.clone(), g.name.clone())) {

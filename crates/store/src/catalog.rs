@@ -127,8 +127,14 @@ impl Store {
         };
         let order = self.rules()?.arcade_order;
         let rank = |s: &str| arcade::rank_in(&order, s);
+        let mut dat_note = String::new();
         let best = match self.dat_pick(&records, &whole.path, &rank, known)? {
-            Ok(Some(system)) => rank(system),
+            Ok(Some((system, skipped))) => {
+                if !skipped.is_empty() {
+                    dat_note = format!("skipped {skipped}");
+                }
+                rank(system)
+            }
             Ok(None) => records
                 .iter()
                 .map(|r| rank(&r.system))
@@ -140,6 +146,7 @@ impl Store {
                         archive: whole.path.clone(),
                         chds: set_chds(&whole.path),
                         alt: Vec::new(),
+                        dat_note: String::new(),
                     },
                     ident: Ident::Incomplete(reason),
                     in_library,
@@ -170,6 +177,7 @@ impl Store {
                 archive: whole.path.clone(),
                 chds: set_chds(&whole.path),
                 alt,
+                dat_note,
             },
             ident,
             in_library,
@@ -179,14 +187,15 @@ impl Store {
     /// DAT check for uncertain arcade matches (only `MAME`, or several arcade databases):
     /// the first core in placement order whose DAT the zip is complete for, a core without
     /// loaded DAT counting as complete. `Ok(None)` if no check applies, `Err` with the
-    /// reasons per core if no core fits.
+    /// reasons per core if no core fits. A pick comes with the reasons of the cores skipped
+    /// before it (empty if none).
     fn dat_pick<'r>(
         &self,
         records: &'r [Record],
         archive: &Path,
         rank: &impl Fn(&str) -> usize,
         known: &HashSet<String>,
-    ) -> Result<std::result::Result<Option<&'r str>, String>> {
+    ) -> Result<std::result::Result<Option<(&'r str, String)>, String>> {
         let mut cores: Vec<&Record> = records
             .iter()
             .filter(|r| arcade::is_arcade(&r.system))
@@ -219,7 +228,7 @@ impl Store {
                 .or_else(|| stem.clone())
                 .unwrap_or_default();
             match self.check_set(&r.system, &name, &members, has_set)? {
-                None | Some(Ok(())) => return Ok(Ok(Some(&r.system))),
+                None | Some(Ok(())) => return Ok(Ok(Some((&r.system, reasons.join("; "))))),
                 Some(Err(why)) => reasons.push(format!("{}: {why}", r.system)),
             }
         }
