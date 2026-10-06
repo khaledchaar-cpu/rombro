@@ -35,6 +35,9 @@ pub struct Rules {
     /// RetroArch core per system (system → core id, e.g. `snes9x`); unlisted systems use
     /// the recommendation (`retroarch::pick`).
     pub cores: BTreeMap<String, String>,
+    /// Folder name → system for files without database match (cartridge conversions, games
+    /// without a database); their file name is the release name (SPEC §11a).
+    pub name_folders: BTreeMap<String, String>,
 }
 
 /// Overrides for one system; `None` falls back to the global value.
@@ -95,6 +98,10 @@ impl Default for Rules {
             frontend_trash: true,
             systems: BTreeMap::new(),
             cores: BTreeMap::new(),
+            name_folders: BTreeMap::from(
+                [("n64dd", "Nintendo - Nintendo 64"), ("solarus", "Solarus")]
+                    .map(|(f, s)| (f.to_owned(), s.to_owned())),
+            ),
         }
     }
 }

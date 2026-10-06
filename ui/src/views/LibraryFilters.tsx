@@ -8,7 +8,7 @@ const opts = (all: string, list: [string, number][]): Option<string>[] => [
   ...list.map(([s, n]) => ({ value: s, label: s, hint: String(n) })),
 ];
 
-const STATES = ["known", "ambiguous", "unknown", "skip"] as const;
+const STATES = ["known", "named", "ambiguous", "unknown", "skip"] as const;
 const AGES = [
   { label: "Any time", secs: 0 },
   { label: "Last 24 h", secs: 86400 },

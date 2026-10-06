@@ -14,7 +14,7 @@ mod sheet;
 mod tests;
 pub mod trash;
 
-pub use build::{FOLDER_SYSTEMS, build};
+pub use build::{FOLDER_SYSTEMS, build, name_only};
 pub use ops::{
     Done, Execution, Op, execute, execute_progress, journal_from_json, journal_to_json,
     prune_emptied, undo,
@@ -115,6 +115,9 @@ pub enum Ident {
     /// Arcade set matched by a database but incomplete for every core's DAT (SPEC F8):
     /// quarantined with the reason.
     Incomplete(String),
+    /// No database match, but a name folder rule assigns the system; the release name is the
+    /// file name. 1G1R runs among these only, never against verified dumps.
+    Named(Game),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

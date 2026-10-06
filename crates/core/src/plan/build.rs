@@ -16,7 +16,9 @@ const UNKNOWN_TRASH: &str = "unknown";
 mod archives;
 mod folders;
 mod frontend;
+mod named;
 pub use folders::FOLDER_SYSTEMS;
+pub use named::apply as name_only;
 mod place;
 
 use place::quarantine_sources;
@@ -24,6 +26,7 @@ use place::quarantine_sources;
 /// Plans placing `items` into `library`. Nothing is touched on disk (reads only).
 /// Library items should come first so they win over identical inbox copies.
 pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
+    let items = &named::apply(items, &opts.rules);
     let mut b = Builder {
         library,
         opts,
@@ -153,12 +156,14 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     for (dir, g) in placed_sets {
         b.placed_set(dir, g);
     }
-    let mut known: BTreeMap<&str, Vec<(&Item, &Game)>> = BTreeMap::new();
+    // (system, identified by name only) – name-only releases never compete with verified dumps
+    let mut known: BTreeMap<(&str, bool), Vec<(&Item, &Game)>> = BTreeMap::new();
     let mut arcade: Vec<(&Item, &Game)> = Vec::new();
     for &it in &items {
         match &it.ident {
             Ident::Known(g) if matches!(it.files, Files::Set { .. }) => arcade.push((it, g)),
-            Ident::Known(g) => known.entry(&g.system).or_default().push((it, g)),
+            Ident::Known(g) => known.entry((&g.system, false)).or_default().push((it, g)),
+            Ident::Named(g) => known.entry((&g.system, true)).or_default().push((it, g)),
             Ident::Bios(g) => {
                 b.why = Why::new(Rule::Bios, "");
                 b.bios(it, g);
@@ -185,7 +190,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         }
     }
     b.arcade(&arcade);
-    for (system, list) in &known {
+    for ((system, by_name), list) in &known {
         let rules = opts.rules.for_system(system);
         for gp in g1r::select(list, |(_, g)| &g.name, &rules) {
             let tie = gp.needs_decision;
@@ -228,7 +233,11 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 }
             }
             b.why = Why::new(
-                Rule::G1rPick,
+                if *by_name {
+                    Rule::NameOnly
+                } else {
+                    Rule::G1rPick
+                },
                 match (tie, picked.len()) {
                     (true, _) => "preferred by you".into(),
                     (_, n) if n > 1 => format!("{n} discs"),

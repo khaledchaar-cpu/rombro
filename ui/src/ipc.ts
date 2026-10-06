@@ -270,7 +270,7 @@ export interface LibraryRow {
   path: string;
   system: string;
   name: string;
-  state: "known" | "ambiguous" | "unknown" | "skip";
+  state: "known" | "named" | "ambiguous" | "unknown" | "skip";
   files: number;
 }
 

@@ -261,3 +261,55 @@ fn playlist_of_a_system_without_games_goes_to_the_trash() {
     assert!(plan.ops.iter().any(|op| matches!(op,
         Op::Write { path, .. } if path == &pl.join(format!("{SYS}.lpl")))));
 }
+
+#[test]
+fn name_folder_places_unknown_files_by_name_with_1g1r() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox/n64dd"), tmp.path().join("lib"));
+    let unknown = |file: &str| {
+        let mut it = known(&inbox, file, "");
+        it.ident = Ident::Unknown;
+        it
+    };
+    let items = [
+        unknown("F-Zero X + Expansion Kit (Japan).n64"),
+        unknown("F-Zero X + Expansion Kit (USA).n64"),
+        unknown("gamelist.Missing.Serial.txt"),
+    ];
+    let mut o = opts(Rules::default());
+    o.inbox = Some(tmp.path().join("inbox"));
+    let plan = build(&items, &lib, &o);
+    let n64 = "Nintendo - Nintendo 64";
+    let placed: Vec<_> = plan
+        .ops
+        .iter()
+        .map(|op| op.target().to_path_buf())
+        .collect();
+    assert!(placed.contains(&lib.join(n64).join("F-Zero X + Expansion Kit (USA).n64")));
+    assert!(
+        plan.why
+            .iter()
+            .any(|w| w.rule == crate::rules::Rule::NameOnly)
+    );
+    // the Japanese release loses 1G1R: a decision, never trashed by name alone
+    assert!(
+        plan.decisions
+            .iter()
+            .any(|d| matches!(d, Decision::Rejected { name, .. }
+        if name == "F-Zero X + Expansion Kit (Japan)"))
+    );
+    assert!(
+        !placed
+            .iter()
+            .any(|p| p.to_string_lossy().contains("(Japan)"))
+    );
+
+    // audit: the placed file in the system folder stays identified (not trashed as unknown)
+    let lib_item = Item {
+        files: Files::Single(lib.join(n64).join("F-Zero X + Expansion Kit (USA).n64")),
+        ident: Ident::Unknown,
+        in_library: true,
+    };
+    let named = name_only(&[lib_item], &Rules::default());
+    assert!(matches!(&named[0].ident, Ident::Named(g) if g.system == n64));
+}

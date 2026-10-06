@@ -276,6 +276,11 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   bewusst ohne Prüfung, ob es im selben Core-Ordner landet). Übersprungene Cores stehen beim platzierten Set als
   Begründung (`[arcade-set: skipped …]`, `Files::Set.dat_note`). Zuordnung nach Dateiname **und** CRC
   (nur CRC passt → „misnamed“). Set-Name fürs DAT = `rom_name` des RDB-Eintrags.
+- Name-Ordner (2026-10-06): `rules.name_folders` (Ordner → System, Default `n64dd` → Nintendo 64, `solarus` → Solarus)
+  identifiziert Dateien ohne DB-Treffer direkt in so einem Ordner (bzw. im Systemordner der Library) über den
+  Dateinamen (`Ident::Named`, Regel `name-only`). Keine Notizen/Medien (Endungs-Denylist). 1G1R nur unter
+  Name-only-Releases desselben Systems, nie gegen verifizierte Dumps; Verlierer → Entscheidung, nie Trash.
+  Grund: Batoceras `n64dd`-Dateien sind gepatchte Cartridge-Umbauten (kein `.ndd`, nicht in DBs), Solarus hat keine RDB.
 
 ## 11. Offene Fragen
 - Ziel (User): vollständige Sammlung im Sinne der RetroArch-Datenbanken. Andere Versionen, Derivate, Formate interessieren nicht, solange sie in keiner RDB stehen → Quarantäne ist richtig für Unbekanntes in erkannten System-Ordnern.

@@ -79,9 +79,10 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
                 let _ = app.emit("scan://progress", Progress { done, total });
             }
         })?;
-        let items = store.items(&report, true).map_err(err)?;
+        let rules = crate::settings::load_rules(&store)?;
+        let items = rombro_core::plan::name_only(&store.items(&report, true).map_err(err)?, &rules);
         let added_db = store.added_times(&library).map_err(err)?;
-        let folder_systems = crate::settings::load_rules(&store)?.folder_systems;
+        let folder_systems = rules.folder_systems;
         // Game folders (DOS, ScummVM, ports): the folder of a known key file is the game;
         // its other files are game data, not unknown items.
         let game_dirs: std::collections::HashSet<PathBuf> = items
@@ -138,6 +139,7 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
                 }
                 let (state, system, name) = match it.ident {
                     Ident::Known(g) => ("known", g.system, g.name),
+                    Ident::Named(g) => ("named", g.system, g.name),
                     Ident::Ambiguous(c) => (
                         "ambiguous",
                         String::new(),
