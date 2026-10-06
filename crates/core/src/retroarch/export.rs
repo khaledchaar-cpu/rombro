@@ -8,7 +8,7 @@ use super::Dirs;
 use super::firmware::Firmware;
 use super::info::Core;
 use super::pick;
-use crate::plan::{BIOS_DIR, Op, PLAYLIST_DIR};
+use crate::plan::{BIOS_DIR, Op, PLAYLIST_DIR, TRASH_DIR};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 
@@ -42,6 +42,8 @@ pub struct Export {
     pub downloads: Vec<(String, PathBuf)>,
     /// Wanted cores that are missing and not to be installed (system, core id).
     pub cores_missing: Vec<(String, String)>,
+    /// Earlier exported playlists whose system has no games left (moved to the trash).
+    pub playlists_removed: Vec<String>,
     /// Playlists already up to date.
     pub playlists_unchanged: usize,
     /// Firmware copied into the system folder (path inside it).
@@ -125,6 +127,53 @@ fn plan_playlists(library: &Path, dirs: &Dirs, cores: &[Core], opts: &Options, e
         ex.ops.push(Op::Write { path, contents });
         ex.playlists.push((system, core.map(|c| c.name.clone())));
     }
+    plan_stale(library, dirs, ex);
+}
+
+/// RetroArch playlists without a library playlist whose entries all point into the library
+/// (exported by us earlier, system now empty) go to `<library>/_trash/playlists`.
+/// Playlists of other content are left alone.
+fn plan_stale(library: &Path, dirs: &Dirs, ex: &mut Export) {
+    let Ok(rd) = std::fs::read_dir(&dirs.playlists) else {
+        return;
+    };
+    let mut stale: Vec<PathBuf> = rd
+        .filter_map(|e| e.ok().map(|e| e.path()))
+        .filter(|p| p.extension().is_some_and(|e| e == "lpl"))
+        .filter(|p| {
+            p.file_name()
+                .is_some_and(|n| !library.join(PLAYLIST_DIR).join(n).exists())
+        })
+        .filter(|p| from_library(p, library))
+        .collect();
+    stale.sort();
+    for from in stale {
+        let Some(name) = from.file_name() else {
+            continue;
+        };
+        let to = library.join(TRASH_DIR).join("playlists").join(name);
+        ex.playlists_removed
+            .push(name.to_string_lossy().into_owned());
+        ex.ops.push(Op::Move { from, to });
+    }
+}
+
+/// Whether the playlist at `p` has entries and all of them lie inside `library`.
+fn from_library(p: &Path, library: &Path) -> bool {
+    let Ok(text) = std::fs::read_to_string(p) else {
+        return false;
+    };
+    let Ok(doc) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return false;
+    };
+    let Some(items) = doc["items"].as_array().filter(|i| !i.is_empty()) else {
+        return false;
+    };
+    items.iter().all(|i| {
+        i["path"]
+            .as_str()
+            .is_some_and(|s| Path::new(s.split('#').next().unwrap_or(s)).starts_with(library))
+    })
 }
 
 /// Systems with a playlist in the library, sorted.
@@ -337,6 +386,20 @@ mod tests {
         let again = plan(&lib, &dirs, &cores, &firmware, &files, &opts);
         assert!(again.ops.is_empty());
         assert_eq!((again.playlists_unchanged, again.bios_present), (1, 2));
+
+        // a system without games left: its exported playlist goes to the trash, foreign ones stay
+        let item = |p: &Path| format!(r#"{{"items":[{{"path":"{}"}}]}}"#, p.display());
+        fs::write(ra.join("playlists/MAME.lpl"), item(&lib.join("MAME/x.zip"))).unwrap();
+        fs::write(
+            ra.join("playlists/Mine.lpl"),
+            item(Path::new("/elsewhere/y.zip")),
+        )
+        .unwrap();
+        let gone = plan(&lib, &dirs, &cores, &firmware, &files, &opts);
+        assert_eq!(gone.playlists_removed, ["MAME.lpl"]);
+        assert!(crate::plan::execute(&gone.ops).error.is_none());
+        assert!(lib.join("_trash/playlists/MAME.lpl").exists());
+        assert!(ra.join("playlists/Mine.lpl").exists());
     }
 
     #[test]

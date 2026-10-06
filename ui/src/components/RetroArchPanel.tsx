@@ -70,6 +70,10 @@ export default function RetroArchPanel() {
             </Show>
             <h4>
               Playlists: {r().playlists.length} to write, {r().playlists_unchanged} up to date
+              <Show when={r().playlists_removed.length}>
+                , {r().playlists_removed.length} to the trash (no games left):{" "}
+                {r().playlists_removed.join(", ")}
+              </Show>
             </h4>
             <For each={r().playlists}>
               {(p) => (

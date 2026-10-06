@@ -50,6 +50,7 @@ pub struct RetroArchView {
     can_install: bool,
     playlists: Vec<PlaylistView>,
     playlists_unchanged: usize,
+    playlists_removed: Vec<String>,
     bios_copied: Vec<String>,
     bios_present: usize,
     bios_conflicts: Vec<String>,
@@ -180,6 +181,7 @@ pub async fn retroarch_export(
                 .map(|(system, core)| PlaylistView { system, core })
                 .collect(),
             playlists_unchanged: ex.playlists_unchanged,
+            playlists_removed: ex.playlists_removed,
             bios_copied: ex.bios_copied,
             bios_present: ex.bios_present,
             bios_conflicts: ex.bios_conflicts,
