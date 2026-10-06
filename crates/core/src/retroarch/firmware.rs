@@ -19,6 +19,34 @@ pub fn bundled() -> Vec<Firmware> {
     parse(SYSTEM_DAT)
 }
 
+/// Library (RDB) systems a `System.dat` system stands for, where the names differ.
+pub fn library_systems(system: &str) -> &'static [&'static str] {
+    match system {
+        "3DO Company, The - 3DO" => &["The 3DO Company - 3DO"],
+        "Atari - 400-800" => &["Atari - 8-bit Family"],
+        "EPOCH/YENO Super Cassette Vision" => &["Epoch - Super Cassette Vision"],
+        "Enterprise - 64/128" => &["Enterprise - 128"],
+        "Fairchild Channel F" => &["Fairchild - Channel F"],
+        "Id Software - Doom" => &["DOOM"],
+        "J2ME" => &["Mobile - J2ME"],
+        "NEC - PC-8801" => &["NEC - PC-8001 - PC-8801", "NEC - PC-88"],
+        "NEC - PC Engine - TurboGrafx 16 - SuperGrafx" => &[
+            "NEC - PC Engine - TurboGrafx 16",
+            "NEC - PC Engine CD - TurboGrafx-CD",
+            "NEC - PC Engine SuperGrafx",
+        ],
+        "Nintendo - Famicom Disk System" => &["Nintendo - Family Computer Disk System"],
+        "Nintendo - Gameboy" => &["Nintendo - Game Boy"],
+        "Nintendo - Gameboy Color" => &["Nintendo - Game Boy Color"],
+        "Nintendo - SuFami Turbo" => &["Nintendo - Sufami Turbo"],
+        "Phillips - Videopac+" => &["Philips - Videopac+"],
+        "SNK - NeoGeo CD" => &["SNK - Neo Geo CD"],
+        "Sega - Dreamcast-based Arcade" => &["Sega - Naomi", "Sega - Naomi 2", "Atomiswave"],
+        "Sega - Mega CD - Sega CD" => &["Sega - Mega-CD - Sega CD"],
+        _ => &[],
+    }
+}
+
 pub fn parse(text: &str) -> Vec<Firmware> {
     let mut system = String::new();
     let mut out = Vec::new();

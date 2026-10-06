@@ -278,7 +278,7 @@ fn plan_bios(
                 ex.bios_copied.push(f.path.clone());
             }
             (None, true) => ex.bios_present += 1,
-            (None, false) if systems.contains(&f.system.to_lowercase()) => {
+            (None, false) if in_library(&f.system, systems) => {
                 ex.bios_missing.push((f.system.clone(), f.path.clone()));
             }
             (None, false) => {}
@@ -310,6 +310,13 @@ fn by_name(library: &Path, path: &str) -> Option<PathBuf> {
 }
 
 /// System folders at the top of the library (lower case: `System.dat` spells some differently).
+/// Whether the library has a folder for the firmware's system (also under its RDB name).
+fn in_library(system: &str, systems: &BTreeSet<String>) -> bool {
+    std::iter::once(system)
+        .chain(super::firmware::library_systems(system).iter().copied())
+        .any(|s| systems.contains(&s.to_lowercase()))
+}
+
 fn library_systems(library: &Path) -> BTreeSet<String> {
     std::fs::read_dir(library)
         .map(|rd| {
@@ -484,5 +491,15 @@ mod tests {
         );
         let pl = fs::read_to_string(ra.join(format!("playlists/{SNES}.lpl"))).unwrap();
         assert!(pl.contains("snes9x_libretro.so"));
+    }
+
+    #[test]
+    fn firmware_systems_match_library_folders_under_their_rdb_name() {
+        let systems: BTreeSet<String> = ["nec - pc engine cd - turbografx-cd".to_owned()].into();
+        assert!(in_library(
+            "NEC - PC Engine - TurboGrafx 16 - SuperGrafx",
+            &systems
+        ));
+        assert!(!in_library("Sega - Mega CD - Sega CD", &systems));
     }
 }
