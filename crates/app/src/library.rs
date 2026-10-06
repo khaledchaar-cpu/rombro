@@ -81,6 +81,42 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
         })?;
         let items = store.items(&report, true).map_err(err)?;
         let added_db = store.added_times(&library).map_err(err)?;
+        let folder_systems = crate::settings::load_rules(&store)?.folder_systems;
+        // Game folders (DOS, ScummVM, ports): the folder of a known key file is the game;
+        // its other files are game data, not unknown items.
+        let game_dirs: std::collections::HashSet<PathBuf> = items
+            .iter()
+            .filter_map(|it| match &it.ident {
+                Ident::Known(g) if folder_systems.contains(&g.system) => {
+                    it.files.primary().parent().map(|d| d.to_path_buf())
+                }
+                _ => None,
+            })
+            .filter(|d| d != &library)
+            .collect();
+        let mut extra: std::collections::HashMap<PathBuf, usize> = Default::default();
+        let in_game = |p: &std::path::Path| {
+            p.ancestors()
+                .skip(1)
+                .take_while(|a| *a != library)
+                .find(|a| game_dirs.contains(*a))
+                .map(|a| a.to_path_buf())
+        };
+        let items: Vec<_> = items
+            .into_iter()
+            .filter(|it| {
+                if !matches!(it.ident, Ident::Unknown) {
+                    return true;
+                }
+                match in_game(it.files.primary()) {
+                    Some(dir) => {
+                        *extra.entry(dir).or_default() += it.files.all().len();
+                        false
+                    }
+                    None => true,
+                }
+            })
+            .collect();
         Ok(items
             .into_iter()
             // trash, playlists and BIOS sets are managed by RomBro, not part of the collection
@@ -94,7 +130,12 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
             .map(|it| {
                 let p = it.files.primary();
                 let path = p.strip_prefix(&library).unwrap_or(p).display().to_string();
-                let files = it.files.all().len();
+                let mut files = it.files.all().len();
+                if matches!(it.ident, Ident::Known(_))
+                    && let Some(n) = p.parent().and_then(|d| extra.get(d))
+                {
+                    files += n;
+                }
                 let (state, system, name) = match it.ident {
                     Ident::Known(g) => ("known", g.system, g.name),
                     Ident::Ambiguous(c) => (
