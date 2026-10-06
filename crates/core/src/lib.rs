@@ -8,6 +8,7 @@ pub mod g1r;
 pub mod gamify;
 pub mod hash;
 pub mod header;
+mod meter;
 pub mod naming;
 pub mod paths;
 pub mod plan;

@@ -4,12 +4,12 @@ use crate::cache::HashCache;
 use crate::disc::{self, DiscId, DiscKind};
 use crate::hash::{Hashes, hash_reader};
 use crate::header::{self, Header};
+use crate::meter::{Counter, Meter};
 use rayon::prelude::*;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, BufReader, Read, Seek};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use walkdir::WalkDir;
 
 #[derive(Debug, thiserror::Error)]
@@ -165,28 +165,16 @@ pub fn scan_cached(
     let file_sizes: Vec<u64> = files.par_iter().map(size).collect();
     let total = files.len() + sheets.len();
     let bytes_total = sheet_sizes.iter().chain(&file_sizes).sum();
-    let done = AtomicUsize::new(0);
-    let bytes = AtomicU64::new(0);
-    let tick = |n: u64| {
-        progress(ScanTick {
-            done: done.fetch_add(1, Ordering::Relaxed) + 1,
-            total,
-            bytes: bytes.fetch_add(n, Ordering::Relaxed) + n,
-            bytes_total,
-        })
-    };
-    progress(ScanTick {
-        total,
-        bytes_total,
-        ..ScanTick::default()
-    });
+    let meter = Meter::new(total, bytes_total, progress);
     let discs: Vec<_> = sheets
         .into_par_iter()
         .zip(sheet_sizes)
         .map(|((path, kind, found, missing), n)| {
-            let r = scan_disc_cached(&path, kind, &found, missing, cache)
+            // discs are the large files: count while hashing so the bar keeps moving
+            let counter = Counter::new(&meter, n);
+            let r = scan_disc_cached(&path, kind, &found, missing, cache, &counter)
                 .map_err(|error| ScanFailure { path, error });
-            tick(n);
+            meter.finish(n, counter.read());
             r
         })
         .collect();
@@ -210,7 +198,7 @@ pub fn scan_cached(
                     path: p.clone(),
                     error,
                 });
-            tick(n);
+            meter.finish(n, 0);
             r
         })
         .collect();
@@ -245,7 +233,8 @@ pub fn scan_disc(
     tracks: &[PathBuf],
     missing: Vec<PathBuf>,
 ) -> Result<ScannedDisc, ScanError> {
-    scan_disc_cached(path, kind, tracks, missing, &HashCache::default())
+    let counter = Counter::default();
+    scan_disc_cached(path, kind, tracks, missing, &HashCache::default(), &counter)
 }
 
 fn scan_disc_cached(
@@ -254,6 +243,7 @@ fn scan_disc_cached(
     tracks: &[PathBuf],
     missing: Vec<PathBuf>,
     cache: &HashCache,
+    counter: &Counter,
 ) -> Result<ScannedDisc, ScanError> {
     let mut hashed = Vec::with_capacity(tracks.len());
     for t in tracks {
@@ -267,7 +257,7 @@ fn scan_disc_cached(
         }
         let (hashes, raw) = if cd_iso {
             // 2048-byte sectors: also hash as raw sectors, as the databases list them
-            crate::hash::hash_iso(BufReader::new(File::open(t)?))?
+            crate::hash::hash_iso(BufReader::new(counter.wrap(File::open(t)?)))?
         } else if kind == DiscKind::Nintendo {
             // compressed container: no database hash exists; the header identifies the file
             hash_reader(File::open(t)?.take(1 << 16), None, false)?
@@ -275,9 +265,9 @@ fn scan_disc_cached(
             let data = disc::chd::ChdTrack::open_redump(t)?.ok_or_else(|| {
                 io::Error::new(io::ErrorKind::InvalidData, "CHD without CD data track")
             })?;
-            hash_reader(BufReader::new(data), None, false)?
+            hash_reader(BufReader::new(counter.wrap(data)), None, false)?
         } else {
-            hash_reader(BufReader::new(File::open(t)?), None, false)?
+            hash_reader(BufReader::new(counter.wrap(File::open(t)?)), None, false)?
         };
         hashed.push(ScannedRom {
             path: t.clone(),

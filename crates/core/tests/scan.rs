@@ -202,3 +202,15 @@ fn ignores_os_clutter_and_empty_files() {
     assert_eq!(paths, vec![root.join("game.bin")]);
     assert!(report.failures.is_empty());
 }
+
+#[test]
+fn reports_bytes_while_hashing_a_disc() {
+    let dir = tempfile::tempdir().unwrap();
+    fs::write(dir.path().join("big.iso"), vec![0u8; 4 << 20]).unwrap();
+    let calls = std::sync::Mutex::new(Vec::new());
+    rombro_core::scan_with_progress(dir.path(), &|p| calls.lock().unwrap().push(p));
+    let calls = calls.into_inner().unwrap();
+    assert!(calls.iter().any(|p| p.done == 0 && p.bytes > 0));
+    let last = calls.last().unwrap();
+    assert_eq!((last.done, last.bytes), (1, 4 << 20));
+}
