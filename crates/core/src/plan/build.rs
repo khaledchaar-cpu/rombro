@@ -259,11 +259,21 @@ impl Builder<'_> {
     }
 
     /// Unknown files in folders without any identified item (game installs, frontend media,
-    /// unsupported formats) stay where they are; only the inbox/library root itself is swept.
+    /// unsupported formats) or in a BIOS folder stay where they are.
     fn left_alone(&self, p: &Path) -> bool {
         let Some(dir) = p.parent() else { return false };
         let is_root = Some(dir) == self.opts.inbox.as_deref() || dir == self.library;
-        !is_root && !self.identified.contains(dir)
+        // a frontend's BIOS folder (`bios`, `00bios`, `system`) is kept as it is
+        let roots = [self.opts.inbox.as_deref(), Some(self.library)];
+        let in_bios_dir = dir
+            .ancestors()
+            .take_while(|a| !roots.contains(&Some(*a)))
+            .filter_map(Path::file_name)
+            .any(|n| {
+                let n = n.to_string_lossy().to_ascii_lowercase();
+                matches!(n.as_str(), "bios" | "00bios" | "system")
+            });
+        in_bios_dir || !is_root && !self.identified.contains(dir)
     }
 
     /// Path below `_quarantine/`: relative to the inbox (or library) root, else the bare name.

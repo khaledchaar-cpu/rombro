@@ -11,6 +11,8 @@ pub enum Platform {
     Saturn,
     SegaCd,
     Dreamcast,
+    GameCube,
+    Wii,
 }
 
 impl Platform {
@@ -23,6 +25,8 @@ impl Platform {
             Self::Saturn => "Sega - Saturn",
             Self::SegaCd => "Sega - Mega-CD - Sega CD",
             Self::Dreamcast => "Sega - Dreamcast",
+            Self::GameCube => "Nintendo - GameCube",
+            Self::Wii => "Nintendo - Wii",
         }
     }
 }
@@ -32,6 +36,8 @@ pub struct DiscId {
     pub platform: Platform,
     /// Serial as printed on the disc, normalized to the RDB style (`SLUS-00594`, `T-31202G`).
     pub serial: String,
+    /// GameCube/Wii: (disc number, revision) from the header, to pick among `(Rev n)` entries.
+    pub variant: Option<(u8, u8)>,
 }
 
 impl DiscId {
@@ -76,6 +82,7 @@ pub fn detect<R: Read + Seek>(track: &mut Track<R>) -> io::Result<Option<DiscId>
             return Ok(Some(DiscId {
                 platform: Platform::Psp,
                 serial: serial.to_owned(),
+                variant: None,
             }));
         }
     }
@@ -95,7 +102,11 @@ fn sega_header(s: &[u8]) -> Option<DiscId> {
         return None;
     };
     let serial = String::from_utf8_lossy(field).trim().to_owned();
-    (!serial.is_empty()).then_some(DiscId { platform, serial })
+    (!serial.is_empty()).then_some(DiscId {
+        platform,
+        serial,
+        variant: None,
+    })
 }
 
 /// PS1 (`BOOT = cdrom:\SLUS_005.94;1`) or PS2 (`BOOT2 = cdrom0:\SLUS_205.25;1`).
@@ -122,7 +133,11 @@ pub fn parse_system_cnf(text: &str) -> Option<DiscId> {
                 }
             })
             .collect();
-        return is_sony_serial(&serial).then_some(DiscId { platform, serial });
+        return is_sony_serial(&serial).then_some(DiscId {
+            platform,
+            serial,
+            variant: None,
+        });
     }
     None
 }
@@ -188,6 +203,7 @@ mod tests {
         let dc = DiscId {
             platform: id.platform,
             serial: "T40201N".into(),
+            variant: None,
         };
         assert_eq!(dc.lookup_keys(), ["T40201N", "T-40201N"]);
 

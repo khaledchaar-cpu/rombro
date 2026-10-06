@@ -37,10 +37,31 @@ impl Store {
             // so an ambiguous serial surfaces all candidates.
             let mut hits = self.by_serial(&key, system)?;
             hits.extend(self.by_serial_prefix(&format!("{key}-"), system)?);
+            if let Some((disc_no, rev)) = id.variant {
+                pick_variant(&mut hits, disc_no, rev);
+            }
             if !hits.is_empty() {
                 return Ok(DiscMatch::Serial(hits));
             }
         }
         Ok(DiscMatch::Unknown)
+    }
+}
+
+/// GameCube/Wii share one game ID across revisions and discs; narrow by the header's values
+/// (`(Rev 1)`, `(Disc 2)`) when that leaves at least one entry.
+fn pick_variant(hits: &mut Vec<Record>, disc_no: u8, rev: u8) {
+    let fits = |r: &Record| {
+        let rev_ok = if rev == 0 {
+            !r.name.contains("(Rev ")
+        } else {
+            r.name.contains(&format!("(Rev {rev})"))
+        };
+        let disc_ok =
+            !r.name.contains("(Disc ") || r.name.contains(&format!("(Disc {})", disc_no + 1));
+        rev_ok && disc_ok
+    };
+    if hits.iter().any(fits) {
+        hits.retain(fits);
     }
 }

@@ -211,6 +211,7 @@ fn identify_disc_by_hash_then_serial() {
         id: id.map(|(platform, s)| DiscId {
             platform,
             serial: s.into(),
+            variant: None,
         }),
         tracks,
         missing: vec![],

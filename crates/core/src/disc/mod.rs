@@ -2,6 +2,7 @@
 
 pub mod chd;
 pub mod iso9660;
+pub mod nintendo;
 pub mod serial;
 pub mod sheet;
 
@@ -18,6 +19,8 @@ pub enum DiscKind {
     Gdi,
     Iso,
     Chd,
+    /// GameCube/Wii container (RVZ, WIA, WBFS, CISO): identified by game ID only.
+    Nintendo,
 }
 
 impl DiscKind {
@@ -27,6 +30,7 @@ impl DiscKind {
             "gdi" => Some(Self::Gdi),
             "iso" => Some(Self::Iso),
             "chd" => Some(Self::Chd),
+            e if nintendo::is_container_ext(e) => Some(Self::Nintendo),
             _ => None,
         }
     }
@@ -37,7 +41,9 @@ impl DiscKind {
 pub fn tracks(path: &Path, kind: DiscKind) -> io::Result<(Vec<PathBuf>, Vec<PathBuf>)> {
     let dir = path.parent().unwrap_or(Path::new("."));
     let listed = match kind {
-        DiscKind::Iso | DiscKind::Chd => return Ok((vec![path.to_path_buf()], Vec::new())),
+        DiscKind::Iso | DiscKind::Chd | DiscKind::Nintendo => {
+            return Ok((vec![path.to_path_buf()], Vec::new()));
+        }
         DiscKind::Cue => sheet::parse_cue(&read_text(path)?, dir),
         DiscKind::Gdi => sheet::parse_gdi(&read_text(path)?, dir),
     };
@@ -54,6 +60,18 @@ pub fn tracks(path: &Path, kind: DiscKind) -> io::Result<(Vec<PathBuf>, Vec<Path
 /// Detects platform and serial from the first track that yields one.
 pub fn identify(tracks: &[PathBuf]) -> io::Result<Option<DiscId>> {
     for t in tracks {
+        let ext = t
+            .extension()
+            .map(|e| e.to_string_lossy().to_ascii_lowercase())
+            .unwrap_or_default();
+        if (ext == "iso" || nintendo::is_container_ext(&ext))
+            && let Some(id) = nintendo::identify(t)?
+        {
+            return Ok(Some(id));
+        }
+        if nintendo::is_container_ext(&ext) {
+            continue;
+        }
         let id = if is_chd(t) {
             match chd::ChdTrack::open(t)? {
                 Some(data) => serial::detect(&mut Track::open(BufReader::new(data))?)?,

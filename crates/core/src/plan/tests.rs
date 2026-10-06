@@ -337,6 +337,20 @@ fn unknown_files_in_folders_without_matches_stay_put() {
             false,
         ),
         item(file(&inbox, "loose.bin", "2"), Ident::Unknown, false),
+        item(
+            file(&inbox, "00bios/dc/dc_nvmem.bin", "3"),
+            Ident::Unknown,
+            false,
+        ),
+        item(
+            file(&inbox, "00bios/scph.bin", "4"),
+            Ident::Bios(Game {
+                system: "Sony - PlayStation".into(),
+                name: "[BIOS] PS (USA)".into(),
+                crc: Some(1),
+            }),
+            false,
+        ),
     ];
     let o = Options {
         inbox: Some(inbox.clone()),
@@ -345,7 +359,8 @@ fn unknown_files_in_folders_without_matches_stay_put() {
     let plan = build(&items, &lib, &o);
     assert_eq!(plan.quarantined, 1);
     execute(&plan.ops);
-    assert_eq!(tree(&lib), ["_quarantine/loose.bin"]);
+    // recognized BIOS is placed, the rest of the BIOS folder stays put
+    assert_eq!(tree(&lib), ["_bios/scph.bin", "_quarantine/loose.bin"]);
 }
 
 #[test]
