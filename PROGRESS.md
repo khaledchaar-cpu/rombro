@@ -50,6 +50,8 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    benannt) → Quarantäne ist korrekt; für den Test manuell neben die Sets kopiert. Logik bleibt (User-Entscheidung).
 4. ✅ M14 Arcade-DATs. ✅ Ideen umgesetzt: platzierte geprüfte Sets zeigen übersprungene Cores
    (`[arcade-set: skipped MAME: …]`, `Files::Set.dat_note`); ~~Eltern-Set auch in der Library suchen~~ ✅ (Eltern zählen, wenn sie irgendwo im Scan oder in der Library liegen: `set_names`/`items_with`); ✅ `db stats` zeigt DAT-Versionen (`--db`).
+4b. ✅ (2026-10-06) Kombinierte Sufami-Turbo-Images → BIOS + Carts extrahiert (8 echte Dateien als Kopie: 7 Carts +
+   BIOS SHA1-verifiziert, Undo bitgleich). Schema v9 erzwingt Rehash betroffener SNES-Dateien im Cache.
 5. Sichtprüfung in der App (M10-Rest): Gamification-Panels mit echten Daten plausibel; Effects off in beiden Themes.
 6. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 

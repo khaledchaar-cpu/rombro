@@ -210,6 +210,14 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                     }
                     _ => {}
                 }
+                // An archive member that duplicates the pick needs no decision: it is simply
+                // not extracted, and the archive counts as handled.
+                if *reason == g1r::Reason::Duplicate
+                    && let Files::Member { archive, .. } = &it.files
+                {
+                    *b.members_done.entry(archive.clone()).or_default() += 1;
+                    continue;
+                }
                 b.plan.decisions.push(Decision::Rejected {
                     path: it.files.primary().clone(),
                     system: (*system).to_owned(),

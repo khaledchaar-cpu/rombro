@@ -286,6 +286,11 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - Entschieden: Spielordner (DOS, ScummVM, Ports/Engines – Liste in `plan/build/folders.rs`): ein DB-Treffer identifiziert den Ordner, der Ordner wandert komplett nach `<System>/<Ordnername ohne .dos/.scummvm>/`. Name/System nie aus dem Treffer allein (Schlüsseldateien wie `dosbox.bat`, `ADL.DRV` sind geteilt). Endung entscheidet das System, sonst spezifischer Port vor DOS/ScummVM, sonst Mehrheit.
 - Entschieden: Unbekannte Dateien in Ordnern ohne jeden erkannten Eintrag bleiben unangetastet (Spielinstallationen, Frontend-Medien); nur Ordner mit Treffern und die Inbox-Wurzel werden in die Quarantäne gekehrt.
 - Entschieden: Archive mit unbekannten Membern werden nie teilweise entpackt (ganz in Quarantäne).
+- Entschieden (User, 2026-10-06): Kombinierte Sufami-Turbo-Images (`.smc/.sfc`: BIOS 256 KiB ×4 gespiegelt, dann
+  1–2 Carts ab `0x100000`, Erkennung über `BANDAI SFC-ADX`) gelten als Pseudo-Archiv (`core::sufami`): Member
+  `SuFami Turbo (Japan).sfc` + `Slot A/B.st` werden wie Zip-Member erkannt und extrahiert, das Original geht danach
+  nach `_trash/`. Bitgleiche Duplikat-Member (gleicher DB-Name wie der Pick) brauchen keine Entscheidung, sie werden
+  nicht extrahiert und zählen fürs Archiv als erledigt (gilt für alle Archive).
 - Entschieden: Arcade-Treffer auf einzelne Chips in einem Zip zählen nicht (Arcade-RDBs hashen ganze Sets) → Zip bleibt ganz, ohne Set-Treffer in Quarantäne.
 - Entschieden: Quarantäne übernimmt den Pfad relativ zum Inbox (`_quarantine/<unterordner>/<datei>`), damit gleiche Namen nicht kollidieren.
 - Entschieden: OS-Müll (`.DS_Store`, `._*`, `Thumbs.db`, `desktop.ini`) und leere Dateien werden beim Scan ignoriert und nie verschoben.

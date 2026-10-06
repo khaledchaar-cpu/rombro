@@ -1,4 +1,4 @@
-//! Extracting single members from ZIP and 7z archives.
+//! Extracting single members from ZIP and 7z archives (and combined Sufami Turbo images).
 
 use std::fs::{self, File};
 use std::io::{self, BufReader, BufWriter, Write};
@@ -76,6 +76,7 @@ fn write_member(archive: &Path, member: &str, out: &mut impl Write) -> io::Resul
                 ))
             }
         }
+        "smc" | "sfc" | "swc" | "fig" => crate::sufami::write_member(archive, member, out),
         _ => Err(io::Error::new(
             io::ErrorKind::Unsupported,
             format!("not an archive: {}", archive.display()),

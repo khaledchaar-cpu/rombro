@@ -469,3 +469,31 @@ fn arcade_1g1r_keeps_one_set_per_game() {
         [Decision::Rejected { path, kept: Some(k), reason, .. }]
             if path == &inbox.join("a/gradius3.zip") && k == "Gradius III (World, version R)" && reason == "Region"));
 }
+
+#[test]
+fn duplicate_members_need_no_decision() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let (a, b) = (inbox.join("a.zip"), inbox.join("b.zip"));
+    zip(&a, &["bios.sfc", "x.sfc"]);
+    zip(&b, &["bios.sfc", "y.sfc"]);
+    let items = [
+        member(&a, "bios.sfc", game("Bios (Japan)")),
+        member(&a, "x.sfc", game("X (Japan)")),
+        member(&b, "bios.sfc", game("Bios (Japan)")),
+        member(&b, "y.sfc", game("Y (Japan)")),
+    ];
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    assert!(plan.decisions.is_empty());
+    assert!(execute(&plan.ops).error.is_none());
+    assert_eq!(
+        tree(&lib),
+        [
+            "Nintendo - SNES/Bios (Japan).sfc",
+            "Nintendo - SNES/X (Japan).sfc",
+            "Nintendo - SNES/Y (Japan).sfc",
+            "_trash/a.zip",
+            "_trash/b.zip"
+        ]
+    );
+}

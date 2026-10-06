@@ -13,6 +13,7 @@ pub mod paths;
 pub mod plan;
 pub mod rules;
 pub mod scan;
+pub mod sufami;
 pub mod thumbnail;
 
 pub use cache::{CachedRom, HashCache, Stamp};

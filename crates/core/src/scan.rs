@@ -7,7 +7,7 @@ use crate::header::{self, Header};
 use rayon::prelude::*;
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{self, BufReader, Read};
+use std::io::{self, BufReader, Read, Seek};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use walkdir::WalkDir;
@@ -265,6 +265,27 @@ pub fn scan_file(path: &Path) -> Result<Vec<ScannedRom>, ScanError> {
     let members = match ext.as_str() {
         "zip" => scan_zip(path)?,
         "7z" => scan_7z(path)?,
+        _ if let Some(layout) = crate::sufami::layout(path)? => {
+            // combined image: members only, so the planner treats it like an archive
+            return layout
+                .into_iter()
+                .map(|(name, range)| {
+                    let mut f = File::open(path)?;
+                    f.seek(io::SeekFrom::Start(range.start))?;
+                    let size = range.end - range.start;
+                    let ext = ext_of(Path::new(&name));
+                    let (hashes, header, headerless) =
+                        hash_rom(BufReader::new(f.take(size)), size, &ext)?;
+                    Ok(ScannedRom {
+                        path: path.to_path_buf(),
+                        member: Some(name),
+                        hashes,
+                        header,
+                        headerless,
+                    })
+                })
+                .collect();
+        }
         _ => {
             let f = File::open(path)?;
             let size = f.metadata()?.len();

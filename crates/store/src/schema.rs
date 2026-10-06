@@ -81,6 +81,10 @@ const MIGRATIONS: &[&str] = &[
     // v8: why and when a verdict was given
     "ALTER TABLE verdict ADD COLUMN reason TEXT NOT NULL DEFAULT '';
      ALTER TABLE verdict ADD COLUMN decided INTEGER;",
+    // v9: rehash SNES files that may be combined Sufami Turbo images (keeps `added`)
+    "UPDATE file SET mtime = -1
+     WHERE size BETWEEN 1572864 AND 3146240
+       AND lower(substr(path, -4)) IN ('.smc', '.sfc', '.swc', '.fig');",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {
