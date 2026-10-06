@@ -37,7 +37,8 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    leer oder ohne Core) nach `_trash/playlists`; Systeme ohne jeden Core (Solarus) bekommen keine RA-Playlist.
    Name-Ordner (`rules.name_folders`, Regel `name-only`, `Ident::Named`, SPEC 11a): n64dd-Cartridge-Umbauten → N64,
    solarus → Solarus. GUI: „Last run“-Bericht nach Execute, Meldung bei leerem Plan. **Offen:** name_folders in der
-   Rules-Seite editierbar machen; `[Patched]` als Hack-Flag erkennen; Sichtprüfung der neuen GUI-Teile.
+   Rules-Seite editierbar machen; `[Patched]` als Hack-Flag erkennen; Sichtprüfung der neuen GUI-Teile;
+   **Aufräumen GUI-Elemente**.
    Stolperstein: nach Schema-Wechseln mit DAT-Drop erst `db sync`, sonst greifen Arcade-Prüfungen nicht.
 0. M14b (2026-10-06): Core-Empfehlung (Batocera) + Auswahl + Installation beim Export, siehe SPEC 11a. CLI e2e in
    Scratch-RA verifiziert (4 Cores geladen/entpackt, Playlists mit Pfad, Undo). **Offen:** Sichtprüfung CorePicker in
