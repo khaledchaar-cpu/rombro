@@ -247,6 +247,7 @@ impl Builder<'_> {
             .into_iter()
             .flatten()
             .filter(|e| e.file_type().is_file())
+            .filter(|e| !super::frontend::is_metadata(&self.meta_roots, e.path()))
             .map(|e| {
                 let rel = e.path().strip_prefix(root).unwrap_or(e.path());
                 self.transfer(&it, e.path(), &target.join(rel))

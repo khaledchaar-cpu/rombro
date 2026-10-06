@@ -126,3 +126,75 @@ fn identical_copies_are_duplicates_different_ones_conflict() {
         "{other:?}"
     );
 }
+
+#[test]
+fn frontend_metadata_goes_to_trash_and_game_folder_moves_without_it() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let put = |rel: &str| {
+        let p = inbox.join(rel);
+        fs::create_dir_all(p.parent().unwrap()).unwrap();
+        fs::write(&p, rel).unwrap();
+        p
+    };
+    let unknown = |rel: &str| Item {
+        files: Files::Single(put(rel)),
+        ident: Ident::Unknown,
+        in_library: false,
+    };
+    let items = [
+        Item {
+            files: Files::Single(put("tyrquake/pak0.pak")),
+            ident: Ident::Known(Game {
+                system: "Quake".into(),
+                name: "Quake".into(),
+                crc: Some(1),
+            }),
+            in_library: false,
+        },
+        unknown("tyrquake/id1/pak1.pak"),
+        unknown("tyrquake/gamelist.xml"),
+        unknown("tyrquake/gamelist.xml.old"),
+        unknown("tyrquake/images/Quake-image.png"),
+        // a frontend folder without any game
+        unknown("mrboom/gamelist.xml"),
+        unknown("mrboom/videos/MrBoom-video.mp4"),
+        unknown("mrboom/MrBoom.libretro"),
+    ];
+    let mut o = Options {
+        mode: Mode::Move,
+        inbox: Some(inbox.clone()),
+        ..opts(Rules::default())
+    };
+    let plan = build(&items, &lib, &o);
+    assert_eq!(plan.discarded, 5);
+    let r = crate::plan::execute(&plan.ops);
+    assert!(r.error.is_none(), "{:?}", r.error);
+    let left: Vec<_> = walkdir::WalkDir::new(&lib)
+        .into_iter()
+        .flatten()
+        .filter(|e| e.file_type().is_file())
+        .map(|e| e.path().strip_prefix(&lib).unwrap().display().to_string())
+        .collect::<std::collections::BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    assert_eq!(
+        left,
+        [
+            "Quake/tyrquake/id1/pak1.pak",
+            "Quake/tyrquake/pak0.pak",
+            "_trash/frontend/mrboom/gamelist.xml",
+            "_trash/frontend/mrboom/videos/MrBoom-video.mp4",
+            "_trash/frontend/tyrquake/gamelist.xml",
+            "_trash/frontend/tyrquake/gamelist.xml.old",
+            "_trash/frontend/tyrquake/images/Quake-image.png",
+        ]
+    );
+    assert!(inbox.join("mrboom/MrBoom.libretro").is_file());
+
+    // switched off: nothing goes to the trash
+    o.rules.frontend_trash = false;
+    let tmp2 = TempDir::new().unwrap();
+    let off = build(&items[4..5], &tmp2.path().join("lib"), &o);
+    assert_eq!(off.discarded, 0);
+}

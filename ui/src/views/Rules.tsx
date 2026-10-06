@@ -18,6 +18,7 @@ const FIELDS: Record<string, (keyof R)[]> = {
   "arcade-set": ["arcade_order", "arcade_g1r"],
   "game-folder": ["folder_systems"],
   quarantine: ["quarantine"],
+  "frontend-meta": ["frontend_trash"],
 };
 
 /** Every planner rule: what it does, how often it fired in the last plan, its settings. */
@@ -84,6 +85,16 @@ export default function Rules() {
         <label class="check">
           <input type="checkbox" checked={r.quarantine} onChange={(e) => edit({ quarantine: e.currentTarget.checked })} />
           Move unknown files to _quarantine (off: leave them where they are)
+        </label>
+      </Match>
+      <Match when={info.id === "frontend-meta"}>
+        <label class="check">
+          <input
+            type="checkbox"
+            checked={r.frontend_trash}
+            onChange={(e) => edit({ frontend_trash: e.currentTarget.checked })}
+          />
+          Move frontend metadata to _trash/frontend (off: treat it like any unknown file)
         </label>
       </Match>
     </Switch>

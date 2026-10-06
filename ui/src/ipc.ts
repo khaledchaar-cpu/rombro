@@ -364,6 +364,8 @@ export interface Rules {
   arcade_g1r: boolean;
   folder_systems: string[];
   quarantine: boolean;
+  /** Move frontend metadata (gamelist.xml, scraped media) to _trash/frontend. */
+  frontend_trash: boolean;
   systems: Record<string, SystemRules>;
   /** RetroArch core per system (core id); unlisted systems use the recommendation. */
   cores: Record<string, string>;
@@ -388,6 +390,7 @@ const mockRules = (): Rules => ({
   arcade_g1r: true,
   folder_systems: ["DOS", "ScummVM", "DOOM", "Quake"],
   quarantine: true,
+  frontend_trash: true,
   systems: {},
   cores: {},
 });

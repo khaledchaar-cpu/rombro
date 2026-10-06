@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 
 mod archives;
 mod folders;
+mod frontend;
 pub use folders::FOLDER_SYSTEMS;
 mod place;
 
@@ -33,6 +34,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             .filter(|it| !matches!(it.ident, Ident::Unknown))
             .filter_map(|it| it.files.primary().parent().map(Path::to_path_buf))
             .collect(),
+        meta_roots: HashSet::new(),
     };
     let managed = [QUARANTINE_DIR, PLAYLIST_DIR, TRASH_DIR, BIOS_DIR].map(|d| library.join(d));
     let items: Vec<&Item> = items
@@ -43,6 +45,21 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             !opts.ignore.iter().any(|i| p.starts_with(i))
         })
         .collect();
+
+    // Frontend metadata (gamelist.xml, scraped media) goes to the trash before anything else,
+    // so game folders move without it.
+    if opts.rules.frontend_trash {
+        b.meta_roots = frontend::roots(&items);
+    }
+    let (meta, items): (Vec<&Item>, Vec<&Item>) = items.into_iter().partition(|it| {
+        matches!(it.ident, Ident::Unknown)
+            && it.files.archive().is_none()
+            && frontend::is_metadata(&b.meta_roots, it.files.primary())
+    });
+    b.why = Why::new(Rule::FrontendMeta, "");
+    for it in meta {
+        b.trash_meta(it);
+    }
 
     // Archives with any unknown member stay whole (e.g. multi-disk games where only some
     // disks match): nothing is extracted, the archive goes to quarantine as is.
@@ -246,6 +263,8 @@ struct Builder<'a> {
     members_done: HashMap<PathBuf, usize>,
     /// Folders holding at least one identified item; unknown files elsewhere are left alone.
     identified: HashSet<PathBuf>,
+    /// Folders with frontend metadata to trash (see [`frontend`]); empty if the rule is off.
+    meta_roots: HashSet<PathBuf>,
 }
 
 impl Builder<'_> {
@@ -433,6 +452,23 @@ impl Builder<'_> {
             .collect::<Vec<_>>();
         if !ops.is_empty() {
             self.commit(it, ops);
+        }
+    }
+
+    /// Frontend metadata to `_trash/frontend/<path in library or inbox>` (always a move).
+    fn trash_meta(&mut self, it: &Item) {
+        let f = it.files.primary();
+        let to = self
+            .library
+            .join(TRASH_DIR)
+            .join("frontend")
+            .join(self.quarantine_rel(f));
+        let op = Op::Move {
+            from: f.clone(),
+            to,
+        };
+        if self.commit(it, vec![op]) {
+            self.plan.discarded += 1;
         }
     }
 

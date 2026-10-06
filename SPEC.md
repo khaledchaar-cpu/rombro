@@ -293,6 +293,11 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   das System nennt (wenigste Systeme gewinnt). BIOS: libretro `System.dat` (Snapshot in `crates/core/data/`) per SHA1
   gegen den Library-Index, Arcade-Zips per Name aus `_bios/`; `Op::Copy` nur wenn Ziel fehlt, abweichende Dateien
   bleiben (Konflikt-Hinweis); fehlende BIOS nur für Systeme mit Library-Ordner gemeldet.
+- Entschieden (User, 2026-10-06): Frontend-Metadaten (Batocera/EmulationStation) wandern automatisch nach
+  `_trash/frontend/<Pfad>` (Regel `frontend-meta`, Schalter `rules.frontend_trash`, Default an): `gamelist*` und
+  `_info.txt` in einem Ordner mit `gamelist*.xml` sowie Bilder/Videos/PDFs in dessen `images/`, `videos/`, `media/`,
+  `manuals/`, `downloaded_*`. Nur solche Ordner zählen, damit Spieldaten nie betroffen sind. Startdateien
+  (`.libretro`, `.quake` …) bleiben. Ordner-Spiele werden ohne die Metadaten verschoben.
 - Entschieden (User, 2026-10-06): Core-Wahl & -Installation beim RetroArch-Export (`retroarch::pick`).
   Empfehlung pro RDB-System aus den **Batocera-x86_64-Defaults** (`batocera-launch/resources/defaults/config.yml`
   + `config-x86_64.yml`), übersetzt in libretro-Kerne: `crates/core/src/retroarch/recommended.tsv`. Wo Batocera einen

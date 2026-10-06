@@ -16,11 +16,12 @@ pub enum Rule {
     ArchiveExtracted,
     Bios,
     Quarantine,
+    FrontendMeta,
     Playlist,
 }
 
 impl Rule {
-    pub const ALL: [Rule; 11] = [
+    pub const ALL: [Rule; 12] = [
         Rule::G1rPick,
         Rule::ArcadeSet,
         Rule::ArcadeDat,
@@ -31,6 +32,7 @@ impl Rule {
         Rule::ArchiveExtracted,
         Rule::Bios,
         Rule::Quarantine,
+        Rule::FrontendMeta,
         Rule::Playlist,
     ];
 
@@ -46,6 +48,7 @@ impl Rule {
             Rule::ArchiveExtracted => "archive-extracted",
             Rule::Bios => "bios",
             Rule::Quarantine => "quarantine",
+            Rule::FrontendMeta => "frontend-meta",
             Rule::Playlist => "playlist",
         }
     }
@@ -62,6 +65,7 @@ impl Rule {
             Rule::ArchiveExtracted => "Archive extracted",
             Rule::Bios => "BIOS",
             Rule::Quarantine => "Quarantine",
+            Rule::FrontendMeta => "Frontend metadata",
             Rule::Playlist => "RetroArch playlist",
         }
     }
@@ -104,6 +108,11 @@ impl Rule {
             Rule::Quarantine => {
                 "Files without database match go to _quarantine, keeping their subfolders. \
                  Unknown files in folders without any identified game are left alone."
+            }
+            Rule::FrontendMeta => {
+                "Frontend leftovers (Batocera, EmulationStation) go to _trash/frontend: \
+                 gamelist*.xml with backups, _info.txt and scraped images/videos next to them. \
+                 Only folders holding a gamelist*.xml count, so game data is never touched."
             }
             Rule::Playlist => "One RetroArch .lpl playlist per system in _playlists.",
         }
