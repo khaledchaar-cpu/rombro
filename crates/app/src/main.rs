@@ -15,12 +15,14 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(import::Pending::default())
+        .manage(import::Leftovers::default())
         .invoke_handler(tauri::generate_handler![
             commands::db_stats,
             commands::db_sync,
             commands::scan,
             import::plan_import,
             import::execute_plan,
+            import::inbox_clear,
             import::undo_last,
             import::journal_list,
             decide::resolve_ambiguous,

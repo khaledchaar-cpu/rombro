@@ -13,6 +13,17 @@ use tauri::{AppHandle, Emitter, State};
 #[derive(Default)]
 pub struct Pending(Mutex<Option<(PathBuf, Vec<Op>)>>);
 
+/// Inbox files the last plan leaves alone: (inbox, library, files).
+#[derive(Default)]
+pub struct Leftovers(Mutex<Option<(PathBuf, PathBuf, Vec<PathBuf>)>>);
+
+#[derive(Serialize)]
+pub struct LeftoverView {
+    /// Relative to the inbox.
+    path: String,
+    size: u64,
+}
+
 #[derive(Deserialize, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
 pub enum ModeArg {
@@ -90,6 +101,8 @@ pub struct PlanView {
     discarded: usize,
     ops: Vec<OpView>,
     decisions: Vec<DecisionView>,
+    /// Inbox files no operation touches (stay in the inbox).
+    leftovers: Vec<LeftoverView>,
 }
 
 #[derive(Serialize)]
@@ -119,13 +132,14 @@ fn emit_scan(
 pub async fn plan_import(
     app: AppHandle,
     pending: State<'_, Pending>,
+    leftover: State<'_, Leftovers>,
     inbox: Option<PathBuf>,
     library: PathBuf,
     mode: ModeArg,
 ) -> CmdResult<PlanView> {
     let library = std::path::absolute(&library).map_err(err)?;
     let lib = library.clone();
-    let (p, items) = tauri::async_runtime::spawn_blocking(move || -> CmdResult<_> {
+    let (p, items, left) = tauri::async_runtime::spawn_blocking(move || -> CmdResult<_> {
         let (store, _) = open_store()?;
         store.set_library(&lib).map_err(err)?;
         store.set_setting("mode", mode.as_str()).map_err(err)?;
@@ -136,7 +150,7 @@ pub async fn plan_import(
             known = rombro_store::set_names(&report);
             items = store.items(&report, true).map_err(err)?;
         }
-        let mut inbox_root = None;
+        let mut inbox_root: Option<PathBuf> = None;
         if let Some(inbox) = inbox {
             let inbox = std::path::absolute(&inbox).map_err(err)?;
             if !inbox.is_dir() {
@@ -161,12 +175,16 @@ pub async fn plan_import(
             rules: crate::settings::load_rules(&store)?,
             playlists: Some(lib.join(PLAYLIST_DIR)),
             verdicts: store.verdicts().map_err(err)?,
-            inbox: inbox_root,
+            inbox: inbox_root.clone(),
             ignore: store.ignored().map_err(err)?,
         };
         let p = plan::build(&items, &lib, &opts);
         store.set_rule_hits(&p.why).map_err(err)?;
-        Ok((p, items.len()))
+        let left = match &inbox_root {
+            Some(i) => Some((i.clone(), plan::inbox::leftovers(i, &p).map_err(err)?)),
+            None => None,
+        };
+        Ok((p, items.len(), left))
     })
     .await
     .map_err(err)??;
@@ -185,7 +203,24 @@ pub async fn plan_import(
             .map(|(o, w)| op_view(o, w))
             .collect(),
         decisions: p.decisions.iter().map(decision_view).collect(),
+        leftovers: left
+            .iter()
+            .flat_map(|(inbox, files)| {
+                files.iter().map(move |(f, size)| LeftoverView {
+                    path: f
+                        .strip_prefix(inbox)
+                        .unwrap_or(f)
+                        .to_string_lossy()
+                        .into_owned(),
+                    size: *size,
+                })
+            })
+            .collect(),
     };
+    *leftover.0.lock().map_err(err)? = left.map(|(inbox, files)| {
+        let files = files.into_iter().map(|(f, _)| f).collect();
+        (inbox, library.clone(), files)
+    });
     *pending.0.lock().map_err(err)? = Some((library, p.ops));
     Ok(view)
 }
@@ -219,6 +254,50 @@ pub async fn execute_plan(pending: State<'_, Pending>) -> CmdResult<ExecResult> 
                     .map_err(err)?,
             )
         };
+        Ok(ExecResult {
+            done: ex.done.len(),
+            journal,
+            error: ex
+                .error
+                .map(|(op, e)| format!("{}: {e}", op.target().display())),
+        })
+    })
+    .await
+    .map_err(err)?
+}
+
+/// Moves the inbox leftovers of the last plan to `<library>/_trash/inbox-<time>/`
+/// (journaled: undo brings them back) and removes the emptied inbox folders.
+#[tauri::command]
+pub async fn inbox_clear(leftover: State<'_, Leftovers>) -> CmdResult<ExecResult> {
+    let (inbox, library, files) = leftover
+        .0
+        .lock()
+        .map_err(err)?
+        .take()
+        .ok_or("no inbox leftovers – plan an import first")?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let ts = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(err)?
+            .as_secs() as i64;
+        let ops = plan::inbox::clear_ops(&inbox, &library, &ts.to_string(), &files);
+        let ex = plan::execute(&ops);
+        let journal = if ex.done.is_empty() {
+            None
+        } else {
+            let (store, _) = open_store()?;
+            Some(
+                store
+                    .add_journal(
+                        ts,
+                        &library.to_string_lossy(),
+                        &plan::journal_to_json(&ex.done),
+                    )
+                    .map_err(err)?,
+            )
+        };
+        plan::inbox::prune_empty_dirs(&inbox);
         Ok(ExecResult {
             done: ex.done.len(),
             journal,

@@ -2,7 +2,7 @@
 import { createSignal } from "solid-js";
 import { inbox, library, mode, refreshLibrary } from "./libraryStore";
 import {
-  executePlan, planImport, resolveAmbiguous, setVerdict, undoLast,
+  executePlan, inboxClear, planImport, resolveAmbiguous, setVerdict, undoLast,
   type Choice, type DecisionView, type ExecResult, type PlanView, type Verdict,
 } from "../ipc";
 
@@ -15,6 +15,8 @@ const save = (k: string, v: string) => {
 
 export { inbox, library, mode, setInbox, setLibrary, setMode } from "./libraryStore";
 export const [plan, setPlan] = createSignal<PlanView>();
+/** Inbox files the last plan leaves alone; kept after executing so they can be cleared. */
+export const [leftovers, setLeftovers] = createSignal<PlanView["leftovers"]>([]);
 export const [busy, setBusy] = createSignal(false);
 /** Unique per decision (a tie's `path` is its system, shared by all ties of that system). */
 export const decisionKey = (d: DecisionView) =>
@@ -60,6 +62,7 @@ export const buildPlan = (withInbox: boolean) =>
     lastWithInbox = withInbox;
     const p = await planImport(withInbox ? inbox() || null : null, library(), mode());
     setPlan(p);
+    setLeftovers(p.leftovers);
     rememberOpen(p);
     return p;
   });
@@ -73,6 +76,18 @@ export const execute = () =>
       r.error
         ? { ok: false, text: `stopped after ${r.done} ops: ${r.error}` }
         : { ok: true, text: `executed ${r.done} operations${r.journal ? ` (journal #${r.journal})` : ""}` },
+    );
+  });
+
+/** Moves the inbox leftovers to the library trash (undo brings them back). */
+export const clearInbox = () =>
+  guard(async () => {
+    const r = await inboxClear();
+    setLeftovers([]);
+    setStatus(
+      r.error
+        ? { ok: false, text: `stopped after ${r.done} files: ${r.error}` }
+        : { ok: true, text: `moved ${r.done} inbox files to the trash${r.journal ? ` (journal #${r.journal})` : ""}` },
     );
   });
 

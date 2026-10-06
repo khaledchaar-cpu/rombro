@@ -120,6 +120,8 @@ export interface PlanView {
   discarded: number;
   ops: OpView[];
   decisions: DecisionView[];
+  /** Inbox files no operation touches (path relative to the inbox). */
+  leftovers: { path: string; size: number }[];
 }
 export interface ExecResult {
   done: number;
@@ -147,6 +149,12 @@ function mockPlan(library: string): PlanView {
     quarantined: 12,
     discarded: 0,
     ops,
+    leftovers: [
+      { path: "mrboom/MrBoom.libretro", size: 25 },
+      { path: "mrboom/gamelist.xml", size: 1005 },
+      { path: "mrboom/images/MrBoom-image.png", size: 696200 },
+      { path: "sdlpop/PrinceOfPersia.sdlpop", size: 0 },
+    ],
     decisions: [
       {
         kind: "ambiguous",
@@ -201,6 +209,12 @@ export async function planImport(
 export async function executePlan(): Promise<ExecResult> {
   if (!inTauri) return { done: 0, journal: null, error: null };
   return invoke<ExecResult>("execute_plan");
+}
+
+/** Moves the last plan's inbox leftovers to the library trash (undoable). */
+export async function inboxClear(): Promise<ExecResult> {
+  if (!inTauri) return { done: 0, journal: null, error: null };
+  return invoke<ExecResult>("inbox_clear");
 }
 
 export async function undoLast(): Promise<number> {

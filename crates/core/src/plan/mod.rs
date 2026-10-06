@@ -4,6 +4,7 @@
 #[cfg(test)]
 mod archive_tests;
 mod build;
+pub mod inbox;
 pub mod lpl;
 mod ops;
 #[cfg(test)]

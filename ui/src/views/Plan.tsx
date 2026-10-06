@@ -2,6 +2,7 @@ import { createVirtualizer } from "@tanstack/solid-virtual";
 import { createMemo, createSignal, For, Show } from "solid-js";
 import Panel from "../components/Panel";
 import ScanProgress from "../components/ScanProgress";
+import InboxLeftovers from "../components/InboxLeftovers";
 import type { DecisionView } from "../ipc";
 import {
   busy,
@@ -286,6 +287,9 @@ export default function Plan() {
             </Show>
           </>
         )}
+      </Show>
+      <Show when={!busy()}>
+        <InboxLeftovers />
       </Show>
     </div>
   );
