@@ -69,31 +69,10 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         b.folder_game(root, fg);
     }
     let mut known: BTreeMap<&str, Vec<(&Item, &Game)>> = BTreeMap::new();
-    let mut arcade_seen: HashSet<(&str, &str)> = HashSet::new();
+    let mut arcade: Vec<(&Item, &Game)> = Vec::new();
     for &it in &items {
         match &it.ident {
-            // Arcade sets are kept as-is: every exact match is its own release, no 1G1R.
-            // A second copy of the same set is a duplicate (library copies come first and win).
-            Ident::Known(g) if matches!(it.files, Files::Set { .. }) => {
-                if arcade_seen.insert((g.system.as_str(), g.name.as_str())) {
-                    b.why = "arcade romset".into();
-                    let g = b.free_arcade_slot(it, g);
-                    b.release(&g.system, &[&(it, g)]);
-                } else if opts.verdicts.get(&(g.system.clone(), g.name.clone()))
-                    == Some(&Verdict::Discard)
-                {
-                    b.why = "discarded by you (duplicate set)".into();
-                    b.discard(it);
-                } else {
-                    b.plan.decisions.push(Decision::Rejected {
-                        path: it.files.primary().clone(),
-                        system: g.system.clone(),
-                        name: g.name.clone(),
-                        kept: Some(g.name.clone()),
-                        reason: format!("{:?}", g1r::Reason::Duplicate),
-                    });
-                }
-            }
+            Ident::Known(g) if matches!(it.files, Files::Set { .. }) => arcade.push((it, g)),
             Ident::Known(g) => known.entry(&g.system).or_default().push((it, g)),
             Ident::Bios(g) => {
                 b.why = "BIOS".into();
@@ -116,6 +95,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             }),
         }
     }
+    b.arcade(&arcade);
     for (system, list) in &known {
         for gp in g1r::select(list, |(_, g)| &g.name, &opts.rules) {
             let tie = gp.needs_decision;
@@ -285,6 +265,39 @@ impl Builder<'_> {
             .find_map(|root| f.strip_prefix(root).ok())
             .filter(|rel| !rel.as_os_str().is_empty())
             .map_or_else(|| PathBuf::from(file_name(f)), Path::to_path_buf)
+    }
+
+    /// Arcade sets are kept as-is: every exact match is its own release, no 1G1R. A second
+    /// copy of the same set is a duplicate (library copies come first and win). Sets with
+    /// the fewest fallback systems pick first, so versions listed in one system only get it.
+    fn arcade(&mut self, sets: &[(&Item, &Game)]) {
+        let alts = |it: &Item| match &it.files {
+            Files::Set { alt, .. } => alt.len(),
+            _ => 0,
+        };
+        let mut order: Vec<&(&Item, &Game)> = sets.iter().collect();
+        order.sort_by_key(|(it, _)| (!it.in_library, alts(it)));
+        let mut seen: HashSet<(&str, &str)> = HashSet::new();
+        for &&(it, g) in &order {
+            if seen.insert((g.system.as_str(), g.name.as_str())) {
+                self.why = "arcade romset".into();
+                let g = self.free_arcade_slot(it, g);
+                self.release(&g.system, &[&(it, g)]);
+            } else if self.opts.verdicts.get(&(g.system.clone(), g.name.clone()))
+                == Some(&Verdict::Discard)
+            {
+                self.why = "discarded by you (duplicate set)".into();
+                self.discard(it);
+            } else {
+                self.plan.decisions.push(Decision::Rejected {
+                    path: it.files.primary().clone(),
+                    system: g.system.clone(),
+                    name: g.name.clone(),
+                    kept: Some(g.name.clone()),
+                    reason: format!("{:?}", g1r::Reason::Duplicate),
+                });
+            }
+        }
     }
 
     /// The best system whose slot for this set's short name is free: another version under

@@ -322,3 +322,44 @@ fn second_version_under_the_same_short_name_falls_back_to_the_next_system() {
         ]
     );
 }
+
+#[test]
+fn version_listed_in_one_system_only_gets_that_slot() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    zip(&inbox.join("a/pururun.zip"), &["set2"]);
+    zip(&inbox.join("b/pururun.zip"), &["set1"]);
+    let fb = "FBNeo - Arcade Games";
+    let set = |p: &str, alt| Files::Set {
+        archive: inbox.join(p),
+        chds: vec![],
+        alt,
+    };
+    let items = [
+        // listed first, but it could also go to MAME 2003-Plus
+        Item {
+            files: set("a/pururun.zip", vec![arcade("MAME 2003-Plus", "Pururun")]),
+            ident: Ident::Known(arcade(fb, "Pururun (set 2)")),
+            in_library: false,
+        },
+        Item {
+            files: set("b/pururun.zip", vec![]),
+            ident: Ident::Known(arcade(fb, "Pururun (set 1)")),
+            in_library: false,
+        },
+    ];
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    assert!(plan.decisions.is_empty(), "{:?}", plan.decisions);
+    assert!(plan.ops.iter().any(
+        |op| op.source() == Some(inbox.join("b/pururun.zip").as_path())
+            && op.target() == lib.join("FBNeo - Arcade Games/pururun.zip")
+    ));
+    assert!(execute(&plan.ops).error.is_none());
+    assert_eq!(
+        tree(&lib),
+        [
+            "FBNeo - Arcade Games/pururun.zip",
+            "MAME 2003-Plus/pururun.zip"
+        ]
+    );
+}
