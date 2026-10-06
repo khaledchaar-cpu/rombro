@@ -1,6 +1,7 @@
 import { createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
+import SyncProgress from "../components/SyncProgress";
 import { LibraryPanel, RunsPanel } from "./DashboardHistory";
 import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
 import {
@@ -104,18 +105,19 @@ export default function Dashboard(props: {
             disabled={syncing()}
             onClick={() => void sync(false)}
           >
-            Sync RDBs
+            Sync databases
           </button>
           <button
             class="btn ghost"
             disabled={syncing()}
             onClick={() => void sync(true)}
           >
-            Choose folder…
+            Choose RDB folder…
           </button>
         </div>
-        <Show when={syncMsg()}>
-          <p class="dim small">{syncMsg()}</p>
+        <p class="dim small">RetroArch databases (local) and arcade DATs (downloaded).</p>
+        <Show when={syncing()} fallback={<Show when={syncMsg()}><p class="dim small">{syncMsg()}</p></Show>}>
+          <SyncProgress />
         </Show>
       </Panel>
 

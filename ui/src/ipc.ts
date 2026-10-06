@@ -223,6 +223,20 @@ export async function setVerdict(
   return invoke("set_verdict", { system: c.system, name: c.name, verdict, reason });
 }
 
+export interface SyncProgress {
+  phase: "rdb" | "dat";
+  done: number;
+  total: number;
+}
+
+/** Progress of `dbSync`: RDB files parsed, then arcade DAT sources checked. */
+export function onSyncProgress(cb: (p: SyncProgress) => void): Promise<UnlistenFn> {
+  if (!inTauri) return Promise.resolve(() => {});
+  return listen<[SyncProgress["phase"], ScanProgress]>("sync://progress", (e) =>
+    cb({ phase: e.payload[0], ...e.payload[1] }),
+  );
+}
+
 export function onImportProgress(
   cb: (p: ImportProgress) => void,
 ): Promise<UnlistenFn> {

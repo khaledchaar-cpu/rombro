@@ -38,6 +38,15 @@ struct Parsed {
 impl Store {
     /// Imports new or changed `.rdb` files from `dir`; drops sources that vanished.
     pub fn sync_rdbs(&mut self, dir: impl AsRef<Path>) -> Result<SyncReport> {
+        self.sync_rdbs_progress(dir, &|_, _| {})
+    }
+
+    /// [`Self::sync_rdbs`], reporting (parsed, to parse) RDB files to `progress`.
+    pub fn sync_rdbs_progress(
+        &mut self,
+        dir: impl AsRef<Path>,
+        progress: &(dyn Fn(usize, usize) + Sync),
+    ) -> Result<SyncReport> {
         let files = scan_dir(dir.as_ref())?;
         let known: HashMap<String, (i64, i64, i64)> = {
             let mut st = self
@@ -70,9 +79,16 @@ impl Store {
             }
         }
 
+        let done = std::sync::atomic::AtomicUsize::new(0);
+        progress(0, todo.len());
         let parsed = todo
             .par_iter()
-            .map(|f| parse_file(f))
+            .map(|f| {
+                let p = parse_file(f);
+                let n = done.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+                progress(n, todo.len());
+                p
+            })
             .collect::<Result<Vec<_>>>()?;
 
         let tx = self.conn.transaction()?;

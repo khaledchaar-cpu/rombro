@@ -71,13 +71,32 @@ pub type Fetch<'a> = &'a dyn Fn(&str) -> io::Result<Vec<u8>>;
 impl Store {
     /// Downloads every core's newest DAT over HTTPS.
     pub fn sync_dats(&mut self, now: i64) -> Result<DatSyncReport> {
-        self.sync_dats_with(&http_get, now)
+        self.sync_dats_progress(now, &|_, _| {})
+    }
+
+    /// [`Self::sync_dats`], reporting (done, total) DAT sources to `progress`.
+    pub fn sync_dats_progress(
+        &mut self,
+        now: i64,
+        progress: &dyn Fn(usize, usize),
+    ) -> Result<DatSyncReport> {
+        self.sync_dats_inner(&http_get, now, progress)
     }
 
     pub fn sync_dats_with(&mut self, fetch: Fetch, now: i64) -> Result<DatSyncReport> {
+        self.sync_dats_inner(fetch, now, &|_, _| {})
+    }
+
+    fn sync_dats_inner(
+        &mut self,
+        fetch: Fetch,
+        now: i64,
+        progress: &dyn Fn(usize, usize),
+    ) -> Result<DatSyncReport> {
         let known = self.dats()?;
         let mut report = DatSyncReport::default();
-        for (system, source) in &SOURCES {
+        progress(0, SOURCES.len());
+        for (i, (system, source)) in SOURCES.iter().enumerate() {
             let have = known
                 .iter()
                 .find(|d| d.system == *system)
@@ -100,6 +119,7 @@ impl Store {
                     None => format!("{system}: {e} (no DAT, sets unchecked)"),
                 }),
             }
+            progress(i + 1, SOURCES.len());
         }
         Ok(report)
     }

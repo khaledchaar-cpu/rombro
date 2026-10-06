@@ -153,9 +153,10 @@ pub struct SyncSummary {
     dat_warnings: Vec<String>,
 }
 
-/// Imports RetroArch RDBs from `dir` (or the auto-detected folder) into the database.
+/// Imports RetroArch RDBs from `dir` (or the auto-detected folder) and downloads the arcade
+/// DATs; progress goes out as `sync://progress` (phase `rdb`/`dat`, done, total).
 #[tauri::command]
-pub async fn db_sync(dir: Option<PathBuf>) -> CmdResult<SyncSummary> {
+pub async fn db_sync(app: AppHandle, dir: Option<PathBuf>) -> CmdResult<SyncSummary> {
     tauri::async_runtime::spawn_blocking(move || {
         let dir = match dir {
             Some(d) => d,
@@ -163,12 +164,18 @@ pub async fn db_sync(dir: Option<PathBuf>) -> CmdResult<SyncSummary> {
                 .ok_or("RetroArch database folder not found – pick it manually")?,
         };
         let (mut store, _) = open_store()?;
-        let r = store.sync_rdbs(&dir).map_err(err)?;
+        let emit = |phase: &'static str, done: usize, total: usize| {
+            let _ = app.emit("sync://progress", (phase, Progress { done, total }));
+        };
+        let r = store
+            .sync_rdbs_progress(&dir, &|d, t| emit("rdb", d, t))
+            .map_err(err)?;
         let d = store
-            .sync_dats(
+            .sync_dats_progress(
                 std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .map_or(0, |d| d.as_secs() as i64),
+                &|d, t| emit("dat", d, t),
             )
             .map_err(err)?;
         Ok(SyncSummary {
