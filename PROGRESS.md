@@ -40,6 +40,13 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    `PhaseProgress`), Plan-Panel „Left in inbox“ + „Move to trash“ (`plan::inbox`, Journal → `_trash/inbox-<ts>/`),
    CLI-Import nutzt Hash-Cache. Inbox auf CIFS: erster Scan netzgebunden (~118 MB/s), danach Cache (0,2 s).
    Sichtprüfung dieser UI-Teile ebenfalls offen (Chrome-Extension war nicht verbunden).
+   Weitere Nachträge (2026-10-06): Import-Tab (Inbox+Plan), Library zählt Ordner-Spieldaten zum Spiel, Regel
+   `frontend-meta` (gamelist/Medien → `_trash/frontend`), Unbekanntes → `_trash/unknown` statt Quarantäne
+   (`unknown_to_trash`), geleerte Ordner werden entfernt, lose Arcade-Chips nicht mehr als Spiel, DAT-Prüfung mit
+   CHDs (`<disk>`) und Treiberstatus (`arcade_working_only`), verwaiste Playlists → `_trash/playlists`.
+   Schema v11: DATs müssen einmal neu geladen werden („Sync databases“).
+   **Offen:** Sichtprüfung App; doppeltes Quake (`Quake/quake` vs. `tyrquake`); RetroArch-Export entfernt keine
+   veralteten Playlists im RetroArch-Ordner (z. B. alte `MAME.lpl`).
 1. ✅ Rules-Seite abgenommen (User, 2026-10-06). Alte Entscheidungen ohne gespeicherten Grund → „reason not recorded“.
 2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
    Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.
