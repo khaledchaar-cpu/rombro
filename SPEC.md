@@ -83,6 +83,20 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
 ### F7 – Thumbnails (nice to have v1)
 - Download von `thumbnails.libretro.com` (Boxart/Snap/Title), lokaler Cache, Namensmapping wie RetroArch.
 
+### F8 – Arcade-DAT-Prüfung (M14)
+Grundsatz (User, 2026-10-06): **RDBs bestimmen, ob ein Set in die Sammlung kommt; DATs helfen, das richtige System zu bestimmen.**
+- Anlass: `MAME.rdb` mischt Set-Versionen (52.617 Einträge / 37.798 Namen) → alte Sets (z. B. `1943`, 0.78-Format)
+  landeten in `MAME/` und starten im aktuellen MAME-Core nicht.
+- DATs (Member-Listen: Name/Größe/CRC je Datei im Zip) für alle 9 Arcade-Cores, `db sync` lädt automatisch die
+  jeweils neueste Version aus den libretro-Quellen; offline → zuletzt geladene + Warnung; ohne DATs → alte Logik.
+- Ohne RDB-Treffer kein Eintritt (bleibt Quarantäne, auch bei DAT-Vollständigkeit).
+- DAT-Prüfung nur bei unsicheren Treffern: nur `MAME.rdb` oder mehrere Arcade-Cores. Exakte Treffer in versionierten
+  DBs gelten ungeprüft (bewusst: split-Clones ohne Eltern-Set werden dort nicht erkannt).
+- Ziel = erster Core in `arcade_order`, für den RDB-Treffer **und** DAT-Vollständigkeit gelten (Prüfung über
+  CRCs aus dem Zip-Verzeichnis, ohne Entpacken; split/merged/non-merged, split-Clones brauchen Eltern-Set).
+- Kein solcher Core → Quarantäne mit Begründung (fehlend/falsch benannt/Eltern fehlt) in Dry-Run, Audit, App.
+- Quarantäne wird nicht erneut geprüft; keine Reparatur (Umbenennen/Rebuild) in M14.
+
 ## 5. Nicht-Ziele v1
 Emulation/Start von Spielen, Cloud-Sync, ScreenScraper-Integration, Netplay.
 
@@ -161,6 +175,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 | M9 | GUI Feinschliff | Persistenter Library-Index (§10 M9), 1G1R-Regeln-Editor, Settings, Thumbnails, Effekte, Light-Theme | UX-Review bestanden |
 | M10 | Gamification | KPIs, Vollständigkeit, Achievements, XP | Dashboard zeigt KPIs |
 | M11 | Release | Packaging (AppImage/deb, dmg, msi), Pfad-Erkennung je OS, Doku | Builds für 3 OS via CI |
+| M14 | Arcade-DATs | F8: DAT-Download/Import, Member-Prüfung, Systemwahl, Quarantäne-Begründung | 1943 → MAME 2003-Plus, startet in RetroArch |
 
 ## 11a. Entscheidungen
 - M2: Persistenter Cache = SQLite statt eigenem Binärformat. Kalt-Import ~3 s (einmalig, SQLite-Insert-bound),
@@ -251,6 +266,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   - Speicherung in der DB (wie Library-Pfad). CLI: `rules show` + „Warum“ in dry-run-Ausgabe; Setzen via GUI/Datei.
 - **BIOS-Erkennung nur per Hash (User, 2026-10-06):** BIOS-Sets mit unbekanntem Hash (z. B. eigenes `neogeo.zip`-Paket) werden *nicht* am Kurznamen erkannt → Quarantäne.
 - Bitgleiche Kopie an einem schon belegten/geplanten Ziel = 1G1R-Duplikat (TBD-Queue, `discard`-Verdict → `_trash`), nur abweichender Inhalt ist ein Konflikt (User, 2026-10-06). Gilt auch für BIOS.
+- Arcade-DATs ergänzen RDBs nur zur Systemwahl, siehe F8 (User, 2026-10-06).
 
 ## 11. Offene Fragen
 - Ziel (User): vollständige Sammlung im Sinne der RetroArch-Datenbanken. Andere Versionen, Derivate, Formate interessieren nicht, solange sie in keiner RDB stehen → Quarantäne ist richtig für Unbekanntes in erkannten System-Ordnern.
