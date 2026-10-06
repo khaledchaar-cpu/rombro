@@ -104,7 +104,9 @@ fn is_ignored(e: &walkdir::DirEntry) -> bool {
         name.to_ascii_lowercase().as_str(),
         ".ds_store" | "thumbs.db" | "desktop.ini" | ".directory"
     ) || name.starts_with("._");
-    junk || e.metadata().is_ok_and(|m| m.len() == 0)
+    // empty ScummVM launchers are kept: they are repaired from their file name
+    let launcher = crate::scummvm::repaired_id(e.path(), b"").is_some();
+    junk || (e.metadata().is_ok_and(|m| m.len() == 0) && !launcher)
 }
 
 /// Like [`scan_with_progress`], but reuses `cache` for files whose size and mtime are unchanged.
