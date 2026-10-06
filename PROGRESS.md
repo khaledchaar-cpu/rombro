@@ -20,8 +20,16 @@
 | M13 Regeln transparent & einstellbar | ✅ done (Rules-Seite abgenommen 2026-10-06; Entscheidungen zeigen Grund + Datum) |
 | M14 Arcade-DATs | ✅ done |
 | M14b Core-Wahl & -Installation | ✅ done (Sichtprüfung App offen) |
+| v0.3.0 Release + Inbox-Importe | ✅ released 2026-10-06; Nachträge 2026-10-07 (CSO, OpenBOR, Library-Perf) |
 
 ## Aktuell
+Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
+`openbor` als Namensordner (auch in der User-DB eingetragen), Library listet MSU-1-Ordner als ein Spiel,
+Library-Scan beim Planen/Export vertraut dem Index (`HashCache.trusted`, ~16 s → ~3 s; Rescan prüft voll).
+Nächste Schritte: Spiele-Erkennung (`Store::items`, ~1,5–2 s) profilen; Disc-`identify` bei Cache-Treffer cachen;
+Sichtprüfung der neuen UI-Teile (Exec-Fortschritt, Run-Report-Scrollbereich, Scan-Dateizeile); ggf. Release v0.3.1.
+Stolperstein: App läuft beim User per `pnpm tauri dev` – Code-Änderungen starten sie neu (laufende Scans brechen ab).
+
 M14: `core::arcade::dat` (Logiqx/listxml-Parser, Prüfung über Zip-Verzeichnis), `archive::members`, Store-Tabellen
 `dat_source`/`dat_set` (v7), `db sync` lädt 8 DATs (21 s, versioniert, offline → alte + Warnung), `catalog::dat_pick`
 wählt den ersten vollständigen Core, sonst `Ident::Incomplete` → Quarantäne mit Regel `arcade-dat` + Begründung
