@@ -17,6 +17,7 @@ mod archives;
 mod folders;
 mod frontend;
 mod msu;
+pub use msu::SYSTEM as MSU1_SYSTEM;
 mod named;
 pub use folders::FOLDER_SYSTEMS;
 pub use named::apply as name_only;

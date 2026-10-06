@@ -82,13 +82,38 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
         let rules = crate::settings::load_rules(&store)?;
         let items = rombro_core::plan::name_only(&store.items(&report, true).map_err(err)?, &rules);
         let added_db = store.added_times(&library).map_err(err)?;
-        let folder_systems = rules.folder_systems;
+        let mut folder_systems = rules.folder_systems;
+        // MSU-1 games: no database knows them; the ROM in `<MSU-1>/<Game>/` is the game,
+        // named after its folder
+        let msu = library.join(rombro_core::plan::MSU1_SYSTEM);
+        let items: Vec<_> = items
+            .into_iter()
+            .map(|mut it| {
+                let p = it.files.primary();
+                let rom = p.extension().is_some_and(|e| {
+                    e.eq_ignore_ascii_case("sfc") || e.eq_ignore_ascii_case("smc")
+                });
+                if matches!(it.ident, Ident::Unknown)
+                    && rom
+                    && let Some(dir) = p.parent().filter(|d| d.parent() == Some(msu.as_path()))
+                    && let Some(name) = dir.file_name()
+                {
+                    it.ident = Ident::Named(rombro_core::plan::Game {
+                        system: rombro_core::plan::MSU1_SYSTEM.to_owned(),
+                        name: name.to_string_lossy().into_owned(),
+                        crc: None,
+                    });
+                }
+                it
+            })
+            .collect();
+        folder_systems.push(rombro_core::plan::MSU1_SYSTEM.to_owned());
         // Game folders (DOS, ScummVM, ports): the folder of a known key file is the game;
         // its other files are game data, not unknown items.
         let game_dirs: std::collections::HashSet<PathBuf> = items
             .iter()
             .filter_map(|it| match &it.ident {
-                Ident::Known(g) if folder_systems.contains(&g.system) => {
+                Ident::Known(g) | Ident::Named(g) if folder_systems.contains(&g.system) => {
                     it.files.primary().parent().map(|d| d.to_path_buf())
                 }
                 _ => None,
@@ -132,7 +157,7 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
                 let p = it.files.primary();
                 let path = p.strip_prefix(&library).unwrap_or(p).display().to_string();
                 let mut files = it.files.all().len();
-                if matches!(it.ident, Ident::Known(_))
+                if matches!(it.ident, Ident::Known(_) | Ident::Named(_))
                     && let Some(n) = p.parent().and_then(|d| extra.get(d))
                 {
                     files += n;
