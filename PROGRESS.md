@@ -36,8 +36,10 @@ Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeig
    HDD-CHDs ohne CD-Track, 2 CHDs mit Dekompressionsfehler = vermutlich defekt, 2 Zips).
    Danach: bitgleiche Doppel → Duplikat in der TBD-Queue statt Konflikt (BIOS-Fälle verifiziert; Wolfenstein ist
    echter Konflikt: Shareware vs. Vollversion). CLI: `rules --ignore/--unignore <pfad>`.
-3. Prüfung in RetroArch: MAME-BIOS neben Sets, Gamification-Panels, Effects off.
-4. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
+3. Prüfung in RetroArch: MAME-BIOS neben den Sets (BIOS-abhängiges Spiel, z. B. Neo Geo, startet mit MAME-Core
+   und FBNeo aus der importierten Library).
+4. Sichtprüfung in der App (M10-Rest): Gamification-Panels mit echten Daten plausibel; Effects off in beiden Themes.
+5. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 
 ## Stolpersteine
 - DOS/ScummVM-RDBs identifizieren über *eine* Datei, die oft zwischen Spielen geteilt ist (`dosbox.bat`, `ADL.DRV`) → Ordnername statt DB-Name.
