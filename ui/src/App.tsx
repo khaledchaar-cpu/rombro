@@ -6,8 +6,7 @@ import Dashboard from "./views/Dashboard";
 import Placeholder from "./views/Placeholder";
 import Rules from "./views/Rules";
 import Settings from "./views/Settings";
-import Inbox from "./views/Inbox";
-import Plan from "./views/Plan";
+import Import from "./views/Import";
 import Library from "./views/Library";
 import { execute, plan, undo } from "./state/importStore";
 import { initLibrary } from "./state/libraryStore";
@@ -59,16 +58,13 @@ export default function App() {
       <main class="content">
         <Switch fallback={<Placeholder title={title()} />}>
           <Match when={view() === "dashboard"}>
-            <Dashboard onReview={() => setView("plan")} onLibrary={() => setView("library")} />
+            <Dashboard onReview={() => setView("import")} onLibrary={() => setView("library")} />
           </Match>
-          <Match when={view() === "inbox"}>
-            <Inbox onPlanned={() => setView("plan")} />
+          <Match when={view() === "import"}>
+            <Import />
           </Match>
           <Match when={view() === "library"}>
             <Library />
-          </Match>
-          <Match when={view() === "plan"}>
-            <Plan />
           </Match>
           <Match when={view() === "rules"}>
             <Rules />

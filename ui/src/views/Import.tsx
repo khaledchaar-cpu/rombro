@@ -3,6 +3,7 @@ import { createMemo, createSignal, For, Show } from "solid-js";
 import Panel from "../components/Panel";
 import ScanProgress from "../components/ScanProgress";
 import InboxLeftovers from "../components/InboxLeftovers";
+import ImportSetup from "./ImportSetup";
 import type { DecisionView } from "../ipc";
 import {
   busy,
@@ -202,9 +203,11 @@ function Decisions() {
   );
 }
 
-export default function Plan() {
+/** Import: folders and mode on top, then the plan (or its progress) and the inbox leftovers. */
+export default function Import() {
   return (
     <div class="grid">
+      <ImportSetup />
       <Show
         when={plan()}
         fallback={
@@ -212,7 +215,7 @@ export default function Plan() {
             <Show
               when={busy()}
               fallback={
-                <p class="dim">No plan yet – build one in the Inbox view.</p>
+                <p class="dim">No plan yet – choose the folders above and plan the import.</p>
               }
             >
               <p>Planning – scanning library and inbox…</p>

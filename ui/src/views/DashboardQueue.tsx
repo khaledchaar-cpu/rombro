@@ -60,7 +60,7 @@ export function TrashPanel() {
 
   return (
     <Panel title="Trash">
-      <Show when={library()} fallback={<p class="dim">Choose a library in the Inbox view.</p>}>
+      <Show when={library()} fallback={<p class="dim">Choose a library in the Import view.</p>}>
         <div class="kpi">{files()?.length ?? 0}</div>
         <p class="dim small">files · {mb(bytes())} in {library()}/_trash</p>
         <ul class="rows mono small">

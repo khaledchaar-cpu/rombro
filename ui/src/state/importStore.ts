@@ -1,4 +1,4 @@
-// Shared import state: Inbox view builds the plan, Plan view reviews and executes it.
+// Shared import state: the Import view builds, reviews and executes the plan.
 import { createSignal } from "solid-js";
 import { inbox, library, mode, refreshLibrary } from "./libraryStore";
 import {
