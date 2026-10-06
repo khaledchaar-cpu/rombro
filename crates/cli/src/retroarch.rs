@@ -60,9 +60,10 @@ pub fn run(a: Args) -> Result<()> {
     if a.list_cores {
         return list_cores(&library, &cores, &picks);
     }
-    let cache = store.hash_cache(&library)?;
+    let mut cache = store.hash_cache(&library)?;
+    cache.trusted = true;
     let report = rombro_core::scan_cached(&library, &cache, &|_| {});
-    store.save_scan(&library, &report)?;
+    store.save_scan(&library, &report, true)?;
     if a.install_cores && dirs.buildbot.is_none() {
         bail!("retroarch.cfg has no core_updater_buildbot_cores_url – cannot install cores");
     }

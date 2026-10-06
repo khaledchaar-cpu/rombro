@@ -122,11 +122,13 @@ impl Store {
             };
             map.insert(PathBuf::from(path), (stamp, roms));
         }
-        Ok(HashCache(map))
+        Ok(HashCache::new(map))
     }
 
     /// Replaces the index below `root` with the files of `report` (vanished files drop out).
-    pub fn save_scan(&self, root: &Path, report: &ScanReport) -> Result<()> {
+    /// With `trusted` (the scan used a trusted cache) rows whose hashes are unchanged are
+    /// kept as they are instead of re-reading each file's stamp.
+    pub fn save_scan(&self, root: &Path, report: &ScanReport, trusted: bool) -> Result<()> {
         let mut files: Vec<(&Path, Vec<CachedRom>)> = Vec::new();
         let whole: HashMap<&Path, &ScannedRom> = report
             .archives
@@ -149,9 +151,11 @@ impl Store {
         }
         let pre = prefix(root);
         let tx = self.conn.unchecked_transaction()?;
-        let old: Vec<String> = tx
-            .prepare_cached("SELECT path FROM file WHERE substr(path, 1, ?2) = ?1")?
-            .query_map(params![pre, pre.chars().count() as i64], |r| r.get(0))?
+        let old: HashMap<String, String> = tx
+            .prepare_cached("SELECT path, roms FROM file WHERE substr(path, 1, ?2) = ?1")?
+            .query_map(params![pre, pre.chars().count() as i64], |r| {
+                Ok((r.get(0)?, r.get(1)?))
+            })?
             .collect::<rusqlite::Result<_>>()?;
         let now = now();
         let mut seen = std::collections::HashSet::new();
@@ -162,14 +166,18 @@ impl Store {
                  ON CONFLICT(path) DO UPDATE SET size = ?2, mtime = ?3, roms = ?4",
             )?;
             for (path, roms) in files {
-                let Ok(st) = Stamp::of(path) else { continue };
                 let json = serde_json::to_string(&roms)?;
                 let k = key(path);
+                if trusted && old.get(&k) == Some(&json) {
+                    seen.insert(k);
+                    continue;
+                }
+                let Ok(st) = Stamp::of(path) else { continue };
                 up.execute(params![k, st.size as i64, st.mtime, json, now])?;
                 seen.insert(k);
             }
             let mut del = tx.prepare_cached("DELETE FROM file WHERE path = ?1")?;
-            for p in old.iter().filter(|p| !seen.contains(*p)) {
+            for p in old.keys().filter(|p| !seen.contains(*p)) {
                 del.execute([p])?;
             }
         }

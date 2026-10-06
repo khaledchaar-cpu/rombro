@@ -374,9 +374,11 @@ fn file_index_follows_scan_execute_and_undo() {
     store.set_library(&lib).unwrap();
     assert_eq!(store.library().unwrap().as_deref(), Some(lib.as_path()));
 
-    store.save_scan(&inbox, &rombro_core::scan(&inbox)).unwrap();
+    store
+        .save_scan(&inbox, &rombro_core::scan(&inbox), false)
+        .unwrap();
     assert!(store.hash_cache(&inbox).unwrap().get(&src).is_some());
-    assert!(store.hash_cache(&lib).unwrap().0.is_empty());
+    assert!(store.hash_cache(&lib).unwrap().entries.is_empty());
 
     let to = lib.join("GB/a.gb");
     let ex = execute(&[Op::Move {
@@ -402,19 +404,23 @@ fn file_index_follows_scan_execute_and_undo() {
         to: renamed.clone(),
     }]);
     store.index_executed(&ex2.done).unwrap();
-    store.save_scan(&lib, &rombro_core::scan(&lib)).unwrap();
+    store
+        .save_scan(&lib, &rombro_core::scan(&lib), false)
+        .unwrap();
     assert_eq!(store.added_times(&lib).unwrap()[&renamed], 1);
     assert!(undo(&ex2.done).is_empty());
     store.index_undone(&ex2.done).unwrap();
-    assert!(store.hash_cache(&inbox).unwrap().0.is_empty());
+    assert!(store.hash_cache(&inbox).unwrap().entries.is_empty());
 
     assert!(undo(&ex.done).is_empty());
     store.index_undone(&ex.done).unwrap();
     assert!(store.hash_cache(&inbox).unwrap().get(&src).is_some());
 
     std::fs::remove_file(&src).unwrap();
-    store.save_scan(&inbox, &rombro_core::scan(&inbox)).unwrap();
-    assert!(store.hash_cache(&inbox).unwrap().0.is_empty());
+    store
+        .save_scan(&inbox, &rombro_core::scan(&inbox), false)
+        .unwrap();
+    assert!(store.hash_cache(&inbox).unwrap().entries.is_empty());
 }
 
 #[test]

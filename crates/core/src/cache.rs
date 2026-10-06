@@ -63,15 +63,42 @@ impl CachedRom {
 
 /// Cached hashes per file path.
 #[derive(Debug, Default)]
-pub struct HashCache(pub HashMap<PathBuf, (Stamp, Vec<CachedRom>)>);
+pub struct HashCache {
+    pub entries: HashMap<PathBuf, (Stamp, Vec<CachedRom>)>,
+    /// Trust entries without checking each file's size and mtime: the folder listing still
+    /// finds added and removed files, but a file overwritten in place goes unnoticed. For
+    /// the library, which only RomBro changes (its executions keep the index current);
+    /// a full rescan checks every file.
+    pub trusted: bool,
+}
 
 impl HashCache {
-    /// Cached ROMs for `path` if the file is unchanged since it was hashed.
+    pub fn new(entries: HashMap<PathBuf, (Stamp, Vec<CachedRom>)>) -> Self {
+        Self {
+            entries,
+            trusted: false,
+        }
+    }
+
+    /// Cached ROMs for `path` if the file is unchanged since it was hashed (or trusted).
     pub fn get(&self, path: &Path) -> Option<Vec<ScannedRom>> {
-        let (stamp, roms) = self.0.get(path)?;
-        if Stamp::of(path).ok()? != *stamp {
+        let (stamp, roms) = self.entries.get(path)?;
+        if !self.trusted && Stamp::of(path).ok()? != *stamp {
             return None;
         }
         Some(roms.iter().cloned().map(|r| r.into_rom(path)).collect())
+    }
+
+    /// Size of `path`: the trusted cached one, else from the file system.
+    pub fn size(&self, path: &Path) -> Option<u64> {
+        match self.entries.get(path) {
+            Some((stamp, _)) if self.trusted => Some(stamp.size),
+            _ => std::fs::metadata(path).ok().map(|m| m.len()),
+        }
+    }
+
+    /// Whether `path` is served without touching the file system.
+    pub fn trusts(&self, path: &Path) -> bool {
+        self.trusted && self.entries.contains_key(path)
     }
 }

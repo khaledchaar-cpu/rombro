@@ -121,7 +121,7 @@ pub async fn retroarch_export(
         let dirs = Dirs::detect().ok_or("no retroarch.cfg found")?;
         let throttle = crate::commands::Throttle::new();
         emit("scan", 0, 0, "");
-        let report = crate::commands::indexed_scan(&store, &library, &|p| {
+        let report = crate::commands::indexed_scan(&store, &library, true, &|p| {
             if throttle.ready(p.done, p.total) {
                 emit("scan", p.done, p.total, "");
             }

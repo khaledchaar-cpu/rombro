@@ -98,7 +98,7 @@ pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(ScanTick<'_>) + Sync))
 
 /// OS clutter and empty placeholders (`.keep`) are never ROMs; they are left where they are.
 /// Empty files would otherwise match RDB entries that carry the empty-file hash.
-fn is_ignored(e: &walkdir::DirEntry) -> bool {
+fn is_ignored(e: &walkdir::DirEntry, cache: &HashCache) -> bool {
     let name = e.file_name().to_string_lossy();
     let junk = matches!(
         name.to_ascii_lowercase().as_str(),
@@ -106,7 +106,7 @@ fn is_ignored(e: &walkdir::DirEntry) -> bool {
     ) || name.starts_with("._");
     // empty ScummVM launchers are kept: they are repaired from their file name
     let launcher = crate::scummvm::repaired_id(e.path(), b"").is_some();
-    junk || (e.metadata().is_ok_and(|m| m.len() == 0) && !launcher)
+    junk || (cache.size(e.path()) == Some(0) && !launcher)
 }
 
 /// Like [`scan_with_progress`], but reuses `cache` for files whose size and mtime are unchanged.
@@ -119,7 +119,7 @@ pub fn scan_cached(
     let mut files = Vec::new();
     for e in WalkDir::new(root).follow_links(true) {
         match e {
-            Ok(e) if e.file_type().is_file() && !is_ignored(&e) => files.push(e.into_path()),
+            Ok(e) if e.file_type().is_file() && !is_ignored(&e, cache) => files.push(e.into_path()),
             Ok(_) => {}
             Err(err) => report.failures.push(ScanFailure {
                 path: err.path().unwrap_or(root).to_path_buf(),
@@ -162,7 +162,7 @@ pub fn scan_cached(
         }
     }
     files.retain(|p| !claimed.contains(p));
-    let size = |p: &PathBuf| std::fs::metadata(p).map_or(0, |m| m.len());
+    let size = |p: &PathBuf| cache.size(p).unwrap_or(0);
     let sheet_sizes: Vec<u64> = sheets
         .iter()
         .map(|(_, _, found, _)| found.iter().map(size).sum())
@@ -255,14 +255,13 @@ fn scan_disc_cached(
 ) -> Result<ScannedDisc, ScanError> {
     let mut hashed = Vec::with_capacity(tracks.len());
     for t in tracks {
-        let cd_iso = kind == DiscKind::Iso && disc::is_cd_iso(t);
+        // trusted entries were checked when cached; don't touch the file again
+        let cd_iso = kind == DiscKind::Iso && !cache.trusts(t) && disc::is_cd_iso(t);
         if let Some(mut hit) = cache
             .get(t)
             .filter(|h| h.len() == 1 && (!cd_iso || h[0].headerless.is_some()))
             // entries cached before `.cso` support hold the compressed file's hashes
-            .filter(|h| {
-                !disc::is_cso(t) || std::fs::metadata(t).is_ok_and(|m| m.len() != h[0].hashes.size)
-            })
+            .filter(|h| !disc::is_cso(t) || cache.size(t).is_some_and(|n| n != h[0].hashes.size))
         {
             hashed.append(&mut hit);
             continue;

@@ -22,13 +22,13 @@ pub fn run(a: Args) -> Result<()> {
     let mut items = Vec::new();
     let mut known = Default::default();
     if library.is_dir() {
-        let report = scan_cached(&store, &library)?;
+        let report = scan_cached(&store, &library, true)?;
         known = rombro_store::set_names(&report);
         items = store.items(&report, true)?;
     }
     let inbox = a.inbox.as_deref().map(absolute).transpose()?;
     if let Some(inbox) = &inbox {
-        items.extend(store.items_with(&scan_cached(&store, inbox)?, false, &known)?);
+        items.extend(store.items_with(&scan_cached(&store, inbox, false)?, false, &known)?);
     }
     let ts = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
     let opts = Options {
@@ -166,11 +166,17 @@ fn scan(dir: &Path) -> rombro_core::ScanReport {
     report
 }
 
-/// Scan through the hash cache (unchanged files are not read again), like the app.
-fn scan_cached(store: &rombro_store::Store, dir: &Path) -> Result<rombro_core::ScanReport> {
-    let cache = store.hash_cache(dir)?;
+/// Scan through the hash cache (unchanged files are not read again), like the app;
+/// `trusted` takes indexed files without checking them on disk (the library).
+fn scan_cached(
+    store: &rombro_store::Store,
+    dir: &Path,
+    trusted: bool,
+) -> Result<rombro_core::ScanReport> {
+    let mut cache = store.hash_cache(dir)?;
+    cache.trusted = trusted;
     let report = rombro_core::scan_cached(dir, &cache, &|_| {});
-    store.save_scan(dir, &report)?;
+    store.save_scan(dir, &report, trusted)?;
     for f in &report.failures {
         eprintln!("ERROR   {}: {}", f.path.display(), f.error);
     }

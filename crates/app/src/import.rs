@@ -121,7 +121,8 @@ fn emit_scan(
     // Announce the phase right away: walking a large tree takes a while before `total` is known.
     let _ = app.emit("import://progress", (phase, Progress { done: 0, total: 0 }));
     let throttle = Throttle::new();
-    indexed_scan(store, dir, &|p| {
+    // the library is trusted; the inbox is new material and checked file by file
+    indexed_scan(store, dir, phase == "library", &|p| {
         if throttle.ready(p.done, p.total) {
             let _ = app.emit("import://progress", (phase, p));
         }

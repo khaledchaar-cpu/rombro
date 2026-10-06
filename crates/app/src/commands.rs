@@ -24,14 +24,18 @@ pub(crate) fn open_store() -> CmdResult<(Store, PathBuf)> {
 }
 
 /// Scans `root` incrementally via the persistent file index and updates the index.
+/// `trusted`: known files are taken from the index without checking them on disk (the
+/// library, which only RomBro changes); otherwise every file's size and mtime is checked.
 pub(crate) fn indexed_scan(
     store: &Store,
     root: &std::path::Path,
+    trusted: bool,
     progress: &(dyn Fn(rombro_core::ScanTick<'_>) + Sync),
 ) -> CmdResult<rombro_core::ScanReport> {
-    let cache = store.hash_cache(root).map_err(err)?;
+    let mut cache = store.hash_cache(root).map_err(err)?;
+    cache.trusted = trusted;
     let report = rombro_core::scan_cached(root, &cache, progress);
-    store.save_scan(root, &report).map_err(err)?;
+    store.save_scan(root, &report, trusted).map_err(err)?;
     Ok(report)
 }
 

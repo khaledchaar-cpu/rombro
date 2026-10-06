@@ -150,7 +150,7 @@ fn cached_scan_reuses_unchanged_files_only() {
         let mut c = CachedRom::from_rom(&r);
         c.hashes.crc = 0xdead_beef; // marker: proves the cached value is used
         cache
-            .0
+            .entries
             .insert(r.path.clone(), (Stamp::of(&r.path).unwrap(), vec![c]));
     }
     fs::write(&b, rom(2048, 3)).unwrap(); // size changes → rehash
@@ -219,4 +219,37 @@ fn reports_bytes_while_hashing_a_disc() {
             .any(|(d, b, i)| *d == 0 && *b > 0 && i.as_deref() == Some("big.iso"))
     );
     assert_eq!(calls.last().unwrap(), &(1, 4 << 20, None));
+}
+
+#[test]
+fn trusted_cache_skips_file_checks_but_sees_added_and_removed_files() {
+    use rombro_core::{CachedRom, HashCache, Stamp, scan_cached};
+    let dir = tempfile::tempdir().unwrap();
+    let (a, b) = (dir.path().join("a.gb"), dir.path().join("b.gb"));
+    fs::write(&a, rom(1024, 1)).unwrap();
+    fs::write(&b, rom(1024, 2)).unwrap();
+    let mut cache = HashCache::default();
+    for r in scan(dir.path()).roms {
+        let mut c = CachedRom::from_rom(&r);
+        c.hashes.crc = 0xdead_beef;
+        cache
+            .entries
+            .insert(r.path.clone(), (Stamp::of(&r.path).unwrap(), vec![c]));
+    }
+    cache.trusted = true;
+    fs::write(&a, rom(2048, 3)).unwrap(); // overwritten in place: trusted, not rehashed
+    fs::remove_file(&b).unwrap();
+    fs::write(dir.path().join("c.gb"), rom(1024, 4)).unwrap();
+    let report = scan_cached(dir.path(), &cache, &|_| {});
+    let got: Vec<_> = report
+        .roms
+        .iter()
+        .map(|r| {
+            (
+                r.path.file_name().unwrap().to_owned(),
+                r.hashes.crc == 0xdead_beef,
+            )
+        })
+        .collect();
+    assert_eq!(got, [("a.gb".into(), true), ("c.gb".into(), false)]);
 }

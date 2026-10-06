@@ -74,7 +74,8 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
         }
         store.set_library(&library).map_err(err)?;
         let throttle = Throttle::new();
-        let report = indexed_scan(&store, &library, &|p| {
+        // the Rescan button: check every file
+        let report = indexed_scan(&store, &library, false, &|p| {
             if throttle.ready(p.done, p.total) {
                 let _ = app.emit("scan://progress", p);
             }
