@@ -9,7 +9,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 /// Systems whose matches are key files inside a game folder.
-const FOLDER_SYSTEMS: [&str; 12] = [
+const FOLDER_SYSTEMS: [&str; 18] = [
     "DOS",
     "ScummVM",
     "DOOM",
@@ -17,10 +17,16 @@ const FOLDER_SYSTEMS: [&str; 12] = [
     "Quake II",
     "Quake III",
     "Cannonball",
-    "Rick Dangerous",
-    "MrBoom",
+    "Cave Story",
+    "ChaiLove",
     "Dinothawr",
     "Flashback",
+    "Jump 'n Bump",
+    "Lutro",
+    "MrBoom",
+    "Rick Dangerous",
+    "RPG Maker",
+    "Tomb Raider",
     "Wolfenstein 3D",
 ];
 
@@ -59,11 +65,15 @@ pub(super) fn find<'a>(
     let matched: Vec<Match<'a>> = items
         .iter()
         .filter_map(|it| match (&it.ident, &it.files) {
-            (Ident::Known(g), Files::Single(p)) if is_folder_system(&g.system) => Some(Match {
-                item: it,
-                game: g,
-                key: p.as_path(),
-            }),
+            (Ident::Known(g), Files::Single(p) | Files::Set { archive: p, .. })
+                if is_folder_system(&g.system) =>
+            {
+                Some(Match {
+                    item: it,
+                    game: g,
+                    key: p.as_path(),
+                })
+            }
             _ => None,
         })
         .collect();
@@ -120,11 +130,14 @@ fn folder_game<'a>(root: &Path, ms: &[Match<'a>]) -> Option<FolderGame<'a>> {
         Some(_) => Some("DOS"),
         None => None,
     };
-    // otherwise the system most matches belong to (ties: FOLDER_SYSTEMS order)
+    // otherwise a port/engine database beats generic DOS/ScummVM (their DBs also list e.g.
+    // Wolfenstein 3D), then the system most matches belong to
     let system = by_marker.or_else(|| {
         FOLDER_SYSTEMS.iter().copied().max_by_key(|s| {
             let n = ms.iter().filter(|m| m.game.system == *s).count();
+            let specific = n > 0 && !matches!(*s, "DOS" | "ScummVM");
             (
+                specific,
                 n,
                 std::cmp::Reverse(FOLDER_SYSTEMS.iter().position(|x| x == s)),
             )
