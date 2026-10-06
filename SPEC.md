@@ -239,6 +239,8 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   - MAME-CHDs: gleichnamiger Ordner neben erkanntem Zip (`kinst/kinst.chd`) wird ungeprüft mitgenommen; CHD ohne Zip → Quarantäne.
 
 ## 11. Offene Fragen
+- Ziel (User): vollständige Sammlung im Sinne der RetroArch-Datenbanken. Andere Versionen, Derivate, Formate interessieren nicht, solange sie in keiner RDB stehen → Quarantäne ist richtig für Unbekanntes in erkannten System-Ordnern.
+- Entschieden: Gleicher Arcade-Kurzname, andere Version (z. B. `gradius3.zip` Japan/World): weicht auf das nächste System aus, das genau dieses Set listet; Sets mit den wenigsten Ausweich-Systemen wählen zuerst.
 - Entschieden: GameCube/Wii-Container (`.rvz/.wia/.wbfs/.ciso`) und GC/Wii-ISOs werden über die Spiel-ID im Disc-Header erkannt (wie Serial-Fallback); Revision/Disc-Nr. aus dem Header wählen zwischen `(Rev n)`/`(Disc n)`. Keine Hash-Prüfung möglich.
 - Entschieden: BIOS-Ordner im Inbox (`bios`, `00bios`, `system`) bleiben wie sie sind; nur erkannte BIOS werden nach `_bios/` einsortiert.
 - Entschieden: Spielordner (DOS, ScummVM, Ports/Engines – Liste in `plan/build/folders.rs`): ein DB-Treffer identifiziert den Ordner, der Ordner wandert komplett nach `<System>/<Ordnername ohne .dos/.scummvm>/`. Name/System nie aus dem Treffer allein (Schlüsseldateien wie `dosbox.bat`, `ADL.DRV` sind geteilt). Endung entscheidet das System, sonst spezifischer Port vor DOS/ScummVM, sonst Mehrheit.
