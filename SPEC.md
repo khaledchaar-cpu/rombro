@@ -239,6 +239,8 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   - MAME-CHDs: gleichnamiger Ordner neben erkanntem Zip (`kinst/kinst.chd`) wird ungeprüft mitgenommen; CHD ohne Zip → Quarantäne.
 
 ## 11. Offene Fragen
+- Entschieden: GameCube/Wii-Container (`.rvz/.wia/.wbfs/.ciso`) und GC/Wii-ISOs werden über die Spiel-ID im Disc-Header erkannt (wie Serial-Fallback); Revision/Disc-Nr. aus dem Header wählen zwischen `(Rev n)`/`(Disc n)`. Keine Hash-Prüfung möglich.
+- Entschieden: BIOS-Ordner im Inbox (`bios`, `00bios`, `system`) bleiben wie sie sind; nur erkannte BIOS werden nach `_bios/` einsortiert.
 - Entschieden: Spielordner (DOS, ScummVM, Ports/Engines – Liste in `plan/build/folders.rs`): ein DB-Treffer identifiziert den Ordner, der Ordner wandert komplett nach `<System>/<Ordnername ohne .dos/.scummvm>/`. Name/System nie aus dem Treffer allein (Schlüsseldateien wie `dosbox.bat`, `ADL.DRV` sind geteilt). Endung entscheidet das System, sonst spezifischer Port vor DOS/ScummVM, sonst Mehrheit.
 - Entschieden: Unbekannte Dateien in Ordnern ohne jeden erkannten Eintrag bleiben unangetastet (Spielinstallationen, Frontend-Medien); nur Ordner mit Treffern und die Inbox-Wurzel werden in die Quarantäne gekehrt.
 - Entschieden: Archive mit unbekannten Membern werden nie teilweise entpackt (ganz in Quarantäne).
