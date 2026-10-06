@@ -295,7 +295,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   bleiben (Konflikt-Hinweis); fehlende BIOS nur für Systeme mit Library-Ordner gemeldet.
 - Entschieden (User, 2026-10-06): Frontend-Metadaten (Batocera/EmulationStation) wandern automatisch nach
   `_trash/frontend/<Pfad>` (Regel `frontend-meta`, Schalter `rules.frontend_trash`, Default an): `gamelist*` und
-  `_info.txt` in einem Ordner mit `gamelist*.xml` sowie Bilder/Videos/PDFs in dessen `images/`, `videos/`, `media/`,
+  `_info.txt`/`_readme.txt`/`_lisezmoi.txt` in einem Ordner mit `gamelist*.xml` (auch in `_quarantine`) sowie Bilder/Videos/PDFs in dessen `images/`, `videos/`, `media/`,
   `manuals/`, `downloaded_*`. Nur solche Ordner zählen, damit Spieldaten nie betroffen sind. Startdateien
   (`.libretro`, `.quake` …) bleiben. Ordner-Spiele werden ohne die Metadaten verschoben.
 - Entschieden (User, 2026-10-06): Core-Wahl & -Installation beim RetroArch-Export (`retroarch::pick`).

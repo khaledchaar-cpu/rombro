@@ -37,9 +37,14 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         meta_roots: HashSet::new(),
     };
     let managed = [QUARANTINE_DIR, PLAYLIST_DIR, TRASH_DIR, BIOS_DIR].map(|d| library.join(d));
+    let quarantine = library.join(QUARANTINE_DIR);
     let items: Vec<&Item> = items
         .iter()
-        .filter(|it| !managed.iter().any(|m| it.files.primary().starts_with(m)))
+        // quarantined files stay put, except frontend metadata (below)
+        .filter(|it| {
+            let p = it.files.primary();
+            p.starts_with(&quarantine) || !managed.iter().any(|m| p.starts_with(m))
+        })
         .filter(|it| {
             let p = it.files.archive().unwrap_or(it.files.primary());
             !opts.ignore.iter().any(|i| p.starts_with(i))
@@ -60,6 +65,10 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     for it in meta {
         b.trash_meta(it);
     }
+    let items: Vec<&Item> = items
+        .into_iter()
+        .filter(|it| !it.files.primary().starts_with(&quarantine))
+        .collect();
 
     // Archives with any unknown member stay whole (e.g. multi-disk games where only some
     // disks match): nothing is extracted, the archive goes to quarantine as is.

@@ -1,5 +1,5 @@
-//! Frontend metadata (Batocera / EmulationStation): `gamelist.xml` with its backups, `_info.txt`
-//! and scraped media next to it. RetroArch needs none of it. Only folders holding a
+//! Frontend metadata (Batocera / EmulationStation): `gamelist.xml` with its backups, the
+//! `_info.txt` / `_readme.txt` / `_lisezmoi.txt` notes and scraped media next to it. RetroArch needs none of it. Only folders holding a
 //! `gamelist*.xml` count as frontend folders, so game data that happens to sit in an
 //! `images/` folder elsewhere is never touched.
 
@@ -19,6 +19,8 @@ const MEDIA_DIRS: [&str; 9] = [
     "marquees",
     "thumbnails",
 ];
+/// Notes Batocera puts in every system folder.
+const NOTES: [&str; 3] = ["_info.txt", "_readme.txt", "_lisezmoi.txt"];
 const MEDIA_EXT: [&str; 10] = [
     "png", "jpg", "jpeg", "gif", "webp", "mp4", "mkv", "avi", "webm", "pdf",
 ];
@@ -54,7 +56,7 @@ pub(super) fn is_metadata(roots: &HashSet<PathBuf>, path: &Path) -> bool {
             })
             .collect();
         match parts.as_slice() {
-            [name] => name.starts_with("gamelist") || name == "_info.txt",
+            [name] => name.starts_with("gamelist") || NOTES.contains(&name.as_str()),
             [dir, .., name] => {
                 MEDIA_DIRS.contains(&dir.as_str())
                     && name
@@ -77,6 +79,7 @@ mod tests {
             "/lib/Quake/quake/gamelist.xml.old",
             "/lib/Quake/quake/gamelist.Missing.Serial.txt",
             "/lib/Quake/quake/_info.txt",
+            "/lib/Quake/quake/_lisezmoi.txt",
             "/lib/Quake/quake/images/Quake-image.png",
             "/lib/Quake/quake/media/wheel/Quake.png",
             "/lib/Quake/quake/videos/Quake-video.mp4",
