@@ -108,6 +108,9 @@ pub fn run(a: Args) -> Result<()> {
     for (system, p) in &ex.bios_missing {
         println!("MISSING  {p}  [{system}]");
     }
+    for id in &ex.scummvm_targets {
+        println!("SCUMMVM  {id}  (target in scummvm.ini)");
+    }
     println!(
         "\n{} playlists ({} unchanged), {} BIOS to copy ({} present, {} conflicts, {} missing); {} cores installed",
         ex.playlists.len(),

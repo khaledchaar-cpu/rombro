@@ -99,6 +99,12 @@ export default function RetroArchPanel() {
                 <span class="mono">{r().cores_missing.map((m) => m.path).join(", ")}</span>
               </p>
             </Show>
+            <Show when={r().scummvm_targets.length}>
+              <p class="dim">
+                ScummVM: {r().scummvm_targets.length} targets in scummvm.ini{" "}
+                <span class="mono small">({r().scummvm_targets.join(", ")})</span>
+              </p>
+            </Show>
             <h4>
               BIOS: {r().bios_copied.length} to copy, {r().bios_present} present, {r().bios_missing.length} missing
             </h4>

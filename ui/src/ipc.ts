@@ -462,6 +462,8 @@ export interface RetroArchExport {
   bios_present: number;
   bios_conflicts: string[];
   bios_missing: { system: string; path: string }[];
+  /** ScummVM targets written to scummvm.ini so games start without asking. */
+  scummvm_targets: string[];
   /** Operations executed; null for a preview. */
   executed: number | null;
 }
@@ -524,6 +526,7 @@ export async function retroarchExport(dryRun: boolean, installCores: boolean): P
       bios_present: 2,
       bios_conflicts: [],
       bios_missing: [{ system: "Sony - PlayStation", path: "scph5501.bin" }],
+      scummvm_targets: ["monkey2", "atlantis"],
       executed: dryRun ? null : 4,
     };
   return invoke<RetroArchExport>("retroarch_export", { dryRun, installCores });

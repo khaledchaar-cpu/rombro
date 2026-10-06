@@ -56,6 +56,8 @@ pub struct Export {
     pub bios_conflicts: Vec<String>,
     /// Firmware of systems in the library that the library lacks (system, path).
     pub bios_missing: Vec<(String, String)>,
+    /// ScummVM targets added to or updated in `scummvm.ini` (game ids).
+    pub scummvm_targets: Vec<String>,
 }
 
 /// Plans the export. `library_files` maps whole-file SHA1 to a library path (from the index).
@@ -75,7 +77,24 @@ pub fn plan(
     if opts.bios {
         plan_bios(library, dirs, firmware, library_files, &systems, &mut ex);
     }
+    if opts.playlists {
+        plan_scummvm(library, dirs, &mut ex);
+    }
     ex
+}
+
+/// Targets in the core's `scummvm.ini` so ScummVM games start without asking.
+fn plan_scummvm(library: &Path, dirs: &Dirs, ex: &mut Export) {
+    let targets = super::scummvm::targets(library);
+    if targets.is_empty() {
+        return;
+    }
+    let path = dirs.system.join(super::scummvm::INI);
+    let ini = std::fs::read_to_string(&path).unwrap_or_default();
+    if let Some((contents, ids)) = super::scummvm::merge(&ini, &targets, library) {
+        ex.ops.push(Op::Write { path, contents });
+        ex.scummvm_targets = ids;
+    }
 }
 
 fn plan_playlists(library: &Path, dirs: &Dirs, cores: &[Core], opts: &Options, ex: &mut Export) {

@@ -5,6 +5,7 @@ pub mod export;
 pub mod firmware;
 pub mod info;
 pub mod pick;
+pub mod scummvm;
 
 use std::path::{Path, PathBuf};
 

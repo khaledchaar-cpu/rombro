@@ -57,7 +57,7 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    Import 4 Systeme (2026-10-06): DAT-benannte ZIPs ohne RDB-Treffer bekommen den DAT-Grund (Model 3 „not working“
    → Trash statt Quarantäne, ≥75 % Member-Treffer), `astrocde` → `Bally - Astrocade` (Namensordner, kein Core),
    GX4000-`.cpr` bleiben bewusst in `Amstrad - CPC` (RDB führt sie dort), geleerte Inbox-Bäume samt leerer
-   `media/*/default_*` werden entfernt. 2048-Byte-`.iso` (3DO u. a.) werden zusätzlich als rohe MODE1-Sektoren (EDC/ECC) gehasht (`hash::hash_iso`, Ergebnis in `headerless`).
+   `media/*/default_*` werden entfernt. 2048-Byte-`.iso` (3DO u. a.) werden zusätzlich als rohe MODE1-Sektoren (EDC/ECC) gehasht (`hash::hash_iso`, Ergebnis in `headerless`). RetroArch-Export schreibt ScummVM-Targets in `scummvm.ini` (`retroarch::scummvm`, Engine-Tabelle `data/scummvm-engines.tsv` aus scummvm-web `games.yaml`).
    Atomiswave/Naomi (2026-10-06): RDB nennt nur einen Key-Chip pro Spiel → ZIP mit diesem Chip = Set
    (`store::chipset`, `arcade::CHIP_KEYED`), vor der MAME-„not working“-Regel (Flycast, nicht MAME);
    `awbios`/`naomi`/`naomi2` → `_bios/dc/` (Export → `system/dc/`).

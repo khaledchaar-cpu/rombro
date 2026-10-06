@@ -56,6 +56,8 @@ pub struct RetroArchView {
     bios_present: usize,
     bios_conflicts: Vec<String>,
     bios_missing: Vec<MissingView>,
+    /// ScummVM targets added to or updated in `scummvm.ini`.
+    scummvm_targets: Vec<String>,
     /// Operations executed (`None` for a preview).
     executed: Option<usize>,
 }
@@ -192,6 +194,7 @@ pub async fn retroarch_export(
                 .into_iter()
                 .map(|(system, path)| MissingView { system, path })
                 .collect(),
+            scummvm_targets: ex.scummvm_targets,
             executed,
         })
     })
