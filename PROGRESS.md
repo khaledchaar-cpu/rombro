@@ -54,6 +54,10 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    Schema v11: DATs müssen einmal neu geladen werden („Sync databases“).
    **Offen:** Sichtprüfung App; doppeltes Quake (`Quake/quake` vs. `tyrquake`); RetroArch-Export entfernt keine
    veralteten Playlists im RetroArch-Ordner (z. B. alte `MAME.lpl`).
+   Import 4 Systeme (2026-10-06): DAT-benannte ZIPs ohne RDB-Treffer bekommen den DAT-Grund (Model 3 „not working“
+   → Trash statt Quarantäne, ≥75 % Member-Treffer), `astrocde` → `Bally - Astrocade` (Namensordner, kein Core),
+   GX4000-`.cpr` bleiben bewusst in `Amstrad - CPC` (RDB führt sie dort), geleerte Inbox-Bäume samt leerer
+   `media/*/default_*` werden entfernt.
 1. ✅ Rules-Seite abgenommen (User, 2026-10-06). Alte Entscheidungen ohne gespeicherten Grund → „reason not recorded“.
 2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
    Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.
