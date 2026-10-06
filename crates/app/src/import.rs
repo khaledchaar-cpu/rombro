@@ -163,7 +163,9 @@ pub async fn plan_import(
             inbox: inbox_root,
             ignore: store.ignored().map_err(err)?,
         };
-        Ok((plan::build(&items, &lib, &opts), items.len()))
+        let p = plan::build(&items, &lib, &opts);
+        store.set_rule_hits(&p.why).map_err(err)?;
+        Ok((p, items.len()))
     })
     .await
     .map_err(err)??;

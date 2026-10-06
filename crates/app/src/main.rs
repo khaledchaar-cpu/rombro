@@ -30,6 +30,8 @@ fn main() {
             library::library_list,
             settings::rules_get,
             settings::rules_set,
+            settings::rules_defaults,
+            settings::rules_catalog,
             exceptions::exceptions_get,
             exceptions::ignore_set,
             exceptions::resolution_clear,

@@ -13,3 +13,10 @@
 .flag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--sp-2); }
 .check { display: flex; align-items: center; gap: var(--sp-2); cursor: pointer; }
 .check input { accent-color: var(--accent); }
+.tag { border: 1px solid var(--line-strong); padding: 0 var(--sp-1); font-size: 0.8em; white-space: nowrap; }
+.rule-head { align-items: center; margin-bottom: var(--sp-1); }
+.rule-head .btn { margin-left: auto; }
+.save-bar { position: sticky; top: 0; z-index: 1; align-items: center; background: var(--bg); padding: var(--sp-2) 0; margin: 0; }
+.ex-row { align-items: center; margin-bottom: var(--sp-1); }
+.ex-row .ellipsis { flex: 1; }
+.override { border-left: 2px solid var(--line-strong); padding-left: var(--sp-2); margin-bottom: var(--sp-2); }

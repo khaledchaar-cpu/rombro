@@ -59,7 +59,7 @@ function OpList() {
                 <span class="ellipsis" title={op().to}>
                   {rel(op().to)}
                 </span>
-                <span class="ellipsis why" title={op().why}>
+                <span class="ellipsis why" title={`rule: ${op().rule}`}>
                   {op().why}
                 </span>
               </div>

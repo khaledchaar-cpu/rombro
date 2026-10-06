@@ -38,6 +38,7 @@ pub fn run(a: Args) -> Result<()> {
         ignore: store.ignored()?,
     };
     let p = plan::build(&items, &library, &opts);
+    store.set_rule_hits(&p.why)?;
     for (op, why) in p.ops.iter().zip(&p.why) {
         println!("{}  [{}]", describe(op, &library), why.rule.id());
     }

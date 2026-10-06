@@ -25,6 +25,7 @@ fn prefix(root: &Path) -> String {
 
 const RULES_KEY: &str = "rules";
 const IGNORE_KEY: &str = "ignore";
+const HITS_KEY: &str = "rule_hits";
 
 fn now() -> i64 {
     std::time::SystemTime::now()
@@ -74,6 +75,19 @@ impl Store {
     pub fn set_ignored(&self, paths: &[PathBuf]) -> Result<()> {
         let json = serde_json::to_string(paths).unwrap_or_default();
         self.set_setting(IGNORE_KEY, &json)
+    }
+
+    /// Planned ops per rule id from the last plan (setting `rule_hits`).
+    pub fn rule_hits(&self) -> Result<std::collections::BTreeMap<String, usize>> {
+        Ok(self
+            .setting(HITS_KEY)?
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default())
+    }
+
+    pub fn set_rule_hits(&self, why: &[rombro_core::rules::Why]) -> Result<()> {
+        let json = serde_json::to_string(&rombro_core::rules::hits(why)).unwrap_or_default();
+        self.set_setting(HITS_KEY, &json)
     }
 
     pub fn library(&self) -> Result<Option<PathBuf>> {

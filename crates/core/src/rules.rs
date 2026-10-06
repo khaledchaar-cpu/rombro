@@ -100,6 +100,15 @@ impl Rule {
     }
 }
 
+/// Planned ops per rule id (rules without ops are left out).
+pub fn hits(why: &[Why]) -> std::collections::BTreeMap<&'static str, usize> {
+    let mut m = std::collections::BTreeMap::new();
+    for w in why {
+        *m.entry(w.rule.id()).or_insert(0) += 1;
+    }
+    m
+}
+
 /// Reason for one planned op: the rule plus case-specific detail.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Why {

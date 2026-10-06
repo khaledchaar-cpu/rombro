@@ -3125,6 +3125,7 @@ dependencies = [
  "rombro-core",
  "rombro-rdb",
  "rombro-store",
+ "serde_json",
 ]
 
 [[package]]

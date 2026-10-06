@@ -512,3 +512,51 @@ export async function gamifyEnabledSet(on: boolean): Promise<void> {
   if (!inTauri) return;
   return invoke("gamify_enabled_set", { on });
 }
+
+export interface RuleInfo {
+  id: string;
+  title: string;
+  explain: string;
+  hits: number;
+}
+
+export async function rulesCatalog(): Promise<RuleInfo[]> {
+  if (!inTauri)
+    return [
+      { id: "g1r-pick", title: "1G1R pick", explain: "One release per game: region order, language, fewest variant flags.", hits: 1234 },
+      { id: "arcade-set", title: "Arcade romset", explain: "Arcade zips matched as a whole, grouped by title.", hits: 87 },
+      { id: "game-folder", title: "Game folder", explain: "DOS/ScummVM/ports moved as whole folders.", hits: 12 },
+      { id: "quarantine", title: "Quarantine", explain: "Files without database match go to _quarantine.", hits: 5270 },
+      { id: "playlist", title: "RetroArch playlist", explain: "One .lpl per system.", hits: 30 },
+    ];
+  return invoke<RuleInfo[]>("rules_catalog");
+}
+
+export async function rulesDefaults(): Promise<Rules> {
+  if (!inTauri) return mockRules();
+  return invoke<Rules>("rules_defaults");
+}
+
+export interface Exceptions {
+  verdicts: { system: string; name: string; verdict: "keep" | "discard" | "prefer" }[];
+  resolutions: { sha1: string; system: string; name: string }[];
+  ignored: string[];
+}
+
+export async function exceptionsGet(): Promise<Exceptions> {
+  if (!inTauri)
+    return {
+      verdicts: [{ system: "Nintendo - SNES", name: "Mario (USA)", verdict: "keep" }],
+      resolutions: [{ sha1: "00ab", system: "Sony - PlayStation", name: "Final Fantasy VII (Europe) (Disc 1)" }],
+      ignored: ["/roms/frontend-media"],
+    };
+  return invoke<Exceptions>("exceptions_get");
+}
+
+export async function ignoreSet(paths: string[]): Promise<void> {
+  if (inTauri) await invoke("ignore_set", { paths });
+}
+
+export async function resolutionClear(sha1: string): Promise<void> {
+  if (inTauri) await invoke("resolution_clear", { sha1 });
+}

@@ -1,6 +1,7 @@
 mod db;
 mod g1r;
 mod import;
+mod rules;
 mod scan;
 
 use clap::{Parser, Subcommand};
@@ -56,6 +57,14 @@ enum Cmd {
         library: PathBuf,
         #[command(flatten)]
         opts: PlanOpts,
+    },
+    /// Show planner rules (explanation, ops in the last plan, settings) or load settings
+    Rules {
+        /// JSON file with rules to store
+        #[arg(long)]
+        set: Option<PathBuf>,
+        #[arg(long)]
+        db: Option<PathBuf>,
     },
     /// Revert the most recent import/audit execution
     Undo {
@@ -127,6 +136,7 @@ fn main() -> anyhow::Result<()> {
             opts,
         } => import::run(opts.args(Some(inbox), library)),
         Cmd::Audit { library, opts } => import::run(opts.args(None, library)),
+        Cmd::Rules { set, db } => rules::run(set, db),
         Cmd::Undo { db } => import::undo(db),
         Cmd::Resolve { file, pick, db } => import::resolve(file, pick, db),
     }
