@@ -68,6 +68,37 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     for (root, fg) in &folder_games {
         b.folder_game(root, fg);
     }
+    // all items, for trashing archives whose members were all handled
+    let archived = items.clone();
+    let disk_sets = archives::disk_sets(&items);
+    for (archive, members) in &disk_sets {
+        b.disk_set(archive, members);
+    }
+    // multi-disk games already in the library (`<Game>/<Game>.m3u`) are finished units:
+    // their disks may carry inconsistent database names and must not be renamed apart
+    let mut placed_sets: BTreeMap<&Path, &Game> = BTreeMap::new();
+    let items: Vec<&Item> = items
+        .into_iter()
+        .filter(|it| {
+            if it
+                .files
+                .archive()
+                .is_some_and(|a| disk_sets.contains_key(a.as_path()))
+            {
+                return false;
+            }
+            match (&it.ident, it.files.primary().parent()) {
+                (Ident::Known(g), Some(dir)) if it.in_library && has_own_m3u(dir) => {
+                    placed_sets.entry(dir).or_insert(g);
+                    false
+                }
+                _ => true,
+            }
+        })
+        .collect();
+    for (dir, g) in placed_sets {
+        b.placed_set(dir, g);
+    }
     let mut known: BTreeMap<&str, Vec<(&Item, &Game)>> = BTreeMap::new();
     let mut arcade: Vec<(&Item, &Game)> = Vec::new();
     for &it in &items {
@@ -170,7 +201,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             }
         }
     }
-    b.finish_archives(&items);
+    b.finish_archives(&archived);
     b.playlists();
     b.plan
 }
@@ -298,6 +329,22 @@ impl Builder<'_> {
                 });
             }
         }
+    }
+
+    /// A multi-disc game already in place: keeps its files, gets its playlist entry.
+    fn placed_set(&mut self, dir: &Path, g: &Game) {
+        let Some(name) = dir.file_name().map(|n| n.to_string_lossy().into_owned()) else {
+            return;
+        };
+        self.plan.unchanged += 1;
+        self.lpl
+            .entry(g.system.clone())
+            .or_default()
+            .push(lpl::Entry {
+                path: dir.join(format!("{name}.m3u")),
+                label: name,
+                crc: g.crc,
+            });
     }
 
     /// The best system whose slot for this set's short name is free: another version under
@@ -428,6 +475,12 @@ impl Builder<'_> {
             reason,
         });
     }
+}
+
+/// Whether `dir` holds the `.m3u` named after itself (a placed multi-disc game).
+fn has_own_m3u(dir: &Path) -> bool {
+    dir.file_name()
+        .is_some_and(|n| dir.join(format!("{}.m3u", n.to_string_lossy())).is_file())
 }
 
 fn ext_of(p: &Path) -> String {

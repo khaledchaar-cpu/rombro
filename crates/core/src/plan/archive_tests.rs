@@ -363,3 +363,59 @@ fn version_listed_in_one_system_only_gets_that_slot() {
         ]
     );
 }
+
+#[test]
+fn multi_disk_archive_becomes_one_game_folder_with_m3u() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let a = inbox.join("Afterburner (Europe).zip");
+    let (d1, d2) = (
+        "Afterburner (Europe) (Disk A).ipf",
+        "Afterburner (Europe) (Disk B).ipf",
+    );
+    zip(&a, &[d1, d2]);
+    // the database names the two disks inconsistently
+    let items = [
+        member(&a, d1, game("Afterburner (Europe) (Disk 1)")),
+        member(&a, d2, game("Afterburner (Europe)")),
+    ];
+    let mut o = opts(Mode::Move);
+    o.playlists = Some(lib.join("_playlists"));
+    let plan = build(&items, &lib, &o);
+    assert!(plan.decisions.is_empty(), "{:?}", plan.decisions);
+    assert_eq!(plan.placed, 1);
+    assert!(execute(&plan.ops).error.is_none());
+    let dir = format!("{SYS}/Afterburner (Europe)");
+    assert_eq!(
+        tree(&lib),
+        [
+            format!("{dir}/Afterburner (Europe) (Disk A).ipf"),
+            format!("{dir}/Afterburner (Europe) (Disk B).ipf"),
+            format!("{dir}/Afterburner (Europe).m3u"),
+            format!("_playlists/{SYS}.lpl"),
+            "_trash/Afterburner (Europe).zip".to_owned(),
+        ]
+    );
+    assert_eq!(
+        fs::read_to_string(lib.join(&dir).join("Afterburner (Europe).m3u")).unwrap(),
+        format!("{d1}\n{d2}\n")
+    );
+
+    // re-planning the library keeps the folder as it is
+    let lib_items = [
+        Item {
+            files: Files::Single(lib.join(&dir).join(d1)),
+            ident: game("Afterburner (Europe) (Disk 1)"),
+            in_library: true,
+        },
+        Item {
+            files: Files::Single(lib.join(&dir).join(d2)),
+            ident: game("Afterburner (Europe)"),
+            in_library: true,
+        },
+    ];
+    let again = build(&lib_items, &lib, &o);
+    assert!(again.decisions.is_empty());
+    assert_eq!(again.unchanged, 1);
+    assert!(again.ops.iter().all(|op| matches!(op, Op::Write { .. })));
+}
