@@ -244,6 +244,12 @@ pub async fn execute_plan(pending: State<'_, Pending>) -> CmdResult<ExecResult> 
         } else {
             let (store, _) = open_store()?;
             store.index_executed(&ex.done).map_err(err)?;
+            let inbox = store.setting("inbox").map_err(err)?.map(PathBuf::from);
+            let roots: Vec<&std::path::Path> = [Some(library.as_path()), inbox.as_deref()]
+                .into_iter()
+                .flatten()
+                .collect();
+            plan::prune_emptied(&ex.done, &roots);
             Some(
                 store
                     .add_journal(

@@ -16,7 +16,8 @@ pub mod trash;
 
 pub use build::{FOLDER_SYSTEMS, build};
 pub use ops::{
-    Done, Execution, Op, execute, execute_progress, journal_from_json, journal_to_json, undo,
+    Done, Execution, Op, execute, execute_progress, journal_from_json, journal_to_json,
+    prune_emptied, undo,
 };
 
 use crate::g1r::Rules;

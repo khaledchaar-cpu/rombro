@@ -108,4 +108,27 @@ mod tests {
         assert!(crate::plan::undo(&r.done).is_empty());
         assert!(inbox.join("sdlpop/images/box.png").is_file());
     }
+
+    #[test]
+    fn prunes_only_folders_emptied_by_the_moves() {
+        let tmp = tempfile::tempdir().unwrap();
+        let lib = tmp.path().join("lib");
+        let src = lib.join("Quake/quake/images/a.png");
+        fs::create_dir_all(src.parent().unwrap()).unwrap();
+        fs::create_dir_all(lib.join("Untouched/empty")).unwrap();
+        fs::create_dir_all(lib.join("Quake/tyrquake")).unwrap();
+        fs::write(&src, b"png").unwrap();
+        let ops = [Op::Move {
+            from: src.clone(),
+            to: lib.join("_trash/a.png"),
+        }];
+        let r = crate::plan::execute(&ops);
+        // images/ and quake/ emptied; Quake/ keeps tyrquake, Untouched/empty is not ours
+        assert_eq!(crate::plan::prune_emptied(&r.done, &[lib.as_path()]), 2);
+        assert!(!lib.join("Quake/quake").exists());
+        assert!(lib.join("Quake/tyrquake").is_dir());
+        assert!(lib.join("Untouched/empty").is_dir());
+        assert!(crate::plan::undo(&r.done).is_empty());
+        assert!(src.is_file());
+    }
 }

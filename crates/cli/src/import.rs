@@ -37,7 +37,7 @@ pub fn run(a: Args) -> Result<()> {
         playlists: (!a.no_playlists)
             .then(|| a.playlists.unwrap_or_else(|| library.join(PLAYLIST_DIR))),
         verdicts: store.verdicts()?,
-        inbox,
+        inbox: inbox.clone(),
         ignore: store.ignored()?,
     };
     let p = plan::build(&items, &library, &opts);
@@ -70,6 +70,14 @@ pub fn run(a: Args) -> Result<()> {
         return Ok(());
     }
     let ex = plan::execute(&p.ops);
+    let roots: Vec<&Path> = [Some(library.as_path()), inbox.as_deref()]
+        .into_iter()
+        .flatten()
+        .collect();
+    let pruned = plan::prune_emptied(&ex.done, &roots);
+    if pruned > 0 {
+        println!("removed {pruned} emptied folders");
+    }
     if !ex.done.is_empty() {
         let id = store.add_journal(
             ts,

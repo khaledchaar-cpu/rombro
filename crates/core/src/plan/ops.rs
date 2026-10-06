@@ -143,6 +143,33 @@ fn apply(op: &Op) -> io::Result<Done> {
     })
 }
 
+/// Removes folders that `done` moved files out of and that are empty now, walking up to
+/// (never including) one of `roots`; folders outside every root are left alone. Undo
+/// recreates them. Returns how many were removed.
+pub fn prune_emptied(done: &[Done], roots: &[&Path]) -> usize {
+    let dirs: std::collections::BTreeSet<&Path> = done
+        .iter()
+        .filter_map(|d| match &d.op {
+            Op::Move { from, .. } => from.parent(),
+            _ => None,
+        })
+        .collect();
+    let mut n = 0;
+    // deepest first, so emptied parents are seen after their children
+    for dir in dirs.into_iter().rev() {
+        let Some(root) = roots.iter().find(|r| dir.starts_with(r)) else {
+            continue;
+        };
+        for d in dir.ancestors().take_while(|d| d != root) {
+            if fs::remove_dir(d).is_err() {
+                break;
+            }
+            n += 1;
+        }
+    }
+    n
+}
+
 /// Reverts completed operations in reverse order. Continues past failures and returns them.
 pub fn undo(done: &[Done]) -> Vec<(Op, io::Error)> {
     let mut errors = Vec::new();
