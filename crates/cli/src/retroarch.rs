@@ -87,6 +87,9 @@ pub fn run(a: Args) -> Result<()> {
             .unwrap_or("no installed core – RetroArch asks");
         println!("PLAYLIST {system}  [{core}]");
     }
+    for system in &ex.playlists_no_core {
+        println!("NO CORE  {system}  (no RetroArch core runs it – no playlist)");
+    }
     for name in &ex.playlists_removed {
         println!("REMOVE   {name}  (no games left – to the trash)");
     }

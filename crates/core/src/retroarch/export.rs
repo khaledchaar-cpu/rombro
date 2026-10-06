@@ -42,6 +42,8 @@ pub struct Export {
     pub downloads: Vec<(String, PathBuf)>,
     /// Wanted cores that are missing and not to be installed (system, core id).
     pub cores_missing: Vec<(String, String)>,
+    /// Systems no known core runs (no core info lists them): their playlist is not exported.
+    pub playlists_no_core: Vec<String>,
     /// Earlier exported playlists whose system has no games left (moved to the trash).
     pub playlists_removed: Vec<String>,
     /// Playlists already up to date.
@@ -94,6 +96,11 @@ fn plan_playlists(library: &Path, dirs: &Dirs, cores: &[Core], opts: &Options, e
             .file_stem()
             .map(|s| s.to_string_lossy().into_owned())
             .unwrap_or_default();
+        // RetroArch could not start any entry (e.g. Solarus: standalone engine only)
+        if !cores.is_empty() && pick::resolve(cores, &system, &opts.picks, true).is_none() {
+            ex.playlists_no_core.push(system);
+            continue;
+        }
         let Ok(text) = std::fs::read_to_string(&src) else {
             continue;
         };
@@ -141,8 +148,14 @@ fn plan_stale(library: &Path, dirs: &Dirs, ex: &mut Export) {
         .filter_map(|e| e.ok().map(|e| e.path()))
         .filter(|p| p.extension().is_some_and(|e| e == "lpl"))
         .filter(|p| {
+            // systems without core count as gone: an old export of theirs is stale too
+            let no_core = p.file_stem().is_some_and(|s| {
+                ex.playlists_no_core
+                    .iter()
+                    .any(|n| *s.to_string_lossy() == *n)
+            });
             p.file_name()
-                .is_some_and(|n| !library.join(PLAYLIST_DIR).join(n).exists())
+                .is_some_and(|n| no_core || !library.join(PLAYLIST_DIR).join(n).exists())
         })
         .filter(|p| from_library(p, library))
         .collect();
@@ -397,9 +410,18 @@ mod tests {
         .unwrap();
         let gone = plan(&lib, &dirs, &cores, &firmware, &files, &opts);
         assert_eq!(gone.playlists_removed, ["MAME.lpl"]);
+        assert!(gone.playlists_no_core.is_empty());
         assert!(crate::plan::execute(&gone.ops).error.is_none());
         assert!(lib.join("_trash/playlists/MAME.lpl").exists());
         assert!(ra.join("playlists/Mine.lpl").exists());
+
+        // a system no core runs gets no playlist (an old export of it goes to the trash)
+        let z = item(&lib.join("Solarus/z.solarus"));
+        fs::write(lib.join("_playlists/Solarus.lpl"), &z).unwrap();
+        fs::write(ra.join("playlists/Solarus.lpl"), &z).unwrap();
+        let none = plan(&lib, &dirs, &cores, &firmware, &files, &opts);
+        assert_eq!(none.playlists_no_core, ["Solarus"]);
+        assert_eq!(none.playlists_removed, ["Solarus.lpl"]);
     }
 
     #[test]

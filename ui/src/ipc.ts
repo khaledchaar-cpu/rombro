@@ -453,6 +453,8 @@ export interface RetroArchExport {
   playlists_unchanged: number;
   /** Exported playlists of systems without games left, moved to the library trash. */
   playlists_removed: string[];
+  /** Systems no RetroArch core runs: no playlist exported. */
+  playlists_no_core: string[];
   bios_copied: string[];
   bios_present: number;
   bios_conflicts: string[];
@@ -514,6 +516,7 @@ export async function retroarchExport(dryRun: boolean, installCores: boolean): P
       ],
       playlists_unchanged: 3,
       playlists_removed: ["MAME.lpl"],
+      playlists_no_core: ["Solarus"],
       bios_copied: ["STBIOS.bin", "fbneo/neogeo.zip"],
       bios_present: 2,
       bios_conflicts: [],

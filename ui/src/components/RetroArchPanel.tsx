@@ -74,6 +74,9 @@ export default function RetroArchPanel() {
                 , {r().playlists_removed.length} to the trash (no games left):{" "}
                 {r().playlists_removed.join(", ")}
               </Show>
+              <Show when={r().playlists_no_core.length}>
+                , no RetroArch core for: {r().playlists_no_core.join(", ")}
+              </Show>
             </h4>
             <For each={r().playlists}>
               {(p) => (
