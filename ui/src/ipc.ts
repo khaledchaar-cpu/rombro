@@ -48,6 +48,8 @@ export interface SyncSummary {
   unchanged: number;
   removed: number;
   entries: number;
+  dats_updated: number;
+  dat_warnings: string[];
 }
 
 export async function dbSync(dir: string | null): Promise<SyncSummary> {
@@ -58,6 +60,8 @@ export async function dbSync(dir: string | null): Promise<SyncSummary> {
       unchanged: 146,
       removed: 0,
       entries: 0,
+      dats_updated: 0,
+      dat_warnings: [],
     };
   return invoke<SyncSummary>("db_sync", { dir });
 }

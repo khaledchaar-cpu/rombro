@@ -69,6 +69,23 @@ fn sync(dir: PathBuf, db: Option<PathBuf>) -> Result<()> {
         r.removed,
         start.elapsed()
     );
+    let start = Instant::now();
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs() as i64);
+    let d = store.sync_dats(now)?;
+    for (system, version) in &d.updated {
+        println!("DAT {system}: {version}");
+    }
+    for w in &d.warnings {
+        eprintln!("warning: DAT {w}");
+    }
+    println!(
+        "arcade DATs: {} updated, {} unchanged in {:.0?}",
+        d.updated.len(),
+        d.unchanged,
+        start.elapsed()
+    );
     Ok(())
 }
 

@@ -2,6 +2,7 @@
 
 mod catalog;
 mod dat;
+mod dat_sync;
 mod disc;
 mod files;
 mod gamify;
@@ -14,6 +15,8 @@ mod schema;
 #[cfg(test)]
 mod tests;
 
+pub use dat::DatInfo;
+pub use dat_sync::DatSyncReport;
 pub use disc::DiscMatch;
 pub use gamify::Stats;
 pub use identify::{Match, candidates};

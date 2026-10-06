@@ -36,11 +36,13 @@ export default function Dashboard(props: {
     setSyncMsg("syncing…");
     try {
       const r = await dbSync(d);
-      setSyncMsg(
+      const rdbs =
         r.imported + r.removed === 0
           ? `Already up to date · ${r.unchanged} RDBs unchanged`
-          : `${r.imported} imported · ${r.unchanged} unchanged · ${r.removed} removed`,
-      );
+          : `${r.imported} imported · ${r.unchanged} unchanged · ${r.removed} removed`;
+      const dats = r.dats_updated > 0 ? ` · ${r.dats_updated} arcade DATs updated` : "";
+      const warn = r.dat_warnings.length > 0 ? ` · DAT warning: ${r.dat_warnings.join("; ")}` : "";
+      setSyncMsg(rdbs + dats + warn);
       void refetch();
     } catch (e) {
       setSyncMsg(String(e));

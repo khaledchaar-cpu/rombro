@@ -147,6 +147,10 @@ pub struct SyncSummary {
     unchanged: usize,
     removed: usize,
     entries: u64,
+    /// Arcade DATs newly loaded (SPEC F8).
+    dats_updated: usize,
+    /// DATs that could not be refreshed (offline, …).
+    dat_warnings: Vec<String>,
 }
 
 /// Imports RetroArch RDBs from `dir` (or the auto-detected folder) into the database.
@@ -160,12 +164,21 @@ pub async fn db_sync(dir: Option<PathBuf>) -> CmdResult<SyncSummary> {
         };
         let (mut store, _) = open_store()?;
         let r = store.sync_rdbs(&dir).map_err(err)?;
+        let d = store
+            .sync_dats(
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map_or(0, |d| d.as_secs() as i64),
+            )
+            .map_err(err)?;
         Ok(SyncSummary {
             dir: dir.display().to_string(),
             imported: r.imported,
             unchanged: r.unchanged,
             removed: r.removed,
             entries: r.entries as u64,
+            dats_updated: d.updated.len(),
+            dat_warnings: d.warnings,
         })
     })
     .await
