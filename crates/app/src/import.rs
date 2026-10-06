@@ -161,6 +161,7 @@ pub async fn plan_import(
             playlists: Some(lib.join(PLAYLIST_DIR)),
             verdicts: store.verdicts().map_err(err)?,
             inbox: inbox_root,
+            ignore: store.ignored().map_err(err)?,
         };
         Ok((plan::build(&items, &lib, &opts), items.len()))
     })

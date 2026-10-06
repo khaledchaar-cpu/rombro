@@ -89,6 +89,21 @@ impl Store {
             .optional()?)
     }
 
+    /// All stored resolutions as (sha1, system, name).
+    pub fn resolutions(&self) -> Result<Vec<(Vec<u8>, String, String)>> {
+        let mut st = self
+            .conn
+            .prepare("SELECT sha1, system, name FROM resolution ORDER BY system, name")?;
+        let rows = st.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
+
+    pub fn clear_resolution(&self, sha1: &[u8]) -> Result<()> {
+        self.conn
+            .execute("DELETE FROM resolution WHERE sha1 = ?1", [sha1])?;
+        Ok(())
+    }
+
     /// Stores (or with `None` clears) the user's verdict on a release 1G1R rejected.
     pub fn set_verdict(&self, system: &str, name: &str, v: Option<Verdict>) -> Result<()> {
         match v {

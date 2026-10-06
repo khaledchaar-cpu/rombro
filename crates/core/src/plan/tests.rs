@@ -35,6 +35,7 @@ fn opts(mode: Mode) -> Options {
         playlists: None,
         verdicts: Default::default(),
         inbox: None,
+        ignore: Vec::new(),
     }
 }
 
@@ -318,6 +319,7 @@ fn quarantine_keeps_inbox_subfolders_so_equal_names_do_not_clash() {
     ];
     let o = Options {
         inbox: Some(inbox.clone()),
+        ignore: Vec::new(),
         ..opts(Mode::Move)
     };
     let plan = build(&items, &lib, &o);
@@ -362,6 +364,7 @@ fn unknown_files_in_folders_without_matches_stay_put() {
     ];
     let o = Options {
         inbox: Some(inbox.clone()),
+        ignore: Vec::new(),
         ..opts(Mode::Move)
     };
     let plan = build(&items, &lib, &o);
@@ -406,6 +409,7 @@ fn game_folder_moves_whole_under_its_own_name() {
     ];
     let o = Options {
         inbox: Some(inbox.clone()),
+        ignore: Vec::new(),
         ..opts(Mode::Move)
     };
     let plan = build(&items, &lib, &o);
@@ -457,6 +461,7 @@ fn game_folder_keeps_its_name_when_the_key_file_is_shared() {
     ];
     let o = Options {
         inbox: Some(inbox.clone()),
+        ignore: Vec::new(),
         ..opts(Mode::Move)
     };
     execute(&build(&items, &lib, &o).ops);

@@ -24,6 +24,7 @@ fn prefix(root: &Path) -> String {
 }
 
 const RULES_KEY: &str = "rules";
+const IGNORE_KEY: &str = "ignore";
 
 fn now() -> i64 {
     std::time::SystemTime::now()
@@ -60,6 +61,19 @@ impl Store {
     pub fn set_rules(&self, rules: &rombro_core::g1r::Rules) -> Result<()> {
         let json = serde_json::to_string(rules).unwrap_or_default();
         self.set_setting(RULES_KEY, &json)
+    }
+
+    /// Paths the user excluded from planning (setting `ignore`, JSON list).
+    pub fn ignored(&self) -> Result<Vec<PathBuf>> {
+        Ok(self
+            .setting(IGNORE_KEY)?
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default())
+    }
+
+    pub fn set_ignored(&self, paths: &[PathBuf]) -> Result<()> {
+        let json = serde_json::to_string(paths).unwrap_or_default();
+        self.set_setting(IGNORE_KEY, &json)
     }
 
     pub fn library(&self) -> Result<Option<PathBuf>> {

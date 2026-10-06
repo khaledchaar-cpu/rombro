@@ -3,6 +3,7 @@
 
 mod commands;
 mod decide;
+mod exceptions;
 mod gamify;
 mod import;
 mod library;
@@ -29,6 +30,9 @@ fn main() {
             library::library_list,
             settings::rules_get,
             settings::rules_set,
+            exceptions::exceptions_get,
+            exceptions::ignore_set,
+            exceptions::resolution_clear,
             thumbs::thumbnail,
             thumbs::thumbs_online_get,
             thumbs::thumbs_online_set,

@@ -43,6 +43,7 @@ fn opts(mode: Mode) -> Options {
         playlists: None,
         verdicts: Default::default(),
         inbox: None,
+        ignore: Vec::new(),
     }
 }
 

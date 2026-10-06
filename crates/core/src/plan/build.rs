@@ -38,6 +38,10 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     let items: Vec<&Item> = items
         .iter()
         .filter(|it| !managed.iter().any(|m| it.files.primary().starts_with(m)))
+        .filter(|it| {
+            let p = it.files.archive().unwrap_or(it.files.primary());
+            !opts.ignore.iter().any(|i| p.starts_with(i))
+        })
         .collect();
 
     // Archives with any unknown member stay whole (e.g. multi-disk games where only some

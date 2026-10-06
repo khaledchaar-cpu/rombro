@@ -126,6 +126,8 @@ pub struct Options {
     pub verdicts: HashMap<(String, String), Verdict>,
     /// Inbox root; quarantined files keep their path below it (no clashes on equal names).
     pub inbox: Option<PathBuf>,
+    /// Paths the user excluded: nothing at or below them is planned (left as is).
+    pub ignore: Vec<PathBuf>,
 }
 
 /// What to do with a release 1G1R rejected (TBD queue).

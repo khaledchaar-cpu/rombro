@@ -35,6 +35,7 @@ pub fn run(a: Args) -> Result<()> {
             .then(|| a.playlists.unwrap_or_else(|| library.join(PLAYLIST_DIR))),
         verdicts: store.verdicts()?,
         inbox,
+        ignore: store.ignored()?,
     };
     let p = plan::build(&items, &library, &opts);
     for (op, why) in p.ops.iter().zip(&p.why) {

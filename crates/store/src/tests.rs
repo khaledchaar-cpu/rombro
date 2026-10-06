@@ -1,5 +1,5 @@
 use crate::Store;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Minimal MessagePack encoders for synthetic RDB fixtures.
 fn str_(s: &str) -> Vec<u8> {
@@ -289,6 +289,7 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
         playlists: None,
         verdicts: Default::default(),
         inbox: None,
+        ignore: Vec::new(),
     };
     let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
     let p = plan::build(&items, &lib, &opts);
@@ -466,4 +467,16 @@ fn arcade_chip_inside_unknown_zip_is_not_identified() {
     let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
     assert!(!items.is_empty());
     assert!(items.iter().all(|it| matches!(it.ident, Ident::Unknown)));
+}
+
+#[test]
+fn exceptions_roundtrip() {
+    let s = Store::open_in_memory().unwrap();
+    assert!(s.ignored().unwrap().is_empty());
+    s.set_ignored(&[PathBuf::from("/roms/keep")]).unwrap();
+    assert_eq!(s.ignored().unwrap(), [PathBuf::from("/roms/keep")]);
+    s.set_resolution(&[1, 2], "Sys", "Game").unwrap();
+    assert_eq!(s.resolutions().unwrap().len(), 1);
+    s.clear_resolution(&[1, 2]).unwrap();
+    assert!(s.resolutions().unwrap().is_empty());
 }

@@ -30,6 +30,7 @@ fn opts(rules: Rules) -> Options {
         playlists: None,
         verdicts: Default::default(),
         inbox: None,
+        ignore: Vec::new(),
     }
 }
 
@@ -84,4 +85,20 @@ fn arcade_rank_follows_user_order() {
     // unlisted arcade DBs after listed ones, non-arcade last
     assert!(rank_in(&order, "HBMAME") > rank_in(&order, "FBNeo - Arcade Games"));
     assert!(rank_in(&order, "HBMAME") < rank_in(&order, "Sony - PlayStation"));
+}
+
+#[test]
+fn ignored_paths_are_never_planned() {
+    let tmp = TempDir::new().unwrap();
+    let inbox = tmp.path().join("inbox");
+    let mut unknown = known(&inbox.join("keep"), "x.bin", "x");
+    unknown.ident = Ident::Unknown;
+    let items = [
+        known(&inbox.join("keep"), "a.sfc", "Mario (Europe)"),
+        unknown,
+    ];
+    let mut o = opts(Rules::default());
+    o.ignore = vec![inbox.join("keep")];
+    let p = build(&items, &tmp.path().join("lib"), &o);
+    assert!(p.ops.is_empty() && p.decisions.is_empty(), "{p:?}");
 }
