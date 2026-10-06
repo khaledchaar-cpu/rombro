@@ -259,6 +259,10 @@ fn scan_disc_cached(
         if let Some(mut hit) = cache
             .get(t)
             .filter(|h| h.len() == 1 && (!cd_iso || h[0].headerless.is_some()))
+            // entries cached before `.cso` support hold the compressed file's hashes
+            .filter(|h| {
+                !disc::is_cso(t) || std::fs::metadata(t).is_ok_and(|m| m.len() != h[0].hashes.size)
+            })
         {
             hashed.append(&mut hit);
             continue;
@@ -266,6 +270,9 @@ fn scan_disc_cached(
         let (hashes, raw) = if cd_iso {
             // 2048-byte sectors: also hash as raw sectors, as the databases list them
             crate::hash::hash_iso(BufReader::new(counter.wrap(File::open(t)?)))?
+        } else if disc::is_cso(t) {
+            let data = disc::cso::CsoReader::open(t)?;
+            hash_reader(BufReader::new(counter.wrap(data)), None, false)?
         } else if kind == DiscKind::Nintendo {
             // compressed container: no database hash exists; the header identifies the file
             hash_reader(File::open(t)?.take(1 << 16), None, false)?

@@ -2,6 +2,7 @@
 
 pub mod cdsector;
 pub mod chd;
+pub mod cso;
 pub mod iso9660;
 pub mod nintendo;
 pub mod serial;
@@ -20,6 +21,8 @@ pub enum DiscKind {
     Gdi,
     Iso,
     Chd,
+    /// Compressed ISO (PSP): hashed and identified as the ISO it unpacks to.
+    Cso,
     /// GameCube/Wii container (RVZ, WIA, WBFS, CISO): identified by game ID only.
     Nintendo,
 }
@@ -31,6 +34,7 @@ impl DiscKind {
             "gdi" => Some(Self::Gdi),
             "iso" => Some(Self::Iso),
             "chd" => Some(Self::Chd),
+            "cso" => Some(Self::Cso),
             e if nintendo::is_container_ext(e) => Some(Self::Nintendo),
             _ => None,
         }
@@ -42,7 +46,7 @@ impl DiscKind {
 pub fn tracks(path: &Path, kind: DiscKind) -> io::Result<(Vec<PathBuf>, Vec<PathBuf>)> {
     let dir = path.parent().unwrap_or(Path::new("."));
     let listed = match kind {
-        DiscKind::Iso | DiscKind::Chd | DiscKind::Nintendo => {
+        DiscKind::Iso | DiscKind::Chd | DiscKind::Cso | DiscKind::Nintendo => {
             return Ok((vec![path.to_path_buf()], Vec::new()));
         }
         DiscKind::Cue => sheet::parse_cue(&read_text(path)?, dir),
@@ -73,7 +77,9 @@ pub fn identify(tracks: &[PathBuf]) -> io::Result<Option<DiscId>> {
         if nintendo::is_container_ext(&ext) {
             continue;
         }
-        let id = if is_chd(t) {
+        let id = if is_cso(t) {
+            serial::detect(&mut Track::open(BufReader::new(cso::CsoReader::open(t)?))?)?
+        } else if is_chd(t) {
             match chd::ChdTrack::open(t)? {
                 Some(data) => serial::detect(&mut Track::open(BufReader::new(data))?)?,
                 None => None,
@@ -100,6 +106,11 @@ pub fn is_cd_iso(path: &Path) -> bool {
 pub fn is_chd(path: &Path) -> bool {
     path.extension()
         .is_some_and(|e| e.eq_ignore_ascii_case("chd"))
+}
+
+pub fn is_cso(path: &Path) -> bool {
+    path.extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("cso"))
 }
 
 pub fn read_text(path: &Path) -> io::Result<String> {

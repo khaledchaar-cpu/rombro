@@ -102,6 +102,7 @@ impl Default for Rules {
                 [
                     ("astrocde", "Bally - Astrocade"),
                     ("n64dd", "Nintendo - Nintendo 64"),
+                    ("openbor", "OpenBOR"),
                     ("solarus", "Solarus"),
                 ]
                 .map(|(f, s)| (f.to_owned(), s.to_owned())),

@@ -3145,6 +3145,7 @@ dependencies = [
  "crc32fast",
  "criterion",
  "dirs 7.0.0",
+ "flate2",
  "md-5",
  "quick-xml 0.41.0",
  "rayon",
