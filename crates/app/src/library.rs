@@ -103,7 +103,7 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
                         format!("{} candidates", c.len()),
                     ),
                     Ident::Unknown => ("unknown", String::new(), String::new()),
-                    Ident::Skip(r) => ("skip", String::new(), r),
+                    Ident::Skip(r) | Ident::Incomplete(r) => ("skip", String::new(), r),
                     Ident::Bios(g) => ("skip", g.system, g.name), // filtered above
                 };
                 let regions = rombro_core::naming::parse(&name)

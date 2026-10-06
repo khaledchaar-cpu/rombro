@@ -20,3 +20,4 @@ serde = { version = "1.0.229", features = ["derive"] }
 [dev-dependencies]
 zip = "7.2.0"
 tempfile = "3.27.0"
+crc32fast = "1.5.2"

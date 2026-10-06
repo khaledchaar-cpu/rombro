@@ -8,6 +8,7 @@ use serde::Serialize;
 pub enum Rule {
     G1rPick,
     ArcadeSet,
+    ArcadeDat,
     Verdict,
     MultiDisc,
     MultiDiskArchive,
@@ -19,9 +20,10 @@ pub enum Rule {
 }
 
 impl Rule {
-    pub const ALL: [Rule; 10] = [
+    pub const ALL: [Rule; 11] = [
         Rule::G1rPick,
         Rule::ArcadeSet,
+        Rule::ArcadeDat,
         Rule::Verdict,
         Rule::MultiDisc,
         Rule::MultiDiskArchive,
@@ -36,6 +38,7 @@ impl Rule {
         match self {
             Rule::G1rPick => "g1r-pick",
             Rule::ArcadeSet => "arcade-set",
+            Rule::ArcadeDat => "arcade-dat",
             Rule::Verdict => "verdict",
             Rule::MultiDisc => "multi-disc",
             Rule::MultiDiskArchive => "multi-disk-archive",
@@ -51,6 +54,7 @@ impl Rule {
         match self {
             Rule::G1rPick => "1G1R pick",
             Rule::ArcadeSet => "Arcade romset",
+            Rule::ArcadeDat => "Arcade DAT check",
             Rule::Verdict => "Your decision",
             Rule::MultiDisc => "Multi-disc playlist",
             Rule::MultiDiskArchive => "Multi-disk archive",
@@ -73,6 +77,12 @@ impl Rule {
                 "Arcade zips are matched as a whole and keep their short name. Sets are grouped by \
                  title across FBNeo/MAME databases; database order picks the target core, region \
                  order and original-before-bootleg pick the set."
+            }
+            Rule::ArcadeDat => {
+                "When a set is only in the mixed-version MAME database or in several arcade \
+                 databases, its zip is checked against each core's DAT (file names and CRCs). It \
+                 goes to the first core in database order it is complete for, else to \
+                 _quarantine with the reason (missing, misnamed, parent set missing)."
             }
             Rule::Verdict => {
                 "A rejected release you marked keep (placed in addition) or discard (moved to \

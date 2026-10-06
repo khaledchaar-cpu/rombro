@@ -131,6 +131,10 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 b.why = Why::new(Rule::Quarantine, "no database match");
                 b.quarantine(it)
             }
+            Ident::Incomplete(reason) => {
+                b.why = Why::new(Rule::ArcadeDat, reason.clone());
+                b.quarantine(it)
+            }
             Ident::Skip(reason) => b.plan.decisions.push(Decision::Skipped {
                 path: it.files.primary().clone(),
                 reason: reason.clone(),

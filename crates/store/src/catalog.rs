@@ -99,11 +99,25 @@ impl Store {
         };
         let order = self.rules()?.arcade_order;
         let rank = |s: &str| arcade::rank_in(&order, s);
-        let best = records
-            .iter()
-            .map(|r| rank(&r.system))
-            .min()
-            .unwrap_or_default();
+        let best = match self.dat_pick(&records, &whole.path, &rank)? {
+            Ok(Some(system)) => rank(system),
+            Ok(None) => records
+                .iter()
+                .map(|r| rank(&r.system))
+                .min()
+                .unwrap_or_default(),
+            Err(reason) => {
+                return Ok(Some(Item {
+                    files: Files::Set {
+                        archive: whole.path.clone(),
+                        chds: set_chds(&whole.path),
+                        alt: Vec::new(),
+                    },
+                    ident: Ident::Incomplete(reason),
+                    in_library,
+                }));
+            }
+        };
         let mut alt: Vec<Game> = Vec::new();
         let mut others: Vec<&Record> = records
             .iter()
@@ -132,6 +146,59 @@ impl Store {
             ident,
             in_library,
         }))
+    }
+
+    /// DAT check for uncertain arcade matches (only `MAME`, or several arcade databases):
+    /// the first core in placement order whose DAT the zip is complete for, a core without
+    /// loaded DAT counting as complete. `Ok(None)` if no check applies, `Err` with the
+    /// reasons per core if no core fits.
+    fn dat_pick<'r>(
+        &self,
+        records: &'r [Record],
+        archive: &Path,
+        rank: &impl Fn(&str) -> usize,
+    ) -> Result<std::result::Result<Option<&'r str>, String>> {
+        let mut cores: Vec<&Record> = records
+            .iter()
+            .filter(|r| arcade::is_arcade(&r.system))
+            .collect();
+        cores.sort_by_key(|r| rank(&r.system));
+        cores.dedup_by(|a, b| a.system == b.system);
+        let uncertain = match cores.as_slice() {
+            [r] => r.system == "MAME",
+            c => c.len() > 1,
+        };
+        let is_zip = archive
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("zip"));
+        if !uncertain || !is_zip {
+            return Ok(Ok(None));
+        }
+        let Ok(members) = rombro_core::archive::members(archive) else {
+            return Ok(Ok(None));
+        };
+        let stem = archive
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned());
+        let has_set = |n: &str| {
+            ["zip", "7z"]
+                .iter()
+                .any(|e| archive.with_file_name(format!("{n}.{e}")).exists())
+        };
+        let mut reasons = Vec::new();
+        for r in cores {
+            let name = r
+                .rom_name
+                .as_deref()
+                .and_then(|n| n.rsplit_once('.').map(|(s, _)| s.to_owned()))
+                .or_else(|| stem.clone())
+                .unwrap_or_default();
+            match self.check_set(&r.system, &name, &members, has_set)? {
+                None | Some(Ok(())) => return Ok(Ok(Some(&r.system))),
+                Some(Err(why)) => reasons.push(format!("{}: {why}", r.system)),
+            }
+        }
+        Ok(Err(reasons.join("; ")))
     }
 
     /// An archive holding a disc sheet becomes one disc item (identified by its track hashes;

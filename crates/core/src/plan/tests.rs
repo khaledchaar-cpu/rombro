@@ -477,3 +477,25 @@ fn game_folder_keeps_its_name_when_the_key_file_is_shared() {
     let again = build(&lib_items, &lib, &opts(Mode::Move));
     assert!(again.ops.is_empty(), "{:?}", again.ops);
 }
+
+#[test]
+fn incomplete_arcade_set_is_quarantined_with_reason() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let set = file(&inbox, "1943.zip", "z");
+    let it = Item {
+        files: Files::Set {
+            archive: set,
+            chds: Vec::new(),
+            alt: Vec::new(),
+        },
+        ident: Ident::Incomplete("MAME: 1 missing (c.bin)".into()),
+        in_library: false,
+    };
+    let plan = build(&[it], &lib, &opts(Mode::Move));
+    assert_eq!(plan.quarantined, 1);
+    assert_eq!(plan.why[0].rule, crate::rules::Rule::ArcadeDat);
+    assert_eq!(plan.why[0].detail, "MAME: 1 missing (c.bin)");
+    assert!(execute(&plan.ops).error.is_none());
+    assert_eq!(tree(&lib), ["_quarantine/1943.zip"]);
+}

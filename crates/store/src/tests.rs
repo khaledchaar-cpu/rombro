@@ -480,3 +480,76 @@ fn exceptions_roundtrip() {
     s.clear_resolution(&[1, 2]).unwrap();
     assert!(s.resolutions().unwrap().is_empty());
 }
+
+#[test]
+fn arcade_set_goes_to_first_core_whose_dat_it_completes() {
+    use rombro_core::arcade::dat;
+    use rombro_core::plan::Ident;
+    use std::io::Write;
+    let tmp = tempfile::tempdir().unwrap();
+    let (rdb, inbox) = (tmp.path().join("rdb"), tmp.path().join("inbox"));
+    for d in [&rdb, &inbox] {
+        std::fs::create_dir_all(d).unwrap();
+    }
+    let zip = inbox.join("1943.zip");
+    let mut w = zip::ZipWriter::new(std::fs::File::create(&zip).unwrap());
+    for (name, data) in [("a.bin", &b"chip a"[..]), ("b.bin", b"chip b")] {
+        w.start_file(name, zip::write::SimpleFileOptions::default())
+            .unwrap();
+        w.write_all(data).unwrap();
+    }
+    w.finish().unwrap();
+    let mut h = rombro_core::MultiHasher::new();
+    h.update(&std::fs::read(&zip).unwrap());
+    let whole = h.finish();
+    for db in ["MAME", "MAME 2003-Plus"] {
+        write_rdb(
+            &rdb.join(format!("{db}.rdb")),
+            &[map(&[
+                ("name", F::S("1943: The Battle of Midway (Euro)")),
+                ("rom_name", F::S("1943.zip")),
+                ("crc", F::B(Box::leak(Box::new(whole.crc.to_be_bytes())))),
+                ("sha1", F::B(Box::leak(Box::new(whole.sha1)))),
+            ])],
+        );
+    }
+    let crc = |d: &[u8]| format!("{:08x}", crc32fast::hash(d));
+    let dat = |roms: &[(&str, &[u8])]| {
+        let r: String = roms
+            .iter()
+            .map(|(n, d)| format!(r#"<rom name="{n}" size="6" crc="{}"/>"#, crc(d)))
+            .collect();
+        dat::parse(format!(r#"<mame><machine name="1943">{r}</machine></mame>"#).as_bytes())
+            .unwrap()
+    };
+    let mut s = Store::open_in_memory().unwrap();
+    s.sync_rdbs(&rdb).unwrap();
+    let ident = |s: &Store| {
+        s.items(&rombro_core::scan(&inbox), false).unwrap()[0]
+            .ident
+            .clone()
+    };
+    // without DATs: database order (MAME first)
+    assert!(matches!(ident(&s), Ident::Known(g) if g.system == "MAME"));
+
+    let old: &[(&str, &[u8])] = &[("a.bin", b"chip a"), ("b.bin", b"chip b")];
+    s.import_dat(
+        "MAME",
+        "0.289",
+        0,
+        &dat(&[("a.bin", b"chip a"), ("c.bin", b"new")]),
+    )
+    .unwrap();
+    s.import_dat("MAME 2003-Plus", "x", 0, &dat(old)).unwrap();
+    assert!(matches!(ident(&s), Ident::Known(g) if g.system == "MAME 2003-Plus"));
+
+    s.import_dat("MAME 2003-Plus", "x", 0, &dat(&[("a.bin", b"chip b")]))
+        .unwrap();
+    let Ident::Incomplete(why) = ident(&s) else {
+        panic!()
+    };
+    assert_eq!(
+        why,
+        "MAME: 1 missing (c.bin); MAME 2003-Plus: 1 misnamed (a.bin)"
+    );
+}

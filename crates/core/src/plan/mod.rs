@@ -106,6 +106,9 @@ pub enum Ident {
     Bios(Game),
     /// Not handled by the planner (reason shown to the user).
     Skip(String),
+    /// Arcade set matched by a database but incomplete for every core's DAT (SPEC F8):
+    /// quarantined with the reason.
+    Incomplete(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

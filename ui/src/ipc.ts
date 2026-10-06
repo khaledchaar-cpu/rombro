@@ -525,6 +525,7 @@ export async function rulesCatalog(): Promise<RuleInfo[]> {
     return [
       { id: "g1r-pick", title: "1G1R pick", explain: "One release per game: region order, language, fewest variant flags.", hits: 1234 },
       { id: "arcade-set", title: "Arcade romset", explain: "Arcade zips matched as a whole, grouped by title.", hits: 87 },
+      { id: "arcade-dat", title: "Arcade DAT check", explain: "Uncertain arcade matches are checked against each core's DAT.", hits: 3 },
       { id: "game-folder", title: "Game folder", explain: "DOS/ScummVM/ports moved as whole folders.", hits: 12 },
       { id: "quarantine", title: "Quarantine", explain: "Files without database match go to _quarantine.", hits: 5270 },
       { id: "playlist", title: "RetroArch playlist", explain: "One .lpl per system.", hits: 30 },
