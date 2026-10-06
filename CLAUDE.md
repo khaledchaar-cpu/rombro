@@ -39,7 +39,7 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | App dev | `cd ui && pnpm tauri dev` (nur Frontend: `pnpm dev`, Mock-IPC) |
 | RDBs + Arcade-DATs → SQLite | `cargo run -q --release -p rombro-cli -- db sync` (lädt DATs aus dem Netz) |
 | Lookup | `cargo run -q --release -p rombro-cli -- db lookup <crc/sha1/md5/serial>` |
-| DB-Statistik | `cargo run -q --release -p rombro-cli -- db stats` |
+| DB-Statistik | `cargo run -q --release -p rombro-cli -- db stats [--db <file>]` (inkl. DAT-Versionen) |
 | Benchmarks | `cargo bench -q -p rombro-rdb` / `-p rombro-core` |
 | Scan | `cargo run -q --release -p rombro-cli -- scan <dir> [--unknown]` |
 | 1G1R prüfen | `cargo run -q --release -p rombro-cli -- g1r "<System>" [--filter <text>]` |
@@ -70,4 +70,5 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | *(projektspezifische Skills hier eintragen, sobald angelegt)* | |
 
 ## Erkenntnisse / Stolpersteine
+- RetroArch headless: `retroarch --appendconfig=<null-cfg> -L <core.so> <zip> --max-frames=300` (Details PROGRESS).
 - RDB: Hashes sind MessagePack-`bin`, nicht Hex. Header 16 Byte (`RARCHDB\0` + u64-Offset auf Metadaten). Siehe SPEC §3.

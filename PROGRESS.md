@@ -27,6 +27,9 @@ wählt den ersten vollständigen Core, sonst `Ident::Incomplete` → Quarantäne
 (CLI `[regel: detail]`, App „why“). Abnahme: `1943`/`1943kai` → MAME 2003-Plus, läuft headless 300 Frames in
 RetroArch; aktuelles MAME scheitert weiter (Exit 1). Echte Sammlung (Dry-Run Arcade-Ordner): 11× arcade-dat-Quarantäne
 mit plausiblen Gründen (fehlend, misnamed, Eltern fehlt, nicht im DAT).
+Nachträge: Eltern-Suche über Scan + Library, Begründung „skipped …“ bei platzierten Sets, `db stats` zeigt
+DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BIOS neben dem Set).
+**Nächster Milestone: M15 Launcher-Basis** (SPEC §6) – Schnitt noch festlegen.
 
 ## Nächste Schritte
 1. Rules-Seite: erster Eindruck ok (User, 2026-10-06), finale Bewertung im Alltag.

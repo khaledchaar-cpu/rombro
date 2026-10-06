@@ -271,7 +271,9 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   2010/2015/2016 `metadata/`), aktuelles MAME = `mame*lx.zip` des neuesten mamedev-Releases. Version = Commit-SHA
   bzw. Release-Tag; unverändert → kein Download. **HBMAME hat keine DAT** → ungeprüft (alte Logik); ebenso jeder Core
   ohne geladene DAT (zählt als vollständig). BIOS-ROMs (`isbios`) werden im Set nicht verlangt (BIOS-Regel).
-  Eltern-Set „vorhanden“ = `<parent>.zip/.7z` im selben Ordner. Zuordnung nach Dateiname **und** CRC
+  Eltern-Set „vorhanden“ = Archiv `<parent>.*` irgendwo im selben Scan oder in der Library (`set_names`;
+  bewusst ohne Prüfung, ob es im selben Core-Ordner landet). Übersprungene Cores stehen beim platzierten Set als
+  Begründung (`[arcade-set: skipped …]`, `Files::Set.dat_note`). Zuordnung nach Dateiname **und** CRC
   (nur CRC passt → „misnamed“). Set-Name fürs DAT = `rom_name` des RDB-Eintrags.
 
 ## 11. Offene Fragen
