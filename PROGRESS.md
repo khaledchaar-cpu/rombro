@@ -30,7 +30,11 @@ Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeig
 1. Rules-Seite: erster Eindruck ok (User, 2026-10-06), finale Bewertung im Alltag.
 2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
    Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.
-   Offen: erneuter Komplett-Probelauf (~2 h); CLI kann ignorierte Pfade noch nicht setzen (nur GUI).
+   ✅ Komplett-Probelauf (2026-10-06, 2 h 05 min, `~/rombro-test/fullrun.txt`): 225.720 Items, 16.522 zu platzieren,
+   5.270 Quarantäne (wie M12c), 1.672 Entscheidungen, 39.635 Ops, 3 Konflikte (bitgleiche Doppel: 2 FBNeo-BIOS in
+   `Commodore - C64/FBNeo - Arcade/` + `00bios`, Wolfenstein 3D in `ECWolf/` + `Ports/`), 18 Lesefehler (MAME-/CD-i-
+   HDD-CHDs ohne CD-Track, 2 CHDs mit Dekompressionsfehler = vermutlich defekt, 2 Zips).
+   Offen: CLI kann ignorierte Pfade noch nicht setzen (nur GUI); bitgleiche Doppel als Duplikat statt Konflikt?
 3. Prüfung in RetroArch: MAME-BIOS neben Sets, Gamification-Panels, Effects off.
 4. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 
