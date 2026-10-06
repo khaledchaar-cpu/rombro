@@ -102,3 +102,27 @@ fn ignored_paths_are_never_planned() {
     let p = build(&items, &tmp.path().join("lib"), &o);
     assert!(p.ops.is_empty() && p.decisions.is_empty(), "{p:?}");
 }
+
+#[test]
+fn identical_copies_are_duplicates_different_ones_conflict() {
+    let tmp = TempDir::new().unwrap();
+    let lib = tmp.path().join("lib");
+    let item = known(&tmp.path().join("inbox"), "m.sfc", "Mario (Europe)");
+    // an unindexed file already sits at the target
+    let target = lib.join(SYS).join("Mario (Europe).sfc");
+    fs::create_dir_all(target.parent().unwrap()).unwrap();
+    let plan = |content: &str| {
+        fs::write(&target, content).unwrap();
+        build(std::slice::from_ref(&item), &lib, &opts(Rules::default())).decisions
+    };
+    let same = plan("m.sfc"); // same bytes as the inbox file
+    assert!(
+        matches!(&same[..], [Decision::Rejected { reason, kept: Some(k), .. }] if reason == "Duplicate" && k == "Mario (Europe)"),
+        "{same:?}"
+    );
+    let other = plan("different");
+    assert!(
+        matches!(&other[..], [Decision::Conflict { .. }]),
+        "{other:?}"
+    );
+}

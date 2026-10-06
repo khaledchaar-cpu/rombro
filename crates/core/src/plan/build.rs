@@ -24,7 +24,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         library,
         opts,
         plan: Plan::default(),
-        claimed: HashSet::new(),
+        claimed: HashMap::new(),
         lpl: BTreeMap::new(),
         why: Why::new(Rule::G1rPick, ""),
         members_done: HashMap::new(),
@@ -225,8 +225,8 @@ struct Builder<'a> {
     library: &'a Path,
     opts: &'a Options,
     plan: Plan,
-    /// Targets claimed by earlier ops of this plan.
-    claimed: HashSet<PathBuf>,
+    /// Targets claimed by earlier ops of this plan, with the file they come from.
+    claimed: HashMap<PathBuf, Option<PathBuf>>,
     lpl: BTreeMap<String, Vec<lpl::Entry>>,
     /// Reason attached to the ops added next.
     why: Why,
@@ -395,7 +395,7 @@ impl Builder<'_> {
         };
         let free = |s: &str| {
             let t = self.library.join(s).join(file_name(archive));
-            !self.claimed.contains(&t) && (!t.exists() || t == *archive)
+            !self.claimed.contains_key(&t) && (!t.exists() || t == *archive)
         };
         std::iter::once(g)
             .chain(alt)
@@ -458,23 +458,75 @@ impl Builder<'_> {
         }
     }
 
+    /// The game name if every clashing op copies a file bit-identical to the one already at
+    /// (or planned for) its target – the item is then a duplicate, not a conflict.
+    fn identical_copy(&self, it: &Item, ops: &[Op]) -> Option<String> {
+        let (Ident::Known(g) | Ident::Bios(g)) = &it.ident else {
+            return None;
+        };
+        let own: Vec<&Path> = ops.iter().filter_map(Op::source).collect();
+        let all_same = ops.iter().all(|op| {
+            let t = op.target();
+            let other = match self.claimed.get(t) {
+                Some(src) => src.as_deref(),
+                None if t.exists() && !own.contains(&t) => Some(t),
+                None => return true,
+            };
+            match (op, other) {
+                (Op::Extract { .. } | Op::Write { .. }, _) | (_, None) => false,
+                (_, Some(other)) => op.source().is_some_and(|s| same_content(s, other)),
+            }
+        });
+        all_same.then(|| g.name.clone())
+    }
+
+    /// A bit-identical second copy: 1G1R duplicate (decision queue, or trashed if you said so).
+    fn duplicate(&mut self, it: &Item, n_ops: usize, kept: String) {
+        let (Ident::Known(g) | Ident::Bios(g)) = &it.ident else {
+            return;
+        };
+        let key = (g.system.clone(), g.name.clone());
+        // single files only; a duplicate game folder is left for you to remove
+        if n_ops == 1 && self.opts.verdicts.get(&key) == Some(&Verdict::Discard) {
+            self.why = Why::new(Rule::Verdict, "discarded (Duplicate)");
+            self.discard(it);
+            return;
+        }
+        self.plan.decisions.push(Decision::Rejected {
+            path: it.files.primary().clone(),
+            system: key.0,
+            name: key.1,
+            kept: Some(kept),
+            reason: format!("{:?}", g1r::Reason::Duplicate),
+        });
+    }
+
     /// Adds an item's ops unless a target exists or is already claimed (then: conflict).
     fn commit(&mut self, it: &Item, ops: Vec<Op>) -> bool {
         let own: Vec<&Path> = ops.iter().filter_map(Op::source).collect();
         let clash = ops.iter().find(|op| {
             let t = op.target();
             let rewrite = matches!(op, Op::Write { .. });
-            self.claimed.contains(t) && !rewrite || (t.exists() && !own.contains(&t) && !rewrite)
+            self.claimed.contains_key(t) && !rewrite
+                || (t.exists() && !own.contains(&t) && !rewrite)
         });
         if let Some(op) = clash {
+            if let Some(kept) = self.identical_copy(it, &ops) {
+                self.duplicate(it, ops.len(), kept);
+                return false;
+            }
             self.plan.decisions.push(Decision::Conflict {
                 path: it.files.primary().clone(),
                 target: op.target().to_path_buf(),
             });
             return false;
         }
-        self.claimed
-            .extend(ops.iter().map(|op| op.target().to_path_buf()));
+        self.claimed.extend(ops.iter().map(|op| {
+            (
+                op.target().to_path_buf(),
+                op.source().map(Path::to_path_buf),
+            )
+        }));
         if let Some(archive) = it.files.archive() {
             *self.members_done.entry(archive.clone()).or_default() += 1;
         }
@@ -495,7 +547,7 @@ impl Builder<'_> {
         if fs::read_to_string(&path).is_ok_and(|old| old == contents) {
             return;
         }
-        self.claimed.insert(path.clone());
+        self.claimed.insert(path.clone(), None);
         self.plan.why.push(self.why.clone());
         self.plan.ops.push(Op::Write { path, contents });
     }
@@ -535,4 +587,33 @@ fn file_name(p: &Path) -> String {
     p.file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default()
+}
+
+/// Whether two files have the same bytes (size first, then streamed comparison).
+fn same_content(a: &Path, b: &Path) -> bool {
+    use std::io::Read;
+    if a == b {
+        return true;
+    }
+    let (Ok(ma), Ok(mb)) = (fs::metadata(a), fs::metadata(b)) else {
+        return false;
+    };
+    if ma.len() != mb.len() || !ma.is_file() || !mb.is_file() {
+        return false;
+    }
+    let (Ok(mut fa), Ok(mut fb)) = (fs::File::open(a), fs::File::open(b)) else {
+        return false;
+    };
+    let (mut ba, mut bb) = (vec![0u8; 1 << 16], vec![0u8; 1 << 16]);
+    loop {
+        let Ok(n) = fa.read(&mut ba) else {
+            return false;
+        };
+        if n == 0 {
+            return true;
+        }
+        if fb.read_exact(&mut bb[..n]).is_err() || ba[..n] != bb[..n] {
+            return false;
+        }
+    }
 }
