@@ -249,9 +249,9 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
     werden als editierbare Ausnahmeliste gezeigt. „System zuordnen“ erst bei Bedarf.
   - Regeländerung → Audit-Plan zur Prüfung, Ausführung undo-bar (nie automatisch).
   - Speicherung in der DB (wie Library-Pfad). CLI: `rules show` + „Warum“ in dry-run-Ausgabe; Setzen via GUI/Datei.
+- **BIOS-Erkennung nur per Hash (User, 2026-10-06):** BIOS-Sets mit unbekanntem Hash (z. B. eigenes `neogeo.zip`-Paket) werden *nicht* am Kurznamen erkannt → Quarantäne.
 
 ## 11. Offene Fragen
-- `neogeo.zip` aus `00bios` ist ein eigenes Paket (Hash in keiner RDB, enthält `whatsnew.txt`) → landet in Quarantäne. BIOS-Sets zusätzlich am Kurznamen erkennen (`arcade::BIOS_SETS`)? Default bisher: nur Hash.
 - Ziel (User): vollständige Sammlung im Sinne der RetroArch-Datenbanken. Andere Versionen, Derivate, Formate interessieren nicht, solange sie in keiner RDB stehen → Quarantäne ist richtig für Unbekanntes in erkannten System-Ordnern.
 - Entschieden: 1G1R auch für Arcade (User). Keine Parent/Clone-Infos in den RDBs → Gruppierung über den Titel vor der ersten Klammer, über alle DBs, die ein Set listen (Union-Find; `Gradius III: Densetsu…` findet über den MAME-Namen `Gradius III (Japan)` in die Gruppe). Auswahl: Regionen-Reihenfolge der Regeln → Original vor Bootleg/Hack/Proto → neueste Fassung (Name absteigend: Datum/Revision). Abgelehnte → Entscheidungen (wie Konsole). Code: `arcade/g1r.rs`.
 - Entschieden: Verschiedene Spiele mit gleichem Arcade-Kurznamen weichen auf das nächste System aus, das das Set listet; Sets mit den wenigsten Ausweich-Systemen wählen zuerst.
