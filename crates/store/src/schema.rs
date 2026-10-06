@@ -87,6 +87,9 @@ const MIGRATIONS: &[&str] = &[
        AND lower(substr(path, -4)) IN ('.smc', '.sfc', '.swc', '.fig');",
     // v10: DATs now record disks (CHDs); drop them so the next sync imports them again
     "DELETE FROM dat_set; DELETE FROM dat_source;",
+    // v11: driver status (sets the emulator can't run); drop DATs again for a fresh import
+    "ALTER TABLE dat_set ADD COLUMN working INTEGER NOT NULL DEFAULT 1;
+     DELETE FROM dat_set; DELETE FROM dat_source;",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

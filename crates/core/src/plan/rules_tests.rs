@@ -240,3 +240,24 @@ fn unknown_files_go_to_trash_and_old_quarantine_is_emptied() {
     assert!(lib.join("_trash/unknown/bad dump.sfc").is_file());
     assert!(lib.join("_quarantine/ngp/now known.zip").is_file());
 }
+
+#[test]
+fn playlist_of_a_system_without_games_goes_to_the_trash() {
+    let tmp = TempDir::new().unwrap();
+    let lib = tmp.path().join("lib");
+    let pl = lib.join("_playlists");
+    fs::create_dir_all(&pl).unwrap();
+    fs::write(pl.join("MAME.lpl"), "{}").unwrap();
+    let mut item = known(&lib.join(SYS), "Mario (Europe).sfc", "Mario (Europe)");
+    item.in_library = true;
+    let o = Options {
+        playlists: Some(pl.clone()),
+        ..opts(Rules::default())
+    };
+    let plan = build(&[item], &lib, &o);
+    assert!(plan.ops.iter().any(|op| matches!(op,
+        Op::Move { from, to } if from == &pl.join("MAME.lpl")
+            && to == &lib.join("_trash/playlists/MAME.lpl"))));
+    assert!(plan.ops.iter().any(|op| matches!(op,
+        Op::Write { path, .. } if path == &pl.join(format!("{SYS}.lpl")))));
+}

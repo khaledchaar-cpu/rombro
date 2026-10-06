@@ -85,8 +85,9 @@ impl Rule {
             Rule::ArcadeDat => {
                 "When a set is only in the mixed-version MAME database or in several arcade \
                  databases, its zip is checked against each core's DAT (file names and CRCs). It \
-                 goes to the first core in database order it is complete for, else to \
-                 _quarantine with the reason (missing, misnamed, parent set missing)."
+                 goes to the first core in database order it is complete for (CHDs included) \
+                 and that runs it (driver not preliminary), else to the trash with the reason \
+                 (missing, misnamed, parent set missing, not working)."
             }
             Rule::Verdict => {
                 "A rejected release you marked keep (placed in addition) or discard (moved to \

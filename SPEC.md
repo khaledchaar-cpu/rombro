@@ -297,6 +297,9 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   nicht als `<set>/<disk>.chd` neben dem Zip liegt, ist unvollständig (z. B. Laserdisc-Spiele ohne CHD) → Trash mit
   Begründung, keine Playlist. Geerbte Disks (`merge`) werden nicht geprüft. Schema v10 verwirft alte DATs → einmal
   „Sync databases“.
+- Entschieden (User, 2026-10-06): Sets mit Treiberstatus `preliminary` („not working“) gelten für den jeweiligen
+  Core als unvollständig; nächster Core in der Reihenfolge, sonst Trash mit Grund (`rules.arcade_working_only`,
+  Default an). Schema v11 (Spalte `working`, DATs neu laden). Playlists von Systemen ohne Spiele → `_trash/playlists/`.
 - Entschieden (User, 2026-10-06): Unerkannte Dateien (falsche Dumps, Systeme ohne RDB wie Daphne, unvollständige
   Arcade-Sets) gehen per Default nach `_trash/unknown/<Pfad>` statt `_quarantine` (`rules.unknown_to_trash`, Default an;
   aus = alte Quarantäne). Eine bestehende `_quarantine` wird dabei geleert; inzwischen erkannte Dateien bleiben.

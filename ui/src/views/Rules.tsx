@@ -17,6 +17,7 @@ const FIELDS: Record<string, (keyof R)[]> = {
   "g1r-pick": ["regions", "languages", "exclude", "systems"],
   "arcade-set": ["arcade_order", "arcade_g1r"],
   "game-folder": ["folder_systems"],
+  "arcade-dat": ["arcade_working_only"],
   quarantine: ["quarantine", "unknown_to_trash"],
   "frontend-meta": ["frontend_trash"],
 };
@@ -80,6 +81,16 @@ export default function Rules() {
       <Match when={info.id === "game-folder"}>
         <h4>Folder systems</h4>
         <PriorityList items={r.folder_systems} onChange={(folder_systems) => edit({ folder_systems })} placeholder="Add system" />
+      </Match>
+      <Match when={info.id === "arcade-dat"}>
+        <label class="check">
+          <input
+            type="checkbox"
+            checked={r.arcade_working_only}
+            onChange={(e) => edit({ arcade_working_only: e.currentTarget.checked })}
+          />
+          Skip sets the core marks as not working (off: place them anyway)
+        </label>
       </Match>
       <Match when={info.id === "quarantine"}>
         <label class="check">

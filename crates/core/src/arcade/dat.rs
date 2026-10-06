@@ -31,6 +31,8 @@ pub struct DatSet {
     pub name: String,
     pub romof: Option<String>,
     pub bios: bool,
+    /// The emulator runs it: false for driver status `preliminary` (MAME's "not working").
+    pub working: bool,
     pub roms: Vec<DatRom>,
 }
 
@@ -51,8 +53,16 @@ pub fn parse(input: impl BufRead) -> Result<Vec<DatSet>, DatError> {
                         name: attr(&e, b"name").unwrap_or_default(),
                         romof: attr(&e, b"romof"),
                         bios: attr(&e, b"isbios").as_deref() == Some("yes"),
+                        working: true,
                         roms: Vec::new(),
                     });
+                }
+                b"driver" => {
+                    if let Some(s) = cur.as_mut()
+                        && attr(&e, b"status").as_deref() == Some("preliminary")
+                    {
+                        s.working = false;
+                    }
                 }
                 b"rom" => {
                     if let Some(s) = cur.as_mut()
@@ -285,9 +295,11 @@ mod tests {
 
     #[test]
     fn laserdisc_set_needs_its_chd() {
-        let dat = r#"<mame><machine name="lair2"><rom name="lair2.bin" size="4" crc="00000009"/>
+        let dat = r#"<mame><machine name="lair2"><driver status="preliminary"/>
+            <rom name="lair2.bin" size="4" crc="00000009"/>
             <disk name="lair2" sha1="00"/><disk name="nd" status="nodump"/></machine></mame>"#;
         let sets = parse(dat.as_bytes()).unwrap();
+        assert!(!sets[0].working && sets.len() == 1);
         let m = [("lair2.bin".to_string(), 9)];
         let run = |chds: &[String]| check(&sets[0], &m, chds, |_| None, |_| false);
         assert_eq!(run(&[]).unwrap_err().missing, ["lair2.chd"]);

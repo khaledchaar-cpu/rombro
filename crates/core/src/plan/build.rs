@@ -658,9 +658,33 @@ impl Builder<'_> {
             return;
         };
         self.why = Why::new(Rule::Playlist, "");
+        let mut written = HashSet::new();
         for (system, entries) in std::mem::take(&mut self.lpl) {
             let path = dir.join(format!("{}.lpl", naming::sanitize_file_name(&system)));
+            written.insert(path.clone());
             self.write(path, lpl::render(&system, &entries));
+        }
+        // playlists of systems without any game left (all of it trashed or moved away)
+        let Ok(rd) = fs::read_dir(&dir) else { return };
+        let mut stale: Vec<PathBuf> = rd
+            .flatten()
+            .map(|e| e.path())
+            .filter(|p| p.extension().is_some_and(|e| e == "lpl") && !written.contains(p))
+            .collect();
+        stale.sort();
+        self.why = Why::new(Rule::Playlist, "no games left – playlist to the trash");
+        for p in stale {
+            let to = self
+                .library
+                .join(TRASH_DIR)
+                .join("playlists")
+                .join(file_name(&p));
+            let it = Item {
+                files: Files::Single(p.clone()),
+                ident: Ident::Unknown,
+                in_library: true,
+            };
+            self.commit(&it, vec![Op::Move { from: p, to }]);
         }
     }
 

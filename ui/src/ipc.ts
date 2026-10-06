@@ -362,6 +362,8 @@ export interface Rules {
   exclude: Record<FlagKey, boolean>;
   arcade_order: string[];
   arcade_g1r: boolean;
+  /** Sets a core marks as not working count as incomplete for it. */
+  arcade_working_only: boolean;
   folder_systems: string[];
   quarantine: boolean;
   /** Unknown files go to _trash/unknown instead of _quarantine. */
@@ -390,6 +392,7 @@ const mockRules = (): Rules => ({
   ) as Rules["exclude"],
   arcade_order: ["FBNeo - Arcade Games", "MAME", "MAME 2016", "MAME 2015", "MAME 2010", "MAME 2003-Plus", "MAME 2003", "MAME 2000", "HBMAME"],
   arcade_g1r: true,
+  arcade_working_only: true,
   folder_systems: ["DOS", "ScummVM", "DOOM", "Quake"],
   quarantine: true,
   unknown_to_trash: true,

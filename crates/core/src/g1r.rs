@@ -18,6 +18,9 @@ pub struct Rules {
     pub arcade_order: Vec<String>,
     /// 1G1R for arcade sets; off places every matching set.
     pub arcade_g1r: bool,
+    /// Sets a core's DAT marks as not working (driver `preliminary`) count as incomplete
+    /// for that core; with no core left they go to the trash like other incomplete sets.
+    pub arcade_working_only: bool,
     /// Systems whose matches are key files inside a game folder (moved as a whole).
     pub folder_systems: Vec<String>,
     /// Move unknown files to `_quarantine`; off leaves them where they are.
@@ -85,6 +88,7 @@ impl Default for Rules {
             },
             arcade_order: s(&crate::arcade::PRIORITY),
             arcade_g1r: true,
+            arcade_working_only: true,
             folder_systems: s(&crate::plan::FOLDER_SYSTEMS),
             quarantine: true,
             unknown_to_trash: true,

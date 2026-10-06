@@ -25,7 +25,8 @@ impl Store {
         tx.execute("DELETE FROM dat_set WHERE system = ?1", [system])?;
         {
             let mut ins = tx.prepare(
-                "INSERT OR REPLACE INTO dat_set (system, name, romof, bios, roms) VALUES (?1, ?2, ?3, ?4, ?5)",
+                "INSERT OR REPLACE INTO dat_set (system, name, romof, bios, working, roms)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             )?;
             for s in sets {
                 ins.execute(params![
@@ -33,6 +34,7 @@ impl Store {
                     s.name,
                     s.romof,
                     s.bios,
+                    s.working,
                     serde_json::to_string(&s.roms)?
                 ])?;
             }
@@ -60,20 +62,21 @@ impl Store {
     }
 
     pub fn dat_set(&self, system: &str, name: &str) -> Result<Option<DatSet>> {
-        let row: Option<(Option<String>, bool, String)> = self
+        let row: Option<(Option<String>, bool, bool, String)> = self
             .conn
             .query_row(
-                "SELECT romof, bios, roms FROM dat_set WHERE system = ?1 AND name = ?2",
+                "SELECT romof, bios, working, roms FROM dat_set WHERE system = ?1 AND name = ?2",
                 [system, name],
-                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
             )
             .optional()?;
-        row.map(|(romof, bios, roms)| {
+        row.map(|(romof, bios, working, roms)| {
             let roms: Vec<DatRom> = serde_json::from_str(&roms)?;
             Ok(DatSet {
                 name: name.to_owned(),
                 romof,
                 bios,
+                working,
                 roms,
             })
         })
@@ -116,6 +119,9 @@ impl Store {
                 next = s.romof.clone();
                 chain.push(s);
             }
+        }
+        if !set.working && self.rules()?.arcade_working_only {
+            return Ok(Some(Err(format!("{name} not working in {system}"))));
         }
         Ok(Some(
             dat::check(
@@ -161,6 +167,30 @@ mod tests {
                 .unwrap()
                 .unwrap()
                 .is_err()
+        );
+    }
+
+    #[test]
+    fn not_working_sets_fail_unless_allowed() {
+        let mut s = Store::open_in_memory().unwrap();
+        let sets = dat::parse(
+            r#"<mame><machine name="dlair2"><driver status="preliminary"/>
+            <rom name="a" size="1" crc="1"/></machine></mame>"#
+                .as_bytes(),
+        )
+        .unwrap();
+        s.import_dat("MAME", "0.289", 1, &sets).unwrap();
+        let m = vec![("a".to_string(), 1)];
+        assert_eq!(
+            s.check_set("MAME", "dlair2", &m, &[], |_| true).unwrap(),
+            Some(Err("dlair2 not working in MAME".into()))
+        );
+        let mut rules = s.rules().unwrap();
+        rules.arcade_working_only = false;
+        s.set_rules(&rules).unwrap();
+        assert_eq!(
+            s.check_set("MAME", "dlair2", &m, &[], |_| true).unwrap(),
+            Some(Ok(()))
         );
     }
 }
