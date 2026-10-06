@@ -35,7 +35,7 @@ impl Builder<'_> {
                     tracks.iter().map(PathBuf::from).collect(),
                 )),
             ),
-            Files::Set { archive, chds } => {
+            Files::Set { archive, chds, .. } => {
                 let dir = primary.with_extension("");
                 let mut ops = vec![self.transfer(it, archive, &primary)];
                 ops.extend(

@@ -43,6 +43,9 @@ pub enum Files {
     Set {
         archive: PathBuf,
         chds: Vec<PathBuf>,
+        /// Further arcade systems listing this exact set, best first: used when another
+        /// version of the same short name already takes the preferred system's slot.
+        alt: Vec<Game>,
     },
     /// One ROM inside an archive holding several (extracted on import).
     Member { archive: PathBuf, member: String },
@@ -76,7 +79,7 @@ impl Files {
     pub fn all(&self) -> Vec<&PathBuf> {
         match self {
             Files::Single(p) | Files::Member { archive: p, .. } => vec![p],
-            Files::Set { archive, chds } => std::iter::once(archive).chain(chds).collect(),
+            Files::Set { archive, chds, .. } => std::iter::once(archive).chain(chds).collect(),
             Files::ArchivedSheet { archive, .. } => vec![archive],
             Files::Sheet { sheet, tracks } => std::iter::once(sheet).chain(tracks).collect(),
         }

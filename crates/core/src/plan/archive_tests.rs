@@ -180,6 +180,7 @@ fn places_romsets_by_short_name_with_chds_and_bios_apart() {
     let set = |name: &str, chds: Vec<PathBuf>| Files::Set {
         archive: inbox.join(name),
         chds,
+        alt: vec![],
     };
     zip(&inbox.join("burningf.zip"), &["a"]);
     zip(&inbox.join("burningfh.zip"), &["b"]);
@@ -233,7 +234,8 @@ fn places_romsets_by_short_name_with_chds_and_bios_apart() {
             let mut it = it.clone();
             let rel = |p: &Path| p.strip_prefix(&inbox).unwrap().to_path_buf();
             it.files = match &it.files {
-                Files::Set { archive, chds } => Files::Set {
+                Files::Set { archive, chds, alt } => Files::Set {
+                    alt: alt.clone(),
                     archive: lib.join(match &it.ident {
                         Ident::Bios(_) => Path::new("_bios/fbneo").join(rel(archive)),
                         Ident::Known(g) => Path::new(&g.system).join(rel(archive)),
@@ -268,6 +270,7 @@ fn second_copy_of_a_romset_is_a_duplicate_not_a_conflict() {
             files: Files::Set {
                 archive: inbox.join(p),
                 chds: vec![],
+                alt: vec![],
             },
             ident: Ident::Known(arcade("MAME", "720 Degrees (rev 4)")),
             in_library: false,
@@ -278,5 +281,44 @@ fn second_copy_of_a_romset_is_a_duplicate_not_a_conflict() {
     assert!(
         matches!(&plan.decisions[..], [Decision::Rejected { path, reason, .. }]
             if path == &inbox.join("old/720.zip") && reason == "Duplicate")
+    );
+}
+
+#[test]
+fn second_version_under_the_same_short_name_falls_back_to_the_next_system() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    zip(&inbox.join("a/gradius3.zip"), &["japan"]);
+    zip(&inbox.join("b/gradius3.zip"), &["world"]);
+    let fb = "FBNeo - Arcade Games";
+    let items = [
+        Item {
+            files: Files::Set {
+                archive: inbox.join("a/gradius3.zip"),
+                chds: vec![],
+                alt: vec![arcade("MAME 2003-Plus", "Gradius III (Japan)")],
+            },
+            ident: Ident::Known(arcade(fb, "Gradius III (Japan, version 3)")),
+            in_library: false,
+        },
+        Item {
+            files: Files::Set {
+                archive: inbox.join("b/gradius3.zip"),
+                chds: vec![],
+                alt: vec![arcade("MAME 2015", "Gradius III (World)")],
+            },
+            ident: Ident::Known(arcade(fb, "Gradius III (World, version R)")),
+            in_library: false,
+        },
+    ];
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    assert!(plan.decisions.is_empty(), "{:?}", plan.decisions);
+    assert!(execute(&plan.ops).error.is_none());
+    assert_eq!(
+        tree(&lib),
+        [
+            "FBNeo - Arcade Games/gradius3.zip",
+            "MAME 2015/gradius3.zip"
+        ]
     );
 }

@@ -77,6 +77,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             Ident::Known(g) if matches!(it.files, Files::Set { .. }) => {
                 if arcade_seen.insert((g.system.as_str(), g.name.as_str())) {
                     b.why = "arcade romset".into();
+                    let g = b.free_arcade_slot(it, g);
                     b.release(&g.system, &[&(it, g)]);
                 } else if opts.verdicts.get(&(g.system.clone(), g.name.clone()))
                     == Some(&Verdict::Discard)
@@ -284,6 +285,22 @@ impl Builder<'_> {
             .find_map(|root| f.strip_prefix(root).ok())
             .filter(|rel| !rel.as_os_str().is_empty())
             .map_or_else(|| PathBuf::from(file_name(f)), Path::to_path_buf)
+    }
+
+    /// The best system whose slot for this set's short name is free: another version under
+    /// the same name may already take it (e.g. `gradius3.zip`, Japan vs World).
+    fn free_arcade_slot<'g>(&self, it: &'g Item, g: &'g Game) -> &'g Game {
+        let Files::Set { archive, alt, .. } = &it.files else {
+            return g;
+        };
+        let free = |s: &str| {
+            let t = self.library.join(s).join(file_name(archive));
+            !self.claimed.contains(&t) && (!t.exists() || t == *archive)
+        };
+        std::iter::once(g)
+            .chain(alt)
+            .find(|c| free(&c.system))
+            .unwrap_or(g)
     }
 
     /// Puts a BIOS set where RetroArch's core looks for it.

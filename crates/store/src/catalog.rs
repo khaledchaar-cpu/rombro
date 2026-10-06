@@ -102,6 +102,17 @@ impl Store {
             .map(|r| arcade::rank(&r.system))
             .min()
             .unwrap_or_default();
+        let mut alt: Vec<Game> = Vec::new();
+        let mut others: Vec<&Record> = records
+            .iter()
+            .filter(|r| arcade::rank(&r.system) != best && arcade::is_arcade(&r.system))
+            .collect();
+        others.sort_by_key(|r| arcade::rank(&r.system));
+        for r in others {
+            if alt.iter().all(|g| g.system != r.system) {
+                alt.push(game(r));
+            }
+        }
         records.retain(|r| arcade::rank(&r.system) == best);
         let bios = records
             .iter()
@@ -114,6 +125,7 @@ impl Store {
             files: Files::Set {
                 archive: whole.path.clone(),
                 chds: set_chds(&whole.path),
+                alt,
             },
             ident,
             in_library,
