@@ -3102,7 +3102,7 @@ dependencies = [
 
 [[package]]
 name = "rombro-app"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "rombro-core",
@@ -3117,7 +3117,7 @@ dependencies = [
 
 [[package]]
 name = "rombro-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -3130,7 +3130,7 @@ dependencies = [
 
 [[package]]
 name = "rombro-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chd",
  "crc32fast",
@@ -3152,7 +3152,7 @@ dependencies = [
 
 [[package]]
 name = "rombro-rdb"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "criterion",
  "thiserror 2.0.21",
@@ -3160,7 +3160,7 @@ dependencies = [
 
 [[package]]
 name = "rombro-store"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "rayon",
  "rombro-core",
