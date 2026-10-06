@@ -99,8 +99,12 @@ impl Default for Rules {
             systems: BTreeMap::new(),
             cores: BTreeMap::new(),
             name_folders: BTreeMap::from(
-                [("n64dd", "Nintendo - Nintendo 64"), ("solarus", "Solarus")]
-                    .map(|(f, s)| (f.to_owned(), s.to_owned())),
+                [
+                    ("astrocde", "Bally - Astrocade"),
+                    ("n64dd", "Nintendo - Nintendo 64"),
+                    ("solarus", "Solarus"),
+                ]
+                .map(|(f, s)| (f.to_owned(), s.to_owned())),
             ),
         }
     }

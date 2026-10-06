@@ -41,6 +41,9 @@ impl Store {
             if let Some(item) = self.romset(whole, in_library, &known)? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
+            } else if let Some(item) = self.rejected_romset(whole, in_library)? {
+                sets.insert(whole.path.as_path());
+                out.push(item);
             }
         }
         for group in report.roms.chunk_by(|a, b| a.path == b.path) {
@@ -185,6 +188,34 @@ impl Store {
                 dat_note,
             },
             ident,
+            in_library,
+        }))
+    }
+
+    /// A zip without whole-file match that a DAT names and the rules exclude (e.g. MAME
+    /// "not working"): an incomplete set with the DAT reason instead of unknown members.
+    fn rejected_romset(&self, whole: &ScannedRom, in_library: bool) -> Result<Option<Item>> {
+        let is_zip = whole
+            .path
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("zip"));
+        let (Some(stem), true) = (whole.path.file_stem(), is_zip) else {
+            return Ok(None);
+        };
+        let Ok(members) = rombro_core::archive::members(&whole.path) else {
+            return Ok(None);
+        };
+        let Some(reason) = self.rejected_set(&stem.to_string_lossy(), &members)? else {
+            return Ok(None);
+        };
+        Ok(Some(Item {
+            files: Files::Set {
+                archive: whole.path.clone(),
+                chds: set_chds(&whole.path),
+                alt: Vec::new(),
+                dat_note: String::new(),
+            },
+            ident: Ident::Incomplete(reason),
             in_library,
         }))
     }

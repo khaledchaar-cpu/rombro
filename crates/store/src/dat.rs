@@ -83,6 +83,34 @@ impl Store {
         .transpose()
     }
 
+    /// Reason to reject an archive without database match whose name and members belong to
+    /// a set in a loaded arcade DAT that the rules exclude (e.g. MAME "not working"), as
+    /// `"<core>: <reason>"` per core. `None` if no DAT knows the set or one core accepts it.
+    pub fn rejected_set(&self, name: &str, members: &[(String, u32)]) -> Result<Option<String>> {
+        if members.is_empty() || !self.rules()?.arcade_working_only {
+            return Ok(None);
+        }
+        let mut reasons = Vec::new();
+        for info in self.dats()? {
+            let Some(set) = self.dat_set(&info.system, name)? else {
+                continue;
+            };
+            let hits = members
+                .iter()
+                .filter(|(_, crc)| set.roms.iter().any(|r| r.crc == *crc))
+                .count();
+            // Most members suffice: dumps often carry device ROMs MAME lists elsewhere.
+            if hits * 4 < members.len() * 3 {
+                continue;
+            }
+            if set.working {
+                return Ok(None);
+            }
+            reasons.push(format!("{0}: {name} not working in {0}", info.system));
+        }
+        Ok((!reasons.is_empty()).then(|| reasons.join("; ")))
+    }
+
     /// Checks zip `members` and the CHDs next to it (`chds`: file stems) as set `name` of
     /// `system`'s DAT. `None` if no DAT is loaded for
     /// `system`; `Err(reason)` if the set is unknown to the DAT or incomplete.
@@ -192,5 +220,24 @@ mod tests {
             s.check_set("MAME", "dlair2", &m, &[], |_| true).unwrap(),
             Some(Ok(()))
         );
+    }
+
+    #[test]
+    fn rejected_set_names_not_working_dats() {
+        let mut s = Store::open_in_memory().unwrap();
+        let sets = dat::parse(
+            r#"<mame><machine name="scud"><driver status="preliminary"/>
+            <rom name="a" size="1" crc="1"/></machine></mame>"#
+                .as_bytes(),
+        )
+        .unwrap();
+        s.import_dat("MAME", "0.289", 1, &sets).unwrap();
+        let m = vec![("a".to_string(), 1)];
+        assert_eq!(
+            s.rejected_set("scud", &m).unwrap().as_deref(),
+            Some("MAME: scud not working in MAME")
+        );
+        assert_eq!(s.rejected_set("scud", &[("x".into(), 9)]).unwrap(), None);
+        assert_eq!(s.rejected_set("other", &m).unwrap(), None);
     }
 }
