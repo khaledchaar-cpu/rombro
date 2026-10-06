@@ -137,6 +137,39 @@ pub fn n64_swap(probe: &[u8]) -> Option<usize> {
     }
 }
 
+/// Hashes a 2048-byte-sector `.iso` as is and rebuilt as raw MODE1 sectors (sync, header,
+/// EDC, ECC), the form Redump dumps and the disc RDBs use. `None` for the raw variant if
+/// the stream does not end on a sector boundary.
+pub fn hash_iso<R: Read>(mut r: R) -> io::Result<(Hashes, Option<Hashes>)> {
+    use crate::disc::cdsector::{USER, mode1};
+    let (mut plain, mut raw) = (MultiHasher::new(), MultiHasher::new());
+    let mut buf = vec![0u8; BUF_SIZE];
+    let (mut fill, mut lba, mut aligned) = (0usize, 0u32, true);
+    loop {
+        let n = match r.read(&mut buf[fill..]) {
+            Ok(0) => break,
+            Ok(n) => n,
+            Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
+            Err(e) => return Err(e),
+        };
+        plain.update(&buf[fill..fill + n]);
+        fill += n;
+        let whole = fill / USER * USER;
+        for sector in buf[..whole].chunks_exact(USER) {
+            if let Ok(data) = sector.try_into() {
+                raw.update(&mode1(lba, data));
+                lba += 1;
+            }
+        }
+        buf.copy_within(whole..fill, 0);
+        fill -= whole;
+    }
+    if fill != 0 {
+        aligned = false;
+    }
+    Ok((plain.finish(), aligned.then(|| raw.finish())))
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -188,5 +221,16 @@ mod tests {
         }
         let (_, s) = hash_reader(&data[..16], Some(16), false).unwrap();
         assert!(s.is_none());
+    }
+
+    #[test]
+    fn iso_is_also_hashed_as_raw_mode1_sectors() {
+        use crate::disc::cdsector::{USER, empty_mode1};
+        let iso = vec![0u8; 3 * USER];
+        let raw: Vec<u8> = (0..3).flat_map(empty_mode1).collect();
+        let (plain, conv) = hash_iso(&iso[..]).unwrap();
+        assert_eq!(plain, hash_reader(&iso[..], None, false).unwrap().0);
+        assert_eq!(conv, Some(hash_reader(&raw[..], None, false).unwrap().0));
+        assert_eq!(hash_iso(&iso[..USER + 1]).unwrap().1, None);
     }
 }

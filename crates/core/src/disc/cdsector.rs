@@ -45,9 +45,19 @@ pub fn header_lba(raw: &[u8]) -> Option<u32> {
     (un(raw[12]) * 4500 + un(raw[13]) * 75 + un(raw[14])).checked_sub(MSF_OFFSET)
 }
 
+/// User data bytes of a MODE1 sector.
+pub const USER: usize = 2048;
+
 /// A MODE1 sector at `lba` with zeroed user data, complete with EDC and ECC.
 pub fn empty_mode1(lba: u32) -> [u8; SECTOR] {
+    mode1(lba, &[0u8; USER])
+}
+
+/// A MODE1 sector at `lba` holding `data`, complete with EDC and ECC: what a raw
+/// (Redump) dump contains where a 2048-byte `.iso` only keeps the user data.
+pub fn mode1(lba: u32, data: &[u8; USER]) -> [u8; SECTOR] {
     let mut s = [0u8; SECTOR];
+    s[16..16 + USER].copy_from_slice(data);
     s[..12].copy_from_slice(&SYNC);
     let a = lba + MSF_OFFSET;
     let bcd = |v: u32| (((v / 10) << 4) | (v % 10)) as u8;

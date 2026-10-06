@@ -32,7 +32,7 @@ pub struct ScannedRom {
     pub member: Option<String>,
     pub hashes: Hashes,
     pub header: Option<Header>,
-    /// Hashes without the detected header.
+    /// Hashes without the detected header; for a 2048-byte `.iso`, its raw-sector hashes.
     pub headerless: Option<Hashes>,
 }
 
@@ -226,11 +226,18 @@ fn scan_disc_cached(
 ) -> Result<ScannedDisc, ScanError> {
     let mut hashed = Vec::with_capacity(tracks.len());
     for t in tracks {
-        if let Some(mut hit) = cache.get(t).filter(|h| h.len() == 1) {
+        let cd_iso = kind == DiscKind::Iso && disc::is_cd_iso(t);
+        if let Some(mut hit) = cache
+            .get(t)
+            .filter(|h| h.len() == 1 && (!cd_iso || h[0].headerless.is_some()))
+        {
             hashed.append(&mut hit);
             continue;
         }
-        let (hashes, _) = if kind == DiscKind::Nintendo {
+        let (hashes, raw) = if cd_iso {
+            // 2048-byte sectors: also hash as raw sectors, as the databases list them
+            crate::hash::hash_iso(BufReader::new(File::open(t)?))?
+        } else if kind == DiscKind::Nintendo {
             // compressed container: no database hash exists; the header identifies the file
             hash_reader(File::open(t)?.take(1 << 16), None, false)?
         } else if disc::is_chd(t) {
@@ -246,7 +253,7 @@ fn scan_disc_cached(
             member: None,
             hashes,
             header: None,
-            headerless: None,
+            headerless: raw,
         });
     }
     Ok(ScannedDisc {

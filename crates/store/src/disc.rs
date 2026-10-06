@@ -16,8 +16,13 @@ pub enum DiscMatch {
 impl Store {
     pub fn identify_disc(&self, disc: &ScannedDisc) -> Result<DiscMatch> {
         let mut weak = None;
-        for t in &disc.tracks {
-            match self.identify(&t.hashes)? {
+        // `headerless` of a 2048-byte `.iso` holds its raw-sector hashes
+        let hashes = disc
+            .tracks
+            .iter()
+            .flat_map(|t| [Some(&t.hashes), t.headerless.as_ref()]);
+        for h in hashes.flatten() {
+            match self.identify(h)? {
                 Match::Unknown => {}
                 m @ Match::Verified(_) => return Ok(DiscMatch::Hash(m)),
                 m @ Match::CrcOnly(_) => {

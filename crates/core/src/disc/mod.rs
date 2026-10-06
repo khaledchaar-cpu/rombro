@@ -88,6 +88,13 @@ pub fn identify(tracks: &[PathBuf]) -> io::Result<Option<DiscId>> {
     Ok(None)
 }
 
+/// A plain `.iso` sized like a CD data track in 2048-byte sectors (not a DVD image), whose
+/// raw-sector form may be what the databases list.
+pub fn is_cd_iso(path: &Path) -> bool {
+    const CD_MAX: u64 = 900_000_000;
+    fs::metadata(path).is_ok_and(|m| m.len() % cdsector::USER as u64 == 0 && m.len() <= CD_MAX)
+}
+
 /// Sheets may contain non-UTF-8 names (Shift-JIS, Latin-1); decode lossily.
 /// CHD images are read through [`chd::ChdTrack`] instead of as plain files.
 pub fn is_chd(path: &Path) -> bool {
