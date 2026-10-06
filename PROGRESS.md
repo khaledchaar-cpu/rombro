@@ -17,7 +17,7 @@
 | M12 Übertragen & Container | ✅ done |
 | M12b Arcade & Sichtprüfung | ✅ done |
 | M12c Echte Sammlung (Probelauf) | ✅ done |
-| M13 Regeln transparent & einstellbar | ✅ done (Rules-Seite: erster Eindruck ok, finale Bewertung offen) |
+| M13 Regeln transparent & einstellbar | ✅ done (Rules-Seite abgenommen 2026-10-06; Entscheidungen zeigen Grund + Datum) |
 | M14 Arcade-DATs | ✅ done |
 
 ## Aktuell
@@ -32,7 +32,7 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
 **Nächster Milestone: M15 Launcher-Basis** (SPEC §6) – Schnitt noch festlegen.
 
 ## Nächste Schritte
-1. Rules-Seite: erster Eindruck ok (User, 2026-10-06), finale Bewertung im Alltag.
+1. ✅ Rules-Seite abgenommen (User, 2026-10-06). Alte Entscheidungen ohne gespeicherten Grund → „reason not recorded“.
 2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
    Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.
    ✅ Komplett-Probelauf (2026-10-06, 2 h 05 min, `~/rombro-test/fullrun.txt`): 225.720 Items, 16.522 zu platzieren,
