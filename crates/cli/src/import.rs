@@ -22,13 +22,13 @@ pub fn run(a: Args) -> Result<()> {
     let mut items = Vec::new();
     let mut known = Default::default();
     if library.is_dir() {
-        let report = scan(&library);
+        let report = scan_cached(&store, &library)?;
         known = rombro_store::set_names(&report);
         items = store.items(&report, true)?;
     }
     let inbox = a.inbox.as_deref().map(absolute).transpose()?;
     if let Some(inbox) = &inbox {
-        items.extend(store.items_with(&scan(inbox), false, &known)?);
+        items.extend(store.items_with(&scan_cached(&store, inbox)?, false, &known)?);
     }
     let ts = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
     let opts = Options {
@@ -153,6 +153,17 @@ fn scan(dir: &Path) -> rombro_core::ScanReport {
         eprintln!("ERROR   {}: {}", f.path.display(), f.error);
     }
     report
+}
+
+/// Scan through the hash cache (unchanged files are not read again), like the app.
+fn scan_cached(store: &rombro_store::Store, dir: &Path) -> Result<rombro_core::ScanReport> {
+    let cache = store.hash_cache(dir)?;
+    let report = rombro_core::scan_cached(dir, &cache, &|_, _| {});
+    store.save_scan(dir, &report)?;
+    for f in &report.failures {
+        eprintln!("ERROR   {}: {}", f.path.display(), f.error);
+    }
+    Ok(report)
 }
 
 fn absolute(p: &Path) -> Result<PathBuf> {
