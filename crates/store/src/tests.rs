@@ -330,15 +330,23 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
 fn verdicts_roundtrip() {
     use rombro_core::plan::Verdict;
     let s = Store::open_in_memory().unwrap();
-    s.set_verdict("Sys", "A", Some(Verdict::Keep)).unwrap();
-    s.set_verdict("Sys", "B", Some(Verdict::Keep)).unwrap();
-    s.set_verdict("Sys", "B", Some(Verdict::Discard)).unwrap();
-    s.set_verdict("Sys", "C", Some(Verdict::Keep)).unwrap();
-    s.set_verdict("Sys", "C", None).unwrap();
+    s.set_verdict("Sys", "A", Some(Verdict::Keep), "").unwrap();
+    s.set_verdict("Sys", "B", Some(Verdict::Keep), "").unwrap();
+    s.set_verdict("Sys", "B", Some(Verdict::Discard), "Newer revision kept")
+        .unwrap();
+    s.set_verdict("Sys", "C", Some(Verdict::Keep), "").unwrap();
+    s.set_verdict("Sys", "C", None, "").unwrap();
     let v = s.verdicts().unwrap();
     assert_eq!(v.len(), 2);
     assert_eq!(v[&("Sys".into(), "A".into())], Verdict::Keep);
     assert_eq!(v[&("Sys".into(), "B".into())], Verdict::Discard);
+    let rows = s.verdict_rows().unwrap();
+    let b = rows.iter().find(|r| r.name == "B").unwrap();
+    assert_eq!(
+        (b.verdict.as_str(), b.reason.as_str()),
+        ("discard", "Newer revision kept")
+    );
+    assert!(b.decided.is_some());
 }
 
 #[test]

@@ -1,6 +1,5 @@
 //! User exceptions: verdicts on 1G1R rejects, ambiguity resolutions, ignored paths.
 use crate::commands::{CmdResult, err, open_store};
-use rombro_core::plan::Verdict;
 use serde::Serialize;
 use std::path::PathBuf;
 
@@ -8,7 +7,11 @@ use std::path::PathBuf;
 pub struct VerdictView {
     system: String,
     name: String,
-    verdict: &'static str,
+    verdict: String,
+    /// Why the release was up for decision (empty for old verdicts).
+    reason: String,
+    /// Unix time of the decision, if known.
+    decided: Option<i64>,
 }
 
 #[derive(Serialize)]
@@ -44,21 +47,18 @@ fn unhex(s: &str) -> CmdResult<Vec<u8>> {
 #[tauri::command]
 pub async fn exceptions_get() -> CmdResult<Exceptions> {
     let (store, _) = open_store()?;
-    let mut verdicts: Vec<VerdictView> = store
-        .verdicts()
+    let verdicts: Vec<VerdictView> = store
+        .verdict_rows()
         .map_err(err)?
         .into_iter()
-        .map(|((system, name), v)| VerdictView {
-            system,
-            name,
-            verdict: match v {
-                Verdict::Keep => "keep",
-                Verdict::Discard => "discard",
-                Verdict::Prefer => "prefer",
-            },
+        .map(|r| VerdictView {
+            system: r.system,
+            name: r.name,
+            verdict: r.verdict,
+            reason: r.reason,
+            decided: r.decided,
         })
         .collect();
-    verdicts.sort_by(|a, b| (&a.system, &a.name).cmp(&(&b.system, &b.name)));
     let resolutions = store
         .resolutions()
         .map_err(err)?

@@ -78,6 +78,9 @@ const MIGRATIONS: &[&str] = &[
         roms   TEXT NOT NULL,
         PRIMARY KEY (system, name)
     ) WITHOUT ROWID;",
+    // v8: why and when a verdict was given
+    "ALTER TABLE verdict ADD COLUMN reason TEXT NOT NULL DEFAULT '';
+     ALTER TABLE verdict ADD COLUMN decided INTEGER;",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

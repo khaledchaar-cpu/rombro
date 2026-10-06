@@ -15,6 +15,17 @@ pub struct JournalEntry {
     pub done: String,
 }
 
+/// A stored verdict as shown to the user (`verdict` = keep/discard/prefer).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VerdictRow {
+    pub system: String,
+    pub name: String,
+    pub verdict: String,
+    pub reason: String,
+    /// Unix time; `None` for verdicts given before reasons were stored.
+    pub decided: Option<i64>,
+}
+
 impl Store {
     pub fn add_journal(&self, ts: i64, library: &str, done: &str) -> Result<i64> {
         self.conn.execute(
@@ -104,8 +115,15 @@ impl Store {
         Ok(())
     }
 
-    /// Stores (or with `None` clears) the user's verdict on a release 1G1R rejected.
-    pub fn set_verdict(&self, system: &str, name: &str, v: Option<Verdict>) -> Result<()> {
+    /// Stores (or with `None` clears) the user's verdict on a release 1G1R rejected;
+    /// `reason` is why the release was up for decision (shown on the rules page).
+    pub fn set_verdict(
+        &self,
+        system: &str,
+        name: &str,
+        v: Option<Verdict>,
+        reason: &str,
+    ) -> Result<()> {
         match v {
             Some(v) => {
                 let v = match v {
@@ -114,8 +132,9 @@ impl Store {
                     Verdict::Prefer => "prefer",
                 };
                 self.conn.execute(
-                    "INSERT OR REPLACE INTO verdict (system, name, verdict) VALUES (?1, ?2, ?3)",
-                    params![system, name, v],
+                    "INSERT OR REPLACE INTO verdict (system, name, verdict, reason, decided)
+                     VALUES (?1, ?2, ?3, ?4, unixepoch())",
+                    params![system, name, v, reason],
                 )?;
             }
             None => {
@@ -126,6 +145,24 @@ impl Store {
             }
         }
         Ok(())
+    }
+
+    /// All stored verdicts with reason and decision time, newest first.
+    pub fn verdict_rows(&self) -> Result<Vec<VerdictRow>> {
+        let mut st = self.conn.prepare(
+            "SELECT system, name, verdict, reason, decided FROM verdict
+             ORDER BY decided IS NULL, decided DESC, system, name",
+        )?;
+        let rows = st.query_map([], |r| {
+            Ok(VerdictRow {
+                system: r.get(0)?,
+                name: r.get(1)?,
+                verdict: r.get(2)?,
+                reason: r.get(3)?,
+                decided: r.get(4)?,
+            })
+        })?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
     }
 
     /// All stored verdicts, ready for `plan::Options::verdicts`.

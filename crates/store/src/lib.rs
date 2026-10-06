@@ -22,7 +22,7 @@ pub use disc::DiscMatch;
 pub use gamify::Stats;
 pub use identify::{Match, candidates};
 pub use import::SyncReport;
-pub use journal::JournalEntry;
+pub use journal::{JournalEntry, VerdictRow};
 pub use record::Record;
 
 use rusqlite::Connection;

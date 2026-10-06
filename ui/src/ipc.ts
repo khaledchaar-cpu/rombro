@@ -217,9 +217,10 @@ export async function resolveAmbiguous(path: string, c: Choice): Promise<void> {
 export async function setVerdict(
   c: Choice,
   verdict: Verdict | null,
+  reason = "",
 ): Promise<void> {
   if (!inTauri) return;
-  return invoke("set_verdict", { system: c.system, name: c.name, verdict });
+  return invoke("set_verdict", { system: c.system, name: c.name, verdict, reason });
 }
 
 export function onImportProgress(
@@ -543,7 +544,15 @@ export async function rulesDefaults(): Promise<Rules> {
 }
 
 export interface Exceptions {
-  verdicts: { system: string; name: string; verdict: "keep" | "discard" | "prefer" }[];
+  verdicts: {
+    system: string;
+    name: string;
+    verdict: "keep" | "discard" | "prefer";
+    /** Why the release was up for decision; empty for old verdicts. */
+    reason: string;
+    /** Unix seconds, null if unknown. */
+    decided: number | null;
+  }[];
   resolutions: { sha1: string; system: string; name: string }[];
   ignored: string[];
 }
@@ -551,7 +560,7 @@ export interface Exceptions {
 export async function exceptionsGet(): Promise<Exceptions> {
   if (!inTauri)
     return {
-      verdicts: [{ system: "Nintendo - SNES", name: "Mario (USA)", verdict: "keep" }],
+      verdicts: [{ system: "Nintendo - SNES", name: "Mario (USA)", verdict: "keep", reason: "Kept release has a preferred region · kept: Mario (Europe)", decided: 1791244800 }],
       resolutions: [{ sha1: "00ab", system: "Sony - PlayStation", name: "Final Fantasy VII (Europe) (Disc 1)" }],
       ignored: ["/roms/frontend-media"],
     };

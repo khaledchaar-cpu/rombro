@@ -36,6 +36,7 @@ pub async fn set_verdict(
     system: String,
     name: String,
     verdict: Option<VerdictArg>,
+    reason: Option<String>,
 ) -> CmdResult<()> {
     let v = verdict.map(|v| match v {
         VerdictArg::Keep => Verdict::Keep,
@@ -43,7 +44,9 @@ pub async fn set_verdict(
         VerdictArg::Prefer => Verdict::Prefer,
     });
     let (store, _) = open_store()?;
-    store.set_verdict(&system, &name, v).map_err(err)
+    store
+        .set_verdict(&system, &name, v, reason.as_deref().unwrap_or_default())
+        .map_err(err)
 }
 
 #[derive(Serialize)]

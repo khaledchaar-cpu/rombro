@@ -39,7 +39,14 @@ export default function Exceptions() {
               {(v) => (
                 <div class="row ex-row">
                   <span class="tag mono">{v.verdict}</span>
-                  <span class="ellipsis" title={v.system}>{v.name}</span>
+                  <div class="ex-main">
+                    <span class="ellipsis" title={v.name}>{v.name}</span>
+                    <span class="dim small ellipsis">
+                      {[v.system, v.reason || "reason not recorded", v.decided && new Date(v.decided * 1000).toLocaleDateString()]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </div>
                   <button class="btn ghost" onClick={async () => (await setVerdict(v, null), refetch())}>Remove</button>
                 </div>
               )}

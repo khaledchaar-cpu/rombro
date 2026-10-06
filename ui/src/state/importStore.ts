@@ -98,13 +98,15 @@ export const pick = (d: DecisionView, c: Choice) =>
 /** Keeps or discards a release 1G1R rejected. */
 export const judge = (d: DecisionView, v: Verdict) =>
   guard(async () => {
-    await setVerdict(d.options[0], v);
+    const kept = d.detail.split("→")[1]?.trim();
+    await setVerdict(d.options[0], v, kept ? `${d.headline} · ${kept}` : d.headline);
     mark(d, `→ ${v}`);
   });
 
 /** Resolves a 1G1R tie in favour of release `c`. */
 export const prefer = (d: DecisionView, c: Choice) =>
   guard(async () => {
-    await setVerdict(c, "prefer");
+    const others = d.options.filter((o) => o.name !== c.name).map((o) => o.name);
+    await setVerdict(c, "prefer", `1G1R tie with ${others.join(", ")}`);
     mark(d, `→ ${c.name}`);
   });
