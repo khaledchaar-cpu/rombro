@@ -238,6 +238,18 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   - BIOS (Arcade-Zips wie `neogeo.zip` und Konsolen-`[BIOS]`-Einträge, Konsole → `_bios/` = `system`-Wurzel) → `<lib>/_bios/` (FBNeo: `_bios/fbneo/` = RetroArch-`system`-Layout; MAME-Cores: neben den Romsets), sonst komplett ignoriert (keine Anzeige – auch nicht im Import-Plan –, Statistik, Achievements).
   - MAME-CHDs: gleichnamiger Ordner neben erkanntem Zip (`kinst/kinst.chd`) wird ungeprüft mitgenommen; CHD ohne Zip → Quarantäne.
 
+- **M13 Regeln transparent & einstellbar (User, 2026-10-06):**
+  - Zielgruppe Power-User (knappe, technische Texte).
+  - Jede Plan-Op trägt eine Regel-ID + Grund; Seite „Regeln“ (GUI) zeigt pro Regel Erklärung, aktuellen Wert
+    (editierbar, „Zurücksetzen“ auf Default) und Treffer-Zahl des letzten Laufs.
+  - Einstellbar: Regionen, Sprachen, Ausschluss-Flags; Arcade-DB-Reihenfolge + Arcade-1G1R an/aus;
+    Ordner-Systeme (FOLDER_SYSTEMS) erweiterbar; Quarantäne an/aus. Global mit Overrides pro System.
+  - Fest: m3u-Variante B, Pfade `_bios`/`_playlists`/`_quarantine`/`_trash`.
+  - Ausnahmen: „immer behalten“, „Release bevorzugen“, „Pfad nie anfassen“; bestehende Verdicts/Resolutions
+    werden als editierbare Ausnahmeliste gezeigt. „System zuordnen“ erst bei Bedarf.
+  - Regeländerung → Audit-Plan zur Prüfung, Ausführung undo-bar (nie automatisch).
+  - Speicherung in der DB (wie Library-Pfad). CLI: `rules show` + „Warum“ in dry-run-Ausgabe; Setzen via GUI/Datei.
+
 ## 11. Offene Fragen
 - Ziel (User): vollständige Sammlung im Sinne der RetroArch-Datenbanken. Andere Versionen, Derivate, Formate interessieren nicht, solange sie in keiner RDB stehen → Quarantäne ist richtig für Unbekanntes in erkannten System-Ordnern.
 - Entschieden: 1G1R auch für Arcade (User). Keine Parent/Clone-Infos in den RDBs → Gruppierung über den Titel vor der ersten Klammer, über alle DBs, die ein Set listen (Union-Find; `Gradius III: Densetsu…` findet über den MAME-Namen `Gradius III (Japan)` in die Gruppe). Auswahl: Regionen-Reihenfolge der Regeln → Original vor Bootleg/Hack/Proto → neueste Fassung (Name absteigend: Datum/Revision). Abgelehnte → Entscheidungen (wie Konsole). Code: `arcade/g1r.rs`.

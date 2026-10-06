@@ -17,7 +17,7 @@
 | M12 Übertragen & Container | ✅ done |
 | M12b Arcade & Sichtprüfung | ✅ done |
 | M12c Echte Sammlung (Probelauf) | ✅ done |
-| M13 Regeln transparent & einstellbar | ⏳ next – erst Abstimmung (`grilling`) |
+| M13 Regeln transparent & einstellbar | 🚧 in Arbeit (Abstimmung erledigt, SPEC 11a) |
 
 ## Aktuell
 M12c: Probelauf über die echte Sammlung (1,2 TB) → viele Sonderregeln: Spielordner (DOS/ScummVM/Ports) ganz,
