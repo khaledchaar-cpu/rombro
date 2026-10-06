@@ -40,7 +40,16 @@ pub fn run(a: Args) -> Result<()> {
     let p = plan::build(&items, &library, &opts);
     store.set_rule_hits(&p.why)?;
     for (op, why) in p.ops.iter().zip(&p.why) {
-        println!("{}  [{}]", describe(op, &library), why.rule.id());
+        if why.detail.is_empty() {
+            println!("{}  [{}]", describe(op, &library), why.rule.id());
+        } else {
+            println!(
+                "{}  [{}: {}]",
+                describe(op, &library),
+                why.rule.id(),
+                why.detail
+            );
+        }
     }
     for d in &p.decisions {
         println!("{}", decision(d));
