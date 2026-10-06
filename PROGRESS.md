@@ -17,7 +17,7 @@
 | M12 Übertragen & Container | ✅ done |
 | M12b Arcade & Sichtprüfung | ✅ done |
 | M12c Echte Sammlung (Probelauf) | ✅ done |
-| M13 Regeln transparent & einstellbar | ✅ done (Sichtprüfung Regeln-Seite offen) |
+| M13 Regeln transparent & einstellbar | ✅ done (Rules-Seite: erster Eindruck ok, finale Bewertung offen) |
 
 ## Aktuell
 M13: Regel-Katalog `core::rules` (10 Regeln, ID/Titel/Erklärung); jede Plan-Op trägt `Why { rule, detail }`.
@@ -27,7 +27,7 @@ App: neue Seite „Rules“ (Taste 5; Settings jetzt 6) mit Erklärung, Treffern
 Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeigt `[regel-id]` je Op.
 
 ## Nächste Schritte
-1. Sichtprüfung der Seite „Rules“ in `pnpm tauri dev` (Browser-Check war in der Session nicht möglich).
+1. Rules-Seite: erster Eindruck ok (User, 2026-10-06), finale Bewertung im Alltag.
 2. Echter Import auf Testordner; erneuter Komplett-Probelauf (~2 h).
 3. Prüfung in RetroArch: MAME-BIOS neben Sets, Gamification-Panels, Effects off.
 4. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
