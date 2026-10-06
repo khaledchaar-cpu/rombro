@@ -64,6 +64,20 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE file ADD COLUMN added INTEGER;",
     // v6: unlocked achievements (unix seconds)
     "CREATE TABLE achievement (id TEXT PRIMARY KEY, unlocked_at INTEGER NOT NULL);",
+    // v7: arcade DATs (member lists per core and set; ROMs as JSON)
+    "CREATE TABLE dat_source (
+        system  TEXT PRIMARY KEY,
+        version TEXT NOT NULL,
+        fetched INTEGER NOT NULL
+    );
+    CREATE TABLE dat_set (
+        system TEXT NOT NULL,
+        name   TEXT NOT NULL,
+        romof  TEXT,
+        bios   INTEGER NOT NULL,
+        roms   TEXT NOT NULL,
+        PRIMARY KEY (system, name)
+    ) WITHOUT ROWID;",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

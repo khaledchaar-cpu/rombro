@@ -1,6 +1,7 @@
 //! rombro-store: SQLite persistence for the RDB cache and (later) library state.
 
 mod catalog;
+mod dat;
 mod disc;
 mod files;
 mod gamify;
