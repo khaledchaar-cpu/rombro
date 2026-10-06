@@ -17,21 +17,18 @@
 | M12 Übertragen & Container | ✅ done |
 | M12b Arcade & Sichtprüfung | ✅ done |
 | M12c Echte Sammlung (Probelauf) | ✅ done |
-| M13 Regeln transparent & einstellbar | 🚧 in Arbeit (Abstimmung erledigt, SPEC 11a) |
+| M13 Regeln transparent & einstellbar | ✅ done (Sichtprüfung Regeln-Seite offen) |
 
 ## Aktuell
-M12c: Probelauf über die echte Sammlung (1,2 TB) → viele Sonderregeln: Spielordner (DOS/ScummVM/Ports) ganz,
-Arcade-1G1R über Titel-Gruppen, Kurznamen-Ausweichen, Multi-Disk-Zips als Ordner+m3u, GC/Wii per Spiel-ID,
-N64-Byteorder, Dreamcast-Serials, Quarantäne mit Unterordnern, unbekannte/BIOS-Ordner bleiben liegen.
-Quarantäne 45.205 → 5.270, Konflikte 186 → 0 (Arcade). Alle Regeln in SPEC „Entscheidungen“.
+M13: Regel-Katalog `core::rules` (10 Regeln, ID/Titel/Erklärung); jede Plan-Op trägt `Why { rule, detail }`.
+`g1r::Rules` erweitert: Arcade-DB-Reihenfolge, Arcade-1G1R, Ordner-Systeme, Quarantäne an/aus, Overrides pro
+System. Ausnahmen: ignorierte Pfade (`Options::ignore`, Setting `ignore`), Verdicts/Resolutions editierbar.
+App: neue Seite „Rules“ (Taste 5; Settings jetzt 6) mit Erklärung, Treffern (Setting `rule_hits`), Reset pro
+Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeigt `[regel-id]` je Op.
 
 ## Nächste Schritte
-1. **M13 starten mit Abstimmung (`grilling`-Skill):** (a) wie machen wir dem User alle Regeln transparent
-   (Plan-Ansicht „warum“, Regel-Übersicht, Doku?), (b) welche Regeln soll er ändern können (Settings,
-   pro System, Ausnahmen?). Ergebnis in SPEC festhalten, dann umsetzen.
-   Regel-Inventar als Ausgangspunkt: SPEC „Entscheidungen“ + `plan/build.rs` (`why`-Texte), `arcade/g1r.rs`,
-   `plan/build/folders.rs` (FOLDER_SYSTEMS, MARKERS), `left_alone`, `g1r::Rules`.
-2. Danach: echter Import auf Testordner; erneuter Komplett-Probelauf (~2 h).
+1. Sichtprüfung der Seite „Rules“ in `pnpm tauri dev` (Browser-Check war in der Session nicht möglich).
+2. Echter Import auf Testordner; erneuter Komplett-Probelauf (~2 h).
 3. Prüfung in RetroArch: MAME-BIOS neben Sets, Gamification-Panels, Effects off.
 4. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 
@@ -94,3 +91,5 @@ Quarantäne 45.205 → 5.270, Konflikte 186 → 0 (Arcade). Alle Regeln in SPEC 
 - 2026-10-05: M11 Release abgeschlossen.
 - 2026-10-05: M12b Arcade-Erkennung & Sichtprüfungs-Fixes.
 - 2026-10-05: F6-Reste (Trash-Größe, Toast, Franchise-Ziele).
+- Neue `Rules`-Felder brauchen Defaults im `Default`-Impl (`#[serde(default)]` nimmt die) – alte gespeicherte JSONs bleiben gültig.
+- Override-Exclude pro System gibt es nur im Backend/JSON, nicht in der UI.
