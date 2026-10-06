@@ -224,6 +224,10 @@ impl Store {
             .file_stem()
             .map(|s| s.to_string_lossy().into_owned());
         let has_set = |n: &str| known.contains(&n.to_ascii_lowercase());
+        let chds: Vec<String> = set_chds(archive)
+            .iter()
+            .filter_map(|p| Some(p.file_stem()?.to_string_lossy().into_owned()))
+            .collect();
         let mut reasons = Vec::new();
         for r in cores {
             let name = r
@@ -232,7 +236,7 @@ impl Store {
                 .and_then(|n| n.rsplit_once('.').map(|(s, _)| s.to_owned()))
                 .or_else(|| stem.clone())
                 .unwrap_or_default();
-            match self.check_set(&r.system, &name, &members, has_set)? {
+            match self.check_set(&r.system, &name, &members, &chds, has_set)? {
                 None | Some(Ok(())) => return Ok(Ok(Some((&r.system, reasons.join("; "))))),
                 Some(Err(why)) => reasons.push(format!("{}: {why}", r.system)),
             }

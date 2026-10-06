@@ -85,6 +85,8 @@ const MIGRATIONS: &[&str] = &[
     "UPDATE file SET mtime = -1
      WHERE size BETWEEN 1572864 AND 3146240
        AND lower(substr(path, -4)) IN ('.smc', '.sfc', '.swc', '.fig');",
+    // v10: DATs now record disks (CHDs); drop them so the next sync imports them again
+    "DELETE FROM dat_set; DELETE FROM dat_source;",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

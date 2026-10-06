@@ -293,6 +293,10 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   das System nennt (wenigste Systeme gewinnt). BIOS: libretro `System.dat` (Snapshot in `crates/core/data/`) per SHA1
   gegen den Library-Index, Arcade-Zips per Name aus `_bios/`; `Op::Copy` nur wenn Ziel fehlt, abweichende Dateien
   bleiben (Konflikt-Hinweis); fehlende BIOS nur für Systeme mit Library-Ordner gemeldet.
+- Entschieden (User, 2026-10-06): Arcade-DATs enthalten auch `<disk>`-Einträge (CHDs). Ein Set, dessen eigene Disk
+  nicht als `<set>/<disk>.chd` neben dem Zip liegt, ist unvollständig (z. B. Laserdisc-Spiele ohne CHD) → Trash mit
+  Begründung, keine Playlist. Geerbte Disks (`merge`) werden nicht geprüft. Schema v10 verwirft alte DATs → einmal
+  „Sync databases“.
 - Entschieden (User, 2026-10-06): Unerkannte Dateien (falsche Dumps, Systeme ohne RDB wie Daphne, unvollständige
   Arcade-Sets) gehen per Default nach `_trash/unknown/<Pfad>` statt `_quarantine` (`rules.unknown_to_trash`, Default an;
   aus = alte Quarantäne). Eine bestehende `_quarantine` wird dabei geleert; inzwischen erkannte Dateien bleiben.

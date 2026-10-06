@@ -21,6 +21,9 @@ pub struct DatRom {
     pub crc: u32,
     /// Shared with the set named by `romof` (parent or BIOS); absent from split sets.
     pub merge: bool,
+    /// A `<disk>` (CHD next to the zip, `<set>/<name>.chd`) rather than a zip member.
+    #[serde(default)]
+    pub disk: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -62,6 +65,20 @@ pub fn parse(input: impl BufRead) -> Result<Vec<DatSet>, DatError> {
                             size: attr(&e, b"size").and_then(|v| v.parse().ok()).unwrap_or(0),
                             crc,
                             merge: attr(&e, b"merge").is_some(),
+                            disk: false,
+                        });
+                    }
+                }
+                b"disk" => {
+                    if let Some(s) = cur.as_mut()
+                        && attr(&e, b"status").as_deref() != Some("nodump")
+                    {
+                        s.roms.push(DatRom {
+                            name: attr(&e, b"name").unwrap_or_default(),
+                            size: 0,
+                            crc: 0,
+                            merge: attr(&e, b"merge").is_some(),
+                            disk: true,
                         });
                     }
                 }
@@ -134,17 +151,24 @@ impl fmt::Display for Incomplete {
     }
 }
 
-/// Checks a zip's `members` (name, CRC) against `set`. Merged ROMs not in the zip must come
-/// from the `romof` chain: BIOS sets are placed separately (not checked), any other owner must
-/// be present (`has_set`). Extra members (merged clones) are fine.
+/// Checks a zip's `members` (name, CRC) and the CHDs next to it (`chds`: file stems in the
+/// set's folder) against `set`. Merged ROMs not in the zip must come from the `romof` chain:
+/// BIOS sets are placed separately (not checked), any other owner must be present
+/// (`has_set`). Extra members (merged clones) are fine; merged disks live with the parent.
 pub fn check<'a>(
     set: &DatSet,
     members: &[(String, u32)],
+    chds: &[String],
     resolve: impl Fn(&str) -> Option<&'a DatSet>,
     has_set: impl Fn(&str) -> bool,
 ) -> Result<(), Incomplete> {
     let mut bad = Incomplete::default();
-    for rom in &set.roms {
+    for disk in set.roms.iter().filter(|r| r.disk && !r.merge) {
+        if !chds.iter().any(|c| c.eq_ignore_ascii_case(&disk.name)) {
+            bad.missing.push(format!("{}.chd", disk.name));
+        }
+    }
+    for rom in set.roms.iter().filter(|r| !r.disk) {
         if members
             .iter()
             .any(|(n, c)| *c == rom.crc && n.eq_ignore_ascii_case(&rom.name))
@@ -181,7 +205,7 @@ fn owner<'a>(
     let mut next = set.romof.clone();
     for _ in 0..8 {
         let s = resolve(next.as_deref()?)?;
-        if s.roms.iter().any(|r| r.crc == crc && !r.merge) {
+        if s.roms.iter().any(|r| r.crc == crc && !r.merge && !r.disk) {
             return Some(s);
         }
         next = s.romof.clone();
@@ -215,6 +239,7 @@ mod tests {
         check(
             set,
             &m,
+            &[],
             |n| sets.iter().find(|s| s.name == n),
             |n| present.contains(&n),
         )
@@ -256,5 +281,16 @@ mod tests {
         let e = run("1943j", &[("j.bin", 3)], &[]).unwrap_err();
         assert_eq!(e.parent.as_deref(), Some("1943"));
         assert_eq!(e.to_string(), "parent set 1943 missing");
+    }
+
+    #[test]
+    fn laserdisc_set_needs_its_chd() {
+        let dat = r#"<mame><machine name="lair2"><rom name="lair2.bin" size="4" crc="00000009"/>
+            <disk name="lair2" sha1="00"/><disk name="nd" status="nodump"/></machine></mame>"#;
+        let sets = parse(dat.as_bytes()).unwrap();
+        let m = [("lair2.bin".to_string(), 9)];
+        let run = |chds: &[String]| check(&sets[0], &m, chds, |_| None, |_| false);
+        assert_eq!(run(&[]).unwrap_err().missing, ["lair2.chd"]);
+        assert_eq!(run(&["LAIR2".to_string()]), Ok(()));
     }
 }

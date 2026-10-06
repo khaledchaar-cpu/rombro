@@ -80,13 +80,15 @@ impl Store {
         .transpose()
     }
 
-    /// Checks zip `members` as set `name` of `system`'s DAT. `None` if no DAT is loaded for
+    /// Checks zip `members` and the CHDs next to it (`chds`: file stems) as set `name` of
+    /// `system`'s DAT. `None` if no DAT is loaded for
     /// `system`; `Err(reason)` if the set is unknown to the DAT or incomplete.
     pub fn check_set(
         &self,
         system: &str,
         name: &str,
         members: &[(String, u32)],
+        chds: &[String],
         has_set: impl Fn(&str) -> bool,
     ) -> Result<Option<std::result::Result<(), String>>> {
         let loaded: bool = self
@@ -119,6 +121,7 @@ impl Store {
             dat::check(
                 &set,
                 members,
+                chds,
                 |n| chain.iter().find(|s| s.name == n),
                 has_set,
             )
@@ -140,21 +143,21 @@ mod tests {
                 .as_bytes(),
         )
         .unwrap();
-        assert_eq!(s.check_set("MAME", "c", &[], |_| true).unwrap(), None);
+        assert_eq!(s.check_set("MAME", "c", &[], &[], |_| true).unwrap(), None);
         s.import_dat("MAME", "0.289", 7, &sets).unwrap();
         s.import_dat("MAME", "0.289", 8, &sets).unwrap();
         assert_eq!(s.dats().unwrap()[0].fetched, 8);
         let m = vec![("b".to_string(), 2)];
         assert_eq!(
-            s.check_set("MAME", "c", &m, |n| n == "p").unwrap(),
+            s.check_set("MAME", "c", &m, &[], |n| n == "p").unwrap(),
             Some(Ok(()))
         );
         assert_eq!(
-            s.check_set("MAME", "c", &m, |_| false).unwrap(),
+            s.check_set("MAME", "c", &m, &[], |_| false).unwrap(),
             Some(Err("parent set p missing".into()))
         );
         assert!(
-            s.check_set("MAME", "x", &m, |_| true)
+            s.check_set("MAME", "x", &m, &[], |_| true)
                 .unwrap()
                 .unwrap()
                 .is_err()
