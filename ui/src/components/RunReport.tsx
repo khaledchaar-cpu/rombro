@@ -1,0 +1,65 @@
+import { For, Show } from "solid-js";
+import Panel from "./Panel";
+import { lastRun } from "../state/importStore";
+import type { OpView } from "../ipc";
+
+const SHOWN = 200;
+
+/** What an operation did, in a word, for grouping the report. */
+function outcome(op: OpView): string {
+  if (op.kind === "write") return op.to.endsWith(".lpl") ? "playlists" : "written";
+  if (/\/_trash\//.test(op.to)) return "to the trash";
+  if (/\/_quarantine\//.test(op.to)) return "quarantined";
+  return "placed";
+}
+
+/** Report of the last executed plan: counts per outcome and the files it touched. */
+export default function RunReport(props: { rel: (p: string) => string }) {
+  return (
+    <Show when={lastRun()}>
+      {(r) => {
+        const counts = () => {
+          const c = new Map<string, number>();
+          for (const op of r().ops) c.set(outcome(op), (c.get(outcome(op)) ?? 0) + 1);
+          return [...c];
+        };
+        return (
+          <Panel title="Last run" class="wide">
+            <p class={r().error ? "err" : "ok"}>
+              {r().error
+                ? `Stopped after ${r().ops.length} operations: ${r().error}`
+                : `Done: ${r().ops.length} operations executed`}
+              {r().journal ? ` (journal #${r().journal}, undo below reverts it)` : ""}
+            </p>
+            <div class="kpis">
+              <For each={counts()}>
+                {([k, n]) => (
+                  <div>
+                    <div class="kpi">{n}</div>
+                    <span class="dim">{k}</span>
+                  </div>
+                )}
+              </For>
+            </div>
+            <For each={r().ops.slice(0, SHOWN)}>
+              {(op) => (
+                <div class="row mono">
+                  <span>{props.rel(op.from ?? op.to)}</span>
+                  <span class="dim"> → {outcome(op)}{op.why ? ` – ${op.why}` : ""}</span>
+                </div>
+              )}
+            </For>
+            <Show when={r().ops.length > SHOWN}>
+              <p class="dim">… and {r().ops.length - SHOWN} more</p>
+            </Show>
+            <Show when={r().ops.some((op) => outcome(op) !== "playlists")}>
+              <p class="dim">
+                Library changed – export to RetroArch (Settings) to update its playlists.
+              </p>
+            </Show>
+          </Panel>
+        );
+      }}
+    </Show>
+  );
+}

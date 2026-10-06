@@ -4,6 +4,7 @@ import Panel from "../components/Panel";
 import ScanProgress from "../components/ScanProgress";
 import InboxLeftovers from "../components/InboxLeftovers";
 import ImportSetup from "./ImportSetup";
+import RunReport from "../components/RunReport";
 import type { DecisionView } from "../ipc";
 import {
   busy,
@@ -211,6 +212,8 @@ export default function Import() {
       <Show
         when={plan()}
         fallback={
+          <>
+          <RunReport rel={rel} />
           <Panel title="Plan" class="wide">
             <Show
               when={busy()}
@@ -228,6 +231,7 @@ export default function Import() {
               Undo last run
             </button>
           </Panel>
+          </>
         }
       >
         {(p) => (

@@ -40,6 +40,9 @@ function rememberOpen(p: PlanView) {
   save("rombro.open", JSON.stringify(o));
 }
 export const [status, setStatus] = createSignal<{ ok: boolean; text: string }>();
+/** The last executed plan: the operations that ran (in order) and how it ended. */
+export interface LastRun { ops: PlanView["ops"]; journal: number | null; error: string | null }
+export const [lastRun, setLastRun] = createSignal<LastRun>();
 
 async function guard<T>(f: () => Promise<T>): Promise<T | undefined> {
   if (busy()) return;
@@ -69,7 +72,9 @@ export const buildPlan = (withInbox: boolean) =>
 
 export const execute = () =>
   guard(async () => {
+    const ops = plan()?.ops ?? [];
     const r: ExecResult = await executePlan();
+    setLastRun({ ops: ops.slice(0, r.done), journal: r.journal, error: r.error });
     setPlan(undefined);
     void refreshLibrary();
     setStatus(
