@@ -26,10 +26,19 @@ export default function ScanProgress() {
     clearInterval(timer);
     void unlisten.then((f) => f());
   });
-  const count = () => (p().total ? ` ${p().done}/${p().total}` : "…");
+  const gb = (b: number) => (b / 1e9).toFixed(1);
+  const count = () => {
+    const { done, total, bytes, bytes_total } = p();
+    if (!total) return "…";
+    const size = bytes_total ? ` · ${gb(bytes ?? 0)}/${gb(bytes_total)} GB` : "";
+    return ` ${done}/${total}${size}`;
+  };
+  // Bytes track the hashing work; file counts stall while large discs are read.
+  const value = () => (p().bytes_total ? (p().bytes ?? 0) : p().done);
+  const max = () => p().bytes_total || p().total;
   return (
     <>
-      <Segments value={p().done} max={p().total} />
+      <Segments value={value()} max={max()} />
       <p class="mono dim small">
         {LABELS[p().phase]}
         {count()} · {secs()}s

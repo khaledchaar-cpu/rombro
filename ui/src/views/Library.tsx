@@ -5,7 +5,7 @@ import GameDetail from "../components/GameDetail";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import { createLibraryFilter } from "./LibraryFilters";
-import { onScanProgress, type LibraryRow } from "../ipc";
+import { onScanProgress, type LibraryRow, type ScanProgress } from "../ipc";
 import {
   library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary, setLibrary,
 } from "../state/libraryStore";
@@ -23,7 +23,7 @@ const COLS: { key: Key; label: string }[] = [
 export default function Library() {
   const filter = createLibraryFilter(rows);
   const [sort, setSort] = createSignal<{ key: Key; asc: boolean }>({ key: "system", asc: true });
-  const [progress, setProgress] = createSignal({ done: 0, total: 0 });
+  const [progress, setProgress] = createSignal<ScanProgress>({ done: 0, total: 0 });
   const unlisten = onScanProgress(setProgress);
   onCleanup(() => void unlisten.then((f) => f()));
 
@@ -55,7 +55,10 @@ export default function Library() {
         </div>
         <filter.Bar />
         <Show when={busy()}>
-          <Segments value={progress().done} max={progress().total} />
+          <Segments
+          value={progress().bytes_total ? (progress().bytes ?? 0) : progress().done}
+          max={progress().bytes_total || progress().total}
+        />
         </Show>
         <Show when={error()}>
           <p class="err mono">{error()}</p>

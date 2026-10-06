@@ -15,6 +15,9 @@ export interface DbStats {
 export interface ScanProgress {
   done: number;
   total: number;
+  /** Bytes hashed so far (scan phases only). */
+  bytes?: number;
+  bytes_total?: number;
 }
 export interface ScanSummary {
   roms: number;
@@ -128,10 +131,8 @@ export interface ExecResult {
   journal: number | null;
   error: string | null;
 }
-export interface ImportProgress {
+export interface ImportProgress extends ScanProgress {
   phase: "library" | "inbox" | "planning";
-  done: number;
-  total: number;
 }
 
 function mockPlan(library: string): PlanView {

@@ -121,9 +121,9 @@ fn emit_scan(
     // Announce the phase right away: walking a large tree takes a while before `total` is known.
     let _ = app.emit("import://progress", (phase, Progress { done: 0, total: 0 }));
     let throttle = Throttle::new();
-    indexed_scan(store, dir, &|done, total| {
-        if throttle.ready(done, total) {
-            let _ = app.emit("import://progress", (phase, Progress { done, total }));
+    indexed_scan(store, dir, &|p| {
+        if throttle.ready(p.done, p.total) {
+            let _ = app.emit("import://progress", (phase, p));
         }
     })
 }

@@ -169,7 +169,7 @@ fn scan(dir: &Path) -> rombro_core::ScanReport {
 /// Scan through the hash cache (unchanged files are not read again), like the app.
 fn scan_cached(store: &rombro_store::Store, dir: &Path) -> Result<rombro_core::ScanReport> {
     let cache = store.hash_cache(dir)?;
-    let report = rombro_core::scan_cached(dir, &cache, &|_, _| {});
+    let report = rombro_core::scan_cached(dir, &cache, &|_| {});
     store.save_scan(dir, &report)?;
     for f in &report.failures {
         eprintln!("ERROR   {}: {}", f.path.display(), f.error);

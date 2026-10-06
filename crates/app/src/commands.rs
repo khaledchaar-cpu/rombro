@@ -27,7 +27,7 @@ pub(crate) fn open_store() -> CmdResult<(Store, PathBuf)> {
 pub(crate) fn indexed_scan(
     store: &Store,
     root: &std::path::Path,
-    progress: &(dyn Fn(usize, usize) + Sync),
+    progress: &(dyn Fn(rombro_core::ScanTick) + Sync),
 ) -> CmdResult<rombro_core::ScanReport> {
     let cache = store.hash_cache(root).map_err(err)?;
     let report = rombro_core::scan_cached(root, &cache, progress);
@@ -115,10 +115,10 @@ pub async fn scan(app: AppHandle, dir: PathBuf) -> CmdResult<ScanSummary> {
     tauri::async_runtime::spawn_blocking(move || {
         let t = Instant::now();
         let throttle = Throttle::new();
-        let report = rombro_core::scan_with_progress(&dir, &|done, total| {
-            if throttle.ready(done, total) {
+        let report = rombro_core::scan_with_progress(&dir, &|p| {
+            if throttle.ready(p.done, p.total) {
                 // Event delivery is best effort; a closed window is not an error.
-                let _ = app.emit("scan://progress", Progress { done, total });
+                let _ = app.emit("scan://progress", p);
             }
         });
         let bytes = report

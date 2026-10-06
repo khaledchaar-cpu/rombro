@@ -128,8 +128,9 @@ fn reports_progress_per_file() {
         fs::write(dir.path().join(format!("{i}.bin")), rom(64, i)).unwrap();
     }
     let calls = std::sync::Mutex::new(Vec::new());
-    let report = rombro_core::scan_with_progress(dir.path(), &|d, t| {
-        calls.lock().unwrap().push((d, t));
+    let report = rombro_core::scan_with_progress(dir.path(), &|p| {
+        assert_eq!(p.bytes_total, 3 * 64);
+        calls.lock().unwrap().push((p.done, p.total));
     });
     assert_eq!(report.roms.len(), 3);
     let mut calls = calls.into_inner().unwrap();
@@ -153,7 +154,7 @@ fn cached_scan_reuses_unchanged_files_only() {
             .insert(r.path.clone(), (Stamp::of(&r.path).unwrap(), vec![c]));
     }
     fs::write(&b, rom(2048, 3)).unwrap(); // size changes → rehash
-    let report = scan_cached(dir.path(), &cache, &|_, _| {});
+    let report = scan_cached(dir.path(), &cache, &|_| {});
     assert_eq!(report.roms[0].hashes.crc, 0xdead_beef);
     assert_ne!(report.roms[1].hashes.crc, 0xdead_beef);
     assert_eq!(report.roms[1].hashes.size, 2048);

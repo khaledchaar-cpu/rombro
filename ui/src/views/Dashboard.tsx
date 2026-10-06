@@ -16,6 +16,7 @@ import {
   dbSync,
   pickDir,
   onScanProgress,
+  type ScanProgress,
   scan,
   type ScanSummary,
 } from "../ipc";
@@ -52,7 +53,7 @@ export default function Dashboard(props: {
     }
   };
   const [dir, setDir] = createSignal("");
-  const [progress, setProgress] = createSignal({ done: 0, total: 0 });
+  const [progress, setProgress] = createSignal<ScanProgress>({ done: 0, total: 0 });
   const [busy, setBusy] = createSignal(false);
   const [result, setResult] = createSignal<ScanSummary | string>();
 
@@ -154,7 +155,10 @@ export default function Dashboard(props: {
             {busy() ? "Scanning" : "Scan"}
           </button>
         </form>
-        <Segments value={progress().done} max={progress().total} />
+        <Segments
+          value={progress().bytes_total ? (progress().bytes ?? 0) : progress().done}
+          max={progress().bytes_total || progress().total}
+        />
         <p class="mono dim small">
           {progress().done}/{progress().total}
         </p>

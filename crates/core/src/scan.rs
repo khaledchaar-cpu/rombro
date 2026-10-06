@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, BufReader, Read, Seek};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use walkdir::WalkDir;
 
 #[derive(Debug, thiserror::Error)]
@@ -43,6 +43,16 @@ pub struct ScanFailure {
     pub error: ScanError,
 }
 
+/// Scan progress: items (files or discs) and the bytes they hold. Bytes advance evenly
+/// with the hashing work, so large discs do not stall the bar.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize)]
+pub struct ScanTick {
+    pub done: usize,
+    pub total: usize,
+    pub bytes: u64,
+    pub bytes_total: u64,
+}
+
 /// A disc image (`.cue`/`.gdi` sheet with its tracks, or a single `.iso`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScannedDisc {
@@ -74,12 +84,12 @@ pub struct ScanReport {
 /// Recursively scans `root` (a directory or single file) in parallel.
 /// Results are sorted by path and member for deterministic output.
 pub fn scan(root: &Path) -> ScanReport {
-    scan_with_progress(root, &|_, _| {})
+    scan_with_progress(root, &|_| {})
 }
 
-/// Like [`scan`], but calls `progress(done, total)` after each file or disc
+/// Like [`scan`], but calls `progress` after each file or disc
 /// is hashed. May be called concurrently from worker threads.
-pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(usize, usize) + Sync)) -> ScanReport {
+pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(ScanTick) + Sync)) -> ScanReport {
     scan_cached(root, &HashCache::default(), progress)
 }
 
@@ -98,7 +108,7 @@ fn is_ignored(e: &walkdir::DirEntry) -> bool {
 pub fn scan_cached(
     root: &Path,
     cache: &HashCache,
-    progress: &(dyn Fn(usize, usize) + Sync),
+    progress: &(dyn Fn(ScanTick) + Sync),
 ) -> ScanReport {
     let mut report = ScanReport::default();
     let mut files = Vec::new();
@@ -147,16 +157,36 @@ pub fn scan_cached(
         }
     }
     files.retain(|p| !claimed.contains(p));
+    let size = |p: &PathBuf| std::fs::metadata(p).map_or(0, |m| m.len());
+    let sheet_sizes: Vec<u64> = sheets
+        .iter()
+        .map(|(_, _, found, _)| found.iter().map(size).sum())
+        .collect();
+    let file_sizes: Vec<u64> = files.par_iter().map(size).collect();
     let total = files.len() + sheets.len();
+    let bytes_total = sheet_sizes.iter().chain(&file_sizes).sum();
     let done = AtomicUsize::new(0);
-    let tick = || progress(done.fetch_add(1, Ordering::Relaxed) + 1, total);
-    progress(0, total);
+    let bytes = AtomicU64::new(0);
+    let tick = |n: u64| {
+        progress(ScanTick {
+            done: done.fetch_add(1, Ordering::Relaxed) + 1,
+            total,
+            bytes: bytes.fetch_add(n, Ordering::Relaxed) + n,
+            bytes_total,
+        })
+    };
+    progress(ScanTick {
+        total,
+        bytes_total,
+        ..ScanTick::default()
+    });
     let discs: Vec<_> = sheets
         .into_par_iter()
-        .map(|(path, kind, found, missing)| {
+        .zip(sheet_sizes)
+        .map(|((path, kind, found, missing), n)| {
             let r = scan_disc_cached(&path, kind, &found, missing, cache)
                 .map_err(|error| ScanFailure { path, error });
-            tick();
+            tick(n);
             r
         })
         .collect();
@@ -169,7 +199,8 @@ pub fn scan_cached(
 
     let results: Vec<_> = files
         .par_iter()
-        .map(|p| {
+        .zip(&file_sizes)
+        .map(|(p, &n)| {
             let r = cache
                 .get(p)
                 // Entries cached before archives were hashed as a whole lack that hash.
@@ -179,7 +210,7 @@ pub fn scan_cached(
                     path: p.clone(),
                     error,
                 });
-            tick();
+            tick(n);
             r
         })
         .collect();

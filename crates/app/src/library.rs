@@ -1,5 +1,5 @@
 //! Library table: every scanned unit in the library with its identification.
-use crate::commands::{CmdResult, Progress, Throttle, err, indexed_scan, open_store};
+use crate::commands::{CmdResult, Throttle, err, indexed_scan, open_store};
 use rombro_core::plan::{BIOS_DIR, Ident, PLAYLIST_DIR, TRASH_DIR};
 use serde::Serialize;
 use std::path::PathBuf;
@@ -74,9 +74,9 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
         }
         store.set_library(&library).map_err(err)?;
         let throttle = Throttle::new();
-        let report = indexed_scan(&store, &library, &|done, total| {
-            if throttle.ready(done, total) {
-                let _ = app.emit("scan://progress", Progress { done, total });
+        let report = indexed_scan(&store, &library, &|p| {
+            if throttle.ready(p.done, p.total) {
+                let _ = app.emit("scan://progress", p);
             }
         })?;
         let rules = crate::settings::load_rules(&store)?;
