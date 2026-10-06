@@ -175,7 +175,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 | M9 | GUI Feinschliff | Persistenter Library-Index (§10 M9), 1G1R-Regeln-Editor, Settings, Thumbnails, Effekte, Light-Theme | UX-Review bestanden |
 | M10 | Gamification | KPIs, Vollständigkeit, Achievements, XP | Dashboard zeigt KPIs |
 | M11 | Release | Packaging (AppImage/deb, dmg, msi), Pfad-Erkennung je OS, Doku | Builds für 3 OS via CI |
-| M14 | Arcade-DATs | F8: DAT-Download/Import, Member-Prüfung, Systemwahl, Quarantäne-Begründung | 1943 → MAME 2003-Plus, startet in RetroArch |
+| M14 ✅ | Arcade-DATs | F8: DAT-Download/Import, Member-Prüfung, Systemwahl, Quarantäne-Begründung | 1943 → MAME 2003-Plus, startet in RetroArch |
 
 ## 11a. Entscheidungen
 - M2: Persistenter Cache = SQLite statt eigenem Binärformat. Kalt-Import ~3 s (einmalig, SQLite-Insert-bound),
@@ -267,6 +267,12 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - **BIOS-Erkennung nur per Hash (User, 2026-10-06):** BIOS-Sets mit unbekanntem Hash (z. B. eigenes `neogeo.zip`-Paket) werden *nicht* am Kurznamen erkannt → Quarantäne.
 - Bitgleiche Kopie an einem schon belegten/geplanten Ziel = 1G1R-Duplikat (TBD-Queue, `discard`-Verdict → `_trash`), nur abweichender Inhalt ist ein Konflikt (User, 2026-10-06). Gilt auch für BIOS.
 - Arcade-DATs ergänzen RDBs nur zur Systemwahl, siehe F8 (User, 2026-10-06).
+- F8-Defaults (M14, Claude): Quellen = libretro-Core-Repos (FBNeo `dats/…Arcade only).dat`, mame2000/2003/2003-plus/
+  2010/2015/2016 `metadata/`), aktuelles MAME = `mame*lx.zip` des neuesten mamedev-Releases. Version = Commit-SHA
+  bzw. Release-Tag; unverändert → kein Download. **HBMAME hat keine DAT** → ungeprüft (alte Logik); ebenso jeder Core
+  ohne geladene DAT (zählt als vollständig). BIOS-ROMs (`isbios`) werden im Set nicht verlangt (BIOS-Regel).
+  Eltern-Set „vorhanden“ = `<parent>.zip/.7z` im selben Ordner. Zuordnung nach Dateiname **und** CRC
+  (nur CRC passt → „misnamed“). Set-Name fürs DAT = `rom_name` des RDB-Eintrags.
 
 ## 11. Offene Fragen
 - Ziel (User): vollständige Sammlung im Sinne der RetroArch-Datenbanken. Andere Versionen, Derivate, Formate interessieren nicht, solange sie in keiner RDB stehen → Quarantäne ist richtig für Unbekanntes in erkannten System-Ordnern.

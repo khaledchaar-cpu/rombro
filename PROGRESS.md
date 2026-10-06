@@ -18,14 +18,15 @@
 | M12b Arcade & Sichtprüfung | ✅ done |
 | M12c Echte Sammlung (Probelauf) | ✅ done |
 | M13 Regeln transparent & einstellbar | ✅ done (Rules-Seite: erster Eindruck ok, finale Bewertung offen) |
-| M14 Arcade-DATs | ⏳ spezifiziert (SPEC F8) |
+| M14 Arcade-DATs | ✅ done |
 
 ## Aktuell
-M13: Regel-Katalog `core::rules` (10 Regeln, ID/Titel/Erklärung); jede Plan-Op trägt `Why { rule, detail }`.
-`g1r::Rules` erweitert: Arcade-DB-Reihenfolge, Arcade-1G1R, Ordner-Systeme, Quarantäne an/aus, Overrides pro
-System. Ausnahmen: ignorierte Pfade (`Options::ignore`, Setting `ignore`), Verdicts/Resolutions editierbar.
-App: neue Seite „Rules“ (Taste 5; Settings jetzt 6) mit Erklärung, Treffern (Setting `rule_hits`), Reset pro
-Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeigt `[regel-id]` je Op.
+M14: `core::arcade::dat` (Logiqx/listxml-Parser, Prüfung über Zip-Verzeichnis), `archive::members`, Store-Tabellen
+`dat_source`/`dat_set` (v7), `db sync` lädt 8 DATs (21 s, versioniert, offline → alte + Warnung), `catalog::dat_pick`
+wählt den ersten vollständigen Core, sonst `Ident::Incomplete` → Quarantäne mit Regel `arcade-dat` + Begründung
+(CLI `[regel: detail]`, App „why“). Abnahme: `1943`/`1943kai` → MAME 2003-Plus, läuft headless 300 Frames in
+RetroArch; aktuelles MAME scheitert weiter (Exit 1). Echte Sammlung (Dry-Run Arcade-Ordner): 11× arcade-dat-Quarantäne
+mit plausiblen Gründen (fehlend, misnamed, Eltern fehlt, nicht im DAT).
 
 ## Nächste Schritte
 1. Rules-Seite: erster Eindruck ok (User, 2026-10-06), finale Bewertung im Alltag.
@@ -42,12 +43,15 @@ Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeig
    Vorbereitet (2026-10-06): `~/rombro-test/ra-lib` (Copy-Import Arcade-Testset), Playlist `ROMBRO Test.lpl`,
    Cores fbneo + mame2016 + mame (0.289) vom Buildbot. User-`neogeo.zip` ist nicht DB-konform (4 Dateien fehlen, 2 anders
    benannt) → Quarantäne ist korrekt; für den Test manuell neben die Sets kopiert. Logik bleibt (User-Entscheidung).
-4. **M14 Arcade-DATs** (SPEC F8) – nächster Milestone. RetroArch-Test: FBNeo/MAME 2016 inkl. Neo-Geo-BIOS ok;
-   `1943`/`1943kai` (0.78-Sets) scheitern in aktuellem MAME → Anlass für F8.
+4. ✅ M14 Arcade-DATs. Offen/Ideen: Begründung auch bei *platzierten* geprüften Sets zeigen (welche Cores
+   übersprungen wurden); Eltern-Set auch in der Library suchen (nicht nur im selben Ordner); `db stats` mit DAT-Versionen.
 5. Sichtprüfung in der App (M10-Rest): Gamification-Panels mit echten Daten plausibel; Effects off in beiden Themes.
 6. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 
 ## Stolpersteine
+- RetroArch headless testen: `retroarch --appendconfig=<cfg mit video/audio/input_driver = "null"> -L <core.so> <zip> --max-frames=300 --verbose`
+  (Exit 0 = läuft). Schreibt in `playlists/builtin/content_history.lpl` → Testeinträge danach entfernen.
+- quick-xml 0.41: `unescape_value` deprecated → `normalized_value(XmlVersion::Implicit1_0)`.
 - DOS/ScummVM-RDBs identifizieren über *eine* Datei, die oft zwischen Spielen geteilt ist (`dosbox.bat`, `ADL.DRV`) → Ordnername statt DB-Name.
 - Kompletter Probelauf: `rombro import "<Sammlung>" <scratch-lib> --dry-run` (nur lesend), ~3 h für 1,2 TB.
 - Leere Dateien matchen RDB-Einträge mit Leer-Hash (z. B. PSP-DLC) → Scanner ignoriert 0-Byte-Dateien.
