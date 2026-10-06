@@ -16,6 +16,22 @@ pub const PRIORITY: [&str; 9] = [
     "HBMAME",
 ];
 
+/// Arcade boards whose RetroArch database names one key chip per game instead of hashing
+/// the whole romset (Flycast systems): a zip holding that chip is the game's set.
+pub const CHIP_KEYED: [&str; 3] = ["Atomiswave", "Sega - Naomi", "Sega - Naomi 2"];
+
+/// BIOS sets of the chip-keyed boards, by short name.
+pub const CHIP_KEYED_BIOS: [(&str, &str); 3] = [
+    ("awbios", "Atomiswave"),
+    ("naomi", "Sega - Naomi"),
+    ("naomi2", "Sega - Naomi 2"),
+];
+
+/// Whether `system`'s database identifies games by a key chip (see [`CHIP_KEYED`]).
+pub fn is_chip_keyed(system: &str) -> bool {
+    CHIP_KEYED.contains(&system)
+}
+
 /// Placement rank of a system (lower wins); non-arcade systems rank last.
 pub fn rank(system: &str) -> usize {
     PRIORITY
@@ -66,6 +82,7 @@ pub fn bios_dir(system: &str) -> std::path::PathBuf {
     let root = std::path::Path::new(crate::plan::BIOS_DIR);
     match system {
         "FBNeo - Arcade Games" => root.join("fbneo"),
+        s if is_chip_keyed(s) => root.join("dc"),
         s if s.starts_with("MAME") => s.into(),
         _ => root.into(),
     }
@@ -75,6 +92,13 @@ pub fn bios_dir(system: &str) -> std::path::PathBuf {
 mod tests {
     use super::*;
     use std::path::Path;
+
+    #[test]
+    fn chip_keyed_bios_goes_to_flycast_dir() {
+        assert!(is_chip_keyed("Atomiswave"));
+        assert!(!is_chip_keyed("MAME"));
+        assert_eq!(bios_dir("Sega - Naomi"), Path::new("_bios/dc"));
+    }
 
     #[test]
     fn fbneo_beats_newest_mame_beats_older() {

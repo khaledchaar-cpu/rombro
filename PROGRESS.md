@@ -58,6 +58,9 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    → Trash statt Quarantäne, ≥75 % Member-Treffer), `astrocde` → `Bally - Astrocade` (Namensordner, kein Core),
    GX4000-`.cpr` bleiben bewusst in `Amstrad - CPC` (RDB führt sie dort), geleerte Inbox-Bäume samt leerer
    `media/*/default_*` werden entfernt.
+   Atomiswave/Naomi (2026-10-06): RDB nennt nur einen Key-Chip pro Spiel → ZIP mit diesem Chip = Set
+   (`store::chipset`, `arcade::CHIP_KEYED`), vor der MAME-„not working“-Regel (Flycast, nicht MAME);
+   `awbios`/`naomi`/`naomi2` → `_bios/dc/` (Export → `system/dc/`).
 1. ✅ Rules-Seite abgenommen (User, 2026-10-06). Alte Entscheidungen ohne gespeicherten Grund → „reason not recorded“.
 2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
    Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.

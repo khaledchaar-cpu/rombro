@@ -41,6 +41,9 @@ impl Store {
             if let Some(item) = self.romset(whole, in_library, &known)? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
+            } else if let Some(item) = self.chip_set(report, whole, in_library)? {
+                sets.insert(whole.path.as_path());
+                out.push(item);
             } else if let Some(item) = self.rejected_romset(whole, in_library)? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
@@ -389,7 +392,7 @@ impl Store {
     }
 }
 
-fn game(r: &Record) -> Game {
+pub(crate) fn game(r: &Record) -> Game {
     Game {
         system: r.system.clone(),
         name: r.name.clone(),

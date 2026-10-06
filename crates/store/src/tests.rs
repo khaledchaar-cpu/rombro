@@ -595,3 +595,59 @@ fn arcade_set_goes_to_first_core_whose_dat_it_completes() {
         .unwrap();
     assert!(matches!(&items[0].ident, Ident::Known(g) if g.system == "MAME 2003-Plus"));
 }
+
+#[test]
+fn chip_keyed_zip_is_a_set_and_its_bios_is_bios() {
+    use rombro_core::MultiHasher;
+    use rombro_core::plan::{Files, Ident};
+    use std::io::Write;
+    let mut h = MultiHasher::new();
+    h.update(b"key chip");
+    let chip = h.finish();
+    let tmp = tempfile::tempdir().unwrap();
+    let (rdb, inbox) = (tmp.path().join("rdb"), tmp.path().join("inbox"));
+    for d in [&rdb, &inbox] {
+        std::fs::create_dir_all(d).unwrap();
+    }
+    write_rdb(
+        &rdb.join("Atomiswave.rdb"),
+        &[map(&[
+            ("name", F::S("The King of Fighters XI")),
+            ("rom_name", F::S("ax3201m01.mrom1")),
+            ("crc", F::B(Box::leak(Box::new(chip.crc.to_be_bytes())))),
+            ("sha1", F::B(Box::leak(Box::new(chip.sha1)))),
+        ])],
+    );
+    let zip = |name: &str, members: &[(&str, &[u8])]| {
+        let mut w = zip::ZipWriter::new(std::fs::File::create(inbox.join(name)).unwrap());
+        for (m, data) in members {
+            w.start_file(*m, zip::write::SimpleFileOptions::default())
+                .unwrap();
+            w.write_all(data).unwrap();
+        }
+        w.finish().unwrap();
+    };
+    zip(
+        "kofxi.zip",
+        &[
+            ("ax3201m01.mrom1", b"key chip"),
+            ("ax3207m01.mrom7", b"gfx"),
+        ],
+    );
+    zip("awbios.zip", &[("bios0.ic23", b"bios")]);
+
+    let mut s = Store::open_in_memory().unwrap();
+    s.sync_rdbs(&rdb).unwrap();
+    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
+    assert_eq!(items.len(), 2);
+    let by = |n: &str| {
+        items
+            .iter()
+            .find(|it| it.files.primary().ends_with(n))
+            .unwrap()
+    };
+    let kof = by("kofxi.zip");
+    assert!(matches!(kof.files, Files::Set { .. }));
+    assert!(matches!(&kof.ident, Ident::Known(g) if g.system == "Atomiswave"));
+    assert!(matches!(&by("awbios.zip").ident, Ident::Bios(g) if g.system == "Atomiswave"));
+}
