@@ -117,7 +117,11 @@ pub fn run(a: Args) -> Result<()> {
     }
     if !ex.downloads.is_empty() {
         println!("downloading {} cores …", ex.downloads.len());
-        export::download(&ex, &rombro_store::http_get)?;
+        export::download(&ex, &rombro_store::http_get, &|i, n, name| {
+            if !name.is_empty() {
+                println!("  [{}/{n}] {name}", i + 1);
+            }
+        })?;
     }
     let r = plan::execute(&ex.ops);
     if !r.done.is_empty() {

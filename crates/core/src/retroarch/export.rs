@@ -142,12 +142,17 @@ pub fn playlist_systems(library: &Path) -> Vec<String> {
 }
 
 /// Downloads the core archives of `ex` with `fetch` into the cache (always fresh: the
-/// buildbot serves the latest build under the same name).
+/// buildbot serves the latest build under the same name). Reports (done, total, current
+/// file name) to `progress` before each download and once at the end.
 pub fn download(
     ex: &Export,
     fetch: &dyn Fn(&str) -> std::io::Result<Vec<u8>>,
+    progress: &dyn Fn(usize, usize, &str),
 ) -> std::io::Result<()> {
-    for (url, file) in &ex.downloads {
+    let total = ex.downloads.len();
+    for (i, (url, file)) in ex.downloads.iter().enumerate() {
+        let name = url.rsplit('/').next().unwrap_or(url);
+        progress(i, total, name);
         let body = fetch(url).map_err(|e| std::io::Error::other(format!("{url}: {e}")))?;
         if let Some(dir) = file.parent() {
             std::fs::create_dir_all(dir)?;
@@ -156,6 +161,7 @@ pub fn download(
         std::fs::write(&tmp, body)?;
         std::fs::rename(tmp, file)?;
     }
+    progress(total, total, "");
     Ok(())
 }
 

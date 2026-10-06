@@ -1,6 +1,9 @@
 import { createSignal, For, Show } from "solid-js";
 import Panel from "./Panel";
 import CorePicker from "./CorePicker";
+import PhaseProgress from "./PhaseProgress";
+
+const LABELS = { scan: "scanning library", download: "downloading core", write: "writing to RetroArch" };
 import { retroarchExport, type RetroArchExport } from "../ipc";
 
 /** Preview, then export library playlists (with core), identified BIOS files and missing cores to RetroArch. */
@@ -49,6 +52,9 @@ export default function RetroArchPanel() {
           Export {pending() ? `(${pending()})` : ""}
         </button>
       </div>
+      <Show when={busy()}>
+        <PhaseProgress event="retroarch://progress" labels={LABELS} />
+      </Show>
       <Show when={error()}>
         <p class="small err">{error()}</p>
       </Show>
@@ -74,7 +80,9 @@ export default function RetroArchPanel() {
               )}
             </For>
             <Show when={r().cores_install.length}>
-              <h4>Cores to install: {r().cores_install.length}</h4>
+              <h4>
+                {r().executed === null ? "Cores to install" : "Cores installed"}: {r().cores_install.length}
+              </h4>
               <For each={r().cores_install}>{(c) => <div class="mono">+ {c}</div>}</For>
             </Show>
             <Show when={r().cores_missing.length}>

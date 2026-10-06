@@ -1,7 +1,7 @@
 import { createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
-import SyncProgress from "../components/SyncProgress";
+import PhaseProgress from "../components/PhaseProgress";
 import { LibraryPanel, RunsPanel } from "./DashboardHistory";
 import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
 import {
@@ -117,7 +117,10 @@ export default function Dashboard(props: {
         </div>
         <p class="dim small">RetroArch databases (local) and arcade DATs (downloaded).</p>
         <Show when={syncing()} fallback={<Show when={syncMsg()}><p class="dim small">{syncMsg()}</p></Show>}>
-          <SyncProgress />
+          <PhaseProgress
+            event="sync://progress"
+            labels={{ rdb: "reading RetroArch databases", dat: "downloading arcade DATs" }}
+          />
         </Show>
       </Panel>
 

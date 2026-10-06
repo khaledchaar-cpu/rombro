@@ -86,8 +86,14 @@ pub struct Execution {
 /// Executes operations in order and stops at the first failure.
 /// Never overwrites existing files except via `Op::Write`.
 pub fn execute(ops: &[Op]) -> Execution {
+    execute_progress(ops, &|_, _| {})
+}
+
+/// [`execute`], reporting (done, total) operations to `progress`.
+pub fn execute_progress(ops: &[Op], progress: &dyn Fn(usize, usize)) -> Execution {
     let mut ex = Execution::default();
-    for op in ops {
+    for (i, op) in ops.iter().enumerate() {
+        progress(i, ops.len());
         match apply(op) {
             Ok(d) => ex.done.push(d),
             Err(e) => {
@@ -96,6 +102,7 @@ pub fn execute(ops: &[Op]) -> Execution {
             }
         }
     }
+    progress(ex.done.len(), ops.len());
     ex
 }
 

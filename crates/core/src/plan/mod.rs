@@ -15,7 +15,9 @@ mod tests;
 pub mod trash;
 
 pub use build::{FOLDER_SYSTEMS, build};
-pub use ops::{Done, Execution, Op, execute, journal_from_json, journal_to_json, undo};
+pub use ops::{
+    Done, Execution, Op, execute, execute_progress, journal_from_json, journal_to_json, undo,
+};
 
 use crate::g1r::Rules;
 use std::collections::HashMap;

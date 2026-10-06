@@ -95,7 +95,19 @@ pub async fn retroarch_cores() -> CmdResult<Vec<SystemCores>> {
 /// Plans (and unless `dry_run` executes) the export for the stored library; with
 /// `install_cores` missing cores are downloaded from RetroArch's buildbot.
 #[tauri::command]
-pub async fn retroarch_export(dry_run: bool, install_cores: bool) -> CmdResult<RetroArchView> {
+pub async fn retroarch_export(
+    app: tauri::AppHandle,
+    dry_run: bool,
+    install_cores: bool,
+) -> CmdResult<RetroArchView> {
+    use tauri::Emitter;
+    // `retroarch://progress`: (phase scan/download/write, progress, current item)
+    let emit = move |phase: &'static str, done: usize, total: usize, item: &str| {
+        let _ = app.emit(
+            "retroarch://progress",
+            (phase, crate::commands::Progress { done, total }, item),
+        );
+    };
     tauri::async_runtime::spawn_blocking(move || {
         let (store, _) = open_store()?;
         let library = store
@@ -103,7 +115,13 @@ pub async fn retroarch_export(dry_run: bool, install_cores: bool) -> CmdResult<R
             .map_err(err)?
             .ok_or("no library set – run an import first")?;
         let dirs = Dirs::detect().ok_or("no retroarch.cfg found")?;
-        let report = crate::commands::indexed_scan(&store, &library, &|_, _| {})?;
+        let throttle = crate::commands::Throttle::new();
+        emit("scan", 0, 0, "");
+        let report = crate::commands::indexed_scan(&store, &library, &|d, t| {
+            if throttle.ready(d, t) {
+                emit("scan", d, t, "");
+            }
+        })?;
         let cores = info::available(&dirs.info, &dirs.cores);
         let opts = export::Options {
             playlists: true,
@@ -122,8 +140,11 @@ pub async fn retroarch_export(dry_run: bool, install_cores: bool) -> CmdResult<R
         );
         let mut executed = None;
         if !dry_run && !ex.ops.is_empty() {
-            export::download(&ex, &rombro_store::http_get).map_err(err)?;
-            let r = plan::execute(&ex.ops);
+            export::download(&ex, &rombro_store::http_get, &|d, t, name| {
+                emit("download", d, t, name)
+            })
+            .map_err(err)?;
+            let r = plan::execute_progress(&ex.ops, &|d, t| emit("write", d, t, ""));
             if !r.done.is_empty() {
                 let ts = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)

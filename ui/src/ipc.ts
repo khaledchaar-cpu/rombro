@@ -237,17 +237,19 @@ export async function setVerdict(
   return invoke("set_verdict", { system: c.system, name: c.name, verdict, reason });
 }
 
-export interface SyncProgress {
-  phase: "rdb" | "dat";
+export interface PhaseProgress {
+  phase: string;
   done: number;
   total: number;
+  /** Current item (e.g. the core being downloaded), if the event names one. */
+  item?: string;
 }
 
-/** Progress of `dbSync`: RDB files parsed, then arcade DAT sources checked. */
-export function onSyncProgress(cb: (p: SyncProgress) => void): Promise<UnlistenFn> {
+/** Phased progress events: `sync://progress` (rdb, dat), `retroarch://progress` (scan, download, write). */
+export function onPhaseProgress(event: string, cb: (p: PhaseProgress) => void): Promise<UnlistenFn> {
   if (!inTauri) return Promise.resolve(() => {});
-  return listen<[SyncProgress["phase"], ScanProgress]>("sync://progress", (e) =>
-    cb({ phase: e.payload[0], ...e.payload[1] }),
+  return listen<[string, ScanProgress, string?]>(event, (e) =>
+    cb({ phase: e.payload[0], ...e.payload[1], item: e.payload[2] }),
   );
 }
 
