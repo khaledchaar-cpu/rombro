@@ -364,6 +364,8 @@ export interface Rules {
   arcade_g1r: boolean;
   folder_systems: string[];
   quarantine: boolean;
+  /** Unknown files go to _trash/unknown instead of _quarantine. */
+  unknown_to_trash: boolean;
   /** Move frontend metadata (gamelist.xml, scraped media) to _trash/frontend. */
   frontend_trash: boolean;
   systems: Record<string, SystemRules>;
@@ -390,6 +392,7 @@ const mockRules = (): Rules => ({
   arcade_g1r: true,
   folder_systems: ["DOS", "ScummVM", "DOOM", "Quake"],
   quarantine: true,
+  unknown_to_trash: true,
   frontend_trash: true,
   systems: {},
   cores: {},

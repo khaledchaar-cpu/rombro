@@ -10,6 +10,9 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+/// Folder in `_trash` for unknown files (when they don't go to `_quarantine`).
+const UNKNOWN_TRASH: &str = "unknown";
+
 mod archives;
 mod folders;
 mod frontend;
@@ -65,10 +68,24 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     for it in meta {
         b.trash_meta(it);
     }
-    let items: Vec<&Item> = items
+    let outer = |it: &Item| it.files.archive().unwrap_or(it.files.primary()).clone();
+    let (quarantined, items): (Vec<&Item>, Vec<&Item>) = items
         .into_iter()
-        .filter(|it| !it.files.primary().starts_with(&quarantine))
-        .collect();
+        .partition(|it| it.files.primary().starts_with(&quarantine));
+    if opts.rules.unknown_to_trash {
+        // the old quarantine is emptied into the trash; files identified meanwhile stay
+        let mut still_unknown: BTreeMap<PathBuf, bool> = BTreeMap::new();
+        for it in &quarantined {
+            let unknown = matches!(it.ident, Ident::Unknown | Ident::Incomplete(_));
+            *still_unknown.entry(outer(it)).or_insert(true) &= unknown;
+        }
+        b.why = Why::new(Rule::Quarantine, "old quarantine emptied into the trash");
+        for (p, unknown) in still_unknown {
+            if unknown {
+                b.trash_quarantined(&p, &quarantine);
+            }
+        }
+    }
 
     // Archives with any unknown member stay whole (e.g. multi-disk games where only some
     // disks match): nothing is extracted, the archive goes to quarantine as is.
@@ -314,8 +331,13 @@ impl Builder<'_> {
             });
     }
 
+    /// Unknown files go to `_trash/unknown` (default) or `_quarantine`, keeping their path.
     pub(super) fn quarantine(&mut self, it: &Item) {
-        let dir = self.library.join(QUARANTINE_DIR);
+        let dir = if self.opts.rules.unknown_to_trash {
+            self.library.join(TRASH_DIR).join(UNKNOWN_TRASH)
+        } else {
+            self.library.join(QUARANTINE_DIR)
+        };
         let ops = quarantine_sources(&it.files)
             .iter()
             .map(|f| self.transfer(it, f, &dir.join(self.quarantine_rel(f))))
@@ -461,6 +483,24 @@ impl Builder<'_> {
             .collect::<Vec<_>>();
         if !ops.is_empty() {
             self.commit(it, ops);
+        }
+    }
+
+    /// A file of the old `_quarantine` to `_trash/unknown/<path in quarantine>`.
+    fn trash_quarantined(&mut self, p: &Path, quarantine: &Path) {
+        let rel = p.strip_prefix(quarantine).unwrap_or(p);
+        let to = self.library.join(TRASH_DIR).join(UNKNOWN_TRASH).join(rel);
+        let it = Item {
+            files: Files::Single(p.to_path_buf()),
+            ident: Ident::Unknown,
+            in_library: true,
+        };
+        let op = Op::Move {
+            from: p.to_path_buf(),
+            to,
+        };
+        if self.commit(&it, vec![op]) {
+            self.plan.quarantined += 1;
         }
     }
 

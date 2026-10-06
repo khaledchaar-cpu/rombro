@@ -106,7 +106,9 @@ impl Rule {
             }
             Rule::Bios => "BIOS files go to the system root (_bios for FBNeo, next to MAME sets).",
             Rule::Quarantine => {
-                "Files without database match go to _quarantine, keeping their subfolders. \
+                "Files without database match (wrong dumps, unsupported systems, incomplete \
+                 arcade sets) go to _trash/unknown – or to _quarantine if you prefer – keeping \
+                 their subfolders; undo brings them back, only emptying the trash deletes them. \
                  Unknown files in folders without any identified game are left alone."
             }
             Rule::FrontendMeta => {

@@ -293,6 +293,10 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   das System nennt (wenigste Systeme gewinnt). BIOS: libretro `System.dat` (Snapshot in `crates/core/data/`) per SHA1
   gegen den Library-Index, Arcade-Zips per Name aus `_bios/`; `Op::Copy` nur wenn Ziel fehlt, abweichende Dateien
   bleiben (Konflikt-Hinweis); fehlende BIOS nur für Systeme mit Library-Ordner gemeldet.
+- Entschieden (User, 2026-10-06): Unerkannte Dateien (falsche Dumps, Systeme ohne RDB wie Daphne, unvollständige
+  Arcade-Sets) gehen per Default nach `_trash/unknown/<Pfad>` statt `_quarantine` (`rules.unknown_to_trash`, Default an;
+  aus = alte Quarantäne). Eine bestehende `_quarantine` wird dabei geleert; inzwischen erkannte Dateien bleiben.
+  Undo holt alles zurück, endgültig gelöscht wird nur über „Papierkorb leeren“.
 - Entschieden (User, 2026-10-06): Frontend-Metadaten (Batocera/EmulationStation) wandern automatisch nach
   `_trash/frontend/<Pfad>` (Regel `frontend-meta`, Schalter `rules.frontend_trash`, Default an): `gamelist*` und
   `_info.txt`/`_readme.txt`/`_lisezmoi.txt` in einem Ordner mit `gamelist*.xml` (auch in `_quarantine`) sowie Bilder/Videos/PDFs in dessen `images/`, `videos/`, `media/`,

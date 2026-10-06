@@ -31,7 +31,11 @@ fn item(path: PathBuf, ident: Ident, in_library: bool) -> Item {
 fn opts(mode: Mode) -> Options {
     Options {
         mode,
-        rules: Default::default(),
+        // these tests cover the quarantine; `unknown_to_trash` has its own test
+        rules: crate::g1r::Rules {
+            unknown_to_trash: false,
+            ..Default::default()
+        },
         playlists: None,
         verdicts: Default::default(),
         inbox: None,

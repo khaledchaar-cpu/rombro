@@ -58,7 +58,7 @@ pub fn run(a: Args) -> Result<()> {
         println!("{}", decision(d));
     }
     println!(
-        "\n{} items: {} to place, {} unchanged, {} to quarantine, {} need attention; {} operations",
+        "\n{} items: {} to place, {} unchanged, {} unknown (trash/quarantine), {} need attention; {} operations",
         items.len(),
         p.placed,
         p.unchanged,

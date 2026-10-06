@@ -22,6 +22,9 @@ pub struct Rules {
     pub folder_systems: Vec<String>,
     /// Move unknown files to `_quarantine`; off leaves them where they are.
     pub quarantine: bool,
+    /// Unknown files go to `_trash/unknown` (and the old `_quarantine` is emptied there);
+    /// off keeps them in `_quarantine`.
+    pub unknown_to_trash: bool,
     /// Move frontend metadata (gamelist.xml, scraped media) to `_trash/frontend`.
     pub frontend_trash: bool,
     /// Per-system overrides of regions, languages and excluded flags.
@@ -84,6 +87,7 @@ impl Default for Rules {
             arcade_g1r: true,
             folder_systems: s(&crate::plan::FOLDER_SYSTEMS),
             quarantine: true,
+            unknown_to_trash: true,
             frontend_trash: true,
             systems: BTreeMap::new(),
             cores: BTreeMap::new(),

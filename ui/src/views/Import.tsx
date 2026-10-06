@@ -248,7 +248,7 @@ export default function Import() {
                 </div>
                 <div>
                   <div class="kpi">{p().quarantined}</div>
-                  <span class="dim">quarantine</span>
+                  <span class="dim">unknown</span>
                 </div>
                 <Show when={p().discarded}>
                   <div>

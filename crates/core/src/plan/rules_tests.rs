@@ -3,7 +3,7 @@
 use super::*;
 use crate::g1r::SystemRules;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
 const SYS: &str = "Nintendo - SNES";
@@ -197,4 +197,46 @@ fn frontend_metadata_goes_to_trash_and_game_folder_moves_without_it() {
     let tmp2 = TempDir::new().unwrap();
     let off = build(&items[4..5], &tmp2.path().join("lib"), &o);
     assert_eq!(off.discarded, 0);
+}
+
+#[test]
+fn unknown_files_go_to_trash_and_old_quarantine_is_emptied() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let put = |p: PathBuf| {
+        fs::create_dir_all(p.parent().unwrap()).unwrap();
+        fs::write(&p, p.to_string_lossy().as_bytes()).unwrap();
+        p
+    };
+    let it = |p: PathBuf, ident: Ident, in_library: bool| Item {
+        files: Files::Single(put(p)),
+        ident,
+        in_library,
+    };
+    let items = [
+        it(lib.join("_quarantine/ngp/old.zip"), Ident::Unknown, true),
+        // identified since it was quarantined: stays
+        it(
+            lib.join("_quarantine/ngp/now known.zip"),
+            Ident::Known(Game {
+                system: SYS.into(),
+                name: "Now Known".into(),
+                crc: Some(2),
+            }),
+            true,
+        ),
+        known(&inbox, "Mario (Europe).sfc", "Mario (Europe)"),
+        it(inbox.join("bad dump.sfc"), Ident::Unknown, false),
+    ];
+    let o = Options {
+        mode: Mode::Move,
+        inbox: Some(inbox.clone()),
+        ..opts(Rules::default())
+    };
+    let plan = build(&items, &lib, &o);
+    assert_eq!(plan.quarantined, 2);
+    assert!(crate::plan::execute(&plan.ops).error.is_none());
+    assert!(lib.join("_trash/unknown/ngp/old.zip").is_file());
+    assert!(lib.join("_trash/unknown/bad dump.sfc").is_file());
+    assert!(lib.join("_quarantine/ngp/now known.zip").is_file());
 }

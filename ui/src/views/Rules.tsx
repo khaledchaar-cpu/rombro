@@ -17,7 +17,7 @@ const FIELDS: Record<string, (keyof R)[]> = {
   "g1r-pick": ["regions", "languages", "exclude", "systems"],
   "arcade-set": ["arcade_order", "arcade_g1r"],
   "game-folder": ["folder_systems"],
-  quarantine: ["quarantine"],
+  quarantine: ["quarantine", "unknown_to_trash"],
   "frontend-meta": ["frontend_trash"],
 };
 
@@ -84,7 +84,15 @@ export default function Rules() {
       <Match when={info.id === "quarantine"}>
         <label class="check">
           <input type="checkbox" checked={r.quarantine} onChange={(e) => edit({ quarantine: e.currentTarget.checked })} />
-          Move unknown files to _quarantine (off: leave them where they are)
+          Move unknown files out of the inbox and system folders (off: leave them where they are)
+        </label>
+        <label class="check">
+          <input
+            type="checkbox"
+            checked={r.unknown_to_trash}
+            onChange={(e) => edit({ unknown_to_trash: e.currentTarget.checked })}
+          />
+          …into _trash/unknown, and empty the old _quarantine there (off: keep them in _quarantine)
         </label>
       </Match>
       <Match when={info.id === "frontend-meta"}>
