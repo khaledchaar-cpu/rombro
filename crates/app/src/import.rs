@@ -226,7 +226,7 @@ pub async fn plan_import(
 }
 
 #[tauri::command]
-pub async fn execute_plan(pending: State<'_, Pending>) -> CmdResult<ExecResult> {
+pub async fn execute_plan(app: AppHandle, pending: State<'_, Pending>) -> CmdResult<ExecResult> {
     let (library, ops) = pending
         .0
         .lock()
@@ -238,7 +238,17 @@ pub async fn execute_plan(pending: State<'_, Pending>) -> CmdResult<ExecResult> 
             .duration_since(UNIX_EPOCH)
             .map_err(err)?
             .as_secs() as i64;
-        let ex = plan::execute(&ops);
+        let emit = |phase: &str, done, total| {
+            let _ = app.emit("execute://progress", (phase, Progress { done, total }));
+        };
+        let throttle = Throttle::new();
+        let ex = plan::execute_progress(&ops, &|done, total| {
+            if throttle.ready(done, total) {
+                emit("move", done, total);
+            }
+        });
+        // indexing, pruning and the journal follow; tell the UI it is not stuck
+        emit("finish", 0, 0);
         let journal = if ex.done.is_empty() {
             None
         } else {

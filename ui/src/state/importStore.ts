@@ -18,6 +18,7 @@ export const [plan, setPlan] = createSignal<PlanView>();
 /** Inbox files the last plan leaves alone; kept after executing so they can be cleared. */
 export const [leftovers, setLeftovers] = createSignal<PlanView["leftovers"]>([]);
 export const [busy, setBusy] = createSignal(false);
+export const [executing, setExecuting] = createSignal(false);
 /** When the current plan was built and whether it is a library-only audit. */
 export const [planned, setPlanned] = createSignal<{ at: Date; audit: boolean }>();
 /** Unique per decision (a tie's `path` is its system, shared by all ties of that system). */
@@ -76,7 +77,8 @@ export const buildPlan = (withInbox: boolean) =>
 export const execute = () =>
   guard(async () => {
     const ops = plan()?.ops ?? [];
-    const r: ExecResult = await executePlan();
+    setExecuting(true);
+    const r: ExecResult = await executePlan().finally(() => setExecuting(false));
     setLastRun({ ops: ops.slice(0, r.done), journal: r.journal, error: r.error });
     setPlan(undefined);
     void refreshLibrary();

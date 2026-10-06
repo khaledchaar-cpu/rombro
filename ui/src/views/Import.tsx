@@ -5,12 +5,14 @@ import ScanProgress from "../components/ScanProgress";
 import InboxLeftovers from "../components/InboxLeftovers";
 import ImportSetup from "./ImportSetup";
 import RunReport from "../components/RunReport";
+import ExecProgress from "../components/ExecProgress";
 import type { DecisionView } from "../ipc";
 import {
   busy,
   decided,
   decisionKey,
   execute,
+  executing,
   judge,
   library,
   pick,
@@ -282,9 +284,12 @@ export default function Import() {
                   disabled={busy() || !p().ops.length}
                   onClick={execute}
                 >
-                  {busy() ? "Executing" : "Execute"}
+                  {executing() ? "Executing" : "Execute"}
                 </button>
               </div>
+              <Show when={executing()}>
+                <ExecProgress />
+              </Show>
             </Panel>
             <Show
               when={p().ops.length || p().decisions.length}

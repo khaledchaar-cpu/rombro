@@ -3,7 +3,7 @@ import Panel from "./Panel";
 import { lastRun } from "../state/importStore";
 import type { OpView } from "../ipc";
 
-const SHOWN = 200;
+const SHOWN = 2000;
 
 /** What an operation did, in a word, for grouping the report. */
 function outcome(op: OpView): string {
@@ -41,6 +41,7 @@ export default function RunReport(props: { rel: (p: string) => string }) {
                 )}
               </For>
             </div>
+            <div class="oplist">
             <For each={r().ops.slice(0, SHOWN)}>
               {(op) => (
                 <div class="row mono">
@@ -49,6 +50,7 @@ export default function RunReport(props: { rel: (p: string) => string }) {
                 </div>
               )}
             </For>
+            </div>
             <Show when={r().ops.length > SHOWN}>
               <p class="dim">… and {r().ops.length - SHOWN} more</p>
             </Show>
