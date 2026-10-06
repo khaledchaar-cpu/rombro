@@ -38,6 +38,9 @@ Regel, Overrides, Ausnahmen. CLI: `rombro rules [--set file.json]`, dry-run zeig
    echter Konflikt: Shareware vs. Vollversion). CLI: `rules --ignore/--unignore <pfad>`.
 3. Prüfung in RetroArch: MAME-BIOS neben den Sets (BIOS-abhängiges Spiel, z. B. Neo Geo, startet mit MAME-Core
    und FBNeo aus der importierten Library).
+   Vorbereitet (2026-10-06): `~/rombro-test/ra-lib` (Copy-Import Arcade-Testset), Playlist `ROMBRO Test.lpl`,
+   Cores fbneo + mame2016 vom Buildbot. User-`neogeo.zip` ist nicht DB-konform (4 Dateien fehlen, 2 anders
+   benannt) → Quarantäne ist korrekt; für den Test manuell neben die Sets kopiert. Logik bleibt (User-Entscheidung).
 4. Sichtprüfung in der App (M10-Rest): Gamification-Panels mit echten Daten plausibel; Effects off in beiden Themes.
 5. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 
