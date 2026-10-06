@@ -8,14 +8,37 @@ use rombro_core::{ScanReport, ScannedDisc, ScannedRom};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
+/// Lower-cased file stems of every archive in `report`: the arcade sets it holds.
+pub fn set_names(report: &ScanReport) -> HashSet<String> {
+    report
+        .archives
+        .iter()
+        .filter_map(|r| r.path.file_stem())
+        .map(|s| s.to_string_lossy().to_ascii_lowercase())
+        .collect()
+}
+
 impl Store {
     /// Identifies every scanned ROM and disc. Each ROM of a multi-ROM archive becomes its own
     /// item; discs with missing tracks are skipped; ambiguous matches use a stored resolution if there is one.
     pub fn items(&self, report: &ScanReport, in_library: bool) -> Result<Vec<Item>> {
+        self.items_with(report, in_library, &HashSet::new())
+    }
+
+    /// Like [`Store::items`]; `known_sets` names arcade sets found elsewhere (e.g. the library)
+    /// that count as present parents. Sets in `report` itself always count.
+    pub fn items_with(
+        &self,
+        report: &ScanReport,
+        in_library: bool,
+        known_sets: &HashSet<String>,
+    ) -> Result<Vec<Item>> {
+        let mut known = set_names(report);
+        known.extend(known_sets.iter().cloned());
         let mut out = Vec::new();
         let mut sets = HashSet::new();
         for whole in &report.archives {
-            if let Some(item) = self.romset(whole, in_library)? {
+            if let Some(item) = self.romset(whole, in_library, &known)? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
             }
@@ -92,14 +115,19 @@ impl Store {
 
     /// An archive whose whole-file hash matches an entry (arcade romset): the best-ranked
     /// system wins (FBNeo, newest MAME, …); BIOS sets get their own ident.
-    fn romset(&self, whole: &ScannedRom, in_library: bool) -> Result<Option<Item>> {
+    fn romset(
+        &self,
+        whole: &ScannedRom,
+        in_library: bool,
+        known: &HashSet<String>,
+    ) -> Result<Option<Item>> {
         let mut records = match self.identify(&whole.hashes)? {
             Match::Verified(r) | Match::CrcOnly(r) => r,
             Match::Unknown => return Ok(None),
         };
         let order = self.rules()?.arcade_order;
         let rank = |s: &str| arcade::rank_in(&order, s);
-        let best = match self.dat_pick(&records, &whole.path, &rank)? {
+        let best = match self.dat_pick(&records, &whole.path, &rank, known)? {
             Ok(Some(system)) => rank(system),
             Ok(None) => records
                 .iter()
@@ -157,6 +185,7 @@ impl Store {
         records: &'r [Record],
         archive: &Path,
         rank: &impl Fn(&str) -> usize,
+        known: &HashSet<String>,
     ) -> Result<std::result::Result<Option<&'r str>, String>> {
         let mut cores: Vec<&Record> = records
             .iter()
@@ -180,11 +209,7 @@ impl Store {
         let stem = archive
             .file_stem()
             .map(|s| s.to_string_lossy().into_owned());
-        let has_set = |n: &str| {
-            ["zip", "7z"]
-                .iter()
-                .any(|e| archive.with_file_name(format!("{n}.{e}")).exists())
-        };
+        let has_set = |n: &str| known.contains(&n.to_ascii_lowercase());
         let mut reasons = Vec::new();
         for r in cores {
             let name = r

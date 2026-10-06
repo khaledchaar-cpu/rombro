@@ -552,4 +552,27 @@ fn arcade_set_goes_to_first_core_whose_dat_it_completes() {
         why,
         "MAME: 1 missing (c.bin); MAME 2003-Plus: 1 misnamed (a.bin)"
     );
+
+    // split clone: parent `p` counts when known from elsewhere (e.g. the library)
+    let x = crc(b"chip x");
+    let (a, b) = (crc(b"chip a"), crc(b"chip b"));
+    let split = format!(
+        r#"<mame><machine name="p"><rom name="x.bin" size="6" crc="{x}"/></machine>
+        <machine name="1943" cloneof="p" romof="p"><rom name="a.bin" size="6" crc="{a}"/>
+        <rom name="b.bin" size="6" crc="{b}"/><rom name="x.bin" merge="x.bin" size="6" crc="{x}"/>
+        </machine></mame>"#
+    );
+    s.import_dat(
+        "MAME 2003-Plus",
+        "y",
+        0,
+        &dat::parse(split.as_bytes()).unwrap(),
+    )
+    .unwrap();
+    assert!(matches!(ident(&s), Ident::Incomplete(w) if w.ends_with("parent set p missing")));
+    let known = ["p".to_owned()].into();
+    let items = s
+        .items_with(&rombro_core::scan(&inbox), false, &known)
+        .unwrap();
+    assert!(matches!(&items[0].ident, Ident::Known(g) if g.system == "MAME 2003-Plus"));
 }

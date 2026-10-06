@@ -46,7 +46,7 @@ mit plausiblen Gründen (fehlend, misnamed, Eltern fehlt, nicht im DAT).
    Cores fbneo + mame2016 + mame (0.289) vom Buildbot. User-`neogeo.zip` ist nicht DB-konform (4 Dateien fehlen, 2 anders
    benannt) → Quarantäne ist korrekt; für den Test manuell neben die Sets kopiert. Logik bleibt (User-Entscheidung).
 4. ✅ M14 Arcade-DATs. Offen/Ideen: Begründung auch bei *platzierten* geprüften Sets zeigen (welche Cores
-   übersprungen wurden); Eltern-Set auch in der Library suchen (nicht nur im selben Ordner); `db stats` mit DAT-Versionen.
+   übersprungen wurden); ~~Eltern-Set auch in der Library suchen~~ ✅ (Eltern zählen, wenn sie irgendwo im Scan oder in der Library liegen: `set_names`/`items_with`); `db stats` mit DAT-Versionen.
 5. Sichtprüfung in der App (M10-Rest): Gamification-Panels mit echten Daten plausibel; Effects off in beiden Themes.
 6. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 

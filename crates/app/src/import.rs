@@ -130,10 +130,11 @@ pub async fn plan_import(
         store.set_library(&lib).map_err(err)?;
         store.set_setting("mode", mode.as_str()).map_err(err)?;
         let mut items = Vec::new();
+        let mut known = Default::default();
         if lib.is_dir() {
-            items = store
-                .items(&emit_scan(&store, &app, "library", &lib)?, true)
-                .map_err(err)?;
+            let report = emit_scan(&store, &app, "library", &lib)?;
+            known = rombro_store::set_names(&report);
+            items = store.items(&report, true).map_err(err)?;
         }
         let mut inbox_root = None;
         if let Some(inbox) = inbox {
@@ -146,7 +147,7 @@ pub async fn plan_import(
                 .map_err(err)?;
             items.extend(
                 store
-                    .items(&emit_scan(&store, &app, "inbox", &inbox)?, false)
+                    .items_with(&emit_scan(&store, &app, "inbox", &inbox)?, false, &known)
                     .map_err(err)?,
             );
             inbox_root = Some(inbox);

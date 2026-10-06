@@ -20,12 +20,15 @@ pub fn run(a: Args) -> Result<()> {
     let store = open_store(a.db)?;
     let library = absolute(&a.library)?;
     let mut items = Vec::new();
+    let mut known = Default::default();
     if library.is_dir() {
-        items = store.items(&scan(&library), true)?;
+        let report = scan(&library);
+        known = rombro_store::set_names(&report);
+        items = store.items(&report, true)?;
     }
     let inbox = a.inbox.as_deref().map(absolute).transpose()?;
     if let Some(inbox) = &inbox {
-        items.extend(store.items(&scan(inbox), false)?);
+        items.extend(store.items_with(&scan(inbox), false, &known)?);
     }
     let ts = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
     let opts = Options {

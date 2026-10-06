@@ -15,6 +15,7 @@ mod schema;
 #[cfg(test)]
 mod tests;
 
+pub use catalog::set_names;
 pub use dat::DatInfo;
 pub use dat_sync::DatSyncReport;
 pub use disc::DiscMatch;
