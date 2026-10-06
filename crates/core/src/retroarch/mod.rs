@@ -4,6 +4,7 @@
 pub mod export;
 pub mod firmware;
 pub mod info;
+pub mod pick;
 
 use std::path::{Path, PathBuf};
 
@@ -14,6 +15,8 @@ pub struct Dirs {
     pub system: PathBuf,
     pub cores: PathBuf,
     pub info: PathBuf,
+    /// Where RetroArch's core updater downloads cores (`<url>/<core>_libretro.so.zip`).
+    pub buildbot: Option<String>,
 }
 
 impl Dirs {
@@ -49,6 +52,10 @@ impl Dirs {
             system: get("system_directory", "system"),
             info: get("libretro_info_path", &cores.to_string_lossy()),
             cores,
+            buildbot: info::kv(text)
+                .find(|(k, _)| *k == "core_updater_buildbot_cores_url")
+                .map(|(_, v)| v.trim_end_matches('/').to_owned())
+                .filter(|v| !v.is_empty()),
         }
     }
 }

@@ -158,7 +158,8 @@ fn bad(msg: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, msg)
 }
 
-fn http_get(url: &str) -> io::Result<Vec<u8>> {
+/// GET `url` (up to 512 MiB) – DATs, and RetroArch cores for the export.
+pub fn http_get(url: &str) -> io::Result<Vec<u8>> {
     let mut resp = ureq::get(url)
         .header("User-Agent", "rombro")
         .call()

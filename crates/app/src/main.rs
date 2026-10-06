@@ -40,6 +40,7 @@ fn main() {
             thumbs::thumbs_online_get,
             thumbs::thumbs_online_set,
             retroarch::retroarch_export,
+            retroarch::retroarch_cores,
             gamify::gamify_stats,
             gamify::gamify_enabled_get,
             gamify::gamify_enabled_set

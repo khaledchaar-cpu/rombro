@@ -1,20 +1,47 @@
 //! Export to RetroArch: the library playlists (with the matching installed core as default)
-//! into RetroArch's playlist folder, and identified firmware into its system folder.
-//! Only plans operations; executing them goes through the journal like any import.
+//! into RetroArch's playlist folder, identified firmware into its system folder, and, on
+//! request, the missing cores from RetroArch's buildbot into its core folder.
+//! Only plans operations; executing them goes through the journal like any import. Core
+//! archives are downloaded by the caller (see [`Export::downloads`]) before executing.
 
 use super::Dirs;
 use super::firmware::Firmware;
-use super::info::{Core, core_for};
+use super::info::Core;
+use super::pick;
 use crate::plan::{BIOS_DIR, Op, PLAYLIST_DIR};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
+
+/// What to export.
+#[derive(Debug, Clone, Default)]
+pub struct Options {
+    pub playlists: bool,
+    pub bios: bool,
+    /// Install the core each playlist wants if it is missing.
+    pub install_cores: bool,
+    /// Core per system chosen by the user (system → core id); others use the recommendation.
+    pub picks: BTreeMap<String, String>,
+    /// Folder for downloaded core archives.
+    pub cache: PathBuf,
+}
+
+/// The default folder for downloaded core archives (`<cache>/rombro/cores`).
+pub fn default_cache() -> Option<PathBuf> {
+    dirs::cache_dir().map(|d| d.join("rombro/cores"))
+}
 
 /// Planned operations plus what the user should know about them.
 #[derive(Debug, Default)]
 pub struct Export {
     pub ops: Vec<Op>,
-    /// Playlists written (system, core name if one is installed).
+    /// Playlists written (system, core name if one is installed or will be).
     pub playlists: Vec<(String, Option<String>)>,
+    /// Cores to install (id), each extracted from an archive in [`Self::downloads`].
+    pub cores_install: Vec<String>,
+    /// Core archives to download before executing: (url, file).
+    pub downloads: Vec<(String, PathBuf)>,
+    /// Wanted cores that are missing and not to be installed (system, core id).
+    pub cores_missing: Vec<(String, String)>,
     /// Playlists already up to date.
     pub playlists_unchanged: usize,
     /// Firmware copied into the system folder (path inside it).
@@ -34,21 +61,21 @@ pub fn plan(
     cores: &[Core],
     firmware: &[Firmware],
     library_files: &HashMap<[u8; 20], PathBuf>,
-    playlists: bool,
-    bios: bool,
+    opts: &Options,
 ) -> Export {
     let mut ex = Export::default();
     let systems = library_systems(library);
-    if playlists {
-        plan_playlists(library, dirs, cores, &mut ex);
+    if opts.playlists {
+        plan_playlists(library, dirs, cores, opts, &mut ex);
     }
-    if bios {
+    if opts.bios {
         plan_bios(library, dirs, firmware, library_files, &systems, &mut ex);
     }
     ex
 }
 
-fn plan_playlists(library: &Path, dirs: &Dirs, cores: &[Core], ex: &mut Export) {
+fn plan_playlists(library: &Path, dirs: &Dirs, cores: &[Core], opts: &Options, ex: &mut Export) {
+    let install = opts.install_cores && dirs.buildbot.is_some();
     let Ok(rd) = std::fs::read_dir(library.join(PLAYLIST_DIR)) else {
         return;
     };
@@ -71,7 +98,19 @@ fn plan_playlists(library: &Path, dirs: &Dirs, cores: &[Core], ex: &mut Export) 
         let Ok(mut doc) = serde_json::from_str::<serde_json::Value>(&text) else {
             continue;
         };
-        let core = core_for(cores, &system);
+        if let Some(w) = pick::resolve(cores, &system, &opts.picks, true)
+            && !w.installed
+            && !install
+        {
+            ex.cores_missing.push((system.clone(), w.id.clone()));
+        }
+        let core = pick::resolve(cores, &system, &opts.picks, install);
+        if let (Some(c), Some(url)) = (core, &dirs.buildbot)
+            && !c.installed
+            && !ex.cores_install.contains(&c.id)
+        {
+            plan_install(c, url, &opts.cache, ex);
+        }
         if let Some(c) = core {
             doc["default_core_path"] = c.path.to_string_lossy().into_owned().into();
             doc["default_core_name"] = c.name.clone().into();
@@ -86,6 +125,55 @@ fn plan_playlists(library: &Path, dirs: &Dirs, cores: &[Core], ex: &mut Export) 
         ex.ops.push(Op::Write { path, contents });
         ex.playlists.push((system, core.map(|c| c.name.clone())));
     }
+}
+
+/// Systems with a playlist in the library, sorted.
+pub fn playlist_systems(library: &Path) -> Vec<String> {
+    let mut out: Vec<String> = std::fs::read_dir(library.join(PLAYLIST_DIR))
+        .map(|rd| {
+            rd.filter_map(|e| e.ok().map(|e| e.path()))
+                .filter(|p| p.extension().is_some_and(|e| e == "lpl"))
+                .filter_map(|p| Some(p.file_stem()?.to_string_lossy().into_owned()))
+                .collect()
+        })
+        .unwrap_or_default();
+    out.sort();
+    out
+}
+
+/// Downloads the core archives of `ex` with `fetch` into the cache (always fresh: the
+/// buildbot serves the latest build under the same name).
+pub fn download(
+    ex: &Export,
+    fetch: &dyn Fn(&str) -> std::io::Result<Vec<u8>>,
+) -> std::io::Result<()> {
+    for (url, file) in &ex.downloads {
+        let body = fetch(url).map_err(|e| std::io::Error::other(format!("{url}: {e}")))?;
+        if let Some(dir) = file.parent() {
+            std::fs::create_dir_all(dir)?;
+        }
+        let tmp = file.with_extension("part");
+        std::fs::write(&tmp, body)?;
+        std::fs::rename(tmp, file)?;
+    }
+    Ok(())
+}
+
+/// Download of `<core file>.zip` from the buildbot, then extraction into the core folder.
+fn plan_install(core: &Core, buildbot: &str, cache: &Path, ex: &mut Export) {
+    let Some(file) = core.path.file_name() else {
+        return;
+    };
+    let file = file.to_string_lossy().into_owned();
+    let zip = cache.join(format!("{file}.zip"));
+    ex.downloads
+        .push((format!("{buildbot}/{file}.zip"), zip.clone()));
+    ex.ops.push(Op::Extract {
+        archive: zip,
+        member: file,
+        to: core.path.clone(),
+    });
+    ex.cores_install.push(core.id.clone());
 }
 
 fn plan_bios(
@@ -186,6 +274,7 @@ mod tests {
             system: ra.join("system"),
             cores: ra.join("cores"),
             info: ra.join("cores"),
+            buildbot: None,
         };
         fs::create_dir_all(lib.join("_playlists")).unwrap();
         fs::create_dir_all(lib.join("Sony - PlayStation")).unwrap();
@@ -212,10 +301,17 @@ mod tests {
         let files = HashMap::from([([1u8; 20], lib.join("st.sfc"))]);
         let cores = [Core {
             path: "/c/snes9x_libretro.so".into(),
+            id: "snes9x".into(),
+            installed: true,
             name: "Snes9x".into(),
             databases: vec!["Nintendo - SNES".into()],
         }];
-        let ex = plan(&lib, &dirs, &cores, &firmware, &files, true, true);
+        let opts = Options {
+            playlists: true,
+            bios: true,
+            ..Options::default()
+        };
+        let ex = plan(&lib, &dirs, &cores, &firmware, &files, &opts);
         assert_eq!(
             ex.playlists,
             [("Nintendo - SNES".into(), Some("Snes9x".into()))]
@@ -232,8 +328,70 @@ mod tests {
         assert!(pl.contains("snes9x_libretro.so"));
 
         // second run: nothing left to do
-        let again = plan(&lib, &dirs, &cores, &firmware, &files, true, true);
+        let again = plan(&lib, &dirs, &cores, &firmware, &files, &opts);
         assert!(again.ops.is_empty());
         assert_eq!((again.playlists_unchanged, again.bios_present), (1, 2));
+    }
+
+    #[test]
+    fn installs_missing_recommended_core() {
+        const SNES: &str = "Nintendo - Super Nintendo Entertainment System";
+        let tmp = tempfile::tempdir().unwrap();
+        let (lib, ra) = (tmp.path().join("lib"), tmp.path().join("ra"));
+        let dirs = Dirs {
+            playlists: ra.join("playlists"),
+            system: ra.join("system"),
+            cores: ra.join("cores"),
+            info: ra.join("cores"),
+            buildbot: Some("https://bb/latest".into()),
+        };
+        fs::create_dir_all(lib.join("_playlists")).unwrap();
+        fs::write(
+            lib.join(format!("_playlists/{SNES}.lpl")),
+            r#"{"items":[]}"#,
+        )
+        .unwrap();
+        let core = |id: &str, installed| Core {
+            path: ra.join(format!("cores/{id}_libretro.so")),
+            id: id.into(),
+            installed,
+            name: id.into(),
+            databases: vec![SNES.into()],
+        };
+        let cores = [core("bsnes", true), core("snes9x", false)];
+        let mut opts = Options {
+            playlists: true,
+            cache: tmp.path().join("cache"),
+            ..Options::default()
+        };
+        // Without install: the installed core, and the recommendation reported missing.
+        let ex = plan(&lib, &dirs, &cores, &[], &HashMap::new(), &opts);
+        assert_eq!(ex.playlists, [(SNES.into(), Some("bsnes".into()))]);
+        assert_eq!(ex.cores_missing, [(SNES.into(), "snes9x".into())]);
+        assert!(ex.downloads.is_empty());
+
+        opts.install_cores = true;
+        let ex = plan(&lib, &dirs, &cores, &[], &HashMap::new(), &opts);
+        assert_eq!(ex.cores_install, ["snes9x"]);
+        let (url, zip) = &ex.downloads[0];
+        assert_eq!(url, "https://bb/latest/snes9x_libretro.so.zip");
+        // Stand-in for the download.
+        fs::create_dir_all(zip.parent().unwrap()).unwrap();
+        let mut w = zip::ZipWriter::new(fs::File::create(zip).unwrap());
+        w.start_file(
+            "snes9x_libretro.so",
+            zip::write::SimpleFileOptions::default(),
+        )
+        .unwrap();
+        std::io::Write::write_all(&mut w, b"ELF").unwrap();
+        w.finish().unwrap();
+        let r = crate::plan::execute(&ex.ops);
+        assert!(r.error.is_none(), "{:?}", r.error);
+        assert_eq!(
+            fs::read(ra.join("cores/snes9x_libretro.so")).unwrap(),
+            b"ELF"
+        );
+        let pl = fs::read_to_string(ra.join(format!("playlists/{SNES}.lpl"))).unwrap();
+        assert!(pl.contains("snes9x_libretro.so"));
     }
 }

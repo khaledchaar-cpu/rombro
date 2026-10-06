@@ -1,0 +1,103 @@
+# Recommended core per RetroArch system, derived from Batocera's x86_64 defaults
+# (python-src/batocera-launch/resources/defaults/config.yml + config-x86_64.yml, 2026-10-06).
+# Batocera core names translated to libretro file stems; systems Batocera runs with a
+# standalone emulator use that emulator's libretro port (Jaguar, Quake II/III: libretro alternatives). Arcade databases are not listed:
+# their core follows from the set (DAT check).
+Amstrad - CPC	cap32
+Amstrad - GX4000	cap32
+Arduboy Inc - Arduboy	arduous
+Atari - 2600	stella
+Atari - 5200	atari800
+Atari - 7800	prosystem
+Atari - 8-bit Family	atari800
+Atari - Jaguar	virtualjaguar
+Atari - Lynx	mednafen_lynx
+Atari - ST	hatari
+Atomiswave	flycast
+Bandai - WonderSwan	mednafen_wswan
+Bandai - WonderSwan Color	mednafen_wswan
+Cave Story	nxengine
+Coleco - ColecoVision	bluemsx
+Commodore - 64	vice_x64
+Commodore - Amiga	puae
+Commodore - CD32	puae
+Commodore - CDTV	puae
+Commodore - PET	vice_xpet
+Commodore - Plus-4	vice_xplus4
+Commodore - VIC-20	vice_xvic
+DICE	dice
+DOOM	prboom
+DOS	dosbox_pure
+Epoch - Cassette Vision	pd777
+Epoch - Super Cassette Vision	emuscv
+Fairchild - Channel F	freechaf
+GCE - Vectrex	vecx
+Handheld Electronic Game	gw
+LowRes NX	lowresnx
+Lutro	lutro
+Magnavox - Odyssey2	o2em
+Mattel - Intellivision	freeintv
+Microsoft - MSX	bluemsx
+Microsoft - MSX2	bluemsx
+MrBoom	mrboom
+NEC - PC Engine - TurboGrafx 16	mednafen_pce
+NEC - PC Engine CD - TurboGrafx-CD	mednafen_pce
+NEC - PC Engine SuperGrafx	mednafen_supergrafx
+NEC - PC-88	quasi88
+NEC - PC-8001 - PC-8801	quasi88
+NEC - PC-98	np2kai
+NEC - PC-FX	mednafen_pcfx
+Nintendo - Family Computer Disk System	fceumm
+Nintendo - Game Boy	gambatte
+Nintendo - Game Boy Advance	mgba
+Nintendo - Game Boy Color	gambatte
+Nintendo - GameCube	dolphin
+Nintendo - Nintendo 64	mupen64plus_next
+Nintendo - Nintendo 64DD	mupen64plus_next
+Nintendo - Nintendo DS	melonds
+Nintendo - Nintendo Entertainment System	fceumm
+Nintendo - Pokemon Mini	pokemini
+Nintendo - Satellaview	snes9x
+Nintendo - Sufami Turbo	snes9x
+Nintendo - Super Nintendo Entertainment System	snes9x
+Nintendo - Virtual Boy	mednafen_vb
+Nintendo - Wii	dolphin
+PICO-8	fake08
+Philips - Videopac+	o2em
+Quake	tyrquake
+Quake II	vitaquake2
+Quake III	vitaquake3
+Rick Dangerous	xrick
+ScummVM	scummvm
+Sega - 32X	picodrive
+Sega - Dreamcast	flycast
+Sega - Game Gear	genesis_plus_gx
+Sega - Master System - Mark III	genesis_plus_gx
+Sega - Mega Drive - Genesis	genesis_plus_gx
+Sega - Mega-CD - Sega CD	genesis_plus_gx
+Sega - Naomi	flycast
+Sega - Naomi 2	flycast
+Sega - PICO	genesis_plus_gx
+Sega - SG-1000	genesis_plus_gx
+Sega - Saturn	mednafen_saturn
+Sharp - X1	x1
+Sharp - X68000	px68k
+Sinclair - ZX 81	81
+Sinclair - ZX Spectrum	fuse
+Sinclair - ZX Spectrum +3	fuse
+SNK - Neo Geo CD	neocd
+SNK - Neo Geo Pocket	mednafen_ngp
+SNK - Neo Geo Pocket Color	mednafen_ngp
+Sony - PlayStation	pcsx_rearmed
+Sony - PlayStation 2	pcsx2
+Sony - PlayStation Portable	ppsspp
+Sony - PlayStation Portable (PSN)	ppsspp
+TIC-80	tic80
+The 3DO Company - 3DO	opera
+Thomson - MOTO	theodore
+Uzebox	uzem
+Videoton - TV-Computer	ep128emu_core
+Vircon32	vircon32
+WASM-4	wasm4
+Watara - Supervision	potator
+Spectravideo - SVI-318 - SVI-328	bluemsx

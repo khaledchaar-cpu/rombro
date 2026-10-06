@@ -1,17 +1,19 @@
 import { createSignal, For, Show } from "solid-js";
 import Panel from "./Panel";
+import CorePicker from "./CorePicker";
 import { retroarchExport, type RetroArchExport } from "../ipc";
 
-/** Preview, then export library playlists (with core) and identified BIOS files to RetroArch. */
+/** Preview, then export library playlists (with core), identified BIOS files and missing cores to RetroArch. */
 export default function RetroArchPanel() {
   const [res, setRes] = createSignal<RetroArchExport>();
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
+  const [install, setInstall] = createSignal(false);
   const run = async (dryRun: boolean) => {
     setBusy(true);
     setError("");
     try {
-      setRes(await retroarchExport(dryRun));
+      setRes(await retroarchExport(dryRun, install()));
     } catch (e) {
       setError(String(e));
     } finally {
@@ -20,7 +22,7 @@ export default function RetroArchPanel() {
   };
   const pending = () => {
     const r = res();
-    return r && r.executed === null ? r.playlists.length + r.bios_copied.length : 0;
+    return r && r.executed === null ? r.playlists.length + r.bios_copied.length + r.cores_install.length : 0;
   };
   return (
     <Panel title="RetroArch">
@@ -29,6 +31,18 @@ export default function RetroArchPanel() {
         RetroArch's folders. Existing playlists are replaced; undo restores them. BIOS files already there are never
         overwritten.
       </p>
+      <label class="check">
+        <input
+          type="checkbox"
+          checked={install()}
+          onChange={(e) => {
+            setInstall(e.currentTarget.checked);
+            if (res()) void run(true);
+          }}
+        />
+        Install missing cores (downloaded from RetroArch's core updater)
+      </label>
+      <CorePicker onChange={() => res() && void run(true)} />
       <div class="row">
         <button class="btn ghost" disabled={busy()} onClick={() => void run(true)}>Preview</button>
         <button class="btn" disabled={busy() || !pending()} onClick={() => void run(false)}>
@@ -55,10 +69,21 @@ export default function RetroArchPanel() {
               {(p) => (
                 <div class="row ex-row">
                   <span class="ellipsis">{p.system}</span>
-                  <span class={p.core ? "tag mono" : "dim"}>{p.core ?? "no core installed"}</span>
+                  <span class={p.core ? "tag mono" : "dim"}>{p.core ?? "no core – RetroArch asks"}</span>
                 </div>
               )}
             </For>
+            <Show when={r().cores_install.length}>
+              <h4>Cores to install: {r().cores_install.length}</h4>
+              <For each={r().cores_install}>{(c) => <div class="mono">+ {c}</div>}</For>
+            </Show>
+            <Show when={r().cores_missing.length}>
+              <p class="dim">
+                {r().cores_missing.length} chosen cores are not installed
+                {r().can_install ? " – tick “Install missing cores”" : " – RetroArch's config names no core updater URL"}:{" "}
+                <span class="mono">{r().cores_missing.map((m) => m.path).join(", ")}</span>
+              </p>
+            </Show>
             <h4>
               BIOS: {r().bios_copied.length} to copy, {r().bios_present} present, {r().bios_missing.length} missing
             </h4>

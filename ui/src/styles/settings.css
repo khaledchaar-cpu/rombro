@@ -25,3 +25,5 @@
 .err { color: var(--err); }
 .ra-result { margin-top: var(--sp-2); }
 .ra-result details { margin-top: var(--sp-1); }
+.ra-cores { margin: var(--sp-2) 0; }
+.ra-cores summary h4 { display: inline; }

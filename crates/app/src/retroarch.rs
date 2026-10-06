@@ -1,8 +1,9 @@
-//! Export of playlists and BIOS files to RetroArch (preview, then execute with journal).
+//! Export of playlists, BIOS files and missing cores to RetroArch (preview, then execute
+//! with journal), and the core choice per system.
 
 use crate::commands::{CmdResult, err, open_store};
 use rombro_core::plan;
-use rombro_core::retroarch::{Dirs, export, firmware, info};
+use rombro_core::retroarch::{Dirs, export, firmware, info, pick};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -19,10 +20,34 @@ pub struct MissingView {
 }
 
 #[derive(Serialize)]
+pub struct CoreOption {
+    id: String,
+    name: String,
+    installed: bool,
+    recommended: bool,
+}
+
+#[derive(Serialize)]
+pub struct SystemCores {
+    system: String,
+    /// Core the playlist gets (installed now or after installing); `None` = none known.
+    chosen: Option<String>,
+    /// Chosen by the user (stored in the rules) rather than recommended.
+    picked: bool,
+    options: Vec<CoreOption>,
+}
+
+#[derive(Serialize)]
 pub struct RetroArchView {
     playlist_dir: String,
     system_dir: String,
     cores: usize,
+    /// Cores to install (id).
+    cores_install: Vec<String>,
+    /// Wanted cores that are missing and not to be installed.
+    cores_missing: Vec<MissingView>,
+    /// RetroArch knows where to download cores from.
+    can_install: bool,
     playlists: Vec<PlaylistView>,
     playlists_unchanged: usize,
     bios_copied: Vec<String>,
@@ -33,9 +58,44 @@ pub struct RetroArchView {
     executed: Option<usize>,
 }
 
-/// Plans (and unless `dry_run` executes) the export for the stored library.
+/// The cores to choose from for each playlist of the stored library.
 #[tauri::command]
-pub async fn retroarch_export(dry_run: bool) -> CmdResult<RetroArchView> {
+pub async fn retroarch_cores() -> CmdResult<Vec<SystemCores>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let (store, _) = open_store()?;
+        let library = store.library().map_err(err)?.ok_or("no library set")?;
+        let dirs = Dirs::detect().ok_or("no retroarch.cfg found")?;
+        let picks = store.rules().map_err(err)?.cores;
+        let cores = info::available(&dirs.info, &dirs.cores);
+        Ok(export::playlist_systems(&library)
+            .into_iter()
+            .map(|system| {
+                let rec = pick::recommended(&system);
+                SystemCores {
+                    chosen: pick::resolve(&cores, &system, &picks, true).map(|c| c.id.clone()),
+                    picked: picks.contains_key(&system),
+                    options: pick::options(&cores, &system)
+                        .into_iter()
+                        .map(|c| CoreOption {
+                            id: c.id.clone(),
+                            name: c.name.clone(),
+                            installed: c.installed,
+                            recommended: Some(c.id.as_str()) == rec,
+                        })
+                        .collect(),
+                    system,
+                }
+            })
+            .collect())
+    })
+    .await
+    .map_err(err)?
+}
+
+/// Plans (and unless `dry_run` executes) the export for the stored library; with
+/// `install_cores` missing cores are downloaded from RetroArch's buildbot.
+#[tauri::command]
+pub async fn retroarch_export(dry_run: bool, install_cores: bool) -> CmdResult<RetroArchView> {
     tauri::async_runtime::spawn_blocking(move || {
         let (store, _) = open_store()?;
         let library = store
@@ -44,18 +104,25 @@ pub async fn retroarch_export(dry_run: bool) -> CmdResult<RetroArchView> {
             .ok_or("no library set – run an import first")?;
         let dirs = Dirs::detect().ok_or("no retroarch.cfg found")?;
         let report = crate::commands::indexed_scan(&store, &library, &|_, _| {})?;
-        let cores = info::installed(&dirs.info, &dirs.cores);
+        let cores = info::available(&dirs.info, &dirs.cores);
+        let opts = export::Options {
+            playlists: true,
+            bios: true,
+            install_cores,
+            picks: store.rules().map_err(err)?.cores,
+            cache: export::default_cache().ok_or("no cache folder")?,
+        };
         let ex = export::plan(
             &library,
             &dirs,
             &cores,
             &firmware::bundled(),
             &export::files_by_sha1(&report),
-            true,
-            true,
+            &opts,
         );
         let mut executed = None;
         if !dry_run && !ex.ops.is_empty() {
+            export::download(&ex, &rombro_store::http_get).map_err(err)?;
             let r = plan::execute(&ex.ops);
             if !r.done.is_empty() {
                 let ts = std::time::SystemTime::now()
@@ -78,7 +145,14 @@ pub async fn retroarch_export(dry_run: bool) -> CmdResult<RetroArchView> {
         Ok(RetroArchView {
             playlist_dir: dirs.playlists.display().to_string(),
             system_dir: dirs.system.display().to_string(),
-            cores: cores.len(),
+            cores: cores.iter().filter(|c| c.installed).count(),
+            can_install: dirs.buildbot.is_some(),
+            cores_install: ex.cores_install,
+            cores_missing: ex
+                .cores_missing
+                .into_iter()
+                .map(|(system, path)| MissingView { system, path })
+                .collect(),
             playlists: ex
                 .playlists
                 .into_iter()

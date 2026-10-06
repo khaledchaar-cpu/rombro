@@ -24,6 +24,9 @@ pub struct Rules {
     pub quarantine: bool,
     /// Per-system overrides of regions, languages and excluded flags.
     pub systems: BTreeMap<String, SystemRules>,
+    /// RetroArch core per system (system → core id, e.g. `snes9x`); unlisted systems use
+    /// the recommendation (`retroarch::pick`).
+    pub cores: BTreeMap<String, String>,
 }
 
 /// Overrides for one system; `None` falls back to the global value.
@@ -80,6 +83,7 @@ impl Default for Rules {
             folder_systems: s(&crate::plan::FOLDER_SYSTEMS),
             quarantine: true,
             systems: BTreeMap::new(),
+            cores: BTreeMap::new(),
         }
     }
 }
