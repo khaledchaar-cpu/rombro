@@ -87,6 +87,7 @@ export interface OpView {
   kind: "move" | "copy" | "link" | "clone" | "extract" | "write";
   from: string | null;
   to: string;
+  rule: string;
   why: string;
 }
 export interface DecisionView {
@@ -132,6 +133,7 @@ function mockPlan(library: string): PlanView {
     kind: i % 50 === 0 ? "write" : "move",
     from: i % 50 === 0 ? null : `/inbox/rom_${i}.zip`,
     to: `${library}/Nintendo - Game Boy/Game ${i} (Europe).zip`,
+    rule: i % 50 === 0 ? "playlist" : "g1r-pick",
     why: i % 50 === 0 ? "RetroArch playlist" : "1G1R pick",
   }));
   return {

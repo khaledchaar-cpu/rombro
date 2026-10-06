@@ -37,8 +37,8 @@ pub fn run(a: Args) -> Result<()> {
         inbox,
     };
     let p = plan::build(&items, &library, &opts);
-    for op in &p.ops {
-        println!("{}", describe(op, &library));
+    for (op, why) in p.ops.iter().zip(&p.why) {
+        println!("{}  [{}]", describe(op, &library), why.rule.id());
     }
     for d in &p.decisions {
         println!("{}", decision(d));

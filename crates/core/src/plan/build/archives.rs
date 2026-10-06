@@ -4,6 +4,7 @@
 use super::{Builder, file_name};
 use crate::naming;
 use crate::plan::{Files, Game, Ident, Item, Mode, Op, TRASH_DIR, lpl};
+use crate::rules::{Rule, Why};
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -41,13 +42,13 @@ impl Builder<'_> {
                 continue;
             }
             if c.unknown > 0 {
-                self.why = format!(
-                    "unknown: {} archive member(s) without database match",
-                    c.unknown
+                self.why = Why::new(
+                    Rule::Quarantine,
+                    format!("{} archive member(s) without database match", c.unknown),
                 );
                 self.quarantine(&it);
             } else if c.in_library || self.opts.mode == Mode::Move {
-                self.why = "archive fully extracted".into();
+                self.why = Why::new(Rule::ArchiveExtracted, "");
                 let op = Op::Move {
                     from: archive.to_path_buf(),
                     to: self.library.join(TRASH_DIR).join(file_name(archive)),
@@ -109,7 +110,7 @@ impl Builder<'_> {
         let Some(dir) = m3u.parent().map(Path::to_path_buf) else {
             return;
         };
-        self.why = "multi-disk archive".into();
+        self.why = Why::new(Rule::MultiDiskArchive, "");
         let mut text = String::new();
         let mut all = true;
         for (it, _) in members {

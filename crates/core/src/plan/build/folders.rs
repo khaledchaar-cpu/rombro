@@ -4,6 +4,7 @@
 use super::Builder;
 use crate::naming;
 use crate::plan::{Files, Game, Ident, Item, lpl};
+use crate::rules::{Rule, Why};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -246,7 +247,7 @@ impl Builder<'_> {
                 self.transfer(&it, e.path(), &target.join(rel))
             })
             .collect();
-        self.why = "game folder".into();
+        self.why = Why::new(Rule::GameFolder, "");
         if self.commit(&it, ops) {
             self.plan.placed += 1;
         }

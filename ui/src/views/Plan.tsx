@@ -42,7 +42,7 @@ function OpList() {
         <For each={v.getVirtualItems()}>
           {(row) => {
             const op = () =>
-              ops()[row.index] ?? { kind: "move", from: null, to: "", why: "" };
+              ops()[row.index] ?? { kind: "move", from: null, to: "", rule: "", why: "" };
             return (
               <div
                 class="vrow oprow mono small"

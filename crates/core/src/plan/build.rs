@@ -4,6 +4,7 @@ use super::{
     BIOS_DIR, Decision, Files, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan,
     QUARANTINE_DIR, TRASH_DIR, Verdict, lpl,
 };
+use crate::rules::{Rule, Why};
 use crate::{g1r, naming};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
@@ -24,7 +25,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         plan: Plan::default(),
         claimed: HashSet::new(),
         lpl: BTreeMap::new(),
-        why: String::new(),
+        why: Why::new(Rule::G1rPick, ""),
         members_done: HashMap::new(),
         identified: items
             .iter()
@@ -106,7 +107,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             Ident::Known(g) if matches!(it.files, Files::Set { .. }) => arcade.push((it, g)),
             Ident::Known(g) => known.entry(&g.system).or_default().push((it, g)),
             Ident::Bios(g) => {
-                b.why = "BIOS".into();
+                b.why = Why::new(Rule::Bios, "");
                 b.bios(it, g);
             }
             Ident::Ambiguous(c) => b.plan.decisions.push(Decision::Ambiguous {
@@ -117,7 +118,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             Ident::Unknown if it.files.archive().is_some() => {}
             Ident::Unknown if b.left_alone(it.files.primary()) => {}
             Ident::Unknown => {
-                b.why = "unknown: no database match".into();
+                b.why = Why::new(Rule::Quarantine, "no database match");
                 b.quarantine(it)
             }
             Ident::Skip(reason) => b.plan.decisions.push(Decision::Skipped {
@@ -168,11 +169,14 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                     }
                 }
             }
-            b.why = match (tie, picked.len()) {
-                (true, _) => "1G1R pick (preferred by you)".into(),
-                (_, n) if n > 1 => format!("1G1R pick, {n} discs"),
-                _ => "1G1R pick".into(),
-            };
+            b.why = Why::new(
+                Rule::G1rPick,
+                match (tie, picked.len()) {
+                    (true, _) => "preferred by you".into(),
+                    (_, n) if n > 1 => format!("{n} discs"),
+                    _ => String::new(),
+                },
+            );
             b.release(system, &picked);
             let kept = picked.first().map(|(_, g)| g.name.clone());
             for ((it, g), reason) in &rejected {
@@ -180,12 +184,12 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 match opts.verdicts.get(&key) {
                     // A duplicate would claim the pick's own target; only discarding makes sense.
                     Some(Verdict::Keep) if *reason != g1r::Reason::Duplicate => {
-                        b.why = format!("kept by you (1G1R: {reason:?})");
+                        b.why = Why::new(Rule::Verdict, format!("kept ({reason:?})"));
                         b.release(system, &[&(*it, *g)]);
                         continue;
                     }
                     Some(Verdict::Discard) => {
-                        b.why = format!("discarded by you (1G1R: {reason:?})");
+                        b.why = Why::new(Rule::Verdict, format!("discarded ({reason:?})"));
                         b.discard(it);
                         continue;
                     }
@@ -214,7 +218,7 @@ struct Builder<'a> {
     claimed: HashSet<PathBuf>,
     lpl: BTreeMap<String, Vec<lpl::Entry>>,
     /// Reason attached to the ops added next.
-    why: String,
+    why: Why,
     /// Members of multi-ROM archives handled so far (extracted, quarantined or discarded).
     members_done: HashMap<PathBuf, usize>,
     /// Folders holding at least one identified item; unknown files elsewhere are left alone.
@@ -242,7 +246,7 @@ impl Builder<'_> {
                 text.push('\n');
             }
             if placed.len() == media.len() {
-                self.why = "multi-disc playlist".into();
+                self.why = Why::new(Rule::MultiDisc, "");
                 self.write(m3u.clone(), text);
             }
             m3u
@@ -321,21 +325,21 @@ impl Builder<'_> {
             .collect();
         let picks = crate::arcade::g1r::select(&names, &self.opts.rules.regions);
         for (&&(it, g), (reason, best)) in order.iter().zip(picks) {
-            let place = |b: &mut Self, why: String| {
+            let place = |b: &mut Self, why: Why| {
                 b.why = why;
                 let g = b.free_arcade_slot(it, g);
                 b.release(&g.system, &[&(it, g)]);
             };
             let Some(reason) = reason else {
-                place(self, "arcade romset (1G1R pick)".into());
+                place(self, Why::new(Rule::ArcadeSet, ""));
                 continue;
             };
             match self.opts.verdicts.get(&(g.system.clone(), g.name.clone())) {
                 Some(Verdict::Keep) if reason != g1r::Reason::Duplicate => {
-                    place(self, format!("kept by you (1G1R: {reason:?})"));
+                    place(self, Why::new(Rule::Verdict, format!("kept ({reason:?})")));
                 }
                 Some(Verdict::Discard) => {
-                    self.why = format!("discarded by you (1G1R: {reason:?})");
+                    self.why = Why::new(Rule::Verdict, format!("discarded ({reason:?})"));
                     self.discard(it);
                 }
                 _ => self.plan.decisions.push(Decision::Rejected {
@@ -456,11 +460,13 @@ impl Builder<'_> {
         if let Some(archive) = it.files.archive() {
             *self.members_done.entry(archive.clone()).or_default() += 1;
         }
-        let why = if it.in_library && self.why.starts_with("1G1R") {
-            format!("{} – rename to naming scheme", self.why)
-        } else {
-            self.why.clone()
-        };
+        let mut why = self.why.clone();
+        if it.in_library && matches!(why.rule, Rule::G1rPick | Rule::ArcadeSet) {
+            why.detail = match why.detail.as_str() {
+                "" => "rename to naming scheme".into(),
+                d => format!("{d}, rename to naming scheme"),
+            };
+        }
         self.plan.why.extend(ops.iter().map(|_| why.clone()));
         self.plan.ops.extend(ops);
         true
@@ -480,7 +486,7 @@ impl Builder<'_> {
         let Some(dir) = self.opts.playlists.clone() else {
             return;
         };
-        self.why = "RetroArch playlist".into();
+        self.why = Why::new(Rule::Playlist, "");
         for (system, entries) in std::mem::take(&mut self.lpl) {
             let path = dir.join(format!("{}.lpl", naming::sanitize_file_name(&system)));
             self.write(path, lpl::render(&system, &entries));
