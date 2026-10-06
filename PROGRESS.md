@@ -16,19 +16,24 @@
 | M11 Release | ✅ done (CI grün auf 3 OS) |
 | M12 Übertragen & Container | ✅ done |
 | M12b Arcade & Sichtprüfung | ✅ done |
+| M12c Echte Sammlung (Probelauf) | ✅ done |
+| M13 Regeln transparent & einstellbar | ⏳ next – erst Abstimmung (`grilling`) |
 
 ## Aktuell
-M12b: **Arcade-Erkennung** (FBNeo/MAME über Hash des ganzen Zips, Kurzname bleibt, kein 1G1R, CHD-Ordner mit,
-BIOS → `_bios/<core>/`, sonst unsichtbar). Unbekannte Archive werden nie zerlegt (ganz in Quarantäne).
-UI: Fortschritt zeitbasiert mit Phase + Sekunden, klarere Rejected-Gründe (+ System), Sync-Feedback,
-Completeness-Layout. Echte CHDs (PSX) und Amiga-`.lha` erkannt; Import auf Testordner ausgeführt.
+M12c: Probelauf über die echte Sammlung (1,2 TB) → viele Sonderregeln: Spielordner (DOS/ScummVM/Ports) ganz,
+Arcade-1G1R über Titel-Gruppen, Kurznamen-Ausweichen, Multi-Disk-Zips als Ordner+m3u, GC/Wii per Spiel-ID,
+N64-Byteorder, Dreamcast-Serials, Quarantäne mit Unterordnern, unbekannte/BIOS-Ordner bleiben liegen.
+Quarantäne 45.205 → 5.270, Konflikte 186 → 0 (Arcade). Alle Regeln in SPEC „Entscheidungen“.
 
 ## Nächste Schritte
-1. Sichtprüfung: MAME-BIOS liegt jetzt neben den Romsets – in RetroArch mit Neo-Geo-Set gegenprüfen.
-2. Sichtprüfung Rest: Gamification-Panels, Effects off.
-3. Echte 7z mit cue/bin und Multi-ROM-Zips (Konsole) testen.
-4. ~~Erster Release~~ v0.1.0 veröffentlicht (unsigniert). Release-Notes je Version unter `docs/releases/`.
-5. v2 Launcher (SPEC §6) – **erst ganz zum Schluss** (User-Wunsch).
+1. **M13 starten mit Abstimmung (`grilling`-Skill):** (a) wie machen wir dem User alle Regeln transparent
+   (Plan-Ansicht „warum“, Regel-Übersicht, Doku?), (b) welche Regeln soll er ändern können (Settings,
+   pro System, Ausnahmen?). Ergebnis in SPEC festhalten, dann umsetzen.
+   Regel-Inventar als Ausgangspunkt: SPEC „Entscheidungen“ + `plan/build.rs` (`why`-Texte), `arcade/g1r.rs`,
+   `plan/build/folders.rs` (FOLDER_SYSTEMS, MARKERS), `left_alone`, `g1r::Rules`.
+2. Danach: echter Import auf Testordner; erneuter Komplett-Probelauf (~2 h).
+3. Prüfung in RetroArch: MAME-BIOS neben Sets, Gamification-Panels, Effects off.
+4. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
 
 ## Stolpersteine
 - DOS/ScummVM-RDBs identifizieren über *eine* Datei, die oft zwischen Spielen geteilt ist (`dosbox.bat`, `ADL.DRV`) → Ordnername statt DB-Name.
