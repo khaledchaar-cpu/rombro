@@ -257,7 +257,7 @@ mod tests {
         let mut scd = vec![0u8; 2048];
         scd[..14].copy_from_slice(b"SEGADISCSYSTEM");
         scd[0x180..0x18e].copy_from_slice(b"GM T-45034 -00");
-        assert_eq!(detect_bytes(scd).unwrap().serial, "T-45034");
+        assert_eq!(detect_bytes(scd.clone()).unwrap().serial, "T-45034");
         scd[0x180..0x18e].copy_from_slice(b"GM T-70015-00 ");
         assert_eq!(detect_bytes(scd).unwrap().serial, "T-70015");
 
