@@ -59,7 +59,15 @@ impl Store {
             )? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
-            } else if let Some(item) = self.dat_romset(whole, in_library, &known)? {
+            } else if let Some(item) = self.dat_romset(
+                whole,
+                groups
+                    .get(whole.path.as_path())
+                    .copied()
+                    .unwrap_or_default(),
+                in_library,
+                &known,
+            )? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
             }
@@ -245,6 +253,7 @@ impl Store {
     fn dat_romset(
         &self,
         whole: &ScannedRom,
+        group: &[ScannedRom],
         in_library: bool,
         known: &HashSet<String>,
     ) -> Result<Option<Item>> {
@@ -260,8 +269,18 @@ impl Store {
         if !self.dat_knows(&stem)? {
             return Ok(None);
         }
-        let Ok(members) = rombro_core::archive::members(&whole.path) else {
-            return Ok(None);
+        // the scan already hashed the members: no second read of the zip (network shares)
+        let scanned: Vec<(String, u32)> = group
+            .iter()
+            .filter_map(|r| Some((r.member.clone()?, r.hashes.crc)))
+            .collect();
+        let members = if scanned.is_empty() {
+            match rombro_core::archive::members(&whole.path) {
+                Ok(m) => m,
+                Err(_) => return Ok(None),
+            }
+        } else {
+            scanned
         };
         let files = Files::Set {
             archive: whole.path.clone(),

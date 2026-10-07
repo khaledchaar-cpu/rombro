@@ -103,6 +103,12 @@ const MIGRATIONS: &[&str] = &[
      CREATE TRIGGER snap_res_i AFTER INSERT ON resolution BEGIN DELETE FROM snapshot; END;
      CREATE TRIGGER snap_res_u AFTER UPDATE ON resolution BEGIN DELETE FROM snapshot; END;
      CREATE TRIGGER snap_res_d AFTER DELETE ON resolution BEGIN DELETE FROM snapshot; END;",
+    // v14: files changed since a snapshot was taken, re-identified on its next load
+    "CREATE TABLE snapshot_dirty (root TEXT NOT NULL, path TEXT NOT NULL, PRIMARY KEY (root, path));
+     CREATE TRIGGER snap_dirty_d AFTER DELETE ON snapshot
+       BEGIN DELETE FROM snapshot_dirty WHERE root = OLD.root; END;",
+    // v15: DAT lookups by set name alone (re-packed romsets: which cores know the set)
+    "CREATE INDEX dat_set_name ON dat_set(name);",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {
@@ -129,9 +135,10 @@ pub const ENTRY_INDEXES: &str = "
     CREATE INDEX IF NOT EXISTS entry_md5    ON entry(md5) WHERE md5 IS NOT NULL;
     CREATE INDEX IF NOT EXISTS entry_serial ON entry(serial) WHERE serial IS NOT NULL;
     CREATE INDEX IF NOT EXISTS entry_source ON entry(source_id);
-    CREATE INDEX IF NOT EXISTS entry_system ON entry(system);";
+    CREATE INDEX IF NOT EXISTS entry_system ON entry(system);
+    CREATE INDEX IF NOT EXISTS entry_rom_name ON entry(rom_name) WHERE rom_name IS NOT NULL;";
 
 pub const DROP_ENTRY_INDEXES: &str = "
     DROP INDEX IF EXISTS entry_crc; DROP INDEX IF EXISTS entry_sha1;
     DROP INDEX IF EXISTS entry_md5; DROP INDEX IF EXISTS entry_serial;
-    DROP INDEX IF EXISTS entry_system;";
+    DROP INDEX IF EXISTS entry_system; DROP INDEX IF EXISTS entry_rom_name;";

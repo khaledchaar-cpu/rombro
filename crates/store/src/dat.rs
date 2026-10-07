@@ -4,6 +4,10 @@ use crate::{Result, Store};
 use rombro_core::arcade::dat::{self, DatRom, DatSet};
 use rusqlite::{OptionalExtension, params};
 
+/// Parsed sets per (system, name): identifying a library checks thousands of zips against
+/// every DAT, with the same parents and BIOS sets over and over.
+pub(crate) type DatCache = std::collections::HashMap<(String, String), Option<std::rc::Rc<DatSet>>>;
+
 /// A loaded DAT: core (system), source version, unix time of the download.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct DatInfo {
@@ -21,6 +25,7 @@ impl Store {
         fetched: i64,
         sets: &[DatSet],
     ) -> Result<()> {
+        self.dat_cache.borrow_mut().clear();
         let tx = self
             .conn
             .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
@@ -64,6 +69,21 @@ impl Store {
     }
 
     pub fn dat_set(&self, system: &str, name: &str) -> Result<Option<DatSet>> {
+        Ok(self.dat_set_rc(system, name)?.map(|s| (*s).clone()))
+    }
+
+    /// [`Store::dat_set`] shared from the in-memory cache.
+    fn dat_set_rc(&self, system: &str, name: &str) -> Result<Option<std::rc::Rc<DatSet>>> {
+        let key = (system.to_owned(), name.to_owned());
+        if let Some(hit) = self.dat_cache.borrow().get(&key) {
+            return Ok(hit.clone());
+        }
+        let set = self.dat_set_uncached(system, name)?.map(std::rc::Rc::new);
+        self.dat_cache.borrow_mut().insert(key, set.clone());
+        Ok(set)
+    }
+
+    fn dat_set_uncached(&self, system: &str, name: &str) -> Result<Option<DatSet>> {
         let row: Option<(Option<String>, bool, bool, String)> = self
             .conn
             .query_row(
@@ -107,7 +127,7 @@ impl Store {
         }
         let mut reasons = Vec::new();
         for info in self.dats()? {
-            let Some(set) = self.dat_set(&info.system, name)? else {
+            let Some(set) = self.dat_set_rc(&info.system, name)? else {
                 continue;
             };
             let hits = members
@@ -136,7 +156,7 @@ impl Store {
         let order = self.rules()?.arcade_order;
         let mut best: Option<String> = None;
         for info in self.dats()? {
-            let Some(set) = self.dat_set(&info.system, name)? else {
+            let Some(set) = self.dat_set_rc(&info.system, name)? else {
                 continue;
             };
             let hits = members
@@ -163,13 +183,25 @@ impl Store {
         chds: &[String],
         has_set: impl Fn(&str) -> bool + Copy,
     ) -> Result<Vec<String>> {
-        let order = self.rules()?.arcade_order;
-        let rank = |s: &str| rombro_core::arcade::rank_in(&order, s);
-        let mut systems: Vec<String> = self.dats()?.into_iter().map(|d| d.system).collect();
+        let rules = self.rules()?;
+        let rank = |s: &str| rombro_core::arcade::rank_in(&rules.arcade_order, s);
+        let mut systems: Vec<String> = self
+            .conn
+            .prepare_cached("SELECT system FROM dat_set WHERE name = ?1")?
+            .query_map([name], |r| r.get(0))?
+            .collect::<rusqlite::Result<_>>()?;
         systems.sort_by_key(|s| rank(s));
         let mut out = Vec::new();
         for system in systems {
-            if let Some(Ok(())) = self.check_set(&system, name, members, chds, has_set)? {
+            let ok = self.check_known(
+                &system,
+                name,
+                members,
+                chds,
+                has_set,
+                rules.arcade_working_only,
+            )?;
+            if let Some(Ok(())) = ok {
                 out.push(system);
             }
         }
@@ -199,21 +231,35 @@ impl Store {
         if !loaded {
             return Ok(None);
         }
-        let Some(set) = self.dat_set(system, name)? else {
+        let working_only = self.rules()?.arcade_working_only;
+        self.check_known(system, name, members, chds, has_set, working_only)
+    }
+
+    /// [`Store::check_set`] for a `system` whose DAT is loaded.
+    fn check_known(
+        &self,
+        system: &str,
+        name: &str,
+        members: &[(String, u32)],
+        chds: &[String],
+        has_set: impl Fn(&str) -> bool,
+        working_only: bool,
+    ) -> Result<Option<std::result::Result<(), String>>> {
+        let Some(set) = self.dat_set_rc(system, name)? else {
             return Ok(Some(Err(format!("set {name} not in {system} DAT"))));
         };
-        let mut chain: Vec<DatSet> = Vec::new();
+        let mut chain: Vec<std::rc::Rc<DatSet>> = Vec::new();
         let mut next = set.romof.clone();
         while let Some(n) = next.take() {
             if chain.len() >= 8 || chain.iter().any(|s| s.name == n) {
                 break;
             }
-            if let Some(s) = self.dat_set(system, &n)? {
+            if let Some(s) = self.dat_set_rc(system, &n)? {
                 next = s.romof.clone();
                 chain.push(s);
             }
         }
-        if !set.working && self.rules()?.arcade_working_only {
+        if !set.working && working_only {
             return Ok(Some(Err(format!("{name} not working in {system}"))));
         }
         Ok(Some(
@@ -221,7 +267,7 @@ impl Store {
                 &set,
                 members,
                 chds,
-                |n| chain.iter().find(|s| s.name == n),
+                |n| chain.iter().find(|s| s.name == n).map(|s| &**s),
                 has_set,
             )
             .map_err(|e| e.to_string()),

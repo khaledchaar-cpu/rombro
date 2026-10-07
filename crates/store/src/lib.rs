@@ -56,6 +56,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Handle to the rombro SQLite database.
 pub struct Store {
     conn: Connection,
+    /// Parsed DAT sets by (system, name); `None` = not in that DAT. Emptied on DAT import.
+    dat_cache: std::cell::RefCell<dat::DatCache>,
 }
 
 impl Store {
@@ -77,6 +79,9 @@ impl Store {
         conn.pragma_update(None, "synchronous", "NORMAL")?;
         conn.pragma_update(None, "foreign_keys", "ON")?;
         schema::migrate(&conn)?;
-        Ok(Self { conn })
+        Ok(Self {
+            conn,
+            dat_cache: Default::default(),
+        })
     }
 }
