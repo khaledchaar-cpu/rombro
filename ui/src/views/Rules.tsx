@@ -125,30 +125,59 @@ export default function Rules() {
     </Switch>
   );
 
+  // one rule at a time: the sub-navigation lists every rule plus the exceptions
+  const [section, setSection] = createSignal("g1r-pick");
   return (
     <Show when={rules() && catalog()} fallback={<p class="dim mono">loading…</p>}>
-      <div class="settings">
-        <div class="row save-bar">
-          <button class="btn" disabled={!dirty()} onClick={save}>Save</button>
-          <button class="btn ghost" disabled={!dirty()} onClick={() => setDraft(null)}>Discard</button>
-          <span class="dim mono">{msg()}</span>
+      <div class="settings-shell">
+        <nav class="settings-nav">
+          <For each={catalog()}>
+            {(info) => (
+              <button
+                type="button"
+                class="settings-tab"
+                classList={{ active: section() === info.id }}
+                onClick={() => setSection(info.id)}
+              >
+                {info.title}
+                <span class="settings-tab-hits">{info.hits}</span>
+              </button>
+            )}
+          </For>
+          <button
+            type="button"
+            class="settings-tab"
+            classList={{ active: section() === "exceptions" }}
+            onClick={() => setSection("exceptions")}
+          >
+            Exceptions
+          </button>
+        </nav>
+        <div class="settings">
+          <div class="row save-bar">
+            <button class="btn" disabled={!dirty()} onClick={save}>Save</button>
+            <button class="btn ghost" disabled={!dirty()} onClick={() => setDraft(null)}>Discard</button>
+            <span class="dim mono">{msg()}</span>
+          </div>
+          <For each={catalog()?.filter((info) => info.id === section())}>
+            {(info) => (
+              <Panel title={info.title}>
+                <div class="row rule-head">
+                  <span class="tag mono">{info.id}</span>
+                  <span class="dim mono">{info.hits} ops in last plan</span>
+                  <Show when={FIELDS[info.id]}>
+                    <button class="btn ghost" onClick={() => reset(info.id)}>Reset</button>
+                  </Show>
+                </div>
+                <p class="dim">{info.explain}</p>
+                {editor(info, rules()!)}
+              </Panel>
+            )}
+          </For>
+          <Show when={section() === "exceptions"}>
+            <Exceptions />
+          </Show>
         </div>
-        <For each={catalog()}>
-          {(info) => (
-            <Panel title={info.title}>
-              <div class="row rule-head">
-                <span class="tag mono">{info.id}</span>
-                <span class="dim mono">{info.hits} ops in last plan</span>
-                <Show when={FIELDS[info.id]}>
-                  <button class="btn ghost" onClick={() => reset(info.id)}>Reset</button>
-                </Show>
-              </div>
-              <p class="dim">{info.explain}</p>
-              {editor(info, rules()!)}
-            </Panel>
-          )}
-        </For>
-        <Exceptions />
       </div>
     </Show>
   );

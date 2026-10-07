@@ -1,32 +1,17 @@
-import { For, Show } from "solid-js";
-import { VIEWS, type ViewId } from "../views";
+import { Show } from "solid-js";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
 
-type Props = { view: ViewId; onSelect: (v: ViewId) => void; onPalette: () => void };
+type Props = { title: string; onPalette: () => void };
 
-/** Top bar with logo + view tabs; doubles as window title bar (the native one is disabled). */
+/** Title bar of the content area: view title, command palette, window controls
+ * (the native title bar is disabled). */
 export default function Topbar(props: Props) {
   const win = () => getCurrentWindow();
   return (
     <header class="topbar" data-tauri-drag-region>
-      <div class="logo" data-text="ROMBRO">ROMBRO</div>
-      <nav class="tabs">
-        <For each={VIEWS}>
-          {(v, i) => (
-            <button
-              class="tab"
-              classList={{ active: props.view === v.id }}
-              title={`Ctrl+${v.key}`}
-              onClick={() => props.onSelect(v.id)}
-            >
-              <span class="tab-idx">{String(i() + 1).padStart(2, "0")}</span>
-              {v.label}
-            </button>
-          )}
-        </For>
-      </nav>
+      <h1 class="view-title" data-tauri-drag-region>{props.title}</h1>
       <div class="drag-fill" data-tauri-drag-region />
       <button class="palette-trigger" onClick={props.onPalette}>
         <span class="dim">Command…</span> <kbd>Ctrl K</kbd>

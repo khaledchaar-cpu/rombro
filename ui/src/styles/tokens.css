@@ -32,7 +32,9 @@
   --sp-6: 24px;
 
   --cut: 10px; /* bevel size for clipped corners */
-  --topbar-h: 52px;
+  --topbar-h: 44px;
+  --sidebar-w: 200px;
+  --sidebar-w-collapsed: 56px;
 
   --glow: 0 0 6px color-mix(in srgb, var(--accent) 60%, transparent);
   --grid-line: color-mix(in srgb, var(--cyan) 5%, transparent);

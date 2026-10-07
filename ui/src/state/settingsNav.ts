@@ -1,13 +1,11 @@
 import { createSignal } from "solid-js";
 
-export type SettingsSection = "rules" | "databases" | "retroarch" | "appearance";
+export type SystemSection = "databases" | "appearance";
 
-export const SECTIONS: { id: SettingsSection; label: string }[] = [
-  { id: "rules", label: "Rules" },
+export const SECTIONS: { id: SystemSection; label: string }[] = [
   { id: "databases", label: "Databases" },
-  { id: "retroarch", label: "RetroArch" },
   { id: "appearance", label: "Appearance" },
 ];
 
-/** Section shown in the Settings view (other views link into it). */
-export const [settingsSection, setSettingsSection] = createSignal<SettingsSection>("rules");
+/** Section shown in the System view (other views link into it). */
+export const [systemSection, setSystemSection] = createSignal<SystemSection>("databases");

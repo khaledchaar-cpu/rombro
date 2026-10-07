@@ -28,7 +28,7 @@
 .ra-cores summary h4 { display: inline; }
 
 /* Settings view: section navigation left, content right. */
-.settings-shell { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
+.settings-shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
 .settings-nav { position: sticky; top: 0; display: grid; gap: var(--sp-1); padding-top: var(--sp-2); }
 .settings-tab {
   text-align: left; background: none; border: 0; border-left: 2px solid var(--line);
@@ -37,6 +37,8 @@
   transition: color var(--dur), border-color var(--dur);
 }
 .settings-tab:hover { color: var(--text); border-left-color: var(--line-strong); }
+.settings-tab { display: flex; gap: var(--sp-2); align-items: baseline; }
+.settings-tab-hits { margin-left: auto; font: var(--fs-xs) var(--font-mono); letter-spacing: 0; color: var(--text-dim); }
 .settings-tab.active { color: var(--accent); border-left-color: var(--accent); text-shadow: var(--glow); }
 .settings-tab:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
 @media (max-width: 720px) {

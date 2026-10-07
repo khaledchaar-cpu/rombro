@@ -4,14 +4,17 @@ import Toasts from "./components/Toasts";
 import CommandPalette, { type Command } from "./components/CommandPalette";
 import Dashboard from "./views/Dashboard";
 import Placeholder from "./views/Placeholder";
-import Settings from "./views/Settings";
+import System from "./views/System";
+import RetroArch from "./views/RetroArch";
+import Rules from "./views/Rules";
+import Sidebar from "./components/Sidebar";
 import Import from "./views/Import";
 import Library from "./views/Library";
 import { execute, plan, undo } from "./state/importStore";
 import { initLibrary } from "./state/libraryStore";
 import { effects, setEffects, setTheme, theme } from "./state/appearance";
 import { VIEWS, type ViewId } from "./views";
-import { SECTIONS, setSettingsSection } from "./state/settingsNav";
+import { SECTIONS, setSystemSection } from "./state/settingsNav";
 
 export default function App() {
   const [view, setView] = createSignal<ViewId>("dashboard");
@@ -26,8 +29,8 @@ export default function App() {
     })),
     ...SECTIONS.map((s) => ({
       id: `settings:${s.id}`,
-      label: `Settings: ${s.label}`,
-      run: () => (setSettingsSection(s.id), setView("settings")),
+      label: `System: ${s.label}`,
+      run: () => (setSystemSection(s.id), setView("system")),
     })),
     ...(plan()?.ops.length ? [{ id: "exec", label: "Execute plan", run: () => void execute() }] : []),
     { id: "undo", label: "Undo last run", run: () => void undo() },
@@ -58,7 +61,8 @@ export default function App() {
 
   return (
     <div class="shell">
-      <Topbar view={view()} onSelect={setView} onPalette={() => setPalette(true)} />
+      <Sidebar view={view()} onSelect={setView} />
+      <Topbar title={title()} onPalette={() => setPalette(true)} />
       <Toasts />
       <main class="content">
         <Switch fallback={<Placeholder title={title()} />}>
@@ -66,7 +70,7 @@ export default function App() {
             <Dashboard
               onReview={() => setView("import")}
               onLibrary={() => setView("library")}
-              onDatabases={() => (setSettingsSection("databases"), setView("settings"))}
+              onDatabases={() => (setSystemSection("databases"), setView("system"))}
             />
           </Match>
           <Match when={view() === "import"}>
@@ -75,8 +79,14 @@ export default function App() {
           <Match when={view() === "library"}>
             <Library />
           </Match>
-          <Match when={view() === "settings"}>
-            <Settings />
+          <Match when={view() === "retroarch"}>
+            <RetroArch />
+          </Match>
+          <Match when={view() === "rules"}>
+            <Rules />
+          </Match>
+          <Match when={view() === "system"}>
+            <System />
           </Match>
         </Switch>
       </main>

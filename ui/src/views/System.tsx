@@ -1,12 +1,10 @@
 import { createResource, For, Match, Switch } from "solid-js";
 import DatabasePanel from "../components/DatabasePanel";
 import Panel from "../components/Panel";
-import RetroArchPanel from "../components/RetroArchPanel";
 import { thumbsOnlineGet, thumbsOnlineSet } from "../ipc";
 import { gamifyEnabled, setGamifyEnabled } from "../state/gamify";
 import { effects, setEffects, setTheme, theme } from "../state/appearance";
-import { SECTIONS, setSettingsSection, settingsSection } from "../state/settingsNav";
-import Rules from "./Rules";
+import { SECTIONS, setSystemSection, systemSection } from "../state/settingsNav";
 
 function Appearance() {
   const [online, { mutate: setOnline }] = createResource(thumbsOnlineGet);
@@ -45,8 +43,8 @@ function Appearance() {
   );
 }
 
-/** Everything that configures RomBro: planner rules, databases, RetroArch, appearance. */
-export default function Settings() {
+/** Maintenance and preferences: game databases, appearance. */
+export default function System() {
   return (
     <div class="settings-shell">
       <nav class="settings-nav">
@@ -55,8 +53,8 @@ export default function Settings() {
             <button
               type="button"
               class="settings-tab"
-              classList={{ active: settingsSection() === s.id }}
-              onClick={() => setSettingsSection(s.id)}
+              classList={{ active: systemSection() === s.id }}
+              onClick={() => setSystemSection(s.id)}
             >
               {s.label}
             </button>
@@ -65,20 +63,12 @@ export default function Settings() {
       </nav>
       <div class="settings-body">
         <Switch>
-          <Match when={settingsSection() === "rules"}>
-            <Rules />
-          </Match>
-          <Match when={settingsSection() === "databases"}>
+          <Match when={systemSection() === "databases"}>
             <div class="settings">
               <DatabasePanel />
             </div>
           </Match>
-          <Match when={settingsSection() === "retroarch"}>
-            <div class="settings">
-              <RetroArchPanel />
-            </div>
-          </Match>
-          <Match when={settingsSection() === "appearance"}>
+          <Match when={systemSection() === "appearance"}>
             <Appearance />
           </Match>
         </Switch>
