@@ -273,7 +273,7 @@ fn scan_disc_cached(
         } else if disc::is_cso(t) {
             let data = disc::cso::CsoReader::open(t)?;
             hash_reader(BufReader::new(counter.wrap(data)), None, false)?
-        } else if kind == DiscKind::Nintendo {
+        } else if matches!(kind, DiscKind::Nintendo | DiscKind::Pbp) {
             // compressed container: no database hash exists; the header identifies the file
             hash_reader(File::open(t)?.take(1 << 16), None, false)?
         } else if disc::is_chd(t) {

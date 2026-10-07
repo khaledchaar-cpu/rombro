@@ -5,6 +5,7 @@ pub mod chd;
 pub mod cso;
 pub mod iso9660;
 pub mod nintendo;
+pub mod pbp;
 pub mod serial;
 pub mod sheet;
 
@@ -25,6 +26,8 @@ pub enum DiscKind {
     Cso,
     /// GameCube/Wii container (RVZ, WIA, WBFS, CISO): identified by game ID only.
     Nintendo,
+    /// PSP/PS1-classic `EBOOT.PBP`: identified by the serial in its header only.
+    Pbp,
 }
 
 impl DiscKind {
@@ -35,6 +38,7 @@ impl DiscKind {
             "iso" => Some(Self::Iso),
             "chd" => Some(Self::Chd),
             "cso" => Some(Self::Cso),
+            "pbp" => Some(Self::Pbp),
             e if nintendo::is_container_ext(e) => Some(Self::Nintendo),
             _ => None,
         }
@@ -46,7 +50,7 @@ impl DiscKind {
 pub fn tracks(path: &Path, kind: DiscKind) -> io::Result<(Vec<PathBuf>, Vec<PathBuf>)> {
     let dir = path.parent().unwrap_or(Path::new("."));
     let listed = match kind {
-        DiscKind::Iso | DiscKind::Chd | DiscKind::Cso | DiscKind::Nintendo => {
+        DiscKind::Iso | DiscKind::Chd | DiscKind::Cso | DiscKind::Nintendo | DiscKind::Pbp => {
             return Ok((vec![path.to_path_buf()], Vec::new()));
         }
         DiscKind::Cue => sheet::parse_cue(&read_text(path)?, dir),
@@ -75,6 +79,12 @@ pub fn identify(tracks: &[PathBuf]) -> io::Result<Option<DiscId>> {
             return Ok(Some(id));
         }
         if nintendo::is_container_ext(&ext) {
+            continue;
+        }
+        if ext == "pbp" {
+            if let Some(id) = pbp::identify(t)? {
+                return Ok(Some(id));
+            }
             continue;
         }
         let id = if is_cso(t) {
