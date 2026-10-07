@@ -143,7 +143,7 @@ function BiosOps() {
   const ops = createMemo(() => (plan()?.ops ?? []).filter(isBios));
   return (
     <Show when={ops().length}>
-      <details>
+      <details class="bios-ops">
         <summary>
           BIOS → <span class="mono">_bios</span> <span class="dim small">{ops().length} files</span>
         </summary>
@@ -334,8 +334,8 @@ export default function Import() {
               }
             >
               <Panel title="Operations" class="wide">
-                <OpList />
                 <BiosOps />
+                <OpList />
               </Panel>
             </Show>
             <Show when={p().decisions.length}>

@@ -92,3 +92,4 @@
 .achs li.locked { opacity: 0.45; }
 .tag-new { color: var(--yellow); }
 .oplist { max-height: 40vh; overflow: hidden auto; scrollbar-gutter: stable; padding-right: var(--sp-2); }
+.bios-ops { margin-bottom: var(--sp-2); }
