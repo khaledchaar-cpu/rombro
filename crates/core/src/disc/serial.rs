@@ -47,7 +47,9 @@ impl DiscId {
         let mut keys = Vec::new();
         // Dreamcast headers pad a version suffix with spaces (`T7021D  05` = `T-7021D-05`)
         let joined = self.serial.split_whitespace().collect::<Vec<_>>().join("-");
-        for serial in [self.serial.as_str(), joined.as_str()] {
+        // older scans (hash cache) kept a cut revision separator (`T-70015-`)
+        let trimmed = self.serial.trim_end_matches('-');
+        for serial in [self.serial.as_str(), trimmed, joined.as_str()] {
             if keys.iter().any(|k| k == serial) {
                 continue;
             }
