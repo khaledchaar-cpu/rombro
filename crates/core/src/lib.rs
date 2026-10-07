@@ -23,5 +23,5 @@ pub use cache::{CachedDisc, CachedRom, HashCache, Stamp};
 pub use hash::{Hashes, MultiHasher, hash_reader};
 pub use scan::{
     Playlist, ScanReport, ScanTick, ScannedDisc, ScannedRom, scan, scan_cached, scan_disc,
-    scan_file, scan_with_progress,
+    scan_file, scan_paths_cached, scan_with_progress,
 };

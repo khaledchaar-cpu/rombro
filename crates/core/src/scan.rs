@@ -98,19 +98,22 @@ pub fn scan_with_progress(root: &Path, progress: &(dyn Fn(ScanTick<'_>) + Sync))
 
 /// OS clutter and empty placeholders (`.keep`) are never ROMs; they are left where they are.
 /// Empty files would otherwise match RDB entries that carry the empty-file hash.
-fn is_ignored(e: &walkdir::DirEntry, cache: &HashCache) -> bool {
-    let name = e.file_name().to_string_lossy();
+fn is_ignored(path: &Path, cache: &HashCache) -> bool {
+    let name = path
+        .file_name()
+        .map(|n| n.to_string_lossy())
+        .unwrap_or_default();
     let junk = matches!(
         name.to_ascii_lowercase().as_str(),
         ".ds_store" | "thumbs.db" | "desktop.ini" | ".directory"
     ) || name.starts_with("._");
     // empty ScummVM launchers are kept: they are repaired from their file name; so are
     // port key files (often empty)
-    let launcher = crate::scummvm::repaired_id(e.path(), b"").is_some()
+    let launcher = crate::scummvm::repaired_id(path, b"").is_some()
         || crate::plan::PORTS
             .iter()
             .any(|(_, key)| name.eq_ignore_ascii_case(key));
-    junk || (cache.size(e.path()) == Some(0) && !launcher)
+    junk || (cache.size(path) == Some(0) && !launcher)
 }
 
 /// Like [`scan_with_progress`], but reuses `cache` for files whose size and mtime are unchanged.
@@ -128,7 +131,9 @@ pub fn scan_cached(
         .filter_entry(|e| e.depth() != 1 || e.file_name() != crate::plan::TRASH_DIR);
     for e in walk {
         match e {
-            Ok(e) if e.file_type().is_file() && !is_ignored(&e, cache) => files.push(e.into_path()),
+            Ok(e) if e.file_type().is_file() && !is_ignored(e.path(), cache) => {
+                files.push(e.into_path())
+            }
             Ok(_) => {}
             Err(err) => report.failures.push(ScanFailure {
                 path: err.path().unwrap_or(root).to_path_buf(),
@@ -136,6 +141,30 @@ pub fn scan_cached(
             }),
         }
     }
+    scan_files(root, files, report, cache, progress)
+}
+
+/// Like [`scan_cached`] for just `files` below `root` (e.g. the files a run changed), without
+/// walking the folder. Sheets among them claim their tracks; ignored files are skipped.
+pub fn scan_paths_cached(
+    root: &Path,
+    mut files: Vec<PathBuf>,
+    cache: &HashCache,
+    progress: &(dyn Fn(ScanTick<'_>) + Sync),
+) -> ScanReport {
+    files.retain(|p| p.is_file() && !is_ignored(p, cache));
+    files.sort();
+    files.dedup();
+    scan_files(root, files, ScanReport::default(), cache, progress)
+}
+
+fn scan_files(
+    root: &Path,
+    mut files: Vec<PathBuf>,
+    mut report: ScanReport,
+    cache: &HashCache,
+    progress: &(dyn Fn(ScanTick<'_>) + Sync),
+) -> ScanReport {
     // Disc sheets claim their track files so they are not reported as loose ROMs.
     let mut sheets = Vec::new();
     let mut claimed = HashSet::new();

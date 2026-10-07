@@ -231,21 +231,21 @@ impl Store {
                 } => self.index_member(archive, member, to)?,
                 Op::Write { .. } => {}
             }
-            self.drop_touched(&d.op)?;
+            self.mark_touched(&d.op)?;
         }
         tx.commit()?;
         Ok(())
     }
 
-    /// Drops the snapshots of every library an executed (or undone) op touched.
-    fn drop_touched(&self, op: &Op) -> Result<()> {
+    /// Marks the paths an executed (or undone) op touched as dirty in their snapshots.
+    fn mark_touched(&self, op: &Op) -> Result<()> {
         let paths: Vec<&Path> = match op {
             Op::Move { from, to } | Op::Copy { from, to } => vec![from, to],
             Op::Extract { archive, to, .. } => vec![archive, to],
             Op::Write { path, .. } => vec![path],
         };
         for p in paths {
-            self.drop_snapshots(p)?;
+            self.mark_dirty(p)?;
         }
         Ok(())
     }
@@ -299,7 +299,7 @@ impl Store {
                 }
                 Op::Write { .. } => {}
             }
-            self.drop_touched(&d.op)?;
+            self.mark_touched(&d.op)?;
         }
         tx.commit()?;
         Ok(())

@@ -48,7 +48,12 @@ pub(crate) fn library_snapshot(
     full: bool,
     progress: &(dyn Fn(rombro_core::ScanTick<'_>) + Sync),
 ) -> CmdResult<rombro_store::Snapshot> {
-    if !full && let Some(snap) = store.snapshot(library).map_err(err)? {
+    if !full && let Some(mut snap) = store.snapshot(library).map_err(err)? {
+        let dirty = store.snapshot_dirty(library).map_err(err)?;
+        if !dirty.is_empty() {
+            refresh_snapshot(store, library, &mut snap, &dirty, progress)?;
+            store.save_snapshot(library, &snap).map_err(err)?;
+        }
         return Ok(snap);
     }
     let report = indexed_scan(store, library, !full, progress)?;
@@ -58,6 +63,60 @@ pub(crate) fn library_snapshot(
     };
     store.save_snapshot(library, &snap).map_err(err)?;
     Ok(snap)
+}
+
+/// Re-identifies only what RomBro's own runs changed: items touching a `dirty` path are
+/// dropped from `snap` and their files (plus the dirty ones) scanned and identified again.
+fn refresh_snapshot(
+    store: &Store,
+    library: &std::path::Path,
+    snap: &mut rombro_store::Snapshot,
+    dirty: &[std::path::PathBuf],
+    progress: &(dyn Fn(rombro_core::ScanTick<'_>) + Sync),
+) -> CmdResult<()> {
+    use std::collections::HashSet;
+    use std::path::PathBuf;
+    let dirty: HashSet<&PathBuf> = dirty.iter().collect();
+    let mut rescan: Vec<PathBuf> = dirty.iter().map(|p| (*p).clone()).collect();
+    snap.items.retain(|it| {
+        let paths = it.files.all();
+        let touched = paths.iter().any(|p| dirty.contains(p));
+        if touched {
+            rescan.extend(paths.into_iter().cloned());
+        }
+        !touched
+    });
+    let trash = library.join(rombro_core::plan::TRASH_DIR);
+    rescan.retain(|p| p.starts_with(library) && !p.starts_with(&trash));
+    let mut cache = store.hash_cache(library).map_err(err)?;
+    cache.trusted = true;
+    let report = rombro_core::scan_paths_cached(library, rescan, &cache, progress);
+    // archive names: gone ones leave, rescanned ones (re)enter
+    let stem = |p: &PathBuf| {
+        p.file_stem()
+            .map(|s| s.to_string_lossy().to_ascii_lowercase())
+    };
+    let kept: HashSet<String> = snap
+        .items
+        .iter()
+        .flat_map(|it| it.files.all())
+        .filter_map(stem)
+        .collect();
+    let gone: HashSet<String> = dirty
+        .iter()
+        .filter(|p| !p.exists())
+        .filter_map(|p| stem(p))
+        .filter(|s| !kept.contains(s))
+        .collect();
+    let mut sets: HashSet<String> = snap.sets.drain(..).filter(|s| !gone.contains(s)).collect();
+    sets.extend(rombro_store::set_names(&report));
+    let items = store.items_with(&report, true, &sets).map_err(err)?;
+    snap.items.extend(items);
+    // same order as a full scan builds
+    snap.items
+        .sort_by(|a, b| a.files.primary().cmp(b.files.primary()));
+    snap.sets = sets.into_iter().collect();
+    Ok(())
 }
 
 #[derive(Serialize)]
