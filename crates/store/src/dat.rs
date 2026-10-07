@@ -83,6 +83,19 @@ impl Store {
         .transpose()
     }
 
+    /// Whether any loaded DAT names a set `name` (cheap check before reading an archive).
+    pub fn dat_knows(&self, name: &str) -> Result<bool> {
+        let mut st = self
+            .conn
+            .prepare_cached("SELECT 1 FROM dat_set WHERE system = ?1 AND name = ?2")?;
+        for info in self.dats()? {
+            if st.exists([info.system.as_str(), name])? {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
     /// Reason to reject an archive without database match whose name and members belong to
     /// a set in a loaded arcade DAT that the rules exclude (e.g. MAME "not working"), as
     /// `"<core>: <reason>"` per core. `None` if no DAT knows the set or one core accepts it.

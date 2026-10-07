@@ -3,9 +3,9 @@
 
 use crate::catalog::game;
 use crate::{Result, Store};
+use rombro_core::ScannedRom;
 use rombro_core::arcade::{self, CHIP_KEYED_BIOS};
 use rombro_core::plan::{Files, Game, Ident, Item};
-use rombro_core::{ScanReport, ScannedRom};
 use std::path::Path;
 
 impl Store {
@@ -13,7 +13,7 @@ impl Store {
     /// database entry makes it that game; a known BIOS set name makes it that board's BIOS.
     pub(crate) fn chip_set(
         &self,
-        report: &ScanReport,
+        members: &[ScannedRom],
         whole: &ScannedRom,
         in_library: bool,
     ) -> Result<Option<Item>> {
@@ -47,7 +47,6 @@ impl Store {
                 crc: None,
             }))));
         }
-        let members = report.roms.iter().filter(|r| r.path == whole.path);
         for rom in members {
             let Some(member) = rom.member.as_deref() else {
                 continue;

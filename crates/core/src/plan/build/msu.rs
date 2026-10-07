@@ -54,6 +54,10 @@ pub(super) fn find<'a>(items: &[&'a Item], roots: &[&Path]) -> BTreeMap<PathBuf,
         let Files::Single(f) = &it.files else {
             continue;
         };
+        // an MSU-1 folder always holds a scanned SNES ROM: other folders are not read
+        if !has_ext(f, &ROMS) {
+            continue;
+        }
         let Some(dir) = f.parent() else { continue };
         if roots.contains(&dir) || !seen.insert(dir) {
             continue;
@@ -63,8 +67,8 @@ pub(super) fn find<'a>(items: &[&'a Item], roots: &[&Path]) -> BTreeMap<PathBuf,
         };
         let files: Vec<PathBuf> = rd
             .flatten()
+            .filter(|e| e.file_type().is_ok_and(|t| t.is_file()))
             .map(|e| e.path())
-            .filter(|p| p.is_file())
             .collect();
         let mut msus = files.iter().filter(|p| has_ext(p, &["msu"]));
         let msu = match (msus.next(), msus.next()) {

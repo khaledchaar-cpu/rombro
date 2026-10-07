@@ -16,13 +16,15 @@ fn is_id(s: &str) -> bool {
             .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b':' | b'.'))
 }
 
+fn is_launcher(path: &Path) -> bool {
+    path.extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("scummvm"))
+}
+
 /// The id a broken launcher file should hold (its file stem), or `None` if the file is fine,
 /// not a launcher, or its name is no id either.
 pub fn repaired_id(path: &Path, content: &[u8]) -> Option<String> {
-    if !path
-        .extension()
-        .is_some_and(|e| e.eq_ignore_ascii_case("scummvm"))
-    {
+    if !is_launcher(path) {
         return None;
     }
     if std::str::from_utf8(content).is_ok_and(|s| is_id(s.trim())) {
@@ -34,6 +36,10 @@ pub fn repaired_id(path: &Path, content: &[u8]) -> Option<String> {
 
 /// [`repaired_id`] for a file on disk.
 pub fn repaired_id_of(path: &Path) -> Option<String> {
+    // checked first: game folders hold thousands of files, often on network mounts
+    if !is_launcher(path) {
+        return None;
+    }
     let len = std::fs::metadata(path).ok()?.len();
     if len > MAX {
         return None;

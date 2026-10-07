@@ -237,7 +237,7 @@ impl Builder<'_> {
             });
         if root == target {
             self.plan.unchanged += 1;
-            self.repair_launchers(root, &target);
+            self.repair_launchers(root, &target, fg.system);
             return;
         }
         let it = Item {
@@ -259,12 +259,16 @@ impl Builder<'_> {
         self.why = Why::new(fg.rule, "");
         if self.commit(&it, ops) {
             self.plan.placed += 1;
-            self.repair_launchers(root, &target);
+            self.repair_launchers(root, &target, fg.system);
         }
     }
 
     /// Writes the id into broken ScummVM launcher files of a game folder (at its target).
-    fn repair_launchers(&mut self, root: &Path, target: &Path) {
+    fn repair_launchers(&mut self, root: &Path, target: &Path, system: &str) {
+        // only ScummVM reads launchers; walking every DOS folder costs seconds on a network
+        if system != crate::retroarch::scummvm::SYSTEM {
+            return;
+        }
         let fixes: Vec<_> = walkdir::WalkDir::new(root)
             .sort_by_file_name()
             .into_iter()

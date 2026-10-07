@@ -5,7 +5,7 @@ use rombro_core::arcade;
 use rombro_core::disc::{self, DiscKind};
 use rombro_core::plan::{Files, Game, Ident, Item};
 use rombro_core::{ScanReport, ScannedDisc, ScannedRom};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 /// Lower-cased file stems of every archive in `report`: the arcade sets it holds.
@@ -37,11 +37,23 @@ impl Store {
         known.extend(known_sets.iter().cloned());
         let mut out = Vec::new();
         let mut sets = HashSet::new();
+        let groups: HashMap<&Path, &[ScannedRom]> = report
+            .roms
+            .chunk_by(|a, b| a.path == b.path)
+            .map(|g| (g[0].path.as_path(), g))
+            .collect();
         for whole in &report.archives {
             if let Some(item) = self.romset(whole, in_library, &known)? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
-            } else if let Some(item) = self.chip_set(report, whole, in_library)? {
+            } else if let Some(item) = self.chip_set(
+                groups
+                    .get(whole.path.as_path())
+                    .copied()
+                    .unwrap_or_default(),
+                whole,
+                in_library,
+            )? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
             } else if let Some(item) = self.rejected_romset(whole, in_library)? {
@@ -205,10 +217,15 @@ impl Store {
         let (Some(stem), true) = (whole.path.file_stem(), is_zip) else {
             return Ok(None);
         };
+        let stem = stem.to_string_lossy();
+        // most archives are no arcade sets: skip reading the zip unless a DAT knows the name
+        if !self.dat_knows(&stem)? {
+            return Ok(None);
+        }
         let Ok(members) = rombro_core::archive::members(&whole.path) else {
             return Ok(None);
         };
-        let Some(reason) = self.rejected_set(&stem.to_string_lossy(), &members)? else {
+        let Some(reason) = self.rejected_set(&stem, &members)? else {
             return Ok(None);
         };
         Ok(Some(Item {
