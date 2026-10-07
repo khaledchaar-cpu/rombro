@@ -30,8 +30,9 @@ Nachträge 2026-10-07 (2): `[Patched]`/`(Patched)` = Hack-Flag; Name-Ordner in d
 (Regel `name-only`); Audit der echten Library 10,8 s → 1,8 s bei identischem Plan: Disc-Serial wird mit dem
 ersten Track im Hash-Cache gespeichert (`CachedRom.disc`), Zips nur bei DAT-bekanntem Namen geöffnet
 (`Store::dat_knows`), MSU-1-Suche nur neben SNES-ROMs, ScummVM-Launcher-Reparatur nur für ScummVM-Ordner.
-Nächste Schritte: Sichtprüfung der neuen UI-Teile (Exec-Fortschritt, Run-Report-Scrollbereich, Scan-Dateizeile,
-Name-Ordner-Editor, CorePicker); „Aufräumen GUI-Elemente“ mit User konkretisieren; ggf. Release v0.3.1.
+Sichtprüfung neuer UI-Teile abgenommen 2026-10-07 (Mock + echte App).
+Nächste Schritte:
+„Aufräumen GUI-Elemente“ mit User konkretisieren; ggf. Release v0.3.1.
 Stolperstein: App läuft beim User per `pnpm tauri dev` – Code-Änderungen starten sie neu (laufende Scans brechen ab).
 
 M14: `core::arcade::dat` (Logiqx/listxml-Parser, Prüfung über Zip-Verzeichnis), `archive::members`, Store-Tabellen
