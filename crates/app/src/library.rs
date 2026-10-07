@@ -91,6 +91,37 @@ pub async fn library_list(
         // MSU-1 games: no database knows them; the ROM in `<MSU-1>/<Game>/` is the game,
         // named after its folder
         let msu = library.join(rombro_core::plan::MSU1_SYSTEM);
+        // Daphne: a collection, one game per `<game>.daphne/` folder (`roms/<game>.zip`
+        // is what the core loads); every other file in it is data of the collection
+        let daphne = library.join(rombro_core::plan::DAPHNE_SYSTEM);
+        let daphne_game = |p: &std::path::Path| {
+            let stem = p.file_stem()?.to_string_lossy().into_owned();
+            let in_roms = p.parent()? == daphne.join("roms");
+            (in_roms && daphne.join(format!("{stem}.daphne")).is_dir()).then_some(stem)
+        };
+        let mut daphne_seen = std::collections::HashSet::new();
+        let items: Vec<_> = items
+            .into_iter()
+            .filter_map(|mut it| {
+                let p = it.files.primary();
+                if !p.starts_with(&daphne) {
+                    return Some(it);
+                }
+                match daphne_game(p) {
+                    // a multi-ROM zip comes as one item per member: list the game once
+                    Some(name) if daphne_seen.insert(p.clone()) => {
+                        it.files = rombro_core::plan::Files::Single(p.clone());
+                        it.ident = Ident::Named(rombro_core::plan::Game {
+                            system: rombro_core::plan::DAPHNE_SYSTEM.to_owned(),
+                            name,
+                            crc: None,
+                        });
+                        Some(it)
+                    }
+                    _ => None,
+                }
+            })
+            .collect::<Vec<_>>();
         let items: Vec<_> = items
             .into_iter()
             .map(|mut it| {

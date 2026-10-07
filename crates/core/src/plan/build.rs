@@ -19,6 +19,7 @@ mod firmware;
 mod folders;
 mod frontend;
 mod msu;
+pub use daphne::SYSTEM as DAPHNE_SYSTEM;
 pub use msu::SYSTEM as MSU1_SYSTEM;
 mod named;
 mod ports;
