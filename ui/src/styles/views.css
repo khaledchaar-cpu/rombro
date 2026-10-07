@@ -94,3 +94,33 @@
 .achs li.locked { opacity: 0.45; }
 .tag-new { color: var(--yellow); }
 .oplist { max-height: 40vh; overflow: hidden auto; scrollbar-gutter: stable; padding-right: var(--sp-2); }
+
+/* Import: step indicator and side-by-side folder fields. */
+.steps { display: flex; gap: 2px; list-style: none; margin: 0 0 var(--sp-4); padding: 0; counter-reset: step; }
+.steps li {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  font: 600 var(--fs-xs) var(--font-head);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: var(--bg-sunken);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%);
+}
+.steps li:first-child { clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%); }
+.step-no { font: var(--fs-xs) var(--font-mono); letter-spacing: 0; color: var(--magenta); }
+.steps li.done { color: var(--text); background: color-mix(in srgb, var(--accent) 12%, var(--bg-sunken)); }
+.steps li.done .step-no::after { content: " ✓"; color: var(--ok); }
+.steps li.active { color: var(--bg); background: var(--accent); text-shadow: none; box-shadow: var(--glow); }
+.steps li.active .step-no { color: var(--bg); }
+.steps li.live { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { filter: brightness(1.35) drop-shadow(0 0 6px var(--accent)); } }
+.dir-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 0 var(--sp-4); }
+@media (max-width: 640px) {
+  .steps li { padding: var(--sp-2); }
+  .steps li:not(.active) { font-size: 0; gap: 0; }
+  .steps li:not(.active) .step-no { font-size: var(--fs-xs); }
+}

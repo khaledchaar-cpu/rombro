@@ -1,6 +1,7 @@
 import { For } from "solid-js";
 import DirField from "../components/DirField";
 import Panel from "../components/Panel";
+import ImportSteps from "../components/ImportSteps";
 import type { Mode } from "../ipc";
 import { buildPlan, busy, executing, inbox, library, mode, setInbox, setLibrary, setMode } from "../state/importStore";
 
@@ -15,8 +16,11 @@ export default function ImportSetup() {
 
   return (
     <Panel title="Import" class="wide">
-      <DirField label="Inbox" value={inbox()} onChange={setInbox} />
-      <DirField label="Library" value={library()} onChange={setLibrary} />
+      <ImportSteps />
+      <div class="dir-pair">
+        <DirField label="Inbox" value={inbox()} onChange={setInbox} />
+        <DirField label="Library" value={library()} onChange={setLibrary} />
+      </div>
       <div class="row">
         <For each={MODES}>
           {(m) => (

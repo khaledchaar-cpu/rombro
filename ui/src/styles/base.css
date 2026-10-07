@@ -20,6 +20,18 @@ body::before { /* faint perspective grid + corner glows */
   mask-image: linear-gradient(to bottom, transparent, #000 30%);
   opacity: var(--bg-fx-opacity);
 }
+body::after { /* CRT: scanlines + vignette */
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.5) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 60%, rgb(0 0 0 / 0.45));
+  opacity: var(--scanlines);
+  mix-blend-mode: multiply;
+}
 h1, h2, h3 { font-family: var(--font-head); font-weight: 600; letter-spacing: 0.08em; margin: 0; }
 button {
   font: inherit;

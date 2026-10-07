@@ -236,7 +236,7 @@ export default function Import() {
                 <p class="dim">No plan yet – choose the folders above and plan the import.</p>
               }
             >
-              <p>Planning – scanning library and inbox…</p>
+              <p>Planning – loading the library, scanning the inbox…</p>
               <ScanProgress />
             </Show>
             <Show when={status()}>

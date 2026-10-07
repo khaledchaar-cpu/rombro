@@ -44,11 +44,14 @@
   --edge: linear-gradient(90deg, var(--cyan), var(--magenta) 60%, transparent);
   --chroma: -1px 0 color-mix(in srgb, var(--magenta) 70%, transparent), 1px 0 color-mix(in srgb, var(--cyan) 70%, transparent);
   --dur: 120ms;
+  --scanlines: 0.35; /* CRT scanline strength */
+  --view-in: view-in 260ms steps(6, end); /* view change: glitchy reveal */
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur: 0ms;
+    --view-in: none;
   }
 }
 
@@ -71,6 +74,7 @@
   --glow: 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent);
   --grid-line: color-mix(in srgb, var(--cyan) 8%, transparent);
   --bg-fx-opacity: 0.6;
+  --scanlines: 0.12;
   color-scheme: light;
 }
 
@@ -79,4 +83,6 @@
   --glow: none;
   --bg-fx-opacity: 0;
   --chroma: none;
+  --scanlines: 0;
+  --view-in: none;
 }
