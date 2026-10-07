@@ -253,3 +253,29 @@ fn trusted_cache_skips_file_checks_but_sees_added_and_removed_files() {
         .collect();
     assert_eq!(got, [("a.gb".into(), true), ("c.gb".into(), false)]);
 }
+
+#[test]
+fn cached_disc_id_is_used_without_reading_the_disc() {
+    use rombro_core::disc::iso9660::testimg;
+    use rombro_core::{CachedDisc, CachedRom, HashCache, Stamp, scan_cached};
+    let dir = tempfile::tempdir().unwrap();
+    let iso = dir.path().join("ps2.iso");
+    let ps2 = testimg::iso(&[("SYSTEM.CNF;1", b"BOOT2 = cdrom0:\\SLES_509.33;1\n")]);
+    fs::write(&iso, &ps2).unwrap();
+    let first = scan(dir.path());
+    let mut cache = HashCache::default();
+    let mut c = CachedRom::from_rom(&first.discs[0].tracks[0]);
+    let mut id = first.discs[0].id.clone().unwrap();
+    id.serial = "CACHED-1".into();
+    c.disc = Some(CachedDisc { id: Some(id) });
+    cache
+        .entries
+        .insert(iso.clone(), (Stamp::of(&iso).unwrap(), vec![c]));
+    let report = scan_cached(dir.path(), &cache, &|_| {});
+    assert_eq!(report.discs[0].id.as_ref().unwrap().serial, "CACHED-1");
+
+    // entries without a stored id (older caches) still read the serial
+    cache.entries.get_mut(&iso).unwrap().1[0].disc = None;
+    let report = scan_cached(dir.path(), &cache, &|_| {});
+    assert_eq!(report.discs[0].id.as_ref().unwrap().serial, "SLES-50933");
+}

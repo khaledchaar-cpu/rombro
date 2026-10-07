@@ -19,7 +19,7 @@ pub mod scummvm;
 pub mod sufami;
 pub mod thumbnail;
 
-pub use cache::{CachedRom, HashCache, Stamp};
+pub use cache::{CachedDisc, CachedRom, HashCache, Stamp};
 pub use hash::{Hashes, MultiHasher, hash_reader};
 pub use scan::{
     Playlist, ScanReport, ScanTick, ScannedDisc, ScannedRom, scan, scan_cached, scan_disc,

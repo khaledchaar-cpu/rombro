@@ -1,6 +1,7 @@
 //! Hash cache for incremental scans: files whose size and mtime are unchanged are not rehashed.
 
 use crate::ScannedRom;
+use crate::disc::DiscId;
 use crate::hash::Hashes;
 use crate::header::Header;
 use serde::{Deserialize, Serialize};
@@ -38,6 +39,15 @@ pub struct CachedRom {
     pub hashes: Hashes,
     pub header: Option<Header>,
     pub headerless: Option<Hashes>,
+    /// First track of a disc: its identification (serial), so cached discs aren't read again.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub disc: Option<CachedDisc>,
+}
+
+/// A disc's cached [`disc::identify`](crate::disc::identify) result (`id: None`: no serial).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CachedDisc {
+    pub id: Option<DiscId>,
 }
 
 impl CachedRom {
@@ -47,6 +57,7 @@ impl CachedRom {
             hashes: r.hashes,
             header: r.header,
             headerless: r.headerless,
+            disc: None,
         }
     }
 
@@ -87,6 +98,15 @@ impl HashCache {
             return None;
         }
         Some(roms.iter().cloned().map(|r| r.into_rom(path)).collect())
+    }
+
+    /// Cached disc identification stored with the (unchanged or trusted) first track `path`.
+    pub fn disc_id(&self, path: &Path) -> Option<Option<DiscId>> {
+        let (stamp, roms) = self.entries.get(path)?;
+        if !self.trusted && Stamp::of(path).ok()? != *stamp {
+            return None;
+        }
+        Some(roms.first()?.disc.clone()?.id)
     }
 
     /// Size of `path`: the trusted cached one, else from the file system.

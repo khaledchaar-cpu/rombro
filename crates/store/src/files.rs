@@ -3,7 +3,7 @@
 
 use crate::{Result, Store};
 use rombro_core::plan::{Done, Op};
-use rombro_core::{CachedRom, HashCache, ScanReport, ScannedRom, Stamp};
+use rombro_core::{CachedDisc, CachedRom, HashCache, ScanReport, ScannedRom, Stamp};
 use rusqlite::{OptionalExtension, params};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -146,8 +146,14 @@ impl Store {
                     .collect(),
             ));
         }
-        for t in report.discs.iter().flat_map(|d| &d.tracks) {
-            files.push((&t.path, vec![CachedRom::from_rom(t)]));
+        for d in &report.discs {
+            for (i, t) in d.tracks.iter().enumerate() {
+                let mut c = CachedRom::from_rom(t);
+                if i == 0 {
+                    c.disc = Some(CachedDisc { id: d.id.clone() });
+                }
+                files.push((&t.path, vec![c]));
+            }
         }
         let pre = prefix(root);
         let tx = self.conn.unchecked_transaction()?;

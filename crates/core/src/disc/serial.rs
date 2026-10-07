@@ -3,7 +3,7 @@
 use super::iso9660::Track;
 use std::io::{self, Read, Seek};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Platform {
     Ps1,
     Ps2,
@@ -31,7 +31,7 @@ impl Platform {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct DiscId {
     pub platform: Platform,
     /// Serial as printed on the disc, normalized to the RDB style (`SLUS-00594`, `T-31202G`).

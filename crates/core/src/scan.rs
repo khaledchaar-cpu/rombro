@@ -254,6 +254,7 @@ fn scan_disc_cached(
     counter: &Counter,
 ) -> Result<ScannedDisc, ScanError> {
     let mut hashed = Vec::with_capacity(tracks.len());
+    let mut all_cached = true;
     for t in tracks {
         // trusted entries were checked when cached; don't touch the file again
         let cd_iso = kind == DiscKind::Iso && !cache.trusts(t) && disc::is_cd_iso(t);
@@ -283,6 +284,7 @@ fn scan_disc_cached(
         } else {
             hash_reader(BufReader::new(counter.wrap(File::open(t)?)), None, false)?
         };
+        all_cached = false;
         hashed.push(ScannedRom {
             path: t.clone(),
             member: None,
@@ -291,10 +293,18 @@ fn scan_disc_cached(
             headerless: raw,
         });
     }
+    // reading the serial costs a seek per track (CHD: decompression) – cached with the hashes
+    let cached = all_cached
+        .then(|| tracks.first().and_then(|t| cache.disc_id(t)))
+        .flatten();
+    let id = match cached {
+        Some(id) => id,
+        None => disc::identify(tracks)?,
+    };
     Ok(ScannedDisc {
         path: path.to_path_buf(),
         kind,
-        id: disc::identify(tracks)?,
+        id,
         tracks: hashed,
         missing,
     })
