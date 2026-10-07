@@ -109,16 +109,37 @@ export const replan = () => buildPlan(lastWithInbox);
 
 const mark = (d: DecisionView, label: string) => setDecided((m) => new Map(m).set(decisionKey(d), label));
 
+/** Decisions whose answer is being saved. Per item, not the global `busy`: answering one
+ * must not disable the others or re-layout the page. */
+export const [saving, setSaving] = createSignal<Set<string>>(new Set());
+
+async function decide(d: DecisionView, f: () => Promise<void>) {
+  const key = decisionKey(d);
+  if (busy() || saving().has(key)) return;
+  setSaving((s) => new Set(s).add(key));
+  try {
+    await f();
+  } catch (e) {
+    setStatus({ ok: false, text: String(e) });
+  } finally {
+    setSaving((s) => {
+      const n = new Set(s);
+      n.delete(key);
+      return n;
+    });
+  }
+}
+
 /** Picks a candidate for an ambiguous match. */
 export const pick = (d: DecisionView, c: Choice) =>
-  guard(async () => {
+  decide(d, async () => {
     await resolveAmbiguous(d.path, c);
     mark(d, `→ ${c.name}`);
   });
 
 /** Keeps or discards a release 1G1R rejected. */
 export const judge = (d: DecisionView, v: Verdict) =>
-  guard(async () => {
+  decide(d, async () => {
     const kept = d.detail.split("→")[1]?.trim();
     await setVerdict(d.options[0], v, kept ? `${d.headline} · ${kept}` : d.headline);
     mark(d, `→ ${v}`);
@@ -126,7 +147,7 @@ export const judge = (d: DecisionView, v: Verdict) =>
 
 /** Resolves a 1G1R tie in favour of release `c`. */
 export const prefer = (d: DecisionView, c: Choice) =>
-  guard(async () => {
+  decide(d, async () => {
     const others = d.options.filter((o) => o.name !== c.name).map((o) => o.name);
     await setVerdict(c, "prefer", `1G1R tie with ${others.join(", ")}`);
     mark(d, `→ ${c.name}`);

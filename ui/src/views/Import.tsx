@@ -20,6 +20,7 @@ import {
   planned,
   prefer,
   replan,
+  saving,
   status,
   undo,
 } from "../state/importStore";
@@ -84,6 +85,7 @@ function OpList() {
 
 function Actions(props: { d: DecisionView }) {
   const d = props.d;
+  const off = () => busy() || saving().has(decisionKey(d));
   if (d.kind === "ambiguous")
     return (
       <div class="row wrap">
@@ -91,7 +93,7 @@ function Actions(props: { d: DecisionView }) {
           {(c) => (
             <button
               class="btn ghost small"
-              disabled={busy()}
+              disabled={off()}
               onClick={() => pick(d, c)}
               title={c.system}
             >
@@ -107,7 +109,7 @@ function Actions(props: { d: DecisionView }) {
         <Show when={d.can_keep}>
           <button
             class="btn ghost small"
-            disabled={busy()}
+            disabled={off()}
             onClick={() => judge(d, "keep")}
           >
             Keep
@@ -115,7 +117,7 @@ function Actions(props: { d: DecisionView }) {
         </Show>
         <button
           class="btn ghost small"
-          disabled={busy()}
+          disabled={off()}
           onClick={() => judge(d, "discard")}
         >
           Trash
@@ -129,7 +131,7 @@ function Actions(props: { d: DecisionView }) {
           {(c) => (
             <button
               class="btn ghost small"
-              disabled={busy()}
+              disabled={off()}
               onClick={() => prefer(d, c)}
             >
               {c.name}
@@ -280,13 +282,13 @@ export default function Import() {
                 </span>
                 <span class="spacer" />
                 <Show when={decided().size}>
-                  <button class="btn ghost" disabled={busy()} onClick={replan}>
+                  <button class="btn ghost" disabled={busy() || saving().size > 0} onClick={replan}>
                     Re-plan ({decided().size} decided)
                   </button>
                 </Show>
                 <button
                   class="btn"
-                  disabled={busy() || !p().ops.length}
+                  disabled={busy() || saving().size > 0 || !p().ops.length}
                   onClick={execute}
                 >
                   {executing() ? "Executing" : "Execute"}
