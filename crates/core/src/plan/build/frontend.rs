@@ -55,6 +55,10 @@ pub(super) fn is_metadata(roots: &HashSet<PathBuf>, path: &Path) -> bool {
                 _ => None,
             })
             .collect();
+        // Batocera pad-to-keyboard mappings (`Game.zip.p2k.cfg`) sit next to the games
+        if parts.last().is_some_and(|n| n.ends_with(".p2k.cfg")) {
+            return true;
+        }
         match parts.as_slice() {
             [name] => name.starts_with("gamelist") || NOTES.contains(&name.as_str()),
             [dir, .., name] => {
@@ -80,6 +84,8 @@ mod tests {
             "/lib/Quake/quake/gamelist.Missing.Serial.txt",
             "/lib/Quake/quake/_info.txt",
             "/lib/Quake/quake/_lisezmoi.txt",
+            "/lib/Quake/quake/Quake.zip.p2k.cfg",
+            "/lib/Quake/quake/sub/Quake.dim.p2k.cfg",
             "/lib/Quake/quake/images/Quake-image.png",
             "/lib/Quake/quake/media/wheel/Quake.png",
             "/lib/Quake/quake/videos/Quake-video.mp4",
