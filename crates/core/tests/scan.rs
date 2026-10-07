@@ -188,7 +188,7 @@ fn hashes_archives_as_a_whole() {
 }
 
 #[test]
-fn ignores_os_clutter_and_empty_files() {
+fn ignores_os_clutter_empty_files_and_trash() {
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
     fs::write(root.join("game.bin"), rom(64, 1)).unwrap();
@@ -196,6 +196,8 @@ fn ignores_os_clutter_and_empty_files() {
     fs::write(root.join("._game.bin"), b"junk").unwrap();
     fs::write(root.join("Thumbs.db"), b"junk").unwrap();
     fs::create_dir(root.join("hi")).unwrap();
+    fs::create_dir_all(root.join("_trash/x")).unwrap();
+    fs::write(root.join("_trash/x/old.bin"), rom(64, 2)).unwrap();
     fs::write(root.join("hi/.keep"), b"").unwrap();
     let report = scan(root);
     let paths: Vec<_> = report.roms.iter().map(|r| r.path.clone()).collect();

@@ -121,7 +121,12 @@ pub fn scan_cached(
 ) -> ScanReport {
     let mut report = ScanReport::default();
     let mut files = Vec::new();
-    for e in WalkDir::new(root).follow_links(true) {
+    // the library's trash is never imported or placed: hashing it only costs time
+    let walk = WalkDir::new(root)
+        .follow_links(true)
+        .into_iter()
+        .filter_entry(|e| e.depth() != 1 || e.file_name() != crate::plan::TRASH_DIR);
+    for e in walk {
         match e {
             Ok(e) if e.file_type().is_file() && !is_ignored(&e, cache) => files.push(e.into_path()),
             Ok(_) => {}
