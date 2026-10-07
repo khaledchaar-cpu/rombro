@@ -37,7 +37,7 @@ export const [mode, setMode] = createSignal<Mode>("move");
 export async function initLibrary() {
   const session = await sessionGet().catch(() => null);
   if (session?.inbox && !inbox()) setInbox(session.inbox);
-  // the app offers move and copy only (hardlink/reflink remain CLI options)
+  // sessions from older versions may hold a removed mode (hardlink, reflink)
   if (session?.mode === "move" || session?.mode === "copy") setMode(session.mode);
   let stored = session?.library ?? null;
   if (!stored) {

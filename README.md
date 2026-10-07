@@ -21,7 +21,7 @@ and drop everything into a clean, RetroArch-ready library – with undo for ever
 - 💿 **Discs & archives** – cue/bin, gdi, CHD, zip and 7z; multi-disc sets stay together, unknown archives are never torn apart.
 - 🌍 **1G1R** – one release per game, picked by your region and language order; betas, protos, demos & co. filtered out.
 - 🕹️ **Arcade aware** – FBNeo and MAME romsets keep their short names, CHDs travel along, BIOS sets land where the cores look.
-- 📦 **Safe import** – move, copy, hardlink or reflink; every run is a plan you review first, unknown files go to quarantine, nothing is ever deleted.
+- 📦 **Safe import** – move or copy; every run is a plan you review first, unknown files go to quarantine, nothing is ever deleted.
 - ↩️ **Undo everything** – each run is journaled and can be rolled back.
 - 🎮 **RetroArch-ready** – one folder per system plus playlists; box art from the libretro thumbnail server in the app.
 - 🏆 **Gamification** – XP, levels, streaks, completeness per system, franchise goals and achievements.

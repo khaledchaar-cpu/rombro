@@ -209,9 +209,7 @@ impl Store {
         for d in done {
             match &d.op {
                 Op::Move { from, to } => self.relocate(from, to, true)?,
-                Op::Copy { from, to } | Op::Hardlink { from, to } | Op::Reflink { from, to } => {
-                    self.relocate(from, to, false)?
-                }
+                Op::Copy { from, to } => self.relocate(from, to, false)?,
                 Op::Extract {
                     archive,
                     member,
@@ -264,10 +262,7 @@ impl Store {
         for d in done.iter().rev() {
             match &d.op {
                 Op::Move { from, to } => self.relocate(to, from, true)?,
-                Op::Copy { to, .. }
-                | Op::Hardlink { to, .. }
-                | Op::Reflink { to, .. }
-                | Op::Extract { to, .. } => {
+                Op::Copy { to, .. } | Op::Extract { to, .. } => {
                     self.conn
                         .execute("DELETE FROM file WHERE path = ?1", [key(to)])?;
                 }

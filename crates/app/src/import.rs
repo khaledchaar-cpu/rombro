@@ -29,8 +29,6 @@ pub struct LeftoverView {
 pub enum ModeArg {
     Move,
     Copy,
-    Hardlink,
-    Reflink,
 }
 
 impl ModeArg {
@@ -38,8 +36,6 @@ impl ModeArg {
         match self {
             ModeArg::Move => "move",
             ModeArg::Copy => "copy",
-            ModeArg::Hardlink => "hardlink",
-            ModeArg::Reflink => "reflink",
         }
     }
 }
@@ -49,8 +45,6 @@ impl From<ModeArg> for Mode {
         match m {
             ModeArg::Move => Mode::Move,
             ModeArg::Copy => Mode::Copy,
-            ModeArg::Hardlink => Mode::Hardlink,
-            ModeArg::Reflink => Mode::Reflink,
         }
     }
 }
@@ -363,8 +357,6 @@ fn op_view(op: &Op, why: &Why) -> OpView {
     let kind = match op {
         Op::Move { .. } => "move",
         Op::Copy { .. } => "copy",
-        Op::Hardlink { .. } => "link",
-        Op::Reflink { .. } => "clone",
         Op::Extract { .. } => "extract",
         Op::Write { .. } => "write",
     };

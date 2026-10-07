@@ -106,13 +106,11 @@ fn copy_mode_leaves_inbox_and_rejects_alone() {
         item(file(&inbox, "a.sfc", "a"), game("Mario (USA)"), false),
         item(file(&inbox, "b.sfc", "b"), game("Mario (Europe)"), false),
     ];
-    for mode in [Mode::Copy, Mode::Hardlink, Mode::Reflink] {
-        let ex = execute(&build(&items, &lib, &opts(mode)).ops);
-        assert!(ex.error.is_none());
-        assert_eq!(tree(&inbox), ["a.sfc", "b.sfc"]);
-        assert_eq!(tree(&lib), ["Nintendo - SNES/Mario (Europe).sfc"]);
-        assert!(undo(&ex.done).is_empty());
-    }
+    let ex = execute(&build(&items, &lib, &opts(Mode::Copy)).ops);
+    assert!(ex.error.is_none());
+    assert_eq!(tree(&inbox), ["a.sfc", "b.sfc"]);
+    assert_eq!(tree(&lib), ["Nintendo - SNES/Mario (Europe).sfc"]);
+    assert!(undo(&ex.done).is_empty());
 }
 
 #[test]

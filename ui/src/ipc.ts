@@ -120,7 +120,7 @@ export function onScanProgress(
   return listen<ScanProgress>("scan://progress", (e) => cb(e.payload));
 }
 
-export type Mode = "move" | "copy" | "hardlink" | "reflink";
+export type Mode = "move" | "copy";
 export interface OpView {
   kind: "move" | "copy" | "link" | "clone" | "extract" | "write";
   from: string | null;

@@ -61,7 +61,7 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
   <library>/_quarantine/<System>/...                     # Unknown/BadDump
   ```
 - Dateinamen = RDB-`name` (Thumbnail-kompatibel: `&*/:<>?\|` → `_`).
-- Operationen: move | copy | hardlink | reflink; optional (ent)zippen.
+- Operationen: move | copy; optional (ent)zippen. (hardlink/reflink 2026-10-07 entfernt)
 - Immer: Plan → Dry-Run-Anzeige → Ausführen. Jede Ausführung schreibt ein **Journal** → Undo möglich.
 - Library-Audit: bestehende Library prüfen, falsch benannte/doppelte/nicht-1G1R-Dateien finden und Plan erzeugen.
 - Export: RetroArch-Playlists (`.lpl`, JSON) pro System, inkl. CRC → sofort nutzbar in RetroArch.
@@ -209,7 +209,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   (z. B. „Street Fighter II - The World Warrior (Japan)“), landen in eigenen Gruppen → Parent/Clone-DATs später.
 - M5: Multi-Disc-Release = Name ohne `(Disc|Disk|Side N)`; alle Discs des Picks werden zusammen gewählt.
 - M6: Import = Library + Inbox gemeinsam scannen und planen (Audit = Import ohne Inbox). Library-Dateien werden
-  immer verschoben; Inbox per Modus move/copy/hardlink/reflink (Reflink fällt ohne CoW-FS auf Copy zurück). Von 1G1R verworfene Releases
+  immer verschoben; Inbox per Modus move/copy. Von 1G1R verworfene Releases
   (auch Beta/Hack etc.) werden **nicht** getrasht (User, 2026-10-05), sondern bleiben liegen und landen in der
   **TBD-Queue** (`Decision::Rejected` mit Grund + gewähltem Release); der User entscheidet später (M8: GUI).
   Unbekannte → `_quarantine/<Dateiname>` (System unbekannt). Tie/Ambiguous/Konflikt/Rejected → Item bleibt unangetastet.
