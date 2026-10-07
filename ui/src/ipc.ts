@@ -32,6 +32,33 @@ export interface ScanSummary {
 
 const inTauri = "__TAURI_INTERNALS__" in window;
 
+// Browser mock: an in-page event bus so progress UIs can be checked without the backend.
+const mockBus = new Map<string, Set<(p: unknown) => void>>();
+function mockListen<T>(event: string, cb: (payload: T) => void): Promise<UnlistenFn> {
+  const set = mockBus.get(event) ?? new Set();
+  mockBus.set(event, set);
+  const f = cb as (p: unknown) => void;
+  set.add(f);
+  return Promise.resolve(() => set.delete(f));
+}
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Emits `steps` progress events per phase over ~1.5 s each. */
+async function mockProgress(
+  event: string,
+  phases: string[],
+  payload: (phase: string, done: number, total: number, item: string) => unknown,
+): Promise<void> {
+  const total = 40;
+  for (const phase of phases) {
+    for (let done = 0; done <= total; done++) {
+      const item = `/mnt/pool/Nostalgia/Romburak inbox/${phase}/A Very Long Folder Name For Testing/Game ${done} (Europe) (En,Fr,De,Es,It) (Rev 1).chd`;
+      mockBus.get(event)?.forEach((cb) => cb(payload(phase, done, total, item)));
+      await sleep(40);
+    }
+  }
+}
+const phased = (phase: string, done: number, total: number, item: string) => [phase, { done, total }, item];
+
 export async function dbStats(): Promise<DbStats> {
   if (!inTauri) {
     return {
@@ -58,7 +85,8 @@ export interface SyncSummary {
 }
 
 export async function dbSync(dir: string | null): Promise<SyncSummary> {
-  if (!inTauri)
+  if (!inTauri) {
+    await mockProgress("sync://progress", ["rdb", "dat"], phased);
     return {
       dir: dir ?? "(mock)",
       imported: 0,
@@ -68,6 +96,7 @@ export async function dbSync(dir: string | null): Promise<SyncSummary> {
       dats_updated: 0,
       dat_warnings: [],
     };
+  }
   return invoke<SyncSummary>("db_sync", { dir });
 }
 
@@ -87,7 +116,7 @@ export async function scan(dir: string): Promise<ScanSummary> {
 export function onScanProgress(
   cb: (p: ScanProgress) => void,
 ): Promise<UnlistenFn> {
-  if (!inTauri) return Promise.resolve(() => {});
+  if (!inTauri) return mockListen("scan://progress", cb);
   return listen<ScanProgress>("scan://progress", (e) => cb(e.payload));
 }
 
@@ -205,12 +234,21 @@ export async function planImport(
   library: string,
   mode: Mode,
 ): Promise<PlanView> {
-  if (!inTauri) return mockPlan(library);
+  if (!inTauri) {
+    await mockProgress("import://progress", ["library", "inbox", "planning"], (phase, done, total, item) => [
+      phase,
+      { done, total, bytes: done * 1e8, bytes_total: total * 1e8, item },
+    ]);
+    return mockPlan(library);
+  }
   return invoke<PlanView>("plan_import", { inbox, library, mode });
 }
 
 export async function executePlan(): Promise<ExecResult> {
-  if (!inTauri) return { done: 0, journal: null, error: null };
+  if (!inTauri) {
+    await mockProgress("execute://progress", ["execute"], phased);
+    return { done: 40, journal: 1, error: null };
+  }
   return invoke<ExecResult>("execute_plan");
 }
 
@@ -250,7 +288,8 @@ export interface PhaseProgress {
 
 /** Phased progress events: `sync://progress` (rdb, dat), `retroarch://progress` (scan, download, write). */
 export function onPhaseProgress(event: string, cb: (p: PhaseProgress) => void): Promise<UnlistenFn> {
-  if (!inTauri) return Promise.resolve(() => {});
+  if (!inTauri)
+    return mockListen<[string, ScanProgress, string?]>(event, (p) => cb({ phase: p[0], ...p[1], item: p[2] }));
   return listen<[string, ScanProgress, string?]>(event, (e) =>
     cb({ phase: e.payload[0], ...e.payload[1], item: e.payload[2] }),
   );
@@ -259,7 +298,8 @@ export function onPhaseProgress(event: string, cb: (p: PhaseProgress) => void): 
 export function onImportProgress(
   cb: (p: ImportProgress) => void,
 ): Promise<UnlistenFn> {
-  if (!inTauri) return Promise.resolve(() => {});
+  if (!inTauri)
+    return mockListen<[ImportProgress["phase"], ScanProgress]>("import://progress", (p) => cb({ phase: p[0], ...p[1] }));
   return listen<[ImportProgress["phase"], ScanProgress]>(
     "import://progress",
     (e) => cb({ phase: e.payload[0], ...e.payload[1] }),
@@ -510,7 +550,8 @@ export async function retroarchCores(): Promise<SystemCores[]> {
 
 /** Plans (dryRun) or executes the export of playlists, BIOS files and (installCores) missing cores. */
 export async function retroarchExport(dryRun: boolean, installCores: boolean): Promise<RetroArchExport> {
-  if (!inTauri)
+  if (!inTauri) {
+    await mockProgress("retroarch://progress", dryRun ? ["scan"] : ["scan", "download", "write"], phased);
     return {
       playlist_dir: "~/.config/retroarch/playlists",
       system_dir: "~/.config/retroarch/system",
@@ -532,6 +573,7 @@ export async function retroarchExport(dryRun: boolean, installCores: boolean): P
       scummvm_targets: ["monkey2", "atlantis"],
       executed: dryRun ? null : 4,
     };
+  }
   return invoke<RetroArchExport>("retroarch_export", { dryRun, installCores });
 }
 
@@ -671,6 +713,7 @@ export async function rulesCatalog(): Promise<RuleInfo[]> {
       { id: "arcade-set", title: "Arcade romset", explain: "Arcade zips matched as a whole, grouped by title.", hits: 87 },
       { id: "arcade-dat", title: "Arcade DAT check", explain: "Uncertain arcade matches are checked against each core's DAT.", hits: 3 },
       { id: "game-folder", title: "Game folder", explain: "DOS/ScummVM/ports moved as whole folders.", hits: 12 },
+      { id: "name-only", title: "Name folder", explain: "Files without hash match whose folder names a system (e.g. n64dd, solarus).", hits: 4 },
       { id: "quarantine", title: "Quarantine", explain: "Files without database match go to _quarantine.", hits: 5270 },
       { id: "playlist", title: "RetroArch playlist", explain: "One .lpl per system.", hits: 30 },
     ];

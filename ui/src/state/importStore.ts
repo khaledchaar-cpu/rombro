@@ -82,11 +82,7 @@ export const execute = () =>
     setLastRun({ ops: ops.slice(0, r.done), journal: r.journal, error: r.error });
     setPlan(undefined);
     void refreshLibrary();
-    setStatus(
-      r.error
-        ? { ok: false, text: `stopped after ${r.done} ops: ${r.error}` }
-        : { ok: true, text: `executed ${r.done} operations${r.journal ? ` (journal #${r.journal})` : ""}` },
-    );
+    // the "Last run" report shows the outcome (and the error)
   });
 
 /** Moves the inbox leftovers to the library trash (undo brings them back). */

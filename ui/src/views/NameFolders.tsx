@@ -21,17 +21,19 @@ export default function NameFolders(props: {
     setSystem("");
   };
   return (
-    <div class="overrides">
-      <For each={Object.entries(props.folders)}>
-        {([f, s]) => (
-          <div class="row">
-            <span class="mono">{f}</span>
-            <span class="dim">→</span>
-            <span class="mono">{s}</span>
-            <button class="btn ghost" onClick={() => remove(f)}>Remove</button>
-          </div>
-        )}
-      </For>
+    <div class="prio">
+      <ol class="prio-list">
+        <For each={Object.entries(props.folders)}>
+          {([f, s]) => (
+            <li class="prio-item">
+              <span class="prio-name">
+                {f} <span class="dim">→</span> {s}
+              </span>
+              <button class="btn ghost sm" onClick={() => remove(f)} title="Remove">✕</button>
+            </li>
+          )}
+        </For>
+      </ol>
       <div class="row">
         <input class="field mono" placeholder="Folder, e.g. openbor" value={folder()} onInput={(e) => setFolder(e.currentTarget.value)} />
         <input

@@ -2,7 +2,7 @@ import { For } from "solid-js";
 import DirField from "../components/DirField";
 import Panel from "../components/Panel";
 import type { Mode } from "../ipc";
-import { buildPlan, busy, inbox, library, mode, setInbox, setLibrary, setMode } from "../state/importStore";
+import { buildPlan, busy, executing, inbox, library, mode, setInbox, setLibrary, setMode } from "../state/importStore";
 
 const MODES: { id: Mode; label: string }[] = [
   { id: "move", label: "Move" },
@@ -37,7 +37,7 @@ export default function ImportSetup() {
           Audit library
         </button>
         <button class="btn" disabled={busy() || !library() || !inbox()} onClick={() => run(true)}>
-          {busy() ? "Planning" : "Plan import"}
+          {busy() && !executing() ? "Planning" : "Plan import"}
         </button>
       </div>
     </Panel>

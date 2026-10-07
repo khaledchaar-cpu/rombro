@@ -2,9 +2,9 @@ import { createSignal, For, Show } from "solid-js";
 import Panel from "./Panel";
 import CorePicker from "./CorePicker";
 import PhaseProgress from "./PhaseProgress";
+import { retroarchExport, type RetroArchExport } from "../ipc";
 
 const LABELS = { scan: "scanning library", download: "downloading core", write: "writing to RetroArch" };
-import { retroarchExport, type RetroArchExport } from "../ipc";
 
 /** Preview, then export library playlists (with core), identified BIOS files and missing cores to RetroArch. */
 export default function RetroArchPanel() {

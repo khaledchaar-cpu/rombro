@@ -17,7 +17,7 @@ export default function PhaseProgress(props: { event: string; labels: Record<str
   return (
     <>
       <Segments value={p().done} max={p().total} />
-      <p class="mono dim small">
+      <p class="mono dim small ellipsis" title={p().item}>
         {props.labels[p().phase] ?? "starting"}
         {count()}
         {p().item ? ` · ${p().item}` : ""} · {secs()}s
