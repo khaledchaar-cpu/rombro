@@ -21,6 +21,7 @@
 | M14 Arcade-DATs | ✅ done |
 | M14b Core-Wahl & -Installation | ✅ done (Sichtprüfung App offen) |
 | v0.3.0 Release + Inbox-Importe | ✅ released 2026-10-06; Nachträge 2026-10-07 (CSO, OpenBOR, Library-Perf) |
+| v0.4.0 Release (Perf, Settings-Umbau) | ✅ released 2026-10-07 |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -35,7 +36,8 @@ Nächste Schritte:
 GUI aufgeräumt (2026-10-07): Rules + Settings = ein Tab „Settings“ mit Sektionen Rules/Databases/RetroArch/
 Appearance (`state/settingsNav`, auch per Command-Palette); DB-Sync nach Settings → Databases, Dashboard zeigt
 nur noch Hinweis bei leerer DB; Quick scan entfernt; eigene Checkboxen (Tokens, beide Themes).
-Nächste Schritte: ggf. Release v0.3.1; dann M15 Launcher-Basis.
+v0.4.0 veröffentlicht 2026-10-07 (u. a. hardlink/reflink entfernt).
+Nächste Schritte: M15 Launcher-Basis.
 Stolperstein: App läuft beim User per `pnpm tauri dev` – Code-Änderungen starten sie neu (laufende Scans brechen ab).
 
 M14: `core::arcade::dat` (Logiqx/listxml-Parser, Prüfung über Zip-Verzeichnis), `archive::members`, Store-Tabellen
