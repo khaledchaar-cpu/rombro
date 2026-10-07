@@ -16,6 +16,9 @@ fn flags_and_brackets() {
     assert_eq!(i.title, "Legend of Zelda, The - A Link to the Past");
     assert!(i.flags.beta && i.flags.is_unofficial());
     assert!(parse("Zelda (USA)[h2]").flags.hack);
+    assert!(parse("Zelda (USA) [Patched]").flags.hack);
+    assert!(parse("Zelda (USA) (Patched)").flags.hack);
+    assert!(!parse("Zelda (USA) [p1]").flags.hack);
     assert!(parse("Zelda (USA)[tr es](Alt 1)").flags.translation);
     assert!(parse("Zelda (USA)[tr es](Alt 1)").flags.alt);
     assert!(parse("Zelda (USA) [T-En by X v1.0]").flags.translation);

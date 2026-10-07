@@ -165,7 +165,7 @@ fn parse_paren<'a>(t: &'a str, info: &mut NameInfo<'a>) {
         "pirate" | "bootleg" => f.pirate = true,
         "aftermarket" | "homebrew" => f.aftermarket = true,
         "alt" => f.alt = true,
-        "hack" => f.hack = true,
+        "hack" | "patched" => f.hack = true,
         "disc" | "disk" | "side" => info.disc = lower.split([' ', '-']).nth(1).and_then(media_no),
         "rev" => info.revision = rev_rank(&lower[3..]),
         _ if lower.starts_with("virtual console") => f.virtual_console = true,
@@ -180,6 +180,8 @@ fn parse_bracket(t: &str, f: &mut Flags) {
     let lower = t.to_ascii_lowercase();
     if lower == "bios" {
         f.bios = true;
+    } else if lower == "patched" || lower.starts_with("patched ") {
+        f.hack = true;
     } else if is_rerelease(&lower) {
         f.rerelease = true;
     } else if lower.starts_with("t-") || lower.starts_with("t+") || lower.starts_with("tr") {
