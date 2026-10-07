@@ -78,6 +78,45 @@
   color-scheme: light;
 }
 
+/* Pin-up '40s: cream paper, cherry red, navy ink, polka dots; no neon, no CRT. */
+:root[data-theme="pinup"] {
+  --bg: #f3e6cc;
+  --bg-raised: #fff8ea;
+  --bg-sunken: #e8d6b4;
+  --line: #d9c39b;
+  --line-strong: #1f2c4d;
+  --text: #1f2c4d;
+  --text-dim: #6e6047;
+
+  --cyan: #1f6f78;   /* seafoam teal */
+  --magenta: #d9466f; /* lipstick pink */
+  --yellow: #e0a526;  /* mustard */
+  --ok: #3d7a3a;
+  --err: #b3261e;
+  --accent: #c8102e;  /* cherry red */
+
+  --font-head: "Bebas Neue", "Josefin Sans", system-ui, sans-serif;
+  --font-ui: "Josefin Sans", system-ui, sans-serif;
+  --font-logo: "Lobster", cursive;
+
+  --fs-xs: 0.8rem;
+  --radius: 14px;
+  --ink-shadow: 4px 4px 0 var(--line-strong);
+  --dots: radial-gradient(color-mix(in srgb, var(--accent) 16%, transparent) 22%, transparent 24%) 0 0 / 22px 22px;
+  --stripes: repeating-linear-gradient(-45deg, var(--accent) 0 8px, var(--bg-raised) 8px 16px);
+
+  --glow: none;
+  --grid-line: transparent;
+  --glow-cyan: transparent;
+  --glow-magenta: transparent;
+  --bg-fx-opacity: 1;
+  --edge: var(--stripes);
+  --chroma: none;
+  --scanlines: 0;
+  --view-in: pinup-in 320ms cubic-bezier(0.2, 1.4, 0.4, 1);
+  color-scheme: light;
+}
+
 /* after the theme blocks so it wins over their effect tokens */
 :root[data-effects="off"] {
   --glow: none;

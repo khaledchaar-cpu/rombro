@@ -1,0 +1,101 @@
+/* Pin-up '40s theme: shapes only (colors and fonts come from tokens.css).
+   Rounded cards with an ink offset shadow, ribbon titles, polka-dot paper. */
+:root[data-theme="pinup"] body::before {
+  background: var(--dots);
+  mask-image: none;
+  opacity: 0.6;
+}
+:root[data-theme="pinup"] .logo,
+:root[data-theme="pinup"] .logo-short {
+  font-family: var(--font-logo);
+  font-weight: 400;
+  font-size: 1.7rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--accent);
+  text-shadow: 2px 2px 0 var(--line-strong);
+}
+:root[data-theme="pinup"] .logo::before,
+:root[data-theme="pinup"] .logo::after { display: none; }
+
+:root[data-theme="pinup"] .sidebar {
+  background: var(--line-strong);
+  border-image: none;
+  border-right: 6px solid;
+  border-image: var(--stripes) 6;
+}
+:root[data-theme="pinup"] .sidebar .logo { color: var(--bg-raised); text-shadow: 2px 2px 0 var(--accent); border-bottom-color: color-mix(in srgb, var(--bg) 25%, transparent); }
+:root[data-theme="pinup"] .nav-item {
+  color: color-mix(in srgb, var(--bg) 75%, transparent);
+  font-size: var(--fs-md);
+  letter-spacing: 0.12em;
+  border-left: 0;
+  border-radius: 999px;
+}
+:root[data-theme="pinup"] .nav-item:hover { color: var(--bg-raised); background: color-mix(in srgb, var(--bg) 12%, transparent); }
+:root[data-theme="pinup"] .nav-item.active { color: var(--bg-raised); background: var(--accent); box-shadow: 2px 2px 0 var(--bg-raised); }
+:root[data-theme="pinup"] .nav-item.active .nav-icon { filter: none; }
+:root[data-theme="pinup"] .nav-key { color: var(--yellow); }
+
+:root[data-theme="pinup"] .topbar { background: var(--bg-raised); border-bottom: 3px solid var(--line-strong); border-image: none; }
+:root[data-theme="pinup"] .view-title { font-size: var(--fs-lg); letter-spacing: 0.12em; }
+:root[data-theme="pinup"] .view-title::before { content: "★ "; color: var(--accent); }
+
+:root[data-theme="pinup"] .panel {
+  clip-path: none;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  box-shadow: var(--ink-shadow);
+}
+:root[data-theme="pinup"] .panel::before,
+:root[data-theme="pinup"] .panel::after { display: none; }
+:root[data-theme="pinup"] .panel-title {
+  display: inline-block;
+  margin-left: calc(-1 * var(--sp-4) - 8px);
+  padding: 2px var(--sp-4) 0 var(--sp-6);
+  font-size: var(--fs-lg);
+  letter-spacing: 0.1em;
+  color: var(--bg-raised);
+  background: var(--accent);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%);
+  box-shadow: none;
+}
+:root[data-theme="pinup"] .panel-title::before { content: "★ "; color: var(--yellow); }
+:root[data-theme="pinup"] .panel-title::after { content: ""; animation: none; }
+
+:root[data-theme="pinup"] .btn {
+  clip-path: none;
+  border-radius: 999px;
+  color: var(--bg-raised);
+  background: var(--accent);
+  border: 2px solid var(--line-strong);
+  box-shadow: 2px 2px 0 var(--line-strong);
+  font-size: var(--fs-md);
+  letter-spacing: 0.1em;
+}
+:root[data-theme="pinup"] .btn:not(:disabled):active { transform: translate(2px, 2px); box-shadow: none; }
+:root[data-theme="pinup"] .btn.ghost { color: var(--text); background: var(--bg-raised); }
+:root[data-theme="pinup"] .btn.ghost.active { color: var(--bg-raised); background: var(--cyan); }
+:root[data-theme="pinup"] .field { border-radius: 8px; border-width: 2px; background: var(--bg); }
+:root[data-theme="pinup"] .palette-trigger { clip-path: none; border-radius: 999px; border-width: 2px; }
+
+:root[data-theme="pinup"] .kpi { font-family: var(--font-logo); font-weight: 400; color: var(--accent); text-shadow: 2px 2px 0 var(--line-strong); }
+:root[data-theme="pinup"] .segments i { transform: none; border-radius: 3px; }
+:root[data-theme="pinup"] .segments i.on { background: var(--accent); box-shadow: none; }
+:root[data-theme="pinup"] .segments i.on:last-of-type,
+:root[data-theme="pinup"] .segments i.on:has(+ i:not(.on)) { background: var(--yellow); box-shadow: none; }
+
+:root[data-theme="pinup"] .steps li { clip-path: none; border-radius: 999px; border: 2px solid var(--line-strong); background: var(--bg); }
+:root[data-theme="pinup"] .steps li.active { background: var(--accent); color: var(--bg-raised); box-shadow: 2px 2px 0 var(--line-strong); }
+:root[data-theme="pinup"] .steps li.done { background: color-mix(in srgb, var(--cyan) 18%, var(--bg-raised)); }
+:root[data-theme="pinup"] .steps li.active .step-no { color: var(--yellow); }
+
+:root[data-theme="pinup"] .settings-tab { font-size: var(--fs-md); border-left-width: 4px; }
+:root[data-theme="pinup"] .settings-tab.active { border-left-color: var(--accent); }
+:root[data-theme="pinup"] input[type="checkbox"] { border-radius: 4px; border: 2px solid var(--line-strong); }
+
+@keyframes pinup-in {
+  0% { opacity: 0; transform: translateY(10px) rotate(-0.6deg) scale(0.98); }
+  100% { opacity: 1; transform: none; }
+}

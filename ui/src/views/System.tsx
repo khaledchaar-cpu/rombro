@@ -3,7 +3,7 @@ import DatabasePanel from "../components/DatabasePanel";
 import Panel from "../components/Panel";
 import { thumbsOnlineGet, thumbsOnlineSet } from "../ipc";
 import { gamifyEnabled, setGamifyEnabled } from "../state/gamify";
-import { effects, setEffects, setTheme, theme } from "../state/appearance";
+import { effects, setEffects, setTheme, theme, THEMES } from "../state/appearance";
 import { SECTIONS, setSystemSection, systemSection } from "../state/settingsNav";
 
 function Appearance() {
@@ -13,10 +13,15 @@ function Appearance() {
     <div class="settings">
       <Panel title="Appearance">
         <div class="row">
-          <label class="check">
-            <input type="checkbox" checked={theme() === "light"} onChange={(e) => setTheme(e.currentTarget.checked ? "light" : "dark")} />
-            Light theme
-          </label>
+          <For each={THEMES}>
+            {(t) => (
+              <button type="button" class="btn ghost" classList={{ active: theme() === t.id }} onClick={() => setTheme(t.id)}>
+                {t.label}
+              </button>
+            )}
+          </For>
+        </div>
+        <div class="row">
           <label class="check">
             <input type="checkbox" checked={effects()} onChange={(e) => setEffects(e.currentTarget.checked)} />
             Effects (glow, grid, chromatic edges)

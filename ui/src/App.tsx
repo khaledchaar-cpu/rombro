@@ -12,7 +12,7 @@ import Import from "./views/Import";
 import Library from "./views/Library";
 import { execute, plan, undo } from "./state/importStore";
 import { initLibrary } from "./state/libraryStore";
-import { effects, setEffects, setTheme, theme } from "./state/appearance";
+import { effects, setEffects, setTheme, THEMES } from "./state/appearance";
 import { VIEWS, type ViewId } from "./views";
 import { SECTIONS, setSystemSection } from "./state/settingsNav";
 
@@ -35,7 +35,7 @@ export default function App() {
     ...(plan()?.ops.length ? [{ id: "exec", label: "Execute plan", run: () => void execute() }] : []),
     { id: "undo", label: "Undo last run", run: () => void undo() },
     { id: "fx", label: `Effects: ${effects() ? "off" : "on"}`, run: () => setEffects(!effects()) },
-    { id: "theme", label: `Theme: ${theme() === "dark" ? "light" : "dark"}`, run: () => setTheme(theme() === "dark" ? "light" : "dark") },
+    ...THEMES.map((t) => ({ id: `theme:${t.id}`, label: `Theme: ${t.label}`, run: () => setTheme(t.id) })),
   ];
 
   const onKey = (e: KeyboardEvent) => {

@@ -1,7 +1,13 @@
 // Per-device appearance preferences (theme, effects), persisted in localStorage.
 import { createSignal } from "solid-js";
 
-export type Theme = "dark" | "light";
+export type Theme = "dark" | "light" | "pinup";
+
+export const THEMES: { id: Theme; label: string }[] = [
+  { id: "dark", label: "Neon" },
+  { id: "light", label: "Neon light" },
+  { id: "pinup", label: "Pin-up '40s" },
+];
 
 function load(key: string): string | null {
   try {
@@ -19,7 +25,7 @@ function store(key: string, value: string) {
   }
 }
 
-const [theme, setThemeSignal] = createSignal<Theme>(load("theme") === "light" ? "light" : "dark");
+const [theme, setThemeSignal] = createSignal<Theme>(THEMES.find((t) => t.id === load("theme"))?.id ?? "dark");
 const [effects, setEffectsSignal] = createSignal(load("effects") !== "off");
 
 function apply() {
