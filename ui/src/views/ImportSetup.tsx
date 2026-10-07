@@ -7,8 +7,6 @@ import { buildPlan, busy, executing, inbox, library, mode, setInbox, setLibrary,
 const MODES: { id: Mode; label: string }[] = [
   { id: "move", label: "Move" },
   { id: "copy", label: "Copy" },
-  { id: "hardlink", label: "Hardlink" },
-  { id: "reflink", label: "Reflink" },
 ];
 
 /** Folders and mode of the import; plans with or without the inbox. Results show below it. */

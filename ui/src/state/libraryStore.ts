@@ -37,7 +37,8 @@ export const [mode, setMode] = createSignal<Mode>("move");
 export async function initLibrary() {
   const session = await sessionGet().catch(() => null);
   if (session?.inbox && !inbox()) setInbox(session.inbox);
-  if (session?.mode) setMode(session.mode);
+  // the app offers move and copy only (hardlink/reflink remain CLI options)
+  if (session?.mode === "move" || session?.mode === "copy") setMode(session.mode);
   let stored = session?.library ?? null;
   if (!stored) {
     // one-time migration: the path used to live in localStorage
