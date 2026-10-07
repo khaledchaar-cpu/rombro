@@ -4,6 +4,8 @@
 #[cfg(test)]
 mod archive_tests;
 mod build;
+#[cfg(test)]
+mod daphne_tests;
 pub mod inbox;
 pub mod lpl;
 mod ops;

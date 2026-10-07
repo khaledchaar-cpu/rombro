@@ -13,14 +13,14 @@ fn game(name: &str) -> Ident {
     })
 }
 
-fn file(dir: &Path, name: &str, content: &str) -> PathBuf {
+pub(super) fn file(dir: &Path, name: &str, content: &str) -> PathBuf {
     let p = dir.join(name);
     fs::create_dir_all(p.parent().unwrap()).unwrap();
     fs::write(&p, content).unwrap();
     p
 }
 
-fn item(path: PathBuf, ident: Ident, in_library: bool) -> Item {
+pub(super) fn item(path: PathBuf, ident: Ident, in_library: bool) -> Item {
     Item {
         files: Files::Single(path),
         ident,
@@ -28,7 +28,7 @@ fn item(path: PathBuf, ident: Ident, in_library: bool) -> Item {
     }
 }
 
-fn opts(mode: Mode) -> Options {
+pub(super) fn opts(mode: Mode) -> Options {
     Options {
         mode,
         // these tests cover the quarantine; `unknown_to_trash` has its own test
@@ -44,7 +44,7 @@ fn opts(mode: Mode) -> Options {
 }
 
 /// Sorted relative paths of all files below `root`.
-fn tree(root: &Path) -> Vec<String> {
+pub(super) fn tree(root: &Path) -> Vec<String> {
     let mut v: Vec<String> = walkdir::WalkDir::new(root)
         .into_iter()
         .flatten()

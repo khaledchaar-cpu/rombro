@@ -67,6 +67,12 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
   erkennt es an der Datei, die der Core lädt (`.info` `supported_extensions`, Tabelle `plan::PORTS`, z. B. `smw.game`),
   und verschiebt sie als Spiele-Ordner. Standalone-Ports ohne Core (Batocera: xash3d, devilutionx, cdogs) bleiben
   unerkannt und landen über „Inbox-Reste“ im Trash.
+- Daphne (2026-10-07): Ein Ordner mit `roms/` und `*.daphne/` ist eine Laserdisc-Sammlung; sie wandert komplett
+  (Struktur unverändert) nach `Daphne/`, weil der Core `roms/<spiel>.zip` lädt und Video/Framefile aus
+  `../<spiel>.daphne/` liest. Playlist `Daphne.lpl`: nur Spiele mit `.daphne`-Ordner. Core `daphne`.
+- Arcade-BIOS (2026-10-07): Neu gepackte BIOS-Zips (`neogeo.zip`, `stvbios.zip`) treffen nie den Ganzdatei-Hash;
+  ein Zip, dessen Name im DAT ein `isbios`-Set ist und dessen Member zu ≥ 75 % passen, gilt als BIOS des
+  bestplatzierten Cores. Der Library-`_trash` wird nicht gescannt.
 - Library-Snapshot (2026-10-07): RomBro verwaltet die Library allein, daher gilt der Index als Wahrheit.
   Die identifizierte Library (Items + Arcade-Setnamen) liegt als Snapshot in der DB (`snapshot`, gzip-JSON).
   Plan-Import und Library-View laden ihn (~60 ms) ohne Ordnerdurchlauf und ohne DB-Lookups. Verworfen wird er

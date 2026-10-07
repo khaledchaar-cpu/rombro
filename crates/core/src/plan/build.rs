@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 const UNKNOWN_TRASH: &str = "unknown";
 
 mod archives;
+mod daphne;
 mod firmware;
 mod folders;
 mod frontend;
@@ -131,15 +132,20 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             .any(|m| root.starts_with(m) || m.starts_with(root))
     });
     folder_games.extend(msu);
+    let daphne = daphne::find(&items, &roots, library);
+    folder_games.retain(|root, _| !daphne.iter().any(|d| root.starts_with(d)));
     let items: Vec<&Item> = items
         .into_iter()
         .filter(|it| {
-            !it.files
-                .primary()
-                .ancestors()
-                .any(|a| folder_games.contains_key(a) || foreign.iter().any(|f| f == a))
+            let p = it.files.archive().unwrap_or(it.files.primary());
+            !p.ancestors().any(|a| {
+                folder_games.contains_key(a) || daphne.contains(a) || foreign.iter().any(|f| f == a)
+            })
         })
         .collect();
+    for root in &daphne {
+        b.daphne(root);
+    }
     for (root, fg) in &folder_games {
         b.folder_game(root, fg);
         if fg.rule == Rule::Msu1
