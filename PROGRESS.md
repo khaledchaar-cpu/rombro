@@ -22,6 +22,7 @@
 | M14b Core-Wahl & -Installation | ✅ done (Sichtprüfung App offen) |
 | v0.3.0 Release + Inbox-Importe | ✅ released 2026-10-06; Nachträge 2026-10-07 (CSO, OpenBOR, Library-Perf) |
 | v0.4.0 Release (Perf, Settings-Umbau) | ✅ released 2026-10-07 |
+| v0.5.0 Release (Firmware/BIOS, Daphne, Disc-Serials, neue UI) | ✅ released 2026-10-08 |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -37,7 +38,21 @@ GUI aufgeräumt (2026-10-07): Rules + Settings = ein Tab „Settings“ mit Sekt
 Appearance (`state/settingsNav`, auch per Command-Palette); DB-Sync nach Settings → Databases, Dashboard zeigt
 nur noch Hinweis bei leerer DB; Quick scan entfernt; eigene Checkboxen (Tokens, beide Themes).
 v0.4.0 veröffentlicht 2026-10-07 (u. a. hardlink/reflink entfernt).
-Nächste Schritte: M15 Launcher-Basis.
+
+Stand 2026-10-08: v0.5.0 veröffentlicht. Danach auf `main` (für v0.5.1), alle aus echten Inbox-Läufen:
+- Arcade: neu gepackte Sets/BIOS über DAT erkannt (`Store::complete_sets`, `bios_set`); Indizes
+  `dat_set(name)`, `entry(rom_name)`, DAT-Set-Cache → Library-Neuerkennung 51 s → 8,6 s (22k Dateien, CIFS).
+- Neu gepackte Zips mit gleichen Membern = Duplikat statt Konflikt (`same_content`).
+- Snapshot bleibt nach eigenen Läufen erhalten, nur berührte Pfade werden neu erkannt (`snapshot_dirty`, Schema v14).
+- Disc-Serials: Dreamcast/Sega-CD-Schreibweisen, exakter Treffer vor Suffix, Release vor Beta.
+- Daphne-Sammlungen als Einheit (`Daphne/`, kein Core auf Linux-Buildbot); Library-Ansicht 1 Eintrag je `.daphne`.
+- `_trash` wird nicht gescannt; Trash-Leeren parallel; `.p2k.cfg` = Frontend-Meta; `n64dd` kein Name-Ordner mehr.
+- Fix: Session-Fehler beim Start setzte einen alten localStorage-Pfad als Library.
+- CI: apt-Schritte mit 10-min-Timeout (Linux-Runner hingen stundenlang).
+Stolpersteine: CLI `audit` führt ohne `--dry-run` aus (nur mit `import --dry-run` analysieren!); App läuft im
+Dev-Modus, Codeänderungen starten sie neu → nie während Plan/Import des Users editieren.
+Nächste Schritte: v0.5.1 releasen; Atari-ST-Mehrdisk-Teile (Boot/Data, (A)/(B)) nicht als TIE behandeln;
+Sufami-Turbo-Kombi-Images in Zips; M15 Launcher-Basis.
 Stolperstein: App läuft beim User per `pnpm tauri dev` – Code-Änderungen starten sie neu (laufende Scans brechen ab).
 
 M14: `core::arcade::dat` (Logiqx/listxml-Parser, Prüfung über Zip-Verzeichnis), `archive::members`, Store-Tabellen
