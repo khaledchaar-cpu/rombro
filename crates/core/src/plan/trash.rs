@@ -29,14 +29,29 @@ fn walk(dir: &Path, out: &mut Vec<(PathBuf, u64)>) -> io::Result<()> {
     Ok(())
 }
 
-/// Permanently deletes `<library>/_trash`; returns the number of deleted files.
+/// Permanently deletes `<library>/_trash`; returns the number of deleted files. Files are
+/// removed in parallel: on a network share each delete waits for a round trip.
 pub fn empty(library: &Path) -> io::Result<usize> {
-    let n = list(library)?.len();
+    use rayon::prelude::*;
+    let files = list(library)?;
     let dir = library.join(TRASH_DIR);
-    if dir.is_dir() {
-        fs::remove_dir_all(dir)?;
+    if !dir.is_dir() {
+        return Ok(0);
     }
-    Ok(n)
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(16)
+        .build()
+        .map_err(io::Error::other)?
+        .install(|| {
+            files
+                .par_iter()
+                .try_for_each(|(p, _)| match fs::remove_file(p) {
+                    Err(e) if e.kind() != io::ErrorKind::NotFound => Err(e),
+                    _ => Ok(()),
+                })
+        })?;
+    fs::remove_dir_all(dir)?;
+    Ok(files.len())
 }
 
 #[cfg(test)]

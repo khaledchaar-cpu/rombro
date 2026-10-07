@@ -43,18 +43,22 @@ export function OpenDecisionsPanel(props: { onReview: () => void }) {
 export function TrashPanel() {
   const [files, { refetch }] = createResource(library, (l) => (l ? trashList(l) : Promise.resolve([])));
   const [armed, setArmed] = createSignal(false);
+  const [deleting, setDeleting] = createSignal(false);
   const [msg, setMsg] = createSignal<{ ok: boolean; text: string }>();
   const bytes = () => (files() ?? []).reduce((a, f) => a + f.bytes, 0);
 
   const empty = async () => {
     if (!armed()) return setArmed(true);
     setArmed(false);
+    setDeleting(true);
+    setMsg(undefined);
     try {
       const n = await trashEmpty(library());
       setMsg({ ok: true, text: `deleted ${n} files` });
     } catch (e) {
       setMsg({ ok: false, text: String(e) });
     }
+    setDeleting(false);
     refetch();
   };
 
@@ -82,11 +86,15 @@ export function TrashPanel() {
           <button
             class="btn"
             classList={{ danger: armed() }}
-            disabled={!files()?.length}
+            disabled={deleting() || !files()?.length}
             onClick={empty}
             onMouseLeave={() => setArmed(false)}
           >
-            {armed() ? "Click again: delete permanently" : "Empty trash"}
+            {deleting()
+              ? `Deleting ${files()?.length ?? 0} files…`
+              : armed()
+                ? "Click again: delete permanently"
+                : "Empty trash"}
           </button>
         </div>
         <Show when={msg()}>{(m) => <p class={`mono small ${m().ok ? "ok" : "err"}`}>{m().text}</p>}</Show>
