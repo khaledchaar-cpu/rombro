@@ -69,7 +69,8 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
   unerkannt und landen über „Inbox-Reste“ im Trash.
 - Daphne (2026-10-07): Ein Ordner mit `roms/` und `*.daphne/` ist eine Laserdisc-Sammlung; sie wandert komplett
   (Struktur unverändert) nach `Daphne/`, weil der Core `roms/<spiel>.zip` lädt und Video/Framefile aus
-  `../<spiel>.daphne/` liest. Playlist `Daphne.lpl`: nur Spiele mit `.daphne`-Ordner. Core `daphne`.
+  `../<spiel>.daphne/` liest. Playlist `Daphne.lpl`: nur Spiele mit `.daphne`-Ordner. Kein Core-Mapping:
+  `daphne_libretro` gibt es auf dem Linux-Buildbot nicht (404), die Sammlung wird nur sortiert.
 - Arcade-BIOS (2026-10-07): Neu gepackte BIOS-Zips (`neogeo.zip`, `stvbios.zip`) treffen nie den Ganzdatei-Hash;
   ein Zip, dessen Name im DAT ein `isbios`-Set ist und dessen Member zu ≥ 75 % passen, gilt als BIOS des
   bestplatzierten Cores. Der Library-`_trash` wird nicht gescannt.
