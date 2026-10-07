@@ -37,10 +37,13 @@ impl Store {
             return Ok(DiscMatch::Unknown);
         };
         let system = Some(id.platform.system());
+        // a hit made only of pre-releases yields to a release found under a later key form
+        // (Dreamcast: beta `MK-5111750`, release `MK-51117-50`, same disc header)
+        let mut fallback = None;
         for key in id.lookup_keys() {
             // Multi-disc sets are sometimes stored as `SCUS-94163-0`, `-1`, ...; include them
-            // so an ambiguous serial surfaces all candidates.
-            // an exact match wins over suffixed serials of other releases (`T-70015-50`)
+            // so an ambiguous serial surfaces all candidates. An exact match wins over
+            // suffixed serials of other releases (`T-70015-50`).
             let mut hits = self.by_serial(&key, system)?;
             if hits.is_empty() {
                 hits = self.by_serial_prefix(&format!("{key}-"), system)?;
@@ -48,12 +51,23 @@ impl Store {
             if let Some((disc_no, rev)) = id.variant {
                 pick_variant(&mut hits, disc_no, rev);
             }
-            if !hits.is_empty() {
+            if hits.is_empty() {
+                continue;
+            }
+            if !hits.iter().all(|r| is_prerelease(&r.name)) {
                 return Ok(DiscMatch::Serial(hits));
             }
+            fallback.get_or_insert(hits);
         }
-        Ok(DiscMatch::Unknown)
+        Ok(fallback.map_or(DiscMatch::Unknown, DiscMatch::Serial))
     }
+}
+
+/// Beta, prototype or demo release name.
+fn is_prerelease(name: &str) -> bool {
+    ["(Beta", "(Proto", "(Demo", "(Taikenban", "(Sample"]
+        .iter()
+        .any(|t| name.contains(t))
 }
 
 /// GameCube/Wii share one game ID across revisions and discs; narrow by the header's values

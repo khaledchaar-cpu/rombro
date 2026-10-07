@@ -191,6 +191,19 @@ fn identify_disc_by_hash_then_serial() {
             ("serial", F::S("SLUS-20001-0")),
         ])],
     );
+    write_rdb(
+        &dir.path().join("Sega - Dreamcast.rdb"),
+        &[
+            map(&[
+                ("name", F::S("SA2 (Europe) (Beta)")),
+                ("serial", F::S("MK-5111750")),
+            ]),
+            map(&[
+                ("name", F::S("SA2 (Europe)")),
+                ("serial", F::S("MK-51117-50")),
+            ]),
+        ],
+    );
     let mut s = Store::open_in_memory().unwrap();
     s.sync_rdbs(dir.path()).unwrap();
     let track = |crc, sha1| ScannedRom {
@@ -235,6 +248,11 @@ fn identify_disc_by_hash_then_serial() {
     let d = disc(vec![], Some((Platform::Ps2, "SLUS-20001")));
     assert!(
         matches!(s.identify_disc(&d).unwrap(), DiscMatch::Serial(v) if v[0].name == "Multi (USA) (Disc 1)")
+    );
+    // a pre-release under the raw header serial yields to the release
+    let d = disc(vec![], Some((Platform::Dreamcast, "MK-5111750")));
+    assert!(
+        matches!(s.identify_disc(&d).unwrap(), DiscMatch::Serial(v) if v.len() == 1 && v[0].name == "SA2 (Europe)")
     );
     assert_eq!(
         s.identify_disc(&disc(vec![], None)).unwrap(),
