@@ -36,18 +36,24 @@ export const [mode, setMode] = createSignal<Mode>("move");
 
 /** Restores the last session (library, inbox, mode) and loads the library. */
 export async function initLibrary() {
-  const session = await sessionGet().catch(() => null);
-  if (session?.inbox && !inbox()) setInbox(session.inbox);
+  let session;
+  try {
+    session = await sessionGet();
+  } catch (e) {
+    // never fall back to a stale path: the next load would store it as the library
+    setLibraryError(`Could not read the last session: ${e}`);
+    return;
+  }
+  if (session.inbox && !inbox()) setInbox(session.inbox);
   // sessions from older versions may hold a removed mode (hardlink, reflink)
-  if (session?.mode === "move" || session?.mode === "copy") setMode(session.mode);
-  let stored = session?.library ?? null;
-  if (!stored) {
+  if (session.mode === "move" || session.mode === "copy") setMode(session.mode);
+  let stored = session.library ?? null;
+  try {
     // one-time migration: the path used to live in localStorage
-    try {
-      stored = localStorage.getItem("rombro.library");
-    } catch {
-      /* storage unavailable */
-    }
+    if (!stored) stored = localStorage.getItem("rombro.library");
+    localStorage.removeItem("rombro.library");
+  } catch {
+    /* storage unavailable */
   }
   if (stored && !library()) setLibrary(stored);
   await refreshLibrary();
