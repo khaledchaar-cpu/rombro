@@ -104,8 +104,12 @@ fn is_ignored(e: &walkdir::DirEntry, cache: &HashCache) -> bool {
         name.to_ascii_lowercase().as_str(),
         ".ds_store" | "thumbs.db" | "desktop.ini" | ".directory"
     ) || name.starts_with("._");
-    // empty ScummVM launchers are kept: they are repaired from their file name
-    let launcher = crate::scummvm::repaired_id(e.path(), b"").is_some();
+    // empty ScummVM launchers are kept: they are repaired from their file name; so are
+    // port key files (often empty)
+    let launcher = crate::scummvm::repaired_id(e.path(), b"").is_some()
+        || crate::plan::PORTS
+            .iter()
+            .any(|(_, key)| name.eq_ignore_ascii_case(key));
     junk || (cache.size(e.path()) == Some(0) && !launcher)
 }
 

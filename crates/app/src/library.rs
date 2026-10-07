@@ -113,6 +113,11 @@ pub async fn library_list(
             })
             .collect();
         folder_systems.push(rombro_core::plan::MSU1_SYSTEM.to_owned());
+        folder_systems.extend(
+            rombro_core::plan::PORTS
+                .iter()
+                .map(|(s, _)| (*s).to_owned()),
+        );
         // Game folders (DOS, ScummVM, ports): the folder of a known key file is the game;
         // its other files are game data, not unknown items.
         let game_dirs: std::collections::HashSet<PathBuf> = items

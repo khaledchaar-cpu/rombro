@@ -729,3 +729,36 @@ fn folder_bundling_another_games_file_deep_inside_stays_in_inbox() {
     assert_eq!(plan.placed, 0);
     assert!(plan.ops.is_empty(), "{:?}", plan.ops);
 }
+
+#[test]
+fn libretro_port_folder_moves_whole_by_its_key_file() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let items = [
+        item(
+            file(&inbox, "superbroswar/smw.game", ""),
+            Ident::Unknown,
+            false,
+        ),
+        item(
+            file(&inbox, "superbroswar/maps/a.map", "m"),
+            Ident::Unknown,
+            false,
+        ),
+    ];
+    let o = Options {
+        inbox: Some(inbox.clone()),
+        ignore: Vec::new(),
+        ..opts(Mode::Move)
+    };
+    let plan = build(&items, &lib, &o);
+    assert_eq!(plan.placed, 1);
+    execute(&plan.ops);
+    assert_eq!(
+        tree(&lib),
+        [
+            "Super Mario War/superbroswar/maps/a.map",
+            "Super Mario War/superbroswar/smw.game"
+        ]
+    );
+}

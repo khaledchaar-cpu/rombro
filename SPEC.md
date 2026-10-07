@@ -63,6 +63,10 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
 - Dateinamen = RDB-`name` (Thumbnail-kompatibel: `&*/:<>?\|` → `_`).
 - Operationen: move | copy; optional (ent)zippen. (hardlink/reflink 2026-10-07 entfernt)
 - Immer: Plan → Dry-Run-Anzeige → Ausführen. Jede Ausführung schreibt ein **Journal** → Undo möglich.
+- Ports (2026-10-07): ROMBRO verwaltet nur RetroArch-relevante Titel. Ports mit libretro-Core, aber ohne RDB,
+  erkennt es an der Datei, die der Core lädt (`.info` `supported_extensions`, Tabelle `plan::PORTS`, z. B. `smw.game`),
+  und verschiebt sie als Spiele-Ordner. Standalone-Ports ohne Core (Batocera: xash3d, devilutionx, cdogs) bleiben
+  unerkannt und landen über „Inbox-Reste“ im Trash.
 - Library-Snapshot (2026-10-07): RomBro verwaltet die Library allein, daher gilt der Index als Wahrheit.
   Die identifizierte Library (Items + Arcade-Setnamen) liegt als Snapshot in der DB (`snapshot`, gzip-JSON).
   Plan-Import und Library-View laden ihn (~60 ms) ohne Ordnerdurchlauf und ohne DB-Lookups. Verworfen wird er

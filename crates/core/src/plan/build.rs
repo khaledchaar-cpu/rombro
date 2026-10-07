@@ -20,8 +20,14 @@ mod frontend;
 mod msu;
 pub use msu::SYSTEM as MSU1_SYSTEM;
 mod named;
+mod ports;
 pub use folders::FOLDER_SYSTEMS;
-pub use named::apply as name_only;
+pub use ports::PORTS;
+
+/// Name-only identification ([`named`]) plus libretro ports ([`ports`]).
+pub fn name_only(items: &[Item], rules: &crate::g1r::Rules) -> Vec<Item> {
+    ports::apply(named::apply(items, rules))
+}
 mod place;
 
 use place::quarantine_sources;
@@ -29,7 +35,7 @@ use place::quarantine_sources;
 /// Plans placing `items` into `library`. Nothing is touched on disk (reads only).
 /// Library items should come first so they win over identical inbox copies.
 pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
-    let items = &named::apply(items, &opts.rules);
+    let items = &name_only(items, &opts.rules);
     let mut b = Builder {
         library,
         opts,
@@ -110,12 +116,10 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                     .is_some_and(|a| mixed.contains(a.as_path()))
         })
         .collect();
-    let (mut folder_games, foreign) = folders::find(
-        &items,
-        library,
-        opts.inbox.as_deref(),
-        &opts.rules.folder_systems,
-    );
+    let mut folder_systems = opts.rules.folder_systems.clone();
+    folder_systems.extend(ports::PORTS.iter().map(|(s, _)| (*s).to_owned()));
+    let (mut folder_games, foreign) =
+        folders::find(&items, library, opts.inbox.as_deref(), &folder_systems);
     let roots: Vec<&Path> = [Some(library), opts.inbox.as_deref()]
         .into_iter()
         .flatten()
