@@ -16,10 +16,18 @@ impl Builder<'_> {
             .map(|g| (bios.join(&g.name), g))
             .filter(|(t, _)| !blocked_by_file(&bios, t))
             .collect();
-        let mut free: Vec<&(PathBuf, &Game)> = targets
-            .iter()
-            .filter(|(t, _)| !t.exists() && !self.claimed.contains_key(t))
-            .collect();
+        // a name is only used if it can't clash as file vs. folder with another planned one
+        // (`SGB1.sfc` and `SGB1.sfc/program.rom`): the first listed wins
+        let mut free: Vec<&(PathBuf, &Game)> = Vec::new();
+        for t in &targets {
+            let planned = self.claimed.keys().chain(free.iter().map(|(p, _)| p));
+            let clash = planned
+                .into_iter()
+                .any(|p| p == &t.0 || p.starts_with(&t.0) || t.0.starts_with(p));
+            if !t.0.exists() && !clash {
+                free.push(t);
+            }
+        }
         if free.is_empty() {
             free.extend(targets.first());
         }

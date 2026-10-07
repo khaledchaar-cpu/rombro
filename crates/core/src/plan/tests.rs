@@ -670,3 +670,32 @@ fn firmware_goes_to_bios_only_where_missing() {
         [Decision::Rejected { .. }]
     ));
 }
+
+#[test]
+fn firmware_names_never_clash_as_file_and_folder() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let ident = Ident::Firmware(
+        ["SGB1.sfc", "sgb1.program.rom", "SGB1.sfc/program.rom"]
+            .map(|p| Game {
+                system: "Nintendo - Super Game Boy".into(),
+                name: p.into(),
+                crc: None,
+            })
+            .to_vec(),
+    );
+    let items = [item(file(&inbox, "bios/SGB1.sfc", "sgb"), ident, false)];
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    let targets: Vec<_> = plan
+        .ops
+        .iter()
+        .map(|op| op.target().strip_prefix(&lib).unwrap().to_path_buf())
+        .collect();
+    assert_eq!(
+        targets,
+        [
+            Path::new("_bios/SGB1.sfc"),
+            Path::new("_bios/sgb1.program.rom")
+        ]
+    );
+}
