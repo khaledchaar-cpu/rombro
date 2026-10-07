@@ -26,8 +26,12 @@
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
 `openbor` als Namensordner (auch in der User-DB eingetragen), Library listet MSU-1-Ordner als ein Spiel,
 Library-Scan beim Planen/Export vertraut dem Index (`HashCache.trusted`, ~16 s → ~3 s; Rescan prüft voll).
-Nächste Schritte: Spiele-Erkennung (`Store::items`, ~1,5–2 s) profilen; Disc-`identify` bei Cache-Treffer cachen;
-Sichtprüfung der neuen UI-Teile (Exec-Fortschritt, Run-Report-Scrollbereich, Scan-Dateizeile); ggf. Release v0.3.1.
+Nachträge 2026-10-07 (2): `[Patched]`/`(Patched)` = Hack-Flag; Name-Ordner in der Rules-Seite editierbar
+(Regel `name-only`); Audit der echten Library 10,8 s → 1,8 s bei identischem Plan: Disc-Serial wird mit dem
+ersten Track im Hash-Cache gespeichert (`CachedRom.disc`), Zips nur bei DAT-bekanntem Namen geöffnet
+(`Store::dat_knows`), MSU-1-Suche nur neben SNES-ROMs, ScummVM-Launcher-Reparatur nur für ScummVM-Ordner.
+Nächste Schritte: Sichtprüfung der neuen UI-Teile (Exec-Fortschritt, Run-Report-Scrollbereich, Scan-Dateizeile,
+Name-Ordner-Editor, CorePicker); „Aufräumen GUI-Elemente“ mit User konkretisieren; ggf. Release v0.3.1.
 Stolperstein: App läuft beim User per `pnpm tauri dev` – Code-Änderungen starten sie neu (laufende Scans brechen ab).
 
 M14: `core::arcade::dat` (Logiqx/listxml-Parser, Prüfung über Zip-Verzeichnis), `archive::members`, Store-Tabellen
@@ -44,8 +48,7 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
 0. Nachträge 2026-10-06 (abends): RetroArch-Export räumt verwaiste Playlists (alle Einträge in der Library, System
    leer oder ohne Core) nach `_trash/playlists`; Systeme ohne jeden Core (Solarus) bekommen keine RA-Playlist.
    Name-Ordner (`rules.name_folders`, Regel `name-only`, `Ident::Named`, SPEC 11a): n64dd-Cartridge-Umbauten → N64,
-   solarus → Solarus. GUI: „Last run“-Bericht nach Execute, Meldung bei leerem Plan. **Offen:** name_folders in der
-   Rules-Seite editierbar machen; `[Patched]` als Hack-Flag erkennen; Sichtprüfung der neuen GUI-Teile;
+   solarus → Solarus. GUI: „Last run“-Bericht nach Execute, Meldung bei leerem Plan. **Offen:** Sichtprüfung der neuen GUI-Teile;
    **Aufräumen GUI-Elemente**.
    Stolperstein: nach Schema-Wechseln mit DAT-Drop erst `db sync`, sonst greifen Arcade-Prüfungen nicht.
 0. M14b (2026-10-06): Core-Empfehlung (Batocera) + Auswahl + Installation beim Export, siehe SPEC 11a. CLI e2e in
