@@ -699,3 +699,33 @@ fn firmware_names_never_clash_as_file_and_folder() {
         ]
     );
 }
+
+#[test]
+fn folder_bundling_another_games_file_deep_inside_stays_in_inbox() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let items = [
+        item(
+            file(&inbox, "cdogs/missions/WOLF3D/GAMEMAPS.WL1", "m"),
+            Ident::Known(Game {
+                system: "Wolfenstein 3D".into(),
+                name: "Wolfenstein 3D v1.4 (Shareware)".into(),
+                crc: Some(1),
+            }),
+            false,
+        ),
+        item(
+            file(&inbox, "cdogs/data/guns.json", "g"),
+            Ident::Unknown,
+            false,
+        ),
+    ];
+    let o = Options {
+        inbox: Some(inbox.clone()),
+        ignore: Vec::new(),
+        ..opts(Mode::Move)
+    };
+    let plan = build(&items, &lib, &o);
+    assert_eq!(plan.placed, 0);
+    assert!(plan.ops.is_empty(), "{:?}", plan.ops);
+}

@@ -110,7 +110,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                     .is_some_and(|a| mixed.contains(a.as_path()))
         })
         .collect();
-    let mut folder_games = folders::find(
+    let (mut folder_games, foreign) = folders::find(
         &items,
         library,
         opts.inbox.as_deref(),
@@ -133,7 +133,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             !it.files
                 .primary()
                 .ancestors()
-                .any(|a| folder_games.contains_key(a))
+                .any(|a| folder_games.contains_key(a) || foreign.iter().any(|f| f == a))
         })
         .collect();
     for (root, fg) in &folder_games {

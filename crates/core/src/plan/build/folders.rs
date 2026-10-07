@@ -56,12 +56,14 @@ pub(super) struct FolderGame<'a> {
 
 /// Game folders keyed by their root directory. Matches lying loose in a folder shared by
 /// several games (or in the inbox root) get no folder and are placed as single files.
+/// Second: folders that merely bundle another game's file (see [`bundles_foreign`]); they
+/// are left where they are.
 pub(super) fn find<'a>(
     items: &[&'a Item],
     library: &Path,
     inbox: Option<&Path>,
     systems: &'a [String],
-) -> BTreeMap<PathBuf, FolderGame<'a>> {
+) -> (BTreeMap<PathBuf, FolderGame<'a>>, Vec<PathBuf>) {
     let matched: Vec<Match<'a>> = items
         .iter()
         .filter_map(|it| match (&it.ident, &it.files) {
@@ -107,13 +109,50 @@ pub(super) fn find<'a>(
             groups.entry(root).or_default().push(m);
         }
     }
-    groups
+    let mut foreign = Vec::new();
+    let games = groups
         .into_iter()
         .filter_map(|(root, ms)| {
+            if !root.starts_with(library) && bundles_foreign(&root, &ms) {
+                foreign.push(root);
+                return None;
+            }
             let fg = folder_game(&root, &ms, systems)?;
             Some((root, fg))
         })
+        .collect();
+    (games, foreign)
+}
+
+fn words(s: &str) -> HashSet<String> {
+    s.split(|c: char| !c.is_alphanumeric())
+        .filter(|w| w.len() > 1)
+        .map(str::to_lowercase)
         .collect()
+}
+
+/// A folder of another game that ships a known game's file deep inside (C-Dogs SDL carries
+/// Wolfenstein 3D's `missions/WOLF3D/GAMEMAPS.WL1`): every match lies two or more folders
+/// down and none shares a word with the folder name. Key files of real game folders sit at
+/// or near the top.
+fn bundles_foreign(root: &Path, ms: &[Match<'_>]) -> bool {
+    let Some(dir) = root.file_name().map(|d| d.to_string_lossy()) else {
+        return false;
+    };
+    if dir
+        .rsplit_once('.')
+        .is_some_and(|(_, e)| MARKERS.iter().any(|m| e.eq_ignore_ascii_case(m)))
+    {
+        return false;
+    }
+    let want = words(&dir);
+    ms.iter().all(|m| {
+        let depth = m
+            .key
+            .strip_prefix(root)
+            .map_or(0, |r| r.components().count());
+        depth >= 3 && words(&m.game.name).is_disjoint(&want)
+    })
 }
 
 fn folder_game<'a>(root: &Path, ms: &[Match<'a>], systems: &'a [String]) -> Option<FolderGame<'a>> {
@@ -150,12 +189,6 @@ fn folder_game<'a>(root: &Path, ms: &[Match<'a>], systems: &'a [String]) -> Opti
             )
         })
     })?;
-    let words = |s: &str| -> HashSet<String> {
-        s.split(|c: char| !c.is_alphanumeric())
-            .filter(|w| w.len() > 1)
-            .map(str::to_lowercase)
-            .collect()
-    };
     let want = words(&stem);
     let best = ms
         .iter()
