@@ -44,25 +44,68 @@ impl DiscId {
     /// Serial spellings to try against the database, most specific first.
     /// Sega discs carry `MK-81020`, while the RDB often stores just `81020`.
     pub fn lookup_keys(&self) -> Vec<String> {
-        let mut keys = vec![self.serial.clone()];
-        if let Some(s) = self.serial.strip_prefix("MK-") {
-            keys.push(s.to_owned());
+        let mut keys = Vec::new();
+        // Dreamcast headers pad a version suffix with spaces (`T7021D  05` = `T-7021D-05`)
+        let joined = self.serial.split_whitespace().collect::<Vec<_>>().join("-");
+        for serial in [self.serial.as_str(), joined.as_str()] {
+            if keys.iter().any(|k| k == serial) {
+                continue;
+            }
+            keys.push(serial.to_owned());
+            if let Some(s) = serial.strip_prefix("MK-") {
+                keys.push(s.to_owned());
+            }
+            // Sega headers often omit the dash the databases use (`T40201N` vs `T-40201N`).
+            let letters = serial.bytes().take_while(u8::is_ascii_alphabetic).count();
+            if letters > 0 && serial[letters..].starts_with(|c: char| c.is_ascii_digit()) {
+                keys.push(format!("{}-{}", &serial[..letters], &serial[letters..]));
+            }
         }
-        // Sega headers often omit the dash the databases use (`T40201N` vs `T-40201N`).
-        let letters = self
-            .serial
-            .bytes()
-            .take_while(u8::is_ascii_alphabetic)
-            .count();
-        if letters > 0 && self.serial[letters..].starts_with(|c: char| c.is_ascii_digit()) {
-            keys.push(format!(
-                "{}-{}",
-                &self.serial[..letters],
-                &self.serial[letters..]
-            ));
+        if self.platform == Platform::Dreamcast {
+            for k in dreamcast_keys(&self.serial) {
+                if !keys.contains(&k) {
+                    keys.push(k);
+                }
+            }
         }
         keys
     }
+}
+
+/// Database forms of a Dreamcast header serial: `T-36804D-05`, then the base `T-36804D`
+/// (its lookup also finds other version suffixes). Headers drop separators (`T36804D05`),
+/// the `T` (`17707D`) or both dashes (`MK-5102850` = `MK-51028-50`).
+fn dreamcast_keys(serial: &str) -> Vec<String> {
+    let compact: String = serial
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .collect::<String>()
+        .to_ascii_uppercase();
+    let (prefix, rest) = match compact.strip_prefix("MK") {
+        Some(r) => ("MK", r),
+        None => ("T", compact.strip_prefix('T').unwrap_or(&compact)),
+    };
+    let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+    let (num, tail) = rest.split_at(digits);
+    if num.is_empty() {
+        return Vec::new();
+    }
+    let region = tail.bytes().take_while(u8::is_ascii_alphabetic).count();
+    let (letter, version) = tail.split_at(region);
+    let mut out = Vec::new();
+    let base = if prefix == "MK" && letter.is_empty() && version.is_empty() && num.len() == 7 {
+        // MK serials carry a 5-digit number and a 2-digit version without separators
+        out.push(format!("MK-{}-{}", &num[..5], &num[5..]));
+        format!("MK-{}", &num[..5])
+    } else {
+        let base = format!("{prefix}-{num}{letter}");
+        if !version.is_empty() {
+            out.push(format!("{base}-{version}"));
+        }
+        base
+    };
+    out.push(base);
+    out
 }
 
 /// Identifies platform and serial of a data track, if recognizable.
@@ -101,7 +144,11 @@ fn sega_header(s: &[u8]) -> Option<DiscId> {
     } else {
         return None;
     };
-    let serial = String::from_utf8_lossy(field).trim().to_owned();
+    // the field may cut into the revision separator (`T-70015-`)
+    let serial = String::from_utf8_lossy(field)
+        .trim_end_matches([' ', '-', '\0'])
+        .trim()
+        .to_owned();
     (!serial.is_empty()).then_some(DiscId {
         platform,
         serial,
@@ -211,6 +258,8 @@ mod tests {
         scd[..14].copy_from_slice(b"SEGADISCSYSTEM");
         scd[0x180..0x18e].copy_from_slice(b"GM T-45034 -00");
         assert_eq!(detect_bytes(scd).unwrap().serial, "T-45034");
+        scd[0x180..0x18e].copy_from_slice(b"GM T-70015-00 ");
+        assert_eq!(detect_bytes(scd).unwrap().serial, "T-70015");
 
         let mut dc = vec![0u8; 2048];
         dc[..16].copy_from_slice(b"SEGA SEGAKATANA ");
@@ -220,5 +269,19 @@ mod tests {
             (id.platform, id.serial.as_str()),
             (Platform::Dreamcast, "T-14402M")
         );
+    }
+
+    #[test]
+    fn dreamcast_version_suffix_becomes_dash() {
+        let id = DiscId {
+            platform: Platform::Dreamcast,
+            serial: "T7021D  05".into(),
+            variant: None,
+        };
+        assert!(id.lookup_keys().contains(&"T-7021D-05".to_owned()));
+        assert_eq!(dreamcast_keys("T36804D05"), ["T-36804D-05", "T-36804D"]);
+        assert_eq!(dreamcast_keys("17707D"), ["T-17707D"]);
+        assert_eq!(dreamcast_keys("MK-5102850"), ["MK-51028-50", "MK-51028"]);
+        assert_eq!(dreamcast_keys("T7002D 50"), ["T-7002D-50", "T-7002D"]);
     }
 }

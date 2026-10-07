@@ -40,8 +40,11 @@ impl Store {
         for key in id.lookup_keys() {
             // Multi-disc sets are sometimes stored as `SCUS-94163-0`, `-1`, ...; include them
             // so an ambiguous serial surfaces all candidates.
+            // an exact match wins over suffixed serials of other releases (`T-70015-50`)
             let mut hits = self.by_serial(&key, system)?;
-            hits.extend(self.by_serial_prefix(&format!("{key}-"), system)?);
+            if hits.is_empty() {
+                hits = self.by_serial_prefix(&format!("{key}-"), system)?;
+            }
             if let Some((disc_no, rev)) = id.variant {
                 pick_variant(&mut hits, disc_no, rev);
             }
