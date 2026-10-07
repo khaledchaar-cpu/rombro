@@ -201,7 +201,7 @@ impl Store {
             .iter()
             .any(|r| arcade::is_bios(r.rom_name.as_deref(), &r.name));
         let ident = match self.ident(&records, &whole.hashes.sha1)? {
-            Ident::Known(g) if bios => Ident::Bios(g),
+            Ident::Known(g) if bios => bios_named(g, &records, &whole.path),
             i => i,
         };
         Ok(Some(Item {
@@ -402,12 +402,12 @@ impl Store {
         let c = candidates(records);
         Ok(match c.as_slice() {
             [] => Ident::Unknown,
-            [r] if r.name.starts_with("[BIOS]") => Ident::Bios(game(r)),
+            [r] if r.name.starts_with("[BIOS]") => unnamed_bios(r),
             [r] => Ident::Known(game(r)),
             _ => match self.resolution(sha1)? {
                 Some((system, name)) => {
                     match c.iter().find(|r| r.system == system && r.name == name) {
-                        Some(r) if r.name.starts_with("[BIOS]") => Ident::Bios(game(r)),
+                        Some(r) if r.name.starts_with("[BIOS]") => unnamed_bios(r),
                         Some(r) => Ident::Known(game(r)),
                         None => Ident::Ambiguous(c.iter().map(|r| game(r)).collect()),
                     }
@@ -416,6 +416,31 @@ impl Store {
             },
         })
     }
+}
+
+/// An arcade BIOS set goes to the BIOS folder only under its short name (`neogeo.zip`):
+/// the folder holds nothing a core would not find.
+fn bios_named(g: Game, records: &[Record], path: &Path) -> Ident {
+    let short = records
+        .iter()
+        .find(|r| r.system == g.system && r.name == g.name)
+        .and_then(|r| r.rom_name.as_deref());
+    let name = path.file_name().map(|n| n.to_string_lossy());
+    match short {
+        Some(s) if name.as_deref() != Some(s) => {
+            Ident::Skip(format!("BIOS set {}: must be named {s}", g.name))
+        }
+        _ => Ident::Bios(g),
+    }
+}
+
+/// A console `[BIOS]` database entry not in `System.dat`: no core name is known, so it is
+/// not imported (`System.dat` matches are handled before any database lookup).
+fn unnamed_bios(r: &Record) -> Ident {
+    Ident::Skip(format!(
+        "{}: not in System.dat, no core file name known",
+        r.name
+    ))
 }
 
 /// A loose file (or whole archive) from the inbox that is exactly a known firmware file.
