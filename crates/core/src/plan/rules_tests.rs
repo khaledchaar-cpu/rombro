@@ -276,7 +276,12 @@ fn name_folder_places_unknown_files_by_name_with_1g1r() {
         unknown("F-Zero X + Expansion Kit (USA).n64"),
         unknown("gamelist.Missing.Serial.txt"),
     ];
-    let mut o = opts(Rules::default());
+    // not a default (64DD goes by its .ndd hash), but any folder can be mapped
+    let mut rules = Rules::default();
+    rules
+        .name_folders
+        .insert("n64dd".into(), "Nintendo - Nintendo 64".into());
+    let mut o = opts(rules.clone());
     o.inbox = Some(tmp.path().join("inbox"));
     let plan = build(&items, &lib, &o);
     let n64 = "Nintendo - Nintendo 64";
@@ -310,6 +315,6 @@ fn name_folder_places_unknown_files_by_name_with_1g1r() {
         ident: Ident::Unknown,
         in_library: true,
     };
-    let named = name_only(&[lib_item], &Rules::default());
+    let named = name_only(&[lib_item], &rules);
     assert!(matches!(&named[0].ident, Ident::Named(g) if g.system == n64));
 }

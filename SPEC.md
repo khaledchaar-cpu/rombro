@@ -297,11 +297,13 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   bewusst ohne Prüfung, ob es im selben Core-Ordner landet). Übersprungene Cores stehen beim platzierten Set als
   Begründung (`[arcade-set: skipped …]`, `Files::Set.dat_note`). Zuordnung nach Dateiname **und** CRC
   (nur CRC passt → „misnamed“). Set-Name fürs DAT = `rom_name` des RDB-Eintrags.
-- Name-Ordner (2026-10-06): `rules.name_folders` (Ordner → System, Default `n64dd` → Nintendo 64, `solarus` → Solarus)
+- Name-Ordner (2026-10-06): `rules.name_folders` (Ordner → System, Default `solarus`, `openbor`, `astrocde`)
   identifiziert Dateien ohne DB-Treffer direkt in so einem Ordner (bzw. im Systemordner der Library) über den
   Dateinamen (`Ident::Named`, Regel `name-only`). Keine Notizen/Medien (Endungs-Denylist). 1G1R nur unter
   Name-only-Releases desselben Systems, nie gegen verifizierte Dumps; Verlierer → Entscheidung, nie Trash.
-  Grund: Batoceras `n64dd`-Dateien sind gepatchte Cartridge-Umbauten (kein `.ndd`, nicht in DBs), Solarus hat keine RDB.
+  Grund: Solarus/OpenBOR haben keine RDB. `n64dd` ist seit 2026-10-07 **kein** Default mehr: Batoceras
+  Cartridge-Umbauten (`.n64`, nicht in DBs) sind keine echten Dumps; 64DD wird nur über den `.ndd`-Hash
+  erkannt (Nintendo - Nintendo 64DD), Umbauten landen in der Quarantäne (User-Entscheidung).
 - Library-Scan beim Planen/Export vertraut dem Index (`HashCache.trusted`): nur Ordnerlisten werden gelesen (neue/gelöschte Dateien), bekannte Dateien ohne `stat`. Überschreiben an Ort und Stelle fällt erst beim Library-„Rescan“ (volle Prüfung) auf. Inbox wird immer voll geprüft. Library-Phase ~16 s → ~3 s bei 15k Dateien auf CIFS.
 
 ## 11. Offene Fragen

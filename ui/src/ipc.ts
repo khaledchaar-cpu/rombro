@@ -440,7 +440,7 @@ const mockRules = (): Rules => ({
   arcade_g1r: true,
   arcade_working_only: true,
   folder_systems: ["DOS", "ScummVM", "DOOM", "Quake"],
-  name_folders: { n64dd: "Nintendo - Nintendo 64", solarus: "Solarus" },
+  name_folders: { solarus: "Solarus", openbor: "OpenBOR" },
   quarantine: true,
   unknown_to_trash: true,
   frontend_trash: true,
@@ -714,7 +714,7 @@ export async function rulesCatalog(): Promise<RuleInfo[]> {
       { id: "arcade-set", title: "Arcade romset", explain: "Arcade zips matched as a whole, grouped by title.", hits: 87 },
       { id: "arcade-dat", title: "Arcade DAT check", explain: "Uncertain arcade matches are checked against each core's DAT.", hits: 3 },
       { id: "game-folder", title: "Game folder", explain: "DOS/ScummVM/ports moved as whole folders.", hits: 12 },
-      { id: "name-only", title: "Name folder", explain: "Files without hash match whose folder names a system (e.g. n64dd, solarus).", hits: 4 },
+      { id: "name-only", title: "Name folder", explain: "Files without hash match whose folder names a system (e.g. solarus, openbor).", hits: 4 },
       { id: "quarantine", title: "Quarantine", explain: "Files without database match go to _quarantine.", hits: 5270 },
       { id: "playlist", title: "RetroArch playlist", explain: "One .lpl per system.", hits: 30 },
     ];

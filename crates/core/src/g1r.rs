@@ -101,7 +101,6 @@ impl Default for Rules {
             name_folders: BTreeMap::from(
                 [
                     ("astrocde", "Bally - Astrocade"),
-                    ("n64dd", "Nintendo - Nintendo 64"),
                     ("openbor", "OpenBOR"),
                     ("solarus", "Solarus"),
                 ]

@@ -1,6 +1,6 @@
 //! Name-only identification (SPEC §11a): unknown files directly in a folder the rules map to
-//! a system (`Rules::name_folders`, e.g. Batocera's `n64dd` → Nintendo 64 for cartridge
-//! conversions) become [`Ident::Named`] with the file name as release name. In the library the
+//! a system (`Rules::name_folders`, e.g. `solarus` → Solarus, which has no database)
+//! become [`Ident::Named`] with the file name as release name. In the library the
 //! system folder itself counts, so an audit keeps what an import placed.
 
 use crate::g1r::Rules;

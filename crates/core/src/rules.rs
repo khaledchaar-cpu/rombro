@@ -142,7 +142,7 @@ impl Rule {
             }
             Rule::Playlist => "One RetroArch .lpl playlist per system in _playlists.",
             Rule::NameOnly => {
-                "Files without database match directly in a name folder (e.g. n64dd → Nintendo 64, \
+                "Files without database match directly in a name folder (e.g. \
                  solarus → Solarus, openbor → OpenBOR) are placed under that system with their file name. 1G1R runs \
                  among them by name only, never against verified dumps; rejected ones become a \
                  decision, nothing is trashed by name alone."
