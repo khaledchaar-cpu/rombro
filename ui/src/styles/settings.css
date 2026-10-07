@@ -12,7 +12,6 @@
 .btn.sm { padding: 0 var(--sp-2); min-height: 0; }
 .flag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: var(--sp-2); }
 .check { display: flex; align-items: center; gap: var(--sp-2); cursor: pointer; }
-.check input { accent-color: var(--accent); }
 .tag { border: 1px solid var(--line-strong); padding: 0 var(--sp-1); font-size: 0.8em; white-space: nowrap; }
 .rule-head { align-items: center; margin-bottom: var(--sp-1); }
 .rule-head .btn { margin-left: auto; }
@@ -27,3 +26,39 @@
 .ra-result details { margin-top: var(--sp-1); }
 .ra-cores { margin: var(--sp-2) 0; }
 .ra-cores summary h4 { display: inline; }
+
+/* Settings view: section navigation left, content right. */
+.settings-shell { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
+.settings-nav { position: sticky; top: 0; display: grid; gap: var(--sp-1); padding-top: var(--sp-2); }
+.settings-tab {
+  text-align: left; background: none; border: 0; border-left: 2px solid var(--line);
+  color: var(--text-dim); font: inherit; font-family: var(--font-head); font-size: var(--fs-xs);
+  letter-spacing: 0.12em; text-transform: uppercase; padding: var(--sp-2) var(--sp-3); cursor: pointer;
+  transition: color var(--dur), border-color var(--dur);
+}
+.settings-tab:hover { color: var(--text); border-left-color: var(--line-strong); }
+.settings-tab.active { color: var(--accent); border-left-color: var(--accent); text-shadow: var(--glow); }
+.settings-tab:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
+@media (max-width: 720px) {
+  .settings-shell { grid-template-columns: 1fr; }
+  .settings-nav { position: static; grid-auto-flow: column; overflow-x: auto; }
+}
+
+/* Checkboxes: drawn from tokens instead of the native control (unreadable on dark). */
+input[type="checkbox"] {
+  appearance: none; flex: none; width: 16px; height: 16px; margin: 0; display: inline-grid; place-content: center;
+  background: var(--bg-sunken); border: 1px solid color-mix(in srgb, var(--text-dim) 70%, transparent); cursor: pointer;
+  transition: border-color var(--dur), background var(--dur), box-shadow var(--dur);
+}
+input[type="checkbox"]::before {
+  content: ""; width: 9px; height: 5px; margin-top: -2px;
+  border: solid var(--accent); border-width: 0 0 2px 2px; transform: rotate(-45deg) scale(0);
+  transition: transform var(--dur);
+}
+input[type="checkbox"]:hover { border-color: var(--accent); }
+input[type="checkbox"]:checked {
+  border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--bg-raised)); box-shadow: var(--glow);
+}
+input[type="checkbox"]:checked::before { transform: rotate(-45deg) scale(1); }
+input[type="checkbox"]:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }

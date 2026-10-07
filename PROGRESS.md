@@ -32,7 +32,10 @@ ersten Track im Hash-Cache gespeichert (`CachedRom.disc`), Zips nur bei DAT-beka
 (`Store::dat_knows`), MSU-1-Suche nur neben SNES-ROMs, ScummVM-Launcher-Reparatur nur für ScummVM-Ordner.
 Sichtprüfung neuer UI-Teile abgenommen 2026-10-07 (Mock + echte App).
 Nächste Schritte:
-„Aufräumen GUI-Elemente“ mit User konkretisieren; ggf. Release v0.3.1.
+GUI aufgeräumt (2026-10-07): Rules + Settings = ein Tab „Settings“ mit Sektionen Rules/Databases/RetroArch/
+Appearance (`state/settingsNav`, auch per Command-Palette); DB-Sync nach Settings → Databases, Dashboard zeigt
+nur noch Hinweis bei leerer DB; Quick scan entfernt; eigene Checkboxen (Tokens, beide Themes).
+Nächste Schritte: ggf. Release v0.3.1; dann M15 Launcher-Basis.
 Stolperstein: App läuft beim User per `pnpm tauri dev` – Code-Änderungen starten sie neu (laufende Scans brechen ab).
 
 M14: `core::arcade::dat` (Logiqx/listxml-Parser, Prüfung über Zip-Verzeichnis), `archive::members`, Store-Tabellen
