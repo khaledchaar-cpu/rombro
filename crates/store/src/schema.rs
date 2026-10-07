@@ -112,7 +112,8 @@ pub fn migrate(conn: &Connection) -> Result<()> {
         return Err(Error::SchemaTooNew(current, target));
     }
     for (i, sql) in MIGRATIONS.iter().enumerate().skip(current as usize) {
-        let tx = conn.unchecked_transaction()?;
+        let tx =
+            rusqlite::Transaction::new_unchecked(conn, rusqlite::TransactionBehavior::Immediate)?;
         tx.execute_batch(sql)?;
         tx.pragma_update(None, "user_version", i as i64 + 1)?;
         tx.commit()?;

@@ -156,7 +156,10 @@ impl Store {
             }
         }
         let pre = prefix(root);
-        let tx = self.conn.unchecked_transaction()?;
+        let tx = rusqlite::Transaction::new_unchecked(
+            &self.conn,
+            rusqlite::TransactionBehavior::Immediate,
+        )?;
         let old: HashMap<String, String> = tx
             .prepare_cached("SELECT path, roms FROM file WHERE substr(path, 1, ?2) = ?1")?
             .query_map(params![pre, pre.chars().count() as i64], |r| {
@@ -213,7 +216,10 @@ impl Store {
 
     /// Carries index rows along with executed file operations.
     pub fn index_executed(&self, done: &[Done]) -> Result<()> {
-        let tx = self.conn.unchecked_transaction()?;
+        let tx = rusqlite::Transaction::new_unchecked(
+            &self.conn,
+            rusqlite::TransactionBehavior::Immediate,
+        )?;
         for d in done {
             match &d.op {
                 Op::Move { from, to } => self.relocate(from, to, true)?,
@@ -280,7 +286,10 @@ impl Store {
 
     /// Reverts [`Store::index_executed`] after an undo.
     pub fn index_undone(&self, done: &[Done]) -> Result<()> {
-        let tx = self.conn.unchecked_transaction()?;
+        let tx = rusqlite::Transaction::new_unchecked(
+            &self.conn,
+            rusqlite::TransactionBehavior::Immediate,
+        )?;
         for d in done.iter().rev() {
             match &d.op {
                 Op::Move { from, to } => self.relocate(to, from, true)?,

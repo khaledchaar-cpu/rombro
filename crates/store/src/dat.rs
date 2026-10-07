@@ -21,7 +21,9 @@ impl Store {
         fetched: i64,
         sets: &[DatSet],
     ) -> Result<()> {
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
         tx.execute("DELETE FROM dat_set WHERE system = ?1", [system])?;
         {
             let mut ins = tx.prepare(

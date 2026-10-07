@@ -91,7 +91,9 @@ impl Store {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        let tx = self.conn.transaction()?;
+        let tx = self
+            .conn
+            .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
         // Rebuilding indexes once is far cheaper than maintaining them per insert.
         let bulk = todo.len() > 4;
         if bulk {
