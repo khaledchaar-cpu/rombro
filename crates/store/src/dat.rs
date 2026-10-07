@@ -126,6 +126,34 @@ impl Store {
         Ok((!reasons.is_empty()).then(|| reasons.join("; ")))
     }
 
+    /// Core (system) whose DAT names `name` as a BIOS set and knows most of `members`:
+    /// re-packed BIOS zips (`neogeo.zip`, `stvbios.zip`) never match a database by whole-file
+    /// hash. The best-ranked core in the placement order wins.
+    pub fn bios_set(&self, name: &str, members: &[(String, u32)]) -> Result<Option<String>> {
+        if members.is_empty() {
+            return Ok(None);
+        }
+        let order = self.rules()?.arcade_order;
+        let mut best: Option<String> = None;
+        for info in self.dats()? {
+            let Some(set) = self.dat_set(&info.system, name)? else {
+                continue;
+            };
+            let hits = members
+                .iter()
+                .filter(|(_, crc)| set.roms.iter().any(|r| r.crc == *crc))
+                .count();
+            if !set.bios || hits * 4 < members.len() * 3 {
+                continue;
+            }
+            let rank = |s: &str| rombro_core::arcade::rank_in(&order, s);
+            if best.as_deref().is_none_or(|b| rank(&info.system) < rank(b)) {
+                best = Some(info.system);
+            }
+        }
+        Ok(best)
+    }
+
     /// Checks zip `members` and the CHDs next to it (`chds`: file stems) as set `name` of
     /// `system`'s DAT. `None` if no DAT is loaded for
     /// `system`; `Err(reason)` if the set is unknown to the DAT or incomplete.
@@ -254,5 +282,22 @@ mod tests {
         );
         assert_eq!(s.rejected_set("scud", &[("x".into(), 9)]).unwrap(), None);
         assert_eq!(s.rejected_set("other", &m).unwrap(), None);
+    }
+
+    #[test]
+    fn bios_set_by_members() {
+        let mut s = Store::open_in_memory().unwrap();
+        let sets = dat::parse(
+            r#"<mame><machine name="neogeo" isbios="yes"><rom name="a" size="1" crc="1"/>
+            <rom name="b" size="1" crc="2"/></machine>
+            <machine name="game"><rom name="a" size="1" crc="1"/></machine></mame>"#
+                .as_bytes(),
+        )
+        .unwrap();
+        s.import_dat("MAME", "0.289", 1, &sets).unwrap();
+        let m = vec![("a".to_string(), 1), ("b".to_string(), 2)];
+        assert_eq!(s.bios_set("neogeo", &m).unwrap().as_deref(), Some("MAME"));
+        assert_eq!(s.bios_set("game", &m).unwrap(), None);
+        assert_eq!(s.bios_set("neogeo", &[("x".into(), 9)]).unwrap(), None);
     }
 }

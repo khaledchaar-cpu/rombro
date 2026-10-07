@@ -239,8 +239,9 @@ impl Store {
         }))
     }
 
-    /// A zip without whole-file match that a DAT names and the rules exclude (e.g. MAME
-    /// "not working"): an incomplete set with the DAT reason instead of unknown members.
+    /// A zip without whole-file match that a DAT names: a BIOS set (re-packed, so no hash
+    /// match), or a set the rules exclude (e.g. MAME "not working") – an incomplete set with
+    /// the DAT reason instead of unknown members.
     fn rejected_romset(&self, whole: &ScannedRom, in_library: bool) -> Result<Option<Item>> {
         let is_zip = whole
             .path
@@ -257,6 +258,24 @@ impl Store {
         let Ok(members) = rombro_core::archive::members(&whole.path) else {
             return Ok(None);
         };
+        let files = Files::Set {
+            archive: whole.path.clone(),
+            chds: Vec::new(),
+            alt: Vec::new(),
+            dat_note: String::new(),
+        };
+        if let Some(system) = self.bios_set(&stem, &members)? {
+            let ident = Ident::Bios(Game {
+                system,
+                name: stem.into_owned(),
+                crc: None,
+            });
+            return Ok(Some(Item {
+                files,
+                ident,
+                in_library,
+            }));
+        }
         let Some(reason) = self.rejected_set(&stem, &members)? else {
             return Ok(None);
         };
