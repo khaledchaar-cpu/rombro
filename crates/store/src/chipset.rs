@@ -63,6 +63,53 @@ impl Store {
                 return Ok(Some(item(Ident::Known(game(r)))));
             }
         }
+        // RetroArch's database lists few of these boards' games (mostly GD-ROMs); a cart set
+        // MAME knows on such a board runs on Flycast, whatever MAME's driver status says
+        let crcs: Vec<u32> = members
+            .iter()
+            .filter(|r| r.member.is_some())
+            .map(|r| r.hashes.crc)
+            .collect();
+        if let Some(system) = self.dat_board_set(&stem, &crcs)? {
+            return Ok(Some(item(Ident::Known(Game {
+                system: system.to_owned(),
+                name: stem.into_owned(),
+                crc: None,
+            }))));
+        }
+        Ok(None)
+    }
+
+    /// The chip-keyed board (Flycast system) of arcade set `name`, if a loaded DAT has the
+    /// set on that board's BIOS (via its `romof` chain) and `members` hold most of its ROMs.
+    pub(crate) fn dat_board_set(&self, name: &str, crcs: &[u32]) -> Result<Option<&'static str>> {
+        if crcs.is_empty() {
+            return Ok(None);
+        }
+        for info in self.dats()? {
+            let Some(set) = self.dat_set(&info.system, name)? else {
+                continue;
+            };
+            let hits = crcs
+                .iter()
+                .filter(|c| set.roms.iter().any(|r| r.crc == **c))
+                .count();
+            // as in `rejected_set`: dumps often carry device ROMs listed elsewhere
+            if hits * 4 < crcs.len() * 3 {
+                continue;
+            }
+            let mut romof = set.romof;
+            for _ in 0..4 {
+                let Some(parent) = romof else { break };
+                if let Some(&(_, system)) = CHIP_KEYED_BIOS
+                    .iter()
+                    .find(|(bios, _)| parent.eq_ignore_ascii_case(bios))
+                {
+                    return Ok(Some(system));
+                }
+                romof = self.dat_set(&info.system, &parent)?.and_then(|s| s.romof);
+            }
+        }
         Ok(None)
     }
 }
@@ -72,4 +119,45 @@ fn file_name(p: &str) -> &str {
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or(p)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Store;
+    use rombro_core::plan::{Files, Ident};
+    use std::io::Write;
+
+    #[test]
+    fn cart_set_on_naomi_bios_is_naomi_even_if_mame_marks_it_not_working() {
+        let tmp = tempfile::tempdir().unwrap();
+        let mut w =
+            zip::ZipWriter::new(std::fs::File::create(tmp.path().join("crzytaxi.zip")).unwrap());
+        for (m, data) in [("epr-21684.ic22", &b"boot"[..]), ("mpr-21671.ic1", b"gfx")] {
+            w.start_file(m, zip::write::SimpleFileOptions::default())
+                .unwrap();
+            w.write_all(data).unwrap();
+        }
+        w.finish().unwrap();
+        let crc = |d: &[u8]| crc32fast::hash(d);
+        let dat = format!(
+            r#"<mame>
+            <machine name="naomi" isbios="yes"><rom name="b" size="1" crc="00000001"/></machine>
+            <machine name="crzytaxi" romof="naomi"><driver status="preliminary"/>
+              <rom name="epr-21684.ic22" size="4" crc="{:08x}"/>
+              <rom name="mpr-21671.ic1" size="3" crc="{:08x}"/></machine></mame>"#,
+            crc(b"boot"),
+            crc(b"gfx")
+        );
+        let mut s = Store::open_in_memory().unwrap();
+        let sets = rombro_core::arcade::dat::parse(dat.as_bytes()).unwrap();
+        s.import_dat("MAME", "0.289", 1, &sets).unwrap();
+        let items = s.items(&rombro_core::scan(tmp.path()), false).unwrap();
+        assert_eq!(items.len(), 1);
+        assert!(matches!(items[0].files, Files::Set { .. }));
+        assert!(
+            matches!(&items[0].ident, Ident::Known(g) if g.system == "Sega - Naomi" && g.name == "crzytaxi"),
+            "{:?}",
+            items[0].ident
+        );
+    }
 }

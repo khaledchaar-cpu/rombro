@@ -173,6 +173,29 @@ impl Store {
                 .min()
                 .unwrap_or_default(),
             Err(reason) => {
+                // a set on a Flycast board runs there whatever MAME's driver status says
+                let crcs: Vec<u32> = rombro_core::archive::members(&whole.path)
+                    .map(|m| m.into_iter().map(|(_, crc)| crc).collect())
+                    .unwrap_or_default();
+                let stem = whole.path.file_stem().map(|s| s.to_string_lossy());
+                if let Some(stem) = stem
+                    && let Some(system) = self.dat_board_set(&stem, &crcs)?
+                {
+                    return Ok(Some(Item {
+                        files: Files::Set {
+                            archive: whole.path.clone(),
+                            chds: set_chds(&whole.path),
+                            alt: Vec::new(),
+                            dat_note: String::new(),
+                        },
+                        ident: Ident::Known(Game {
+                            system: system.to_owned(),
+                            name: stem.into_owned(),
+                            crc: None,
+                        }),
+                        in_library,
+                    }));
+                }
                 return Ok(Some(Item {
                     files: Files::Set {
                         archive: whole.path.clone(),
