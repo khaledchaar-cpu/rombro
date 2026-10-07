@@ -272,11 +272,25 @@ fn plan_bios(
     ex: &mut Export,
 ) {
     let mut planned = BTreeSet::new();
+    let mut copies: Vec<PathBuf> = Vec::new();
     for f in firmware {
         if !planned.insert(f.path.as_str()) {
             continue;
         }
         let target = dirs.system.join(&f.path);
+        // `SGB1.sfc` and `SGB1.sfc/sgb1.boot.rom` can't both exist: the first listed wins
+        let blocked = target
+            .ancestors()
+            .skip(1)
+            .take_while(|a| *a != dirs.system)
+            .any(Path::is_file)
+            || target.is_dir()
+            || copies
+                .iter()
+                .any(|c: &PathBuf| c.starts_with(&target) || target.starts_with(c));
+        if blocked {
+            continue;
+        }
         let source = library_files
             .get(&f.sha1)
             .cloned()
@@ -290,6 +304,7 @@ fn plan_bios(
                 }
             }
             (Some(src), false) => {
+                copies.push(target.clone());
                 ex.ops.push(Op::Copy {
                     from: src,
                     to: target,
