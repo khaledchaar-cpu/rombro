@@ -59,7 +59,7 @@ impl Store {
             )? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
-            } else if let Some(item) = self.rejected_romset(whole, in_library)? {
+            } else if let Some(item) = self.dat_romset(whole, in_library, &known)? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
             }
@@ -239,10 +239,15 @@ impl Store {
         }))
     }
 
-    /// A zip without whole-file match that a DAT names: a BIOS set (re-packed, so no hash
-    /// match), or a set the rules exclude (e.g. MAME "not working") – an incomplete set with
+    /// A zip without whole-file match that a DAT names: a BIOS set or a complete set of some
+    /// core (re-packed, so no hash match), or a set the rules exclude (e.g. MAME "not working") – an incomplete set with
     /// the DAT reason instead of unknown members.
-    fn rejected_romset(&self, whole: &ScannedRom, in_library: bool) -> Result<Option<Item>> {
+    fn dat_romset(
+        &self,
+        whole: &ScannedRom,
+        in_library: bool,
+        known: &HashSet<String>,
+    ) -> Result<Option<Item>> {
         let is_zip = whole
             .path
             .extension()
@@ -273,6 +278,38 @@ impl Store {
             return Ok(Some(Item {
                 files,
                 ident,
+                in_library,
+            }));
+        }
+        let has_set = |n: &str| known.contains(&n.to_ascii_lowercase());
+        let chds = set_chds(&whole.path);
+        let chd_names: Vec<String> = chds
+            .iter()
+            .filter_map(|p| Some(p.file_stem()?.to_string_lossy().into_owned()))
+            .collect();
+        let zip_name = format!("{stem}.zip");
+        let mut games = Vec::new();
+        for system in self.complete_sets(&stem, &members, &chd_names, has_set)? {
+            let name = self
+                .by_rom_name(&system, &zip_name)?
+                .first()
+                .map_or_else(|| stem.clone().into_owned(), |r| r.name.clone());
+            games.push(Game {
+                system,
+                name,
+                crc: None,
+            });
+        }
+        if !games.is_empty() {
+            let best = games.remove(0);
+            return Ok(Some(Item {
+                files: Files::Set {
+                    archive: whole.path.clone(),
+                    chds,
+                    alt: games,
+                    dat_note: "matched by DAT (re-packed zip)".into(),
+                },
+                ident: Ident::Known(best),
                 in_library,
             }));
         }

@@ -38,6 +38,11 @@ impl Store {
         )
     }
 
+    /// Entries of `system` whose romset file is `rom_name` (`1942.zip`).
+    pub fn by_rom_name(&self, system: &str, rom_name: &str) -> Result<Vec<Record>> {
+        self.query("system = ?1 AND rom_name = ?2", &[&system, &rom_name])
+    }
+
     /// All entries of one system.
     pub fn by_system(&self, system: &str) -> Result<Vec<Record>> {
         self.query("system = ?1", &[&system])

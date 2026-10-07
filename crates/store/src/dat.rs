@@ -154,6 +154,28 @@ impl Store {
         Ok(best)
     }
 
+    /// Cores (best-ranked first) whose DAT has a working set `name` that `members` and
+    /// `chds` complete: identifies re-packed romsets that miss the whole-file hash.
+    pub fn complete_sets(
+        &self,
+        name: &str,
+        members: &[(String, u32)],
+        chds: &[String],
+        has_set: impl Fn(&str) -> bool + Copy,
+    ) -> Result<Vec<String>> {
+        let order = self.rules()?.arcade_order;
+        let rank = |s: &str| rombro_core::arcade::rank_in(&order, s);
+        let mut systems: Vec<String> = self.dats()?.into_iter().map(|d| d.system).collect();
+        systems.sort_by_key(|s| rank(s));
+        let mut out = Vec::new();
+        for system in systems {
+            if let Some(Ok(())) = self.check_set(&system, name, members, chds, has_set)? {
+                out.push(system);
+            }
+        }
+        Ok(out)
+    }
+
     /// Checks zip `members` and the CHDs next to it (`chds`: file stems) as set `name` of
     /// `system`'s DAT. `None` if no DAT is loaded for
     /// `system`; `Err(reason)` if the set is unknown to the DAT or incomplete.
@@ -299,5 +321,24 @@ mod tests {
         assert_eq!(s.bios_set("neogeo", &m).unwrap().as_deref(), Some("MAME"));
         assert_eq!(s.bios_set("game", &m).unwrap(), None);
         assert_eq!(s.bios_set("neogeo", &[("x".into(), 9)]).unwrap(), None);
+    }
+
+    #[test]
+    fn complete_sets_by_members() {
+        let mut s = Store::open_in_memory().unwrap();
+        let dat = r#"<mame><machine name="1942"><rom name="a" size="1" crc="1"/>
+            <rom name="b" size="1" crc="2"/></machine></mame>"#;
+        let sets = dat::parse(dat.as_bytes()).unwrap();
+        s.import_dat("MAME", "0.289", 1, &sets).unwrap();
+        s.import_dat("FBNeo - Arcade Games", "1", 1, &sets).unwrap();
+        let full = vec![("a".to_string(), 1), ("b".to_string(), 2)];
+        let got = s.complete_sets("1942", &full, &[], |_| false).unwrap();
+        assert_eq!(got, ["FBNeo - Arcade Games", "MAME"]);
+        let part = vec![("a".to_string(), 1)];
+        assert!(
+            s.complete_sets("1942", &part, &[], |_| false)
+                .unwrap()
+                .is_empty()
+        );
     }
 }
