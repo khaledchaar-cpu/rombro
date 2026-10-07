@@ -69,6 +69,9 @@ impl Store {
     }
 
     fn init(conn: Connection) -> Result<Self> {
+        // the app opens several connections (plan, execute, library refresh); a writer waits
+        // for another instead of failing with "database is locked"
+        conn.busy_timeout(std::time::Duration::from_secs(30))?;
         conn.pragma_update(None, "synchronous", "NORMAL")?;
         conn.pragma_update(None, "foreign_keys", "ON")?;
         schema::migrate(&conn)?;
