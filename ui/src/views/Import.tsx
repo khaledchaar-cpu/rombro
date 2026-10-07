@@ -35,7 +35,7 @@ const isBios = (o: { rule: string }) => o.rule === "bios";
 
 function OpList() {
   let scroller!: HTMLDivElement;
-  const ops = createMemo(() => (plan()?.ops ?? []).filter((o) => !isBios(o)));
+  const ops = () => plan()?.ops ?? [];
   const v = createVirtualizer({
     get count() {
       return ops().length;
@@ -53,7 +53,7 @@ function OpList() {
               ops()[row.index] ?? { kind: "move", from: null, to: "", rule: "", why: "" };
             return (
               <div
-                class="vrow oprow mono small"
+                class={`vrow oprow mono small${isBios(op()) ? " bios" : ""}`}
                 style={{
                   transform: `translateY(${row.start}px)`,
                   height: `${ROW_H}px`,
@@ -68,6 +68,9 @@ function OpList() {
                   {rel(op().to)}
                 </span>
                 <span class="ellipsis why" title={`rule: ${op().rule}`}>
+                  <Show when={isBios(op())}>
+                    <span class="tag tag-bios">BIOS</span>{" "}
+                  </Show>
                   {op().why}
                 </span>
               </div>
@@ -136,34 +139,6 @@ function Actions(props: { d: DecisionView }) {
       </div>
     );
   return null;
-}
-
-/** BIOS files bound for `_bios`, collapsed: source name → the name the cores expect. */
-function BiosOps() {
-  const ops = createMemo(() => (plan()?.ops ?? []).filter(isBios));
-  return (
-    <Show when={ops().length}>
-      <details class="bios-ops">
-        <summary>
-          BIOS → <span class="mono">_bios</span> <span class="dim small">{ops().length} files</span>
-        </summary>
-        <For each={ops()}>
-          {(o) => (
-            <div class="mono small row">
-              <span class={`tag tag-${o.kind}`}>{o.kind}</span>
-              <span class="dim ellipsis" title={o.from ?? ""}>
-                {o.from?.split("/").pop() ?? ""}
-              </span>
-              <span class="arrow">→</span>
-              <span class="ellipsis" title={o.to}>
-                {rel(o.to)}
-              </span>
-            </div>
-          )}
-        </For>
-      </details>
-    </Show>
-  );
 }
 
 const KINDS: DecisionView["kind"][] = [
@@ -334,7 +309,6 @@ export default function Import() {
               }
             >
               <Panel title="Operations" class="wide">
-                <BiosOps />
                 <OpList />
               </Panel>
             </Show>

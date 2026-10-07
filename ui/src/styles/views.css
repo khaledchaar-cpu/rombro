@@ -36,6 +36,8 @@
 .tag-ambiguous, .tag-tie { color: var(--yellow); }
 .tag-conflict { color: var(--err); }
 .tag-rejected, .tag-skipped { color: var(--magenta); }
+.tag-bios { color: var(--yellow); }
+.oprow.bios { box-shadow: inset 2px 0 0 var(--yellow); }
 
 .decisions { list-style: none; margin: 0; padding: 0; max-height: 50vh; overflow: auto; }
 .decisions li { display: flex; flex-direction: column; gap: 2px; padding: var(--sp-2) 0; border-bottom: 1px dashed var(--line); }
@@ -92,4 +94,3 @@
 .achs li.locked { opacity: 0.45; }
 .tag-new { color: var(--yellow); }
 .oplist { max-height: 40vh; overflow: hidden auto; scrollbar-gutter: stable; padding-right: var(--sp-2); }
-.bios-ops { margin-bottom: var(--sp-2); }
