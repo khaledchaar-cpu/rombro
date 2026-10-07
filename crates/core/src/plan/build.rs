@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 const UNKNOWN_TRASH: &str = "unknown";
 
 mod archives;
+mod firmware;
 mod folders;
 mod frontend;
 mod msu;
@@ -191,6 +192,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 b.why = Why::new(Rule::Bios, "");
                 b.bios(it, g);
             }
+            Ident::Firmware(paths) => b.firmware(it, paths),
             Ident::Ambiguous(c) => b.plan.decisions.push(Decision::Ambiguous {
                 path: it.files.primary().clone(),
                 candidates: c.clone(),
@@ -592,8 +594,10 @@ impl Builder<'_> {
     /// The game name if every clashing op copies a file bit-identical to the one already at
     /// (or planned for) its target – the item is then a duplicate, not a conflict.
     fn identical_copy(&self, it: &Item, ops: &[Op]) -> Option<String> {
-        let (Ident::Known(g) | Ident::Bios(g)) = &it.ident else {
-            return None;
+        let g = match &it.ident {
+            Ident::Known(g) | Ident::Bios(g) => g,
+            Ident::Firmware(paths) => paths.first()?,
+            _ => return None,
         };
         let own: Vec<&Path> = ops.iter().filter_map(Op::source).collect();
         let all_same = ops.iter().all(|op| {
@@ -613,8 +617,10 @@ impl Builder<'_> {
 
     /// A bit-identical second copy: 1G1R duplicate (decision queue, or trashed if you said so).
     fn duplicate(&mut self, it: &Item, n_ops: usize, kept: String) {
-        let (Ident::Known(g) | Ident::Bios(g)) = &it.ident else {
-            return;
+        let g = match &it.ident {
+            Ident::Known(g) | Ident::Bios(g) => g,
+            Ident::Firmware(paths) if !paths.is_empty() => &paths[0],
+            _ => return,
         };
         let key = (g.system.clone(), g.name.clone());
         // single files only; a duplicate game folder is left for you to remove

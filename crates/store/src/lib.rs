@@ -6,6 +6,7 @@ mod dat;
 mod dat_sync;
 mod disc;
 mod files;
+mod firmware;
 mod gamify;
 mod identify;
 mod import;

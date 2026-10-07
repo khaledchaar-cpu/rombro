@@ -108,6 +108,9 @@ pub enum Ident {
     Unknown,
     /// A BIOS set (arcade or console `[BIOS]` entry): goes to the BIOS folder, ignored everywhere else.
     Bios(Game),
+    /// A file whose size and SHA1 match libretro's `System.dat`: goes to `_bios/<path>` (the
+    /// first listed path still missing). `Game::name` is the path inside `_bios`.
+    Firmware(Vec<Game>),
     /// Not handled by the planner (reason shown to the user).
     Skip(String),
     /// Arcade set matched by a database but incomplete for every core's DAT (SPEC F8):

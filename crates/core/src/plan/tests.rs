@@ -612,3 +612,61 @@ fn msu1_folder_without_marker_gets_one() {
         ]
     );
 }
+
+#[test]
+fn firmware_goes_to_bios_only_where_missing() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let fw = |paths: &[&str]| {
+        Ident::Firmware(
+            paths
+                .iter()
+                .map(|p| Game {
+                    system: "Arcade".into(),
+                    name: (*p).into(),
+                    crc: None,
+                })
+                .collect(),
+        )
+    };
+    file(&lib, "_bios/neogeo.zip", "neo");
+    file(&lib, "_bios/scph5501.bin", "ps1");
+    let items = [
+        // listed twice: the root copy exists, so the FBNeo path gets it
+        item(
+            file(&inbox, "bios/neogeo.zip", "neo"),
+            fw(&["neogeo.zip", "fbneo/neogeo.zip"]),
+            false,
+        ),
+        // already there: a duplicate, nothing moves
+        item(
+            file(&inbox, "bios/scph5501.bin", "ps1"),
+            fw(&["scph5501.bin"]),
+            false,
+        ),
+        // renamed to every name the cores expect
+        item(
+            file(&inbox, "bios/gb.bin", "gb"),
+            fw(&["gb_bios.bin", "dmg_boot.bin"]),
+            false,
+        ),
+    ];
+    let plan = build(&items, &lib, &opts(Mode::Move));
+    let targets: Vec<_> = plan
+        .ops
+        .iter()
+        .map(|op| op.target().strip_prefix(&lib).unwrap().to_path_buf())
+        .collect();
+    assert_eq!(
+        targets,
+        [
+            Path::new("_bios/fbneo/neogeo.zip"),
+            Path::new("_bios/gb_bios.bin"),
+            Path::new("_bios/dmg_boot.bin")
+        ]
+    );
+    assert!(matches!(
+        plan.decisions.as_slice(),
+        [Decision::Rejected { .. }]
+    ));
+}

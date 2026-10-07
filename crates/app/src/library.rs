@@ -149,7 +149,7 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
             // trash, playlists and BIOS sets are managed by RomBro, not part of the collection
             .filter(|it| {
                 let p = it.files.primary();
-                !matches!(it.ident, Ident::Bios(_))
+                !matches!(it.ident, Ident::Bios(_) | Ident::Firmware(_))
                     && ![TRASH_DIR, PLAYLIST_DIR, BIOS_DIR]
                         .iter()
                         .any(|d| p.starts_with(library.join(d)))
@@ -174,6 +174,7 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
                     Ident::Unknown => ("unknown", String::new(), String::new()),
                     Ident::Skip(r) | Ident::Incomplete(r) => ("skip", String::new(), r),
                     Ident::Bios(g) => ("skip", g.system, g.name), // filtered above
+                    Ident::Firmware(_) => ("skip", String::new(), String::new()), // filtered above
                 };
                 let regions = rombro_core::naming::parse(&name)
                     .regions

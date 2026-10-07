@@ -267,6 +267,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   - Speicherung in der DB (wie Library-Pfad). CLI: `rules show` + „Warum“ in dry-run-Ausgabe; Setzen via GUI/Datei.
 - **BIOS-Erkennung nur per Hash (User, 2026-10-06):** BIOS-Sets mit unbekanntem Hash (z. B. eigenes `neogeo.zip`-Paket) werden *nicht* am Kurznamen erkannt → Quarantäne.
 - Bitgleiche Kopie an einem schon belegten/geplanten Ziel = 1G1R-Duplikat (TBD-Queue, `discard`-Verdict → `_trash`), nur abweichender Inhalt ist ein Konflikt (User, 2026-10-06). Gilt auch für BIOS.
+- **Firmware-Import per `System.dat` (User, 2026-10-07):** Eine lose Inbox-Datei (oder ein ganzes Zip), deren Größe + SHA1 exakt einem Eintrag der libretro-`System.dat` entspricht, ist BIOS – vor jeder RDB-/DAT-Erkennung (z. B. `SGB1.sfc` nicht als SNES-Spiel). Sie wird unter **jedem** dort gelisteten, in `_bios/` noch fehlenden Pfad abgelegt (Kopien + ein Move, damit jeder Core seinen Namen findet). Ist schon alles belegt: bitgleich → Duplikat (TBD), sonst Konflikt. Dateien in der Bibliothek bleiben, wo sie sind.
 - Arcade-DATs ergänzen RDBs nur zur Systemwahl, siehe F8 (User, 2026-10-06).
 - F8-Defaults (M14, Claude): Quellen = libretro-Core-Repos (FBNeo `dats/…Arcade only).dat`, mame2000/2003/2003-plus/
   2010/2015/2016 `metadata/`), aktuelles MAME = `mame*lx.zip` des neuesten mamedev-Releases. Version = Commit-SHA

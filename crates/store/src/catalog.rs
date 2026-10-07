@@ -43,7 +43,10 @@ impl Store {
             .map(|g| (g[0].path.as_path(), g))
             .collect();
         for whole in &report.archives {
-            if let Some(item) = self.romset(whole, in_library, &known)? {
+            if let Some(item) = firmware_item(whole, in_library) {
+                sets.insert(whole.path.as_path());
+                out.push(item);
+            } else if let Some(item) = self.romset(whole, in_library, &known)? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
             } else if let Some(item) = self.chip_set(
@@ -77,6 +80,12 @@ impl Store {
                     },
                     _ => Files::Single(rom.path.clone()),
                 };
+                if rom.member.is_none() {
+                    if let Some(item) = firmware_item(rom, in_library) {
+                        out.push(item);
+                        continue;
+                    }
+                }
                 let mut records = self.identify_rom(rom)?;
                 // a single chip matching an arcade entry is no game: arcade sets only match
                 // whole, as archives (loose chips: e.g. a Daphne folder's `M3ROM1.BIN`)
@@ -407,6 +416,19 @@ impl Store {
             },
         })
     }
+}
+
+/// A loose file (or whole archive) from the inbox that is exactly a known firmware file.
+/// Library files keep their place: the rule only imports.
+fn firmware_item(rom: &ScannedRom, in_library: bool) -> Option<Item> {
+    if in_library {
+        return None;
+    }
+    Some(Item {
+        files: Files::Single(rom.path.clone()),
+        ident: crate::firmware::ident(&rom.hashes)?,
+        in_library,
+    })
 }
 
 pub(crate) fn game(r: &Record) -> Game {
