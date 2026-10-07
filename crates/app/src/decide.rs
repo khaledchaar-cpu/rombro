@@ -17,13 +17,30 @@ pub enum VerdictArg {
 #[tauri::command]
 pub async fn resolve_ambiguous(path: PathBuf, system: String, name: String) -> CmdResult<()> {
     tauri::async_runtime::spawn_blocking(move || {
-        let report = rombro_core::scan(&path);
-        let sha1 = match report.discs.first() {
-            Some(d) => d.tracks.first().map(|t| t.hashes.sha1),
-            None => report.roms.first().map(|r| r.hashes.sha1),
-        }
-        .ok_or_else(|| format!("no ROM or disc found at {}", path.display()))?;
         let (store, _) = open_store()?;
+        // the plan's scan cached the hash; re-reading a multi-GB image would stall the list
+        let sheet = path.extension().is_some_and(|e| {
+            ["cue", "gdi", "m3u", "ccd", "toc"]
+                .iter()
+                .any(|x| e.eq_ignore_ascii_case(x))
+        });
+        let cached = (!sheet)
+            .then(|| path.parent())
+            .flatten()
+            .and_then(|dir| store.hash_cache(dir).ok())
+            .and_then(|c| c.get(&path))
+            .and_then(|roms| roms.first().map(|r| r.hashes.sha1));
+        let sha1 = match cached {
+            Some(h) => h,
+            None => {
+                let report = rombro_core::scan(&path);
+                match report.discs.first() {
+                    Some(d) => d.tracks.first().map(|t| t.hashes.sha1),
+                    None => report.roms.first().map(|r| r.hashes.sha1),
+                }
+                .ok_or_else(|| format!("no ROM or disc found at {}", path.display()))?
+            }
+        };
         store.set_resolution(&sha1, &system, &name).map_err(err)
     })
     .await

@@ -205,7 +205,12 @@ function Decisions() {
                 <span class="small">{d.detail}</span>
               </Show>
               <span class="mono small dim wrap-any">{d.path}</span>
-              <Actions d={d} />
+              <Show
+                when={!saving().has(decisionKey(d))}
+                fallback={<span class="dim small">saving…</span>}
+              >
+                <Actions d={d} />
+              </Show>
             </li>
           )}
         </For>
