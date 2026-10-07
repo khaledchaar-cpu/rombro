@@ -501,3 +501,26 @@ fn duplicate_members_need_no_decision() {
         ]
     );
 }
+
+#[test]
+fn repacked_zips_with_equal_members_are_the_same() {
+    let tmp = TempDir::new().unwrap();
+    let a = tmp.path().join("a/1944.zip");
+    zip(&a, &["x.bin", "y.bin"]);
+    // other order, stored instead of deflated: other bytes, same set
+    let b = tmp.path().join("b/1944.zip");
+    fs::create_dir_all(b.parent().unwrap()).unwrap();
+    let mut w = zip::ZipWriter::new(File::create(&b).unwrap());
+    let stored =
+        zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    for m in ["y.bin", "x.bin"] {
+        w.start_file(m, stored).unwrap();
+        w.write_all(m.as_bytes()).unwrap();
+    }
+    w.finish().unwrap();
+    assert_ne!(fs::read(&a).unwrap(), fs::read(&b).unwrap());
+    assert!(build::same_content(&a, &b));
+    let c = tmp.path().join("c/1944.zip");
+    zip(&c, &["x.bin"]);
+    assert!(!build::same_content(&a, &c));
+}

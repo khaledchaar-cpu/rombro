@@ -761,11 +761,31 @@ fn file_name(p: &Path) -> String {
         .unwrap_or_default()
 }
 
-/// Whether two files have the same bytes (size first, then streamed comparison).
-fn same_content(a: &Path, b: &Path) -> bool {
+fn is_zip(p: &Path) -> bool {
+    p.extension().is_some_and(|e| e.eq_ignore_ascii_case("zip"))
+}
+
+/// Whether two files have the same content: zips with the same members (name, CRC), else
+/// the same bytes (size first, then streamed comparison).
+pub(crate) fn same_content(a: &Path, b: &Path) -> bool {
     use std::io::Read;
     if a == b {
         return true;
+    }
+    if is_zip(a) && is_zip(b) {
+        // the same set packed by another tool: equal members count, not equal bytes
+        let members = |p: &Path| {
+            crate::archive::members(p).ok().map(|mut m| {
+                for (n, _) in &mut m {
+                    *n = n.to_ascii_lowercase();
+                }
+                m.sort();
+                m
+            })
+        };
+        if let (Some(ma), Some(mb)) = (members(a), members(b)) {
+            return ma == mb;
+        }
     }
     let (Ok(ma), Ok(mb)) = (fs::metadata(a), fs::metadata(b)) else {
         return false;
