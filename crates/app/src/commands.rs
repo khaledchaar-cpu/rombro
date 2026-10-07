@@ -39,6 +39,27 @@ pub(crate) fn indexed_scan(
     Ok(report)
 }
 
+/// The identified library: the stored snapshot while it is current, otherwise a scan
+/// (`full`: every file checked on disk, else trusted) whose result becomes the new snapshot.
+/// Nothing but RomBro changes the library, so planning never needs to walk it.
+pub(crate) fn library_snapshot(
+    store: &Store,
+    library: &std::path::Path,
+    full: bool,
+    progress: &(dyn Fn(rombro_core::ScanTick<'_>) + Sync),
+) -> CmdResult<rombro_store::Snapshot> {
+    if !full && let Some(snap) = store.snapshot(library).map_err(err)? {
+        return Ok(snap);
+    }
+    let report = indexed_scan(store, library, !full, progress)?;
+    let snap = rombro_store::Snapshot {
+        items: store.items(&report, true).map_err(err)?,
+        sets: rombro_store::set_names(&report).into_iter().collect(),
+    };
+    store.save_snapshot(library, &snap).map_err(err)?;
+    Ok(snap)
+}
+
 #[derive(Serialize)]
 pub struct SystemCount {
     system: String,

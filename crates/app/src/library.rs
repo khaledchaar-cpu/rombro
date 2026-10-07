@@ -1,5 +1,5 @@
 //! Library table: every scanned unit in the library with its identification.
-use crate::commands::{CmdResult, Throttle, err, indexed_scan, open_store};
+use crate::commands::{CmdResult, Throttle, err, library_snapshot, open_store};
 use rombro_core::plan::{BIOS_DIR, Ident, PLAYLIST_DIR, TRASH_DIR};
 use serde::Serialize;
 use std::path::PathBuf;
@@ -56,10 +56,15 @@ pub async fn session_get() -> CmdResult<Session> {
     })
 }
 
-/// Lists the library from the file index; only new or changed files are hashed.
+/// Lists the library from its snapshot (see [`library_snapshot`]); `rescan` checks every
+/// file on disk instead (maintenance, after changes made outside RomBro).
 /// `library` replaces the stored library path; without it the stored one is used.
 #[tauri::command]
-pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult<Vec<Row>> {
+pub async fn library_list(
+    app: AppHandle,
+    library: Option<PathBuf>,
+    rescan: Option<bool>,
+) -> CmdResult<Vec<Row>> {
     tauri::async_runtime::spawn_blocking(move || {
         let (store, _) = open_store()?;
         let library = match library {
@@ -74,14 +79,13 @@ pub async fn library_list(app: AppHandle, library: Option<PathBuf>) -> CmdResult
         }
         store.set_library(&library).map_err(err)?;
         let throttle = Throttle::new();
-        // the Rescan button: check every file
-        let report = indexed_scan(&store, &library, false, &|p| {
+        let snap = library_snapshot(&store, &library, rescan.unwrap_or(false), &|p| {
             if throttle.ready(p.done, p.total) {
                 let _ = app.emit("scan://progress", p);
             }
         })?;
         let rules = crate::settings::load_rules(&store)?;
-        let items = rombro_core::plan::name_only(&store.items(&report, true).map_err(err)?, &rules);
+        let items = rombro_core::plan::name_only(&snap.items, &rules);
         let added_db = store.added_times(&library).map_err(err)?;
         let mut folder_systems = rules.folder_systems;
         // MSU-1 games: no database knows them; the ROM in `<MSU-1>/<Game>/` is the game,

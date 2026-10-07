@@ -330,7 +330,8 @@ export async function sessionGet(): Promise<Session> {
   return invoke<Session>("session_get");
 }
 
-export async function libraryList(library?: string): Promise<LibraryRow[]> {
+/** The library from its stored snapshot; `rescan` checks every file on disk (maintenance). */
+export async function libraryList(library?: string, rescan = false): Promise<LibraryRow[]> {
   if (!inTauri) {
     return Array.from({ length: 5000 }, (_, i) => ({
       path: `Nintendo - Game Boy/Game ${i} (Europe).zip`,
@@ -342,7 +343,7 @@ export async function libraryList(library?: string): Promise<LibraryRow[]> {
       added: Date.now() / 1000 - i * 3600,
     }));
   }
-  return invoke<LibraryRow[]>("library_list", { library });
+  return invoke<LibraryRow[]>("library_list", { library, rescan });
 }
 
 export interface TrashFile {

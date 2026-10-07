@@ -3,7 +3,7 @@ import { onImportProgress, type ImportProgress } from "../ipc";
 import Segments from "./Segments";
 
 const LABELS: Record<ImportProgress["phase"], string> = {
-  library: "scanning library",
+  library: "loading library",
   inbox: "scanning inbox",
   planning: "building plan",
 };

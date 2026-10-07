@@ -1,6 +1,8 @@
 //! Import flow over IPC: plan (dry run) → execute → undo. The last plan is cached in app state so
 //! `execute` runs exactly what the user reviewed.
-use crate::commands::{CmdResult, Progress, Throttle, err, indexed_scan, open_store};
+use crate::commands::{
+    CmdResult, Progress, Throttle, err, indexed_scan, library_snapshot, open_store,
+};
 use rombro_core::plan::{self, Decision, Mode, Op, Options, PLAYLIST_DIR};
 use rombro_core::rules::Why;
 use rombro_store::Store;
@@ -115,8 +117,8 @@ fn emit_scan(
     // Announce the phase right away: walking a large tree takes a while before `total` is known.
     let _ = app.emit("import://progress", (phase, Progress { done: 0, total: 0 }));
     let throttle = Throttle::new();
-    // the library is trusted; the inbox is new material and checked file by file
-    indexed_scan(store, dir, phase == "library", &|p| {
+    // the inbox is new material and checked file by file
+    indexed_scan(store, dir, false, &|p| {
         if throttle.ready(p.done, p.total) {
             let _ = app.emit("import://progress", (phase, p));
         }
@@ -141,9 +143,18 @@ pub async fn plan_import(
         let mut items = Vec::new();
         let mut known = Default::default();
         if lib.is_dir() {
-            let report = emit_scan(&store, &app, "library", &lib)?;
-            known = rombro_store::set_names(&report);
-            items = store.items(&report, true).map_err(err)?;
+            let _ = app.emit(
+                "import://progress",
+                ("library", Progress { done: 0, total: 0 }),
+            );
+            let throttle = Throttle::new();
+            let snap = library_snapshot(&store, &lib, false, &|p| {
+                if throttle.ready(p.done, p.total) {
+                    let _ = app.emit("import://progress", ("library", p));
+                }
+            })?;
+            known = snap.sets.into_iter().collect();
+            items = snap.items;
         }
         let mut inbox_root: Option<PathBuf> = None;
         if let Some(inbox) = inbox {

@@ -33,7 +33,7 @@ pub enum Mode {
 }
 
 /// Files making up one importable unit.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Files {
     /// A ROM, a single-ROM archive or a disc image file (`.iso`).
     Single(PathBuf),
@@ -93,14 +93,14 @@ impl Files {
 }
 
 /// A database entry an item was matched to.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Game {
     pub system: String,
     pub name: String,
     pub crc: Option<u32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Ident {
     Known(Game),
     /// Several different games match; the user decides (SPEC §11a).
@@ -121,7 +121,7 @@ pub enum Ident {
     Named(Game),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Item {
     pub files: Files,
     pub ident: Ident,

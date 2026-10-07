@@ -92,6 +92,17 @@ const MIGRATIONS: &[&str] = &[
      DELETE FROM dat_set; DELETE FROM dat_source;",
     // v12: CHD data tracks now hash with their pregap (Redump layout); rehash CHDs
     "UPDATE file SET mtime = -1 WHERE lower(substr(path, -4)) = '.chd';",
+    // v13: identified library per root (gzip JSON); dropped whenever identification may change
+    "CREATE TABLE snapshot (root TEXT PRIMARY KEY, data BLOB NOT NULL);
+     CREATE TRIGGER snap_rdb_i AFTER INSERT ON rdb_source BEGIN DELETE FROM snapshot; END;
+     CREATE TRIGGER snap_rdb_u AFTER UPDATE ON rdb_source BEGIN DELETE FROM snapshot; END;
+     CREATE TRIGGER snap_rdb_d AFTER DELETE ON rdb_source BEGIN DELETE FROM snapshot; END;
+     CREATE TRIGGER snap_dat_i AFTER INSERT ON dat_source BEGIN DELETE FROM snapshot; END;
+     CREATE TRIGGER snap_dat_u AFTER UPDATE ON dat_source BEGIN DELETE FROM snapshot; END;
+     CREATE TRIGGER snap_dat_d AFTER DELETE ON dat_source BEGIN DELETE FROM snapshot; END;
+     CREATE TRIGGER snap_res_i AFTER INSERT ON resolution BEGIN DELETE FROM snapshot; END;
+     CREATE TRIGGER snap_res_u AFTER UPDATE ON resolution BEGIN DELETE FROM snapshot; END;
+     CREATE TRIGGER snap_res_d AFTER DELETE ON resolution BEGIN DELETE FROM snapshot; END;",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

@@ -165,6 +165,7 @@ impl Store {
             .collect::<rusqlite::Result<_>>()?;
         let now = now();
         let mut seen = std::collections::HashSet::new();
+        let mut changed = false;
         {
             // existing rows keep their `added` time
             let mut up = tx.prepare_cached(
@@ -179,13 +180,20 @@ impl Store {
                     continue;
                 }
                 let Ok(st) = Stamp::of(path) else { continue };
+                if old.get(&k) != Some(&json) {
+                    changed = true;
+                }
                 up.execute(params![k, st.size as i64, st.mtime, json, now])?;
                 seen.insert(k);
             }
             let mut del = tx.prepare_cached("DELETE FROM file WHERE path = ?1")?;
             for p in old.keys().filter(|p| !seen.contains(*p)) {
+                changed = true;
                 del.execute([p])?;
             }
+        }
+        if changed {
+            self.drop_snapshots(root)?;
         }
         tx.commit()?;
         Ok(())
@@ -217,8 +225,22 @@ impl Store {
                 } => self.index_member(archive, member, to)?,
                 Op::Write { .. } => {}
             }
+            self.drop_touched(&d.op)?;
         }
         tx.commit()?;
+        Ok(())
+    }
+
+    /// Drops the snapshots of every library an executed (or undone) op touched.
+    fn drop_touched(&self, op: &Op) -> Result<()> {
+        let paths: Vec<&Path> = match op {
+            Op::Move { from, to } | Op::Copy { from, to } => vec![from, to],
+            Op::Extract { archive, to, .. } => vec![archive, to],
+            Op::Write { path, .. } => vec![path],
+        };
+        for p in paths {
+            self.drop_snapshots(p)?;
+        }
         Ok(())
     }
 
@@ -268,6 +290,7 @@ impl Store {
                 }
                 Op::Write { .. } => {}
             }
+            self.drop_touched(&d.op)?;
         }
         tx.commit()?;
         Ok(())

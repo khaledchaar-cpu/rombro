@@ -63,6 +63,11 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
 - Dateinamen = RDB-`name` (Thumbnail-kompatibel: `&*/:<>?\|` → `_`).
 - Operationen: move | copy; optional (ent)zippen. (hardlink/reflink 2026-10-07 entfernt)
 - Immer: Plan → Dry-Run-Anzeige → Ausführen. Jede Ausführung schreibt ein **Journal** → Undo möglich.
+- Library-Snapshot (2026-10-07): RomBro verwaltet die Library allein, daher gilt der Index als Wahrheit.
+  Die identifizierte Library (Items + Arcade-Setnamen) liegt als Snapshot in der DB (`snapshot`, gzip-JSON).
+  Plan-Import und Library-View laden ihn (~60 ms) ohne Ordnerdurchlauf und ohne DB-Lookups. Verworfen wird er
+  per Trigger bei RDB-/DAT-Sync und Resolutions sowie bei Index-Änderungen unter der Library (Execute/Undo,
+  geänderte Scans); danach baut ihn ein Trusted-Scan neu auf. Wartung: „Rescan library“ prüft jede Datei auf der Platte.
 - Library-Audit: bestehende Library prüfen, falsch benannte/doppelte/nicht-1G1R-Dateien finden und Plan erzeugen.
 - Export: RetroArch-Playlists (`.lpl`, JSON) pro System, inkl. CRC → sofort nutzbar in RetroArch.
 

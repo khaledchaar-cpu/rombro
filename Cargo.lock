@@ -3161,6 +3161,7 @@ name = "rombro-store"
 version = "0.4.0"
 dependencies = [
  "crc32fast",
+ "flate2",
  "rayon",
  "rombro-core",
  "rombro-rdb",

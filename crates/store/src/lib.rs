@@ -14,6 +14,7 @@ mod journal;
 mod lookup;
 mod record;
 mod schema;
+mod snapshot;
 #[cfg(test)]
 mod tests;
 
@@ -26,6 +27,7 @@ pub use identify::{Match, candidates};
 pub use import::SyncReport;
 pub use journal::{JournalEntry, VerdictRow};
 pub use record::Record;
+pub use snapshot::Snapshot;
 
 use rusqlite::Connection;
 use std::path::{Path, PathBuf};

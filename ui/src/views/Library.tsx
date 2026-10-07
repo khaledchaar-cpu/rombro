@@ -49,8 +49,13 @@ export default function Library() {
       <Panel title="Library" class="wide">
         <DirField label="Library" value={library()} onChange={(v) => (setLibrary(v), void refreshLibrary())} />
         <div class="row">
-          <button class="btn" disabled={busy() || !library()} onClick={refreshLibrary}>
-            {busy() ? "Scanning" : "Rescan"}
+          <button
+            class="btn"
+            disabled={busy() || !library()}
+            title="Checks every file on disk – only needed after changes made outside RomBro"
+            onClick={() => void refreshLibrary(true)}
+          >
+            {busy() ? "Scanning" : "Rescan library"}
           </button>
         </div>
         <filter.Bar />

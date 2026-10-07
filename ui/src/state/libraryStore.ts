@@ -15,13 +15,14 @@ export const [libraryBusy, setLibraryBusy] = createSignal(false);
 export const [libraryError, setLibraryError] = createSignal("");
 const [loadedAt, setLoadedAt] = createSignal(0);
 
-/** Rescans the library incrementally (only new or changed files are hashed). */
-export async function refreshLibrary() {
+/** Loads the library from its snapshot (rebuilt only after changes); `rescan` checks
+ * every file on disk, for changes made outside RomBro. */
+export async function refreshLibrary(rescan = false) {
   if (libraryBusy() || !library()) return;
   setLibraryBusy(true);
   setLibraryError("");
   try {
-    setLibraryRows(await libraryList(library()));
+    setLibraryRows(await libraryList(library(), rescan));
     setLoadedAt(Date.now());
   } catch (e) {
     setLibraryError(String(e));
