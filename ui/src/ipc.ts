@@ -368,6 +368,8 @@ export interface Rules {
   /** Sets a core marks as not working count as incomplete for it. */
   arcade_working_only: boolean;
   folder_systems: string[];
+  /** Folder name → system for files identified only by where they lie (rule `name-only`). */
+  name_folders: Record<string, string>;
   quarantine: boolean;
   /** Unknown files go to _trash/unknown instead of _quarantine. */
   unknown_to_trash: boolean;
@@ -397,6 +399,7 @@ const mockRules = (): Rules => ({
   arcade_g1r: true,
   arcade_working_only: true,
   folder_systems: ["DOS", "ScummVM", "DOOM", "Quake"],
+  name_folders: { n64dd: "Nintendo - Nintendo 64", solarus: "Solarus" },
   quarantine: true,
   unknown_to_trash: true,
   frontend_trash: true,

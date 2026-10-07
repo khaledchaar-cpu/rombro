@@ -3,6 +3,7 @@ import Panel from "../components/Panel";
 import PriorityList from "../components/PriorityList";
 import { FLAG_KEYS, type FlagKey, type RuleInfo, type Rules as R, rulesCatalog, rulesDefaults, rulesGet, rulesSet } from "../ipc";
 import Exceptions from "./Exceptions";
+import NameFolders from "./NameFolders";
 import SystemOverrides from "./SystemOverrides";
 
 const FLAG_LABELS: Record<FlagKey, string> = {
@@ -18,6 +19,7 @@ const FIELDS: Record<string, (keyof R)[]> = {
   "arcade-set": ["arcade_order", "arcade_g1r"],
   "game-folder": ["folder_systems"],
   "arcade-dat": ["arcade_working_only"],
+  "name-only": ["name_folders"],
   quarantine: ["quarantine", "unknown_to_trash"],
   "frontend-meta": ["frontend_trash"],
 };
@@ -81,6 +83,10 @@ export default function Rules() {
       <Match when={info.id === "game-folder"}>
         <h4>Folder systems</h4>
         <PriorityList items={r.folder_systems} onChange={(folder_systems) => edit({ folder_systems })} placeholder="Add system" />
+      </Match>
+      <Match when={info.id === "name-only"}>
+        <h4>Name folders</h4>
+        <NameFolders folders={r.name_folders} onChange={(name_folders) => edit({ name_folders })} />
       </Match>
       <Match when={info.id === "arcade-dat"}>
         <label class="check">
