@@ -2,7 +2,7 @@
 //! `execute` runs exactly what the user reviewed.
 use crate::commands::{CmdResult, Progress, Throttle, err, indexed_scan, open_store};
 use rombro_core::plan::{self, Decision, Mode, Op, Options, PLAYLIST_DIR};
-use rombro_core::rules::{Rule, Why};
+use rombro_core::rules::Why;
 use rombro_store::Store;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -193,8 +193,6 @@ pub async fn plan_import(
             .ops
             .iter()
             .zip(&p.why)
-            // BIOS sets are placed silently; the user never sees them in the app
-            .filter(|(_, w)| w.rule != Rule::Bios)
             .map(|(o, w)| op_view(o, w))
             .collect(),
         decisions: p.decisions.iter().map(decision_view).collect(),

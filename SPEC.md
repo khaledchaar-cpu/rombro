@@ -251,7 +251,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - **Arcade (FBNeo/MAME)**: Erkennung über CRC+Größe des *ganzen* Zips (RDB-Einträge beschreiben das Archiv, nicht Member). Nur exakte Treffer; Name passt, CRC nicht → normale Quarantäne (RDB ist Single Point of Truth).
   - Mehrfachtreffer: FBNeo > MAME (neueste zuerst: MAME, 2016, 2015, 2010, 2003-Plus, 2003, 2000) > HBMAME. Ein Zip landet genau einmal in der Library (keine CRC-Dubletten).
   - Kurzname (`burningf.zip`) bleibt erhalten; Arcade ist von 1G1R ausgenommen (alle exakt passenden Sets/Clones bleiben).
-  - BIOS (Arcade-Zips wie `neogeo.zip` und Konsolen-`[BIOS]`-Einträge, Konsole → `_bios/` = `system`-Wurzel) → `<lib>/_bios/` (FBNeo: `_bios/fbneo/` = RetroArch-`system`-Layout; MAME-Cores: neben den Romsets), sonst komplett ignoriert (keine Anzeige – auch nicht im Import-Plan –, Statistik, Achievements).
+  - BIOS (Arcade-Zips wie `neogeo.zip` und Konsolen-`[BIOS]`-Einträge, Konsole → `_bios/` = `system`-Wurzel) → `<lib>/_bios/` (FBNeo: `_bios/fbneo/` = RetroArch-`system`-Layout; MAME-Cores: neben den Romsets), sonst komplett ignoriert (keine Anzeige in Bibliothek, Statistik, Achievements; im Import-Plan als zugeklappte Gruppe „BIOS → `_bios`“, User 2026-10-07).
   - MAME-CHDs: gleichnamiger Ordner neben erkanntem Zip (`kinst/kinst.chd`) wird ungeprüft mitgenommen; CHD ohne Zip → Quarantäne.
 
 - **M13 Regeln transparent & einstellbar (User, 2026-10-06):**

@@ -31,9 +31,11 @@ function rel(p: string) {
   return lib && p.startsWith(lib) ? p.slice(lib.length).replace(/^\/+/, "") : p;
 }
 
+const isBios = (o: { rule: string }) => o.rule === "bios";
+
 function OpList() {
   let scroller!: HTMLDivElement;
-  const ops = () => plan()?.ops ?? [];
+  const ops = createMemo(() => (plan()?.ops ?? []).filter((o) => !isBios(o)));
   const v = createVirtualizer({
     get count() {
       return ops().length;
@@ -134,6 +136,34 @@ function Actions(props: { d: DecisionView }) {
       </div>
     );
   return null;
+}
+
+/** BIOS files bound for `_bios`, collapsed: source name → the name the cores expect. */
+function BiosOps() {
+  const ops = createMemo(() => (plan()?.ops ?? []).filter(isBios));
+  return (
+    <Show when={ops().length}>
+      <details>
+        <summary>
+          BIOS → <span class="mono">_bios</span> <span class="dim small">{ops().length} files</span>
+        </summary>
+        <For each={ops()}>
+          {(o) => (
+            <div class="mono small row">
+              <span class={`tag tag-${o.kind}`}>{o.kind}</span>
+              <span class="dim ellipsis" title={o.from ?? ""}>
+                {o.from?.split("/").pop() ?? ""}
+              </span>
+              <span class="arrow">→</span>
+              <span class="ellipsis" title={o.to}>
+                {rel(o.to)}
+              </span>
+            </div>
+          )}
+        </For>
+      </details>
+    </Show>
+  );
 }
 
 const KINDS: DecisionView["kind"][] = [
@@ -305,6 +335,7 @@ export default function Import() {
             >
               <Panel title="Operations" class="wide">
                 <OpList />
+                <BiosOps />
               </Panel>
             </Show>
             <Show when={p().decisions.length}>
