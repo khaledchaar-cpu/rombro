@@ -1,4 +1,5 @@
 import { createResource, For, Match, Switch } from "solid-js";
+import CheevosPanel from "../components/CheevosPanel";
 import DatabasePanel from "../components/DatabasePanel";
 import Panel from "../components/Panel";
 import { thumbsOnlineGet, thumbsOnlineSet } from "../ipc";
@@ -71,6 +72,7 @@ export default function System() {
           <Match when={systemSection() === "databases"}>
             <div class="settings">
               <DatabasePanel />
+              <CheevosPanel />
             </div>
           </Match>
           <Match when={systemSection() === "appearance"}>

@@ -320,6 +320,10 @@ export interface LibraryRow {
   plays: number;
   seconds: number;
   last_played: number;
+  /** RetroAchievements of this exact file (0 = none, or game lists not synced). */
+  cheevos: number;
+  /** RA title of another version with achievements, when this one has none. */
+  cheevos_other: string | null;
 }
 
 export interface Session {
@@ -350,6 +354,8 @@ export async function libraryList(library?: string, rescan = false): Promise<Lib
       plays: i % 13 ? 0 : 3,
       seconds: i % 13 ? 0 : 5400 + i,
       last_played: i % 13 ? 0 : Date.now() / 1000 - i * 600,
+      cheevos: i % 3 ? 0 : 20 + (i % 40),
+      cheevos_other: i % 3 === 1 && i % 5 === 0 ? `Game ${i}` : null,
     }));
   }
   return invoke<LibraryRow[]>("library_list", { library, rescan });
@@ -818,4 +824,31 @@ export async function play(path: string): Promise<string> {
     return mockGameCore.get(path) ?? "snes9x";
   }
   return invoke<string>("play", { path });
+}
+
+export interface CheevosStatus {
+  has_key: boolean;
+  /** unix seconds of the last game list sync */
+  synced: number | null;
+}
+
+/** Whether a RetroAchievements Web API key is stored and when the game lists were synced. */
+export async function cheevosStatus(): Promise<CheevosStatus> {
+  if (!inTauri) return { has_key: true, synced: Date.now() / 1000 - 3600 };
+  return invoke<CheevosStatus>("cheevos_status");
+}
+
+export async function cheevosSetKey(key: string): Promise<void> {
+  if (!inTauri) return;
+  return invoke<void>("cheevos_set_key", { key });
+}
+
+/** Downloads RA game lists, then hashes the library (`cheevos://progress`, phases sync/hash).
+ * Returns the number of library games with achievements. */
+export async function cheevosSync(): Promise<number> {
+  if (!inTauri) {
+    await mockProgress("cheevos://progress", ["sync", "hash"], phased);
+    return 2685;
+  }
+  return invoke<number>("cheevos_sync");
 }

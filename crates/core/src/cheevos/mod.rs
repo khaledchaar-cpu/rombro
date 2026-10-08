@@ -76,6 +76,41 @@ pub fn console_ids() -> Vec<u32> {
     ids
 }
 
+/// Files RetroAchievements can hash in `library`: every file directly in a system folder
+/// whose system is supported (dot files left out), with its console.
+pub fn library_files(library: &Path) -> io::Result<Vec<(std::path::PathBuf, Console)>> {
+    let mut out = Vec::new();
+    for dir in std::fs::read_dir(library)?.filter_map(|e| e.ok()) {
+        let Some(console) = console(&dir.file_name().to_string_lossy()) else {
+            continue;
+        };
+        for f in std::fs::read_dir(dir.path())?.filter_map(|e| e.ok()) {
+            if f.file_type().is_ok_and(|t| t.is_file())
+                && !f.file_name().to_string_lossy().starts_with('.')
+            {
+                out.push((f.path(), console));
+            }
+        }
+    }
+    out.sort_by(|a, b| a.0.cmp(&b.0));
+    Ok(out)
+}
+
+/// Title key for matching a library name against RA titles across versions: text before the
+/// first ` (` / ` [`, lowercased, letters and digits only (`Zelda, The: X` = `Zelda, The - X`).
+pub fn title_key(name: &str) -> String {
+    let end = [" (", " ["]
+        .iter()
+        .filter_map(|p| name.find(p))
+        .min()
+        .unwrap_or(name.len());
+    name[..end]
+        .chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
+}
+
 /// RA hash (lowercase hex MD5) of a library file. Zip/7z archives are hashed by their first
 /// file's content, except arcade sets (by name). `None` if the content is not hashable
 /// (e.g. an N64 file with an unknown byte order).

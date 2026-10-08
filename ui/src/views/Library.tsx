@@ -14,9 +14,9 @@ import {
 const ROW_H = 26;
 const EMPTY: LibraryRow = {
   path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0,
-  favorite: false, plays: 0, seconds: 0, last_played: 0,
+  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null,
 };
-type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds";
+type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds" | "cheevos";
 const COLS: { key: Key; label: string }[] = [
   { key: "favorite", label: "★" },
   { key: "state", label: "State" },
@@ -24,6 +24,7 @@ const COLS: { key: Key; label: string }[] = [
   { key: "name", label: "Name" },
   { key: "path", label: "Path" },
   { key: "seconds", label: "Played" },
+  { key: "cheevos", label: "🏆" },
 ];
 
 const cmp = (a: LibraryRow, b: LibraryRow, key: Key) => {
@@ -119,6 +120,12 @@ export default function Library() {
                       <span class="ellipsis" title={r().name}>{r().name}</span>
                       <span class="ellipsis mono dim" title={r().path}>{r().path}</span>
                       <span class="dim">{r().seconds ? formatPlayTime(r().seconds) : ""}</span>
+                      <span
+                        class="dim"
+                        title={r().cheevos ? `${r().cheevos} achievements` : r().cheevos_other ? `Another version has achievements: ${r().cheevos_other}` : ""}
+                      >
+                        {r().cheevos ? r().cheevos : r().cheevos_other ? "◌" : ""}
+                      </span>
                     </div>
                   );
                 }}

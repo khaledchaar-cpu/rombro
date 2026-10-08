@@ -25,6 +25,7 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
   const [states, setStates] = createSignal<Set<string>>(new Set());
   const [favOnly, setFavOnly] = createSignal(false);
   const [playedOnly, setPlayedOnly] = createSignal(false);
+  const [cheevosOnly, setCheevosOnly] = createSignal(false);
 
   const count = (key: (r: LibraryRow) => string[]) => {
     const m = new Map<string, number>();
@@ -36,10 +37,11 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
   const stateCounts = createMemo(() => new Map(count((r) => [r.state])));
   const favCount = createMemo(() => rows().filter((r) => r.favorite).length);
   const playedCount = createMemo(() => rows().filter((r) => r.plays > 0).length);
+  const cheevosCount = createMemo(() => rows().filter((r) => r.cheevos > 0).length);
 
   const filtered = createMemo(() => {
     const q = query().toLowerCase();
-    const [sys, reg, st, fav, played] = [system(), region(), states(), favOnly(), playedOnly()];
+    const [sys, reg, st, fav, played, ach] = [system(), region(), states(), favOnly(), playedOnly(), cheevosOnly()];
     const since = age() ? Date.now() / 1000 - age() : 0;
     return rows().filter(
       (r) =>
@@ -48,14 +50,15 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
         (!st.size || st.has(r.state)) &&
         (!fav || r.favorite) &&
         (!played || r.plays > 0) &&
+        (!ach || r.cheevos > 0) &&
         r.added >= since &&
         (!q || r.name.toLowerCase().includes(q) || r.path.toLowerCase().includes(q) || r.system.toLowerCase().includes(q)),
     );
   });
 
-  const active = () => !!(query() || system() || region() || age() || states().size || favOnly() || playedOnly());
+  const active = () => !!(query() || system() || region() || age() || states().size || favOnly() || playedOnly() || cheevosOnly());
   const reset = () => (
-    setQuery(""), setSystem(""), setRegion(""), setAge(0), setStates(new Set<string>()), setFavOnly(false), setPlayedOnly(false)
+    setQuery(""), setSystem(""), setRegion(""), setAge(0), setStates(new Set<string>()), setFavOnly(false), setPlayedOnly(false), setCheevosOnly(false)
   );
   const toggleState = (s: string) =>
     setStates((cur) => {
@@ -78,6 +81,9 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
           </button>
           <button class="chip" classList={{ on: playedOnly() }} disabled={!playedCount()} onClick={() => setPlayedOnly((v) => !v)}>
             played {playedCount()}
+          </button>
+          <button class="chip" classList={{ on: cheevosOnly() }} disabled={!cheevosCount()} onClick={() => setCheevosOnly((v) => !v)}>
+            🏆 achievements {cheevosCount()}
           </button>
           <For each={STATES}>
             {(s) => (

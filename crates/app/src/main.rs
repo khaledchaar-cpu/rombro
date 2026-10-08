@@ -1,6 +1,7 @@
 //! Tauri shell: thin IPC adapter over `rombro-core` / `rombro-store`.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod cheevos;
 mod commands;
 mod decide;
 mod exceptions;
@@ -43,6 +44,10 @@ fn main() {
             thumbs::thumbnail,
             thumbs::thumbs_online_get,
             thumbs::thumbs_online_set,
+            cheevos::cheevos_status,
+            cheevos::cheevos_set_key,
+            cheevos::cheevos_sync,
+            cheevos::cheevos_hash,
             managed_ra::ra_status,
             managed_ra::ra_install,
             managed_ra::ra_display,

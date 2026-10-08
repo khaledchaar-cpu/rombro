@@ -56,6 +56,14 @@ export default function GameDetail(props: { row: LibraryRow }) {
           <dt>Played</dt>
           <dd>{props.row.plays ? `${formatPlayTime(props.row.seconds)} · ${props.row.plays} runs` : "never"}</dd>
           <dt>Last played</dt><dd>{at(props.row.last_played)}</dd>
+          <dt>Achievements</dt>
+          <dd>
+            {props.row.cheevos
+              ? `${props.row.cheevos} (RetroAchievements)`
+              : props.row.cheevos_other
+                ? `none for this version – supported: ${props.row.cheevos_other}`
+                : "–"}
+          </dd>
           <dt>Path</dt><dd class="mono">{props.row.path}</dd>
         </dl>
       </div>

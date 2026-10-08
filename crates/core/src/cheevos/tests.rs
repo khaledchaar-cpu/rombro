@@ -74,3 +74,15 @@ fn files_archives_and_arcade() {
         md5(b"1943")
     );
 }
+
+#[test]
+fn title_keys_match_across_versions() {
+    assert_eq!(
+        title_key("Legend of Zelda, The - A Link to the Past (Europe)"),
+        title_key("Legend of Zelda, The: A Link to the Past")
+    );
+    assert_eq!(
+        title_key("Mario Kart 64 [Subset - Shortcuts]"),
+        "mariokart64"
+    );
+}

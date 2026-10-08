@@ -22,6 +22,10 @@ pub struct Row {
     plays: u64,
     seconds: u64,
     last_played: i64,
+    /// RetroAchievements of this exact file (0 = none or not synced).
+    cheevos: u32,
+    /// RA title of another version that has achievements, when this one has none.
+    cheevos_other: Option<String>,
 }
 
 fn added(p: &std::path::Path) -> i64 {
@@ -95,6 +99,7 @@ pub async fn library_list(
         let keys = store.game_keys(&library).map_err(err)?;
         let stats = store.all_play_stats().map_err(err)?;
         let favorites = store.favorites().map_err(err)?;
+        let ra = crate::cheevos::Index::load(&store, &library)?;
         let mut folder_systems = rules.folder_systems;
         // MSU-1 games: no database knows them; the ROM in `<MSU-1>/<Game>/` is the game,
         // named after its folder
@@ -234,7 +239,10 @@ pub async fn library_list(
                     .cloned()
                     .unwrap_or_else(|| format!("path:{}", p.display()));
                 let st = stats.get(&key).copied().unwrap_or_default();
+                let (cheevos, cheevos_other) = ra.lookup(p, &system, &name);
                 Row {
+                    cheevos,
+                    cheevos_other,
                     favorite: favorites.contains(&key),
                     plays: st.plays,
                     seconds: st.seconds,

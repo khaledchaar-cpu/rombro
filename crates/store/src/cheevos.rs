@@ -2,11 +2,12 @@
 //! `API_GetGameList`), and the RA hash of library files (cached by size + mtime).
 
 use crate::dat_sync::Fetch;
-use crate::files::key;
+use crate::files::{key, prefix};
 use crate::{Result, Store, http_get};
 use rombro_core::cheevos::{self, Method};
 use rusqlite::{OptionalExtension, params};
-use std::path::Path;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, UNIX_EPOCH};
 
 const API: &str = "https://retroachievements.org/API/API_GetGameList.php";
@@ -54,6 +55,16 @@ fn polite_get(url: &str) -> std::io::Result<Vec<u8>> {
         }
     }
     http_get(url)
+}
+
+fn game(r: &rusqlite::Row, at: usize) -> rusqlite::Result<RaGame> {
+    Ok(RaGame {
+        id: r.get(at)?,
+        console: r.get(at + 1)?,
+        title: r.get(at + 2)?,
+        achievements: r.get(at + 3)?,
+        points: r.get(at + 4)?,
+    })
 }
 
 impl Store {
@@ -137,16 +148,37 @@ impl Store {
                 "SELECT g.id, g.console, g.title, g.achievements, g.points
                  FROM ra_hash h JOIN ra_game g ON g.id = h.game WHERE h.hash = ?1",
             )?
-            .query_row([hash], |r| {
-                Ok(RaGame {
-                    id: r.get(0)?,
-                    console: r.get(1)?,
-                    title: r.get(2)?,
-                    achievements: r.get(3)?,
-                    points: r.get(4)?,
-                })
-            })
+            .query_row([hash], |r| game(r, 0))
             .optional()?)
+    }
+
+    /// RA games of the hashed files below `root` (from the hash cache; nothing is read).
+    pub fn ra_file_games(&self, root: &Path) -> Result<HashMap<PathBuf, RaGame>> {
+        let pre = prefix(root);
+        let mut stmt = self.conn.prepare_cached(
+            "SELECT f.path, g.id, g.console, g.title, g.achievements, g.points
+             FROM ra_file f JOIN ra_hash h ON h.hash = f.hash JOIN ra_game g ON g.id = h.game
+             WHERE substr(f.path, 1, ?2) = ?1",
+        )?;
+        let rows = stmt.query_map(params![pre, pre.chars().count() as i64], |r| {
+            Ok((PathBuf::from(r.get::<_, String>(0)?), game(r, 1)?))
+        })?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
+
+    /// Main RA games (no subsets, hacks or homebrew) by (console, [`cheevos::title_key`]).
+    pub fn ra_titles(&self) -> Result<HashMap<(u32, String), RaGame>> {
+        let mut stmt = self.conn.prepare_cached(
+            "SELECT id, console, title, achievements, points FROM ra_game
+             WHERE title NOT LIKE '%[Subset%' AND title NOT LIKE '~%'",
+        )?;
+        let rows = stmt.query_map([], |r| game(r, 0))?;
+        let mut map = HashMap::new();
+        for g in rows {
+            let g = g?;
+            map.insert((g.console, cheevos::title_key(&g.title)), g);
+        }
+        Ok(map)
     }
 
     /// RA hash of `path` (cached by size + mtime); `None` if it cannot be hashed.
