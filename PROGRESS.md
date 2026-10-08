@@ -73,6 +73,9 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    oder neu importieren). (b) DAT-Check verlangt jetzt auch das BIOS-Set (`rumblef` ohne `awbios` lief in MAME 2010
    nicht) → nächster `audit` quarantänisiert Sets ohne BIOS. Nicht ROMBRO: HBMAME-Core kennt `dimahoo` nicht
    (kein HBMAME-DAT, RDB neuer als Core), Flycast kennt `sgdrvsim` nicht.
+   Nachtrag: `awbios`/`naomi` (Flycast-BIOS) werden jetzt auch in MAME-Ordner kopiert, deren DAT sie führt
+   (Audit-Dry-Run: 5 Kopien, Ausführung durch User offen). `rumblef` bleibt offen: MAME 2010 will älteres awbios
+   (`bios.ic23_l`), Flycast stürzt headless damit ab (Illegal instruction). FDS-Tenshitachi: Reparatur offen.
 -1. RetroArch-Stichprobe (2026-10-08, 2 Spiele/Playlist, 142 Starts headless): 121 OK. Rest nicht ROMBRO:
    Sega CD `bios_CD_U.bin` fehlt, Satellaview vermutl. `BS-X.bin`, melonDS-Core (exec stack, glibc), PPSSPP-Assets
    fehlen, blueMSX (Coleco/MSX2) „Failed to load content“ ungeklärt, Snes9x ignoriert `--max-frames` (lädt aber).
