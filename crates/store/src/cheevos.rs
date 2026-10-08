@@ -1,0 +1,205 @@
+//! RetroAchievements: games with achievements and their hashes per console (Web API
+//! `API_GetGameList`), and the RA hash of library files (cached by size + mtime).
+
+use crate::dat_sync::Fetch;
+use crate::files::key;
+use crate::{Result, Store, http_get};
+use rombro_core::cheevos::{self, Method};
+use rusqlite::{OptionalExtension, params};
+use std::path::Path;
+use std::time::UNIX_EPOCH;
+
+const API: &str = "https://retroachievements.org/API/API_GetGameList.php";
+
+/// A RetroAchievements game (only games with achievements are synced).
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct RaGame {
+    pub id: u64,
+    pub console: u32,
+    pub title: String,
+    pub achievements: u32,
+    pub points: u32,
+}
+
+#[derive(Debug, Default, Clone, serde::Serialize)]
+pub struct RaSyncReport {
+    pub consoles: usize,
+    pub games: usize,
+    pub hashes: usize,
+    /// Consoles that could not be fetched: (id, error).
+    pub failed: Vec<(u32, String)>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct ApiGame {
+    #[serde(rename = "ID")]
+    id: u64,
+    title: String,
+    num_achievements: u32,
+    #[serde(default)]
+    points: u32,
+    #[serde(default)]
+    hashes: Vec<String>,
+}
+
+impl Store {
+    /// Downloads the game lists of all consoles RomBro can hash (needs the user's Web API key).
+    pub fn ra_sync(
+        &mut self,
+        api_key: &str,
+        now: i64,
+        progress: &dyn Fn(usize, usize),
+    ) -> Result<RaSyncReport> {
+        self.ra_sync_with(&http_get, api_key, now, progress)
+    }
+
+    pub fn ra_sync_with(
+        &mut self,
+        fetch: Fetch,
+        api_key: &str,
+        now: i64,
+        progress: &dyn Fn(usize, usize),
+    ) -> Result<RaSyncReport> {
+        let ids = cheevos::console_ids();
+        let mut report = RaSyncReport::default();
+        for (i, &id) in ids.iter().enumerate() {
+            progress(i, ids.len());
+            let url = format!("{API}?i={id}&f=1&h=1&y={api_key}");
+            // errors never echo the URL: it carries the key
+            let games: Vec<ApiGame> = match fetch(&url)
+                .map_err(|e| e.to_string())
+                .and_then(|b| serde_json::from_slice(&b).map_err(|e| e.to_string()))
+            {
+                Ok(g) => g,
+                Err(e) => {
+                    report.failed.push((id, e.replace(api_key, "***")));
+                    continue;
+                }
+            };
+            let tx = self.conn.transaction()?;
+            tx.execute(
+                "DELETE FROM ra_hash WHERE game IN (SELECT id FROM ra_game WHERE console = ?1)",
+                [id],
+            )?;
+            tx.execute("DELETE FROM ra_game WHERE console = ?1", [id])?;
+            {
+                let mut game = tx.prepare(
+                    "INSERT OR REPLACE INTO ra_game (id, console, title, achievements, points)
+                     VALUES (?1, ?2, ?3, ?4, ?5)",
+                )?;
+                let mut hash = tx.prepare("INSERT OR REPLACE INTO ra_hash VALUES (?1, ?2)")?;
+                for g in games.iter().filter(|g| g.num_achievements > 0) {
+                    game.execute(params![g.id, id, g.title, g.num_achievements, g.points])?;
+                    report.games += 1;
+                    for h in &g.hashes {
+                        hash.execute(params![h.to_ascii_lowercase(), g.id])?;
+                        report.hashes += 1;
+                    }
+                }
+            }
+            tx.execute(
+                "INSERT OR REPLACE INTO ra_console VALUES (?1, ?2)",
+                [id as i64, now],
+            )?;
+            tx.commit()?;
+            report.consoles += 1;
+        }
+        progress(ids.len(), ids.len());
+        Ok(report)
+    }
+
+    /// Unix seconds of the last successful sync of any console, if any.
+    pub fn ra_synced(&self) -> Result<Option<i64>> {
+        Ok(self
+            .conn
+            .query_row("SELECT max(synced) FROM ra_console", [], |r| r.get(0))?)
+    }
+
+    /// The RA game whose hash list contains `hash`.
+    pub fn ra_game(&self, hash: &str) -> Result<Option<RaGame>> {
+        Ok(self
+            .conn
+            .prepare_cached(
+                "SELECT g.id, g.console, g.title, g.achievements, g.points
+                 FROM ra_hash h JOIN ra_game g ON g.id = h.game WHERE h.hash = ?1",
+            )?
+            .query_row([hash], |r| {
+                Ok(RaGame {
+                    id: r.get(0)?,
+                    console: r.get(1)?,
+                    title: r.get(2)?,
+                    achievements: r.get(3)?,
+                    points: r.get(4)?,
+                })
+            })
+            .optional()?)
+    }
+
+    /// RA hash of `path` (cached by size + mtime); `None` if it cannot be hashed.
+    pub fn ra_hash(&self, path: &Path, method: Method) -> Result<Option<String>> {
+        let meta = std::fs::metadata(path)?;
+        let size = meta.len() as i64;
+        let mtime = meta
+            .modified()
+            .ok()
+            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+            .map_or(0, |d| d.as_secs() as i64);
+        let k = key(path);
+        let cached: Option<Option<String>> = self
+            .conn
+            .prepare_cached(
+                "SELECT hash FROM ra_file WHERE path = ?1 AND size = ?2 AND mtime = ?3",
+            )?
+            .query_row(params![k, size, mtime], |r| r.get(0))
+            .optional()?;
+        if let Some(h) = cached {
+            return Ok(h);
+        }
+        let hash = cheevos::hash_file(path, method)?;
+        self.conn
+            .prepare_cached("INSERT OR REPLACE INTO ra_file VALUES (?1, ?2, ?3, ?4)")?
+            .execute(params![k, size, mtime, hash])?;
+        Ok(hash)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sync_and_lookup() {
+        let mut s = Store::open_in_memory().unwrap();
+        let body = br#"[{"Title":"Game","ID":5,"ConsoleID":7,"NumAchievements":3,"Points":40,
+            "Hashes":["ABCDEF"]},{"Title":"Empty","ID":6,"NumAchievements":0,"Hashes":["11"]}]"#;
+        let fetch = |url: &str| {
+            if url.contains("i=7&") {
+                Ok(body.to_vec())
+            } else if url.contains("i=27&") {
+                Err(std::io::Error::other(format!("401 for {url}")))
+            } else {
+                Ok(b"[]".to_vec())
+            }
+        };
+        let r = s.ra_sync_with(&fetch, "secret", 9, &|_, _| {}).unwrap();
+        assert_eq!((r.games, r.hashes), (1, 1));
+        assert_eq!(r.failed.len(), 1);
+        assert!(!r.failed[0].1.contains("secret"));
+        let g = s.ra_game("abcdef").unwrap().unwrap();
+        assert_eq!((g.id, g.achievements, g.title.as_str()), (5, 3, "Game"));
+        assert!(s.ra_game("11").unwrap().is_none());
+        assert_eq!(s.ra_synced().unwrap(), Some(9));
+    }
+
+    #[test]
+    fn caches_file_hash() {
+        let s = Store::open_in_memory().unwrap();
+        let dir = tempfile::TempDir::new().unwrap();
+        let p = dir.path().join("a.gb");
+        std::fs::write(&p, b"gb").unwrap();
+        let h = s.ra_hash(&p, Method::Whole).unwrap().unwrap();
+        assert_eq!(h.len(), 32);
+        assert_eq!(s.ra_hash(&p, Method::Whole).unwrap(), Some(h));
+    }
+}

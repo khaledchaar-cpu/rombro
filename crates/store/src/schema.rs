@@ -117,6 +117,22 @@ const MIGRATIONS: &[&str] = &[
         last    INTEGER NOT NULL
     );
     CREATE TABLE favorite (game TEXT PRIMARY KEY, added INTEGER NOT NULL);",
+    // v17: RetroAchievements – games and hashes per console (from the Web API), RA hash per file
+    "CREATE TABLE ra_console (id INTEGER PRIMARY KEY, synced INTEGER NOT NULL);
+    CREATE TABLE ra_game (
+        id           INTEGER PRIMARY KEY,
+        console      INTEGER NOT NULL,
+        title        TEXT NOT NULL,
+        achievements INTEGER NOT NULL,
+        points       INTEGER NOT NULL
+    );
+    CREATE TABLE ra_hash (hash TEXT PRIMARY KEY, game INTEGER NOT NULL);
+    CREATE TABLE ra_file (
+        path  TEXT PRIMARY KEY,
+        size  INTEGER NOT NULL,
+        mtime INTEGER NOT NULL,
+        hash  TEXT
+    );",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

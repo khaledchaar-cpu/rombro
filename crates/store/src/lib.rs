@@ -1,6 +1,7 @@
 //! rombro-store: SQLite persistence for the RDB cache and (later) library state.
 
 mod catalog;
+mod cheevos;
 mod chipset;
 mod dat;
 mod dat_sync;
@@ -21,6 +22,7 @@ mod snapshot;
 mod tests;
 
 pub use catalog::set_names;
+pub use cheevos::{RaGame, RaSyncReport};
 pub use dat::DatInfo;
 pub use dat_sync::{DatSyncReport, http_download, http_get};
 pub use disc::DiscMatch;
