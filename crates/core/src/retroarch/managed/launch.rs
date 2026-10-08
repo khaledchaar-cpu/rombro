@@ -48,7 +48,8 @@ impl Managed {
         let dl = self.root.join("download");
         std::fs::create_dir_all(&dl)?;
         let zip = dl.join("info.zip");
-        fetch(INFO_URL, &zip, &|_, _| {}).map_err(|e| io::Error::other(format!("{INFO_URL}: {e}")))?;
+        fetch(INFO_URL, &zip, &|_, _| {})
+            .map_err(|e| io::Error::other(format!("{INFO_URL}: {e}")))?;
         let tmp = self.root.join(".info.tmp");
         let _ = std::fs::remove_dir_all(&tmp);
         std::fs::create_dir_all(&tmp)?;
@@ -231,7 +232,10 @@ mod tests {
 
     #[test]
     fn system_from_library_top_folder_or_known_parent() {
-        let cores = [core("fceumm", &["Nintendo - Nintendo Entertainment System"])];
+        let cores = [core(
+            "fceumm",
+            &["Nintendo - Nintendo Entertainment System"],
+        )];
         let lib = Path::new("/lib");
         let rom = Path::new("/lib/Sony - PlayStation/Game (USA)/Game (USA).m3u");
         assert_eq!(
@@ -252,7 +256,10 @@ mod tests {
         let cores = [core("fceumm", &[sys]), core("nestopia", &[sys])];
         let mut picks = BTreeMap::new();
         picks.insert(sys.to_owned(), "fceumm".to_owned());
-        assert_eq!(core_for_game(&cores, sys, &picks, None).unwrap().id, "fceumm");
+        assert_eq!(
+            core_for_game(&cores, sys, &picks, None).unwrap().id,
+            "fceumm"
+        );
         let got = core_for_game(&cores, sys, &picks, Some("nestopia")).unwrap();
         assert_eq!(got.id, "nestopia");
         let got = core_for_game(&cores, sys, &picks, Some("gone")).unwrap();
