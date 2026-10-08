@@ -92,6 +92,7 @@ mod tests {
             installed,
             name: id.into(),
             databases: dbs.iter().map(|s| (*s).into()).collect(),
+            extensions: Vec::new(),
         }
     }
 

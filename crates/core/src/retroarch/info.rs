@@ -16,6 +16,8 @@ pub struct Core {
     pub name: String,
     /// Systems (RDB names) the core runs.
     pub databases: Vec<String>,
+    /// Content extensions the core loads (`supported_extensions`), lower case.
+    pub extensions: Vec<String>,
 }
 
 /// `key = "value"` pairs of a RetroArch config or info file.
@@ -63,11 +65,15 @@ fn parse(text: &str, path: PathBuf) -> Core {
         name: stem,
         path,
         databases: Vec::new(),
+        extensions: Vec::new(),
     };
     for (k, v) in kv(text) {
         match k {
             "corename" => core.name = v.to_owned(),
             "database" => core.databases = v.split('|').map(str::to_owned).collect(),
+            "supported_extensions" => {
+                core.extensions = v.split('|').map(str::to_ascii_lowercase).collect();
+            }
             _ => {}
         }
     }

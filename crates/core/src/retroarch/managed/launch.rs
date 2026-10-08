@@ -184,7 +184,7 @@ impl Managed {
         }
         let assets = self.core_assets(&core, game.library, fetch, progress)?;
         self.write_config(game.library)?;
-        let command = self.command(&core, game.rom)?;
+        let command = self.command(&core, &content(&core, game.rom))?;
         Ok(Launch {
             system,
             core,
@@ -283,6 +283,26 @@ pub fn system_of(rom: &Path, library: Option<&Path>, cores: &[Core]) -> Option<S
         .map(str::to_owned)
 }
 
+/// What the core is given: an `.m3u` it cannot load (FCEUmm, Famicom Disk System) is
+/// replaced by its first entry.
+pub fn content(core: &Core, rom: &Path) -> PathBuf {
+    let m3u = rom
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("m3u"));
+    if !m3u || core.extensions.is_empty() || core.extensions.iter().any(|e| e == "m3u") {
+        return rom.to_path_buf();
+    }
+    std::fs::read_to_string(rom)
+        .ok()
+        .and_then(|t| {
+            t.lines()
+                .map(str::trim)
+                .find(|l| !l.is_empty() && !l.starts_with('#'))
+                .map(|l| rom.with_file_name(l))
+        })
+        .unwrap_or_else(|| rom.to_path_buf())
+}
+
 /// The core a game starts with: the per-game override, else the system's pick or
 /// recommendation, else the most specialised core (installed or not).
 pub fn core_for_game<'a>(
@@ -306,7 +326,20 @@ mod tests {
             installed: false,
             name: id.into(),
             databases: dbs.iter().map(|s| s.to_string()).collect(),
+            extensions: Vec::new(),
         }
+    }
+
+    #[test]
+    fn m3u_becomes_first_disk_for_cores_without_m3u() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let m3u = tmp.path().join("T (Japan).m3u");
+        std::fs::write(&m3u, "T (Japan) (Disk 1).fds\nT (Japan) (Disk 2).fds\n").unwrap();
+        let mut c = core("fceumm", &[]);
+        c.extensions = vec!["fds".into(), "nes".into()];
+        assert_eq!(content(&c, &m3u), tmp.path().join("T (Japan) (Disk 1).fds"));
+        c.extensions.push("m3u".into());
+        assert_eq!(content(&c, &m3u), m3u);
     }
 
     #[test]
