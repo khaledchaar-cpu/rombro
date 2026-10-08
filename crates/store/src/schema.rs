@@ -109,6 +109,14 @@ const MIGRATIONS: &[&str] = &[
        BEGIN DELETE FROM snapshot_dirty WHERE root = OLD.root; END;",
     // v15: DAT lookups by set name alone (re-packed romsets: which cores know the set)
     "CREATE INDEX dat_set_name ON dat_set(name);",
+    // v16: launcher – play time and favorites per game (`sha1:<hex>`, or `path:<abs>` unhashed)
+    "CREATE TABLE play_stats (
+        game    TEXT PRIMARY KEY,
+        plays   INTEGER NOT NULL,
+        seconds INTEGER NOT NULL,
+        last    INTEGER NOT NULL
+    );
+    CREATE TABLE favorite (game TEXT PRIMARY KEY, added INTEGER NOT NULL);",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

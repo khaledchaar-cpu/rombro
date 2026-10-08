@@ -121,12 +121,24 @@ pub async fn play(app: tauri::AppHandle, path: String) -> CmdResult<String> {
                 Step::Core(id) => emit("core", 0, 0, &id),
             })
             .map_err(err)?;
+        let key = store.game_key(&rom).map_err(err)?;
+        let start = std::time::Instant::now();
         let mut child = l
             .command
             .spawn()
             .map_err(|e| format!("starting RetroArch: {e}"))?;
-        // Reap the process; play time tracking (M15c) hooks in here.
-        std::thread::spawn(move || child.wait());
+        // Reap the process and count its run time; the UI refreshes on `play://ended`.
+        std::thread::spawn(move || {
+            let _ = child.wait();
+            let secs = start.elapsed().as_secs();
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_or(0, |d| d.as_secs() as i64);
+            if let Ok((store, _)) = open_store() {
+                let _ = store.record_play(&key, secs, now);
+            }
+            let _ = app.emit("play://ended", (&path, secs));
+        });
         Ok(l.core.id)
     })
     .await

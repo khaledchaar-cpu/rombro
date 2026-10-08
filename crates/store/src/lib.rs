@@ -13,6 +13,7 @@ mod import;
 mod journal;
 mod lookup;
 mod play;
+pub use play::{MIN_PLAY_SECS, PlayStats};
 mod record;
 mod schema;
 mod snapshot;

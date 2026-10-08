@@ -15,7 +15,7 @@ pub(crate) fn key(p: &Path) -> String {
 }
 
 /// `root` as a path prefix ending in a separator.
-fn prefix(root: &Path) -> String {
+pub(crate) fn prefix(root: &Path) -> String {
     let mut s = key(root);
     if !s.ends_with(std::path::MAIN_SEPARATOR) {
         s.push(std::path::MAIN_SEPARATOR);
@@ -27,7 +27,7 @@ const RULES_KEY: &str = "rules";
 const IGNORE_KEY: &str = "ignore";
 const HITS_KEY: &str = "rule_hits";
 
-fn now() -> i64 {
+pub(crate) fn now() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_secs() as i64)
