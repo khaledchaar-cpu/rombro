@@ -3,6 +3,7 @@
 pub mod arcade;
 pub mod archive;
 pub mod cache;
+pub mod cheevos;
 pub mod disc;
 pub mod g1r;
 pub mod gamify;

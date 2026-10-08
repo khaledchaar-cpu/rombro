@@ -1,0 +1,60 @@
+# RDB system	RetroAchievements console id	hash method (see cheevos::Method)
+Amstrad - CPC	37	whole
+Apple - II	38	whole
+Atari - 2600	25	whole
+Atari - 7800	51	a7800
+Atari - Jaguar	17	whole
+Atari - Lynx	13	lynx
+Bandai - WonderSwan	53	whole
+Bandai - WonderSwan Color	53	whole
+Coleco - ColecoVision	44	whole
+Commodore - 64	30	whole
+Elektor - TV Games Computer	75	whole
+Emerson - Arcadia 2001	73	whole
+Epoch - Super Cassette Vision	55	scv
+Fairchild - Channel F	57	whole
+GCE - Vectrex	46	whole
+Interton - VC 4000	74	whole
+Magnavox - Odyssey2	23	whole
+Mattel - Intellivision	45	whole
+Microsoft - MSX	29	whole
+Microsoft - MSX2	29	whole
+NEC - PC-8001 - PC-8801	47	whole
+NEC - PC-88	47	whole
+NEC - PC Engine - TurboGrafx 16	8	pce
+NEC - PC Engine SuperGrafx	8	pce
+Nintendo - Family Computer Disk System	81	nes
+Nintendo - Game Boy	4	whole
+Nintendo - Game Boy Advance	5	whole
+Nintendo - Game Boy Color	6	whole
+Nintendo - Nintendo 64	2	n64
+Nintendo - Nintendo Entertainment System	7	nes
+Nintendo - Pokemon Mini	24	whole
+Nintendo - Super Nintendo Entertainment System	3	snes
+Nintendo - Virtual Boy	28	whole
+Sega - 32X	10	whole
+Sega - Game Gear	15	whole
+Sega - Master System - Mark III	11	whole
+Sega - Mega Drive - Genesis	1	whole
+Sega - SG-1000	33	whole
+SNK - Neo Geo Pocket	14	whole
+SNK - Neo Geo Pocket Color	14	whole
+Sinclair - ZX Spectrum	59	whole
+Sinclair - ZX Spectrum +3	59	whole
+TIC-80	65	whole
+Uzebox	80	whole
+WASM-4	72	whole
+Watara - Supervision	63	whole
+Atomiswave	27	arcade
+FBNeo - Arcade Games	27	arcade
+HBMAME	27	arcade
+MAME	27	arcade
+MAME 2000	27	arcade
+MAME 2003	27	arcade
+MAME 2003-Plus	27	arcade
+MAME 2010	27	arcade
+MAME 2015	27	arcade
+MAME 2016	27	arcade
+Sega - Naomi	27	arcade
+Sega - Naomi 2	27	arcade
+SNK - Neo Geo	27	arcade
