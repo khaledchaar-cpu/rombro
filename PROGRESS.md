@@ -93,7 +93,7 @@ Sichtprüfung abgenommen (User, 2026-10-08), 2 ScummVM-Titel starten ohne Export
 M15d (2026-10-08): Planner schreibt keine `.lpl` mehr (CLI `--playlists/--no-playlists`, `plan::lpl`, `Options.playlists`
 weg); vorhandene `_playlists/*.lpl` wandern beim nächsten Plan nach `_trash/playlists/`. `retroarch::scummvm` +
 `scummvm-engines.tsv` entfernt. `play`: `.m3u` → erste Disk, wenn der Core kein `m3u` kann (FDS/FCEUmm, `Core.extensions`).
-Offen: Sichtprüfung (nächster Import zeigt die `.lpl`-Verschiebungen). Nächster Milestone (User wählt): 
+Abgenommen (User, 2026-10-08): `.lpl` → `_trash/playlists/` in der echten Library. Fensteranzeige: Omarchy-Override in `~/.config/hypr/hyprland.lua` (`fullscreen = false`). v0.6.0 getaggt. Nächster Milestone (User wählt): 
 Savestate-Übersicht oder RetroAchievements (SPEC §6).
 
 ## Nächste Schritte
