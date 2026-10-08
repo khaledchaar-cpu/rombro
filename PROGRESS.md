@@ -28,7 +28,7 @@
 | M15b Starten | ✅ done (Linux e2e + Sichtprüfung 2026-10-08) |
 | M15c Spielzeit & Favoriten | ✅ done (Sichtprüfung + ScummVM-Start 2026-10-08) |
 | M15d Altlasten | ✅ done (2026-10-08) |
-| M16a RetroAchievements: Hashing + Library-Badge | 🔶 gebaut, Sichtprüfung offen |
+| M16a RetroAchievements: Hashing + Library-Badge | ✅ done (Sichtprüfung 2026-10-08) |
 | M16b RA-Login, Hardcore, Fortschritt | ⏳ |
 | M16c RA Disc-Systeme + NDS | ⏳ |
 
@@ -105,7 +105,7 @@ CLI `rombro cheevos key|sync|scan`, App: Settings → Databases „RetroAchievem
 Library-Spalte 🏆 (◌ = andere Version unterstützt), Filter-Chip, Details. Echte Library: 41 Konsolen, 7.737 Spiele,
 2.685/9.083 Dateien mit Achievements (erster Hash-Lauf 1:27 min über CIFS). Niedrige Quoten (N64 35/193) = EU-Versionen,
 die RA nicht führt (geprüft: Mario Kart 64 EU Rev 1 nicht in RA, Dr. Mario 64 `.n64` erkannt).
-Nächste Schritte: Sichtprüfung App; M16b (Login → `cheevos_token`, Hardcore-Schalter, Fortschritt je Spiel).
+Nächste Schritte: M16b (Login → `cheevos_token`, Hardcore-Schalter, Fortschritt je Spiel).
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,
