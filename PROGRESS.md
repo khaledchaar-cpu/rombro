@@ -28,6 +28,9 @@
 | M15b Starten | ✅ done (Linux e2e + Sichtprüfung 2026-10-08) |
 | M15c Spielzeit & Favoriten | ✅ done (Sichtprüfung + ScummVM-Start 2026-10-08) |
 | M15d Altlasten | ✅ done (2026-10-08) |
+| M16a RetroAchievements: Hashing + Library-Badge | 🔶 gebaut, Sichtprüfung offen |
+| M16b RA-Login, Hardcore, Fortschritt | ⏳ |
+| M16c RA Disc-Systeme + NDS | ⏳ |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -95,6 +98,14 @@ weg); vorhandene `_playlists/*.lpl` wandern beim nächsten Plan nach `_trash/pla
 `scummvm-engines.tsv` entfernt. `play`: `.m3u` → erste Disk, wenn der Core kein `m3u` kann (FDS/FCEUmm, `Core.extensions`).
 Abgenommen (User, 2026-10-08): `.lpl` → `_trash/playlists/` in der echten Library. Fensteranzeige: Omarchy-Override in `~/.config/hypr/hyprland.lua` (`fullscreen = false`). v0.6.0 getaggt. Nächster Milestone (User wählt): 
 Savestate-Übersicht oder RetroAchievements (SPEC §6).
+
+M16a (2026-10-08): `core::cheevos` (rcheevos-Hashing, `consoles.tsv` RDB-System → RA-Konsole + Methode, `title_key`),
+Store v17 `ra_console/ra_game/ra_hash/ra_file` (`ra_sync` mit Pause + Retry bei 429, `ra_hash` cached nach size+mtime),
+CLI `rombro cheevos key|sync|scan`, App: Settings → Databases „RetroAchievements“ (Key, Sync + Hashing mit Fortschritt),
+Library-Spalte 🏆 (◌ = andere Version unterstützt), Filter-Chip, Details. Echte Library: 41 Konsolen, 7.737 Spiele,
+2.685/9.083 Dateien mit Achievements (erster Hash-Lauf 1:27 min über CIFS). Niedrige Quoten (N64 35/193) = EU-Versionen,
+die RA nicht führt (geprüft: Mario Kart 64 EU Rev 1 nicht in RA, Dr. Mario 64 `.n64` erkannt).
+Nächste Schritte: Sichtprüfung App; M16b (Login → `cheevos_token`, Hardcore-Schalter, Fortschritt je Spiel).
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,
