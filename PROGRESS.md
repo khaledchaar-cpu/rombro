@@ -66,6 +66,11 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
 **Nächster Milestone: M15 Launcher-Basis** (SPEC §6) – Schnitt noch festlegen.
 
 ## Nächste Schritte
+-1. RetroArch-Stichprobe (2026-10-08, 2 Spiele/Playlist, 142 Starts headless): 121 OK. Rest nicht ROMBRO:
+   Sega CD `bios_CD_U.bin` fehlt, Satellaview vermutl. `BS-X.bin`, melonDS-Core (exec stack, glibc), PPSSPP-Assets
+   fehlen, blueMSX (Coleco/MSX2) „Failed to load content“ ungeklärt, Snes9x ignoriert `--max-frames` (lädt aber).
+   ROMBRO-Fix: Arcade-BIOS in alle MAME-Ordner, deren DAT es führt (MAME 2010 fand `neogeo.zip` nicht).
+   **Offen:** `audit` auf echter Library ausführen (40 Kopien, User-Freigabe).
 0. Nachträge 2026-10-06 (abends): RetroArch-Export räumt verwaiste Playlists (alle Einträge in der Library, System
    leer oder ohne Core) nach `_trash/playlists`; Systeme ohne jeden Core (Solarus) bekommen keine RA-Playlist.
    Name-Ordner (`rules.name_folders`, Regel `name-only`, `Ident::Named`, SPEC 11a): n64dd-Cartridge-Umbauten → N64,
