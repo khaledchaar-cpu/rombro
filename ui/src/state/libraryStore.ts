@@ -1,6 +1,6 @@
 // Library rows from the persistent file index; loaded at app start and refreshed after execute/undo.
 import { createMemo, createRoot, createSignal } from "solid-js";
-import { libraryList, sessionGet, type LibraryRow, type Mode } from "../ipc";
+import { libraryList, onPlayEnded, sessionGet, setFavorite, type LibraryRow, type Mode } from "../ipc";
 
 export interface LibrarySummary {
   ts: number;
@@ -29,6 +29,30 @@ export async function refreshLibrary(rescan = false) {
   } finally {
     setLibraryBusy(false);
   }
+}
+
+/** Replaces the row of `path` with `f(row)` (local update after favorite/play). */
+function patchRow(path: string, f: (r: LibraryRow) => LibraryRow) {
+  setLibraryRows((rows) => rows.map((r) => (r.path === path ? f(r) : r)));
+}
+
+export async function toggleFavorite(row: LibraryRow) {
+  const on = !row.favorite;
+  await setFavorite(row.path, on);
+  patchRow(row.path, (r) => ({ ...r, favorite: on }));
+}
+
+/** Minimum counted run, as in the backend (`MIN_PLAY_SECS`). */
+const MIN_PLAY_SECS = 30;
+void onPlayEnded((path, secs) => {
+  if (secs < MIN_PLAY_SECS) return;
+  patchRow(path, (r) => ({ ...r, plays: r.plays + 1, seconds: r.seconds + secs, last_played: Date.now() / 1000 }));
+});
+
+/** Play time as `1 h 05 min` / `12 min`. */
+export function formatPlayTime(secs: number): string {
+  const min = Math.round(secs / 60);
+  return min >= 60 ? `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")} min` : `${min} min`;
 }
 
 export const [inbox, setInbox] = createSignal("");

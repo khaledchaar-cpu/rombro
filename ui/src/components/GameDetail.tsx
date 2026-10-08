@@ -2,6 +2,7 @@ import { createResource, For, onCleanup, Show } from "solid-js";
 import Panel from "./Panel";
 import GamePlay from "./GamePlay";
 import { thumbnail, type LibraryRow, type ThumbKind } from "../ipc";
+import { formatPlayTime, toggleFavorite } from "../state/libraryStore";
 
 const KINDS: { kind: ThumbKind; label: string }[] = [
   { kind: "boxart", label: "Boxart" },
@@ -31,9 +32,14 @@ function Thumb(props: { row: LibraryRow; kind: ThumbKind; label: string }) {
 }
 
 export default function GameDetail(props: { row: LibraryRow }) {
-  const date = () => (props.row.added ? new Date(props.row.added * 1000).toLocaleString() : "–");
+  const at = (t: number) => (t ? new Date(t * 1000).toLocaleString() : "–");
   return (
     <Panel title="Details" class="wide">
+      <div class="row">
+        <button class="btn ghost" classList={{ "star on": props.row.favorite }} onClick={() => void toggleFavorite(props.row)}>
+          {props.row.favorite ? "★ Favorite" : "☆ Add to favorites"}
+        </button>
+      </div>
       <GamePlay path={props.row.path} />
       <div class="detail">
         <div class="thumbs">
@@ -46,7 +52,10 @@ export default function GameDetail(props: { row: LibraryRow }) {
           <dt>State</dt><dd class={`tag-${props.row.state}`}>{props.row.state}</dd>
           <dt>Regions</dt><dd>{props.row.regions.join(", ") || "–"}</dd>
           <dt>Files</dt><dd>{props.row.files}</dd>
-          <dt>Added</dt><dd>{date()}</dd>
+          <dt>Added</dt><dd>{at(props.row.added)}</dd>
+          <dt>Played</dt>
+          <dd>{props.row.plays ? `${formatPlayTime(props.row.seconds)} · ${props.row.plays} runs` : "never"}</dd>
+          <dt>Last played</dt><dd>{at(props.row.last_played)}</dd>
           <dt>Path</dt><dd class="mono">{props.row.path}</dd>
         </dl>
       </div>

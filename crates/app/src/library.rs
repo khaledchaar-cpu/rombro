@@ -17,6 +17,11 @@ pub struct Row {
     regions: Vec<String>,
     /// When the file entered the library (unix seconds, from the index; file time as fallback).
     added: i64,
+    favorite: bool,
+    /// Play statistics (zero when never played).
+    plays: u64,
+    seconds: u64,
+    last_played: i64,
 }
 
 fn added(p: &std::path::Path) -> i64 {
@@ -87,6 +92,9 @@ pub async fn library_list(
         let rules = crate::settings::load_rules(&store)?;
         let items = rombro_core::plan::name_only(&snap.items, &rules);
         let added_db = store.added_times(&library).map_err(err)?;
+        let keys = store.game_keys(&library).map_err(err)?;
+        let stats = store.all_play_stats().map_err(err)?;
+        let favorites = store.favorites().map_err(err)?;
         let mut folder_systems = rules.folder_systems;
         // MSU-1 games: no database knows them; the ROM in `<MSU-1>/<Game>/` is the game,
         // named after its folder
@@ -221,7 +229,16 @@ pub async fn library_list(
                     .into_iter()
                     .map(str::to_owned)
                     .collect();
+                let key = keys
+                    .get(p)
+                    .cloned()
+                    .unwrap_or_else(|| format!("path:{}", p.display()));
+                let st = stats.get(&key).copied().unwrap_or_default();
                 Row {
+                    favorite: favorites.contains(&key),
+                    plays: st.plays,
+                    seconds: st.seconds,
+                    last_played: st.last,
                     added: added_db.get(p).copied().unwrap_or_else(|| added(p)),
                     regions,
                     path,

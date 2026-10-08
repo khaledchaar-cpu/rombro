@@ -1,4 +1,4 @@
-// Filter bar for the Library table: text, system, state, region and added-date filters.
+// Filter bar for the Library table: text, system, state, region, added-date, favorite and played filters.
 import { createMemo, createSignal, For, Show, type Accessor } from "solid-js";
 import Select, { type Option } from "../components/Select";
 import type { LibraryRow } from "../ipc";
@@ -23,6 +23,8 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
   const [region, setRegion] = createSignal("");
   const [age, setAge] = createSignal(0);
   const [states, setStates] = createSignal<Set<string>>(new Set());
+  const [favOnly, setFavOnly] = createSignal(false);
+  const [playedOnly, setPlayedOnly] = createSignal(false);
 
   const count = (key: (r: LibraryRow) => string[]) => {
     const m = new Map<string, number>();
@@ -32,23 +34,29 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
   const systems = createMemo(() => count((r) => [r.system]));
   const regions = createMemo(() => count((r) => r.regions));
   const stateCounts = createMemo(() => new Map(count((r) => [r.state])));
+  const favCount = createMemo(() => rows().filter((r) => r.favorite).length);
+  const playedCount = createMemo(() => rows().filter((r) => r.plays > 0).length);
 
   const filtered = createMemo(() => {
     const q = query().toLowerCase();
-    const [sys, reg, st] = [system(), region(), states()];
+    const [sys, reg, st, fav, played] = [system(), region(), states(), favOnly(), playedOnly()];
     const since = age() ? Date.now() / 1000 - age() : 0;
     return rows().filter(
       (r) =>
         (!sys || r.system === sys) &&
         (!reg || r.regions.includes(reg)) &&
         (!st.size || st.has(r.state)) &&
+        (!fav || r.favorite) &&
+        (!played || r.plays > 0) &&
         r.added >= since &&
         (!q || r.name.toLowerCase().includes(q) || r.path.toLowerCase().includes(q) || r.system.toLowerCase().includes(q)),
     );
   });
 
-  const active = () => !!(query() || system() || region() || age() || states().size);
-  const reset = () => (setQuery(""), setSystem(""), setRegion(""), setAge(0), setStates(new Set<string>()));
+  const active = () => !!(query() || system() || region() || age() || states().size || favOnly() || playedOnly());
+  const reset = () => (
+    setQuery(""), setSystem(""), setRegion(""), setAge(0), setStates(new Set<string>()), setFavOnly(false), setPlayedOnly(false)
+  );
   const toggleState = (s: string) =>
     setStates((cur) => {
       const n = new Set(cur);
@@ -65,6 +73,12 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
         <Select value={region()} onChange={setRegion} options={opts("All regions", regions())} />
         <Select value={age()} onChange={setAge} options={AGES.map((a) => ({ value: a.secs, label: a.label }))} />
         <div class="chips">
+          <button class="chip" classList={{ on: favOnly() }} disabled={!favCount()} onClick={() => setFavOnly((v) => !v)}>
+            ★ favorites {favCount()}
+          </button>
+          <button class="chip" classList={{ on: playedOnly() }} disabled={!playedCount()} onClick={() => setPlayedOnly((v) => !v)}>
+            played {playedCount()}
+          </button>
           <For each={STATES}>
             {(s) => (
               <button

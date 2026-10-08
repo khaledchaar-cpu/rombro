@@ -7,18 +7,29 @@ import Segments from "../components/Segments";
 import { createLibraryFilter } from "./LibraryFilters";
 import { onScanProgress, type LibraryRow, type ScanProgress } from "../ipc";
 import {
-  library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary, setLibrary,
+  formatPlayTime, library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary,
+  setLibrary, toggleFavorite,
 } from "../state/libraryStore";
 
 const ROW_H = 26;
-const EMPTY: LibraryRow = { path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0 };
-type Key = "system" | "name" | "path" | "state";
+const EMPTY: LibraryRow = {
+  path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0,
+  favorite: false, plays: 0, seconds: 0, last_played: 0,
+};
+type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds";
 const COLS: { key: Key; label: string }[] = [
+  { key: "favorite", label: "★" },
   { key: "state", label: "State" },
   { key: "system", label: "System" },
   { key: "name", label: "Name" },
   { key: "path", label: "Path" },
+  { key: "seconds", label: "Played" },
 ];
+
+const cmp = (a: LibraryRow, b: LibraryRow, key: Key) => {
+  const x = a[key], y = b[key];
+  return typeof x === "string" ? x.localeCompare(y as string) : Number(y) - Number(x);
+};
 
 export default function Library() {
   const filter = createLibraryFilter(rows);
@@ -30,10 +41,12 @@ export default function Library() {
   const view = createMemo(() => {
     const { key, asc } = sort();
     const f = [...filter.filtered()];
-    return f.sort((a, b) => (asc ? 1 : -1) * (a[key].localeCompare(b[key]) || a.name.localeCompare(b.name)));
+    return f.sort((a, b) => (asc ? 1 : -1) * cmp(a, b, key) || a.name.localeCompare(b.name));
   });
 
-  const [selected, setSelected] = createSignal<LibraryRow | null>(null);
+  // by path: rows are replaced when a favorite or play time changes
+  const [selPath, setSelPath] = createSignal<string | null>(null);
+  const selected = createMemo(() => rows().find((r) => r.path === selPath()) ?? null);
   const toggle = (key: Key) => setSort((s) => ({ key, asc: s.key === key ? !s.asc : true }));
 
   let scroller!: HTMLDivElement;
@@ -90,13 +103,22 @@ export default function Library() {
                   return (
                     <div
                       class="vrow lrow small"
-                      classList={{ sel: selected()?.path === r().path }}
-                      onClick={() => setSelected(r())}
+                      classList={{ sel: selPath() === r().path }}
+                      onClick={() => setSelPath(r().path)}
                       style={{ transform: `translateY(${it.start}px)`, height: `${ROW_H}px` }}>
+                      <button
+                        class="star"
+                        classList={{ on: r().favorite }}
+                        title={r().favorite ? "Remove from favorites" : "Add to favorites"}
+                        onClick={(e) => (e.stopPropagation(), void toggleFavorite(r()))}
+                      >
+                        {r().favorite ? "★" : "☆"}
+                      </button>
                       <span class={`tag tag-${r().state}`}>{r().state}</span>
                       <span class="ellipsis dim" title={r().system}>{r().system}</span>
                       <span class="ellipsis" title={r().name}>{r().name}</span>
                       <span class="ellipsis mono dim" title={r().path}>{r().path}</span>
+                      <span class="dim">{r().seconds ? formatPlayTime(r().seconds) : ""}</span>
                     </div>
                   );
                 }}

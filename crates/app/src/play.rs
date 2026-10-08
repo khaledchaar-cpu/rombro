@@ -85,6 +85,15 @@ pub async fn set_game_core(path: String, core: Option<String>) -> CmdResult<()> 
     store.set_core_override(&rom, core.as_deref()).map_err(err)
 }
 
+/// Marks (`on`) or unmarks a game as favorite.
+#[tauri::command]
+pub async fn set_favorite(path: String, on: bool) -> CmdResult<()> {
+    let (rom, _) = game_path(&path)?;
+    let (store, _) = open_store()?;
+    let key = store.game_key(&rom).map_err(err)?;
+    store.set_favorite(&key, on).map_err(err)
+}
+
 /// Installs what is missing and starts the game; returns the core id. Emits `play://progress`
 /// (phase download/verify/unpack/info/core, MB, core id).
 #[tauri::command]

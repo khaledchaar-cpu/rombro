@@ -315,6 +315,11 @@ export interface LibraryRow {
   name: string;
   state: "known" | "named" | "ambiguous" | "unknown" | "skip";
   files: number;
+  favorite: boolean;
+  /** Counted runs (≥ 30 s), total play time in seconds, last run (unix seconds, 0 = never). */
+  plays: number;
+  seconds: number;
+  last_played: number;
 }
 
 export interface Session {
@@ -341,6 +346,10 @@ export async function libraryList(library?: string, rescan = false): Promise<Lib
       files: 1,
       regions: i % 3 ? ["Europe"] : ["USA", "Japan"],
       added: Date.now() / 1000 - i * 3600,
+      favorite: i % 41 === 0,
+      plays: i % 13 ? 0 : 3,
+      seconds: i % 13 ? 0 : 5400 + i,
+      last_played: i % 13 ? 0 : Date.now() / 1000 - i * 600,
     }));
   }
   return invoke<LibraryRow[]>("library_list", { library, rescan });
@@ -827,12 +836,25 @@ export async function setGameCore(path: string, core: string | null): Promise<vo
   return invoke<void>("set_game_core", { path, core });
 }
 
+/** Marks or unmarks a library game as favorite. */
+export async function setFavorite(path: string, on: boolean): Promise<void> {
+  if (!inTauri) return;
+  return invoke<void>("set_favorite", { path, on });
+}
+
+/** RetroArch closed: game path and run time in seconds (counted when ≥ 30 s). */
+export function onPlayEnded(cb: (path: string, secs: number) => void): Promise<UnlistenFn> {
+  if (!inTauri) return mockListen<[string, number]>("play://ended", (p) => cb(p[0], p[1]));
+  return listen<[string, number]>("play://ended", (e) => cb(e.payload[0], e.payload[1]));
+}
+
 /** Installs what is missing (RetroArch, core) and starts the game; progress on `play://progress`. */
 export async function play(path: string): Promise<string> {
   if (!inTauri) {
     if (!mockRa) await mockProgress("play://progress", ["download", "verify", "unpack"], phased);
     mockRa = mockRa ?? "1.22.2";
     await mockProgress("play://progress", ["core"], (p, d, t) => [p, { done: d, total: t }, "snes9x"]);
+    setTimeout(() => mockBus.get("play://ended")?.forEach((cb) => cb([path, 95])), 3000);
     return mockGameCore.get(path) ?? "snes9x";
   }
   return invoke<string>("play", { path });
