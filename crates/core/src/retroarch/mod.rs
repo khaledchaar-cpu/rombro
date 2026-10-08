@@ -5,6 +5,7 @@ pub mod assets;
 pub mod export;
 pub mod firmware;
 pub mod info;
+pub mod managed;
 pub mod pick;
 pub mod scummvm;
 

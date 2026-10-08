@@ -193,6 +193,46 @@ pub fn http_get(url: &str) -> io::Result<Vec<u8>> {
     Ok(buf)
 }
 
+/// Streams `url` into `to`, reporting (bytes done, total from `Content-Length`).
+pub fn http_download(
+    url: &str,
+    to: &std::path::Path,
+    progress: &dyn Fn(u64, Option<u64>),
+) -> io::Result<()> {
+    let mut resp = ureq::get(url)
+        .header("User-Agent", "rombro")
+        .call()
+        .map_err(io::Error::other)?;
+    let total = resp
+        .headers()
+        .get("content-length")
+        .and_then(|v| v.to_str().ok()?.parse().ok());
+    let mut reader = resp.body_mut().with_config().limit(2 << 30).reader();
+    let mut out = io::BufWriter::new(std::fs::File::create(to)?);
+    let mut buf = vec![0u8; 1 << 16];
+    let (mut done, mut shown) = (0u64, 0u64);
+    loop {
+        let n = reader.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        io::Write::write_all(&mut out, &buf[..n])?;
+        done += n as u64;
+        if done - shown >= 1 << 20 {
+            shown = done;
+            progress(done, total);
+        }
+    }
+    io::Write::flush(&mut out)?;
+    progress(done, total);
+    if total.is_some_and(|t| t != done) {
+        return Err(io::Error::other(format!(
+            "incomplete download ({done} bytes)"
+        )));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

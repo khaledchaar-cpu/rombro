@@ -20,7 +20,7 @@ mod tests;
 
 pub use catalog::set_names;
 pub use dat::DatInfo;
-pub use dat_sync::{DatSyncReport, http_get};
+pub use dat_sync::{DatSyncReport, http_download, http_get};
 pub use disc::DiscMatch;
 pub use gamify::Stats;
 pub use identify::{Match, candidates};

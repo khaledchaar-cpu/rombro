@@ -1,6 +1,7 @@
 mod db;
 mod g1r;
 mod import;
+mod ra;
 mod retroarch;
 mod rules;
 mod scan;
@@ -73,9 +74,14 @@ enum Cmd {
         #[arg(long)]
         db: Option<PathBuf>,
     },
-    /// Revert the most recent import/audit execution
     /// Export playlists (with matching core) and identified BIOS files to RetroArch
     Retroarch(retroarch::Args),
+    /// Install, update and configure the RetroArch rombro manages
+    Ra {
+        #[command(subcommand)]
+        cmd: ra::Cmd,
+    },
+    /// Revert the most recent import/audit execution
     Undo {
         #[arg(long)]
         db: Option<PathBuf>,
@@ -148,6 +154,7 @@ fn main() -> anyhow::Result<()> {
             db,
         } => rules::run(set, &ignore, &unignore, db),
         Cmd::Retroarch(a) => retroarch::run(a),
+        Cmd::Ra { cmd } => ra::run(cmd),
         Cmd::Undo { db } => import::undo(db),
         Cmd::Resolve { file, pick, db } => import::resolve(file, pick, db),
     }
