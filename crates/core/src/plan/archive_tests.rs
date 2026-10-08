@@ -535,3 +535,35 @@ fn repacked_zips_with_equal_members_are_the_same() {
     zip(&c, &["x.bin"]);
     assert!(!build::same_content(&a, &c));
 }
+
+#[test]
+fn zipped_disks_of_a_multi_disk_release_are_extracted_for_the_m3u() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    let disk = |n: u8| {
+        let a = inbox.join(format!("Tenshi (Japan) (Disk {n}).zip"));
+        zip(&a, &[&format!("Tenshi (Japan) (Disk {n}).fds")]);
+        Item {
+            files: Files::Single(a),
+            ident: game(&format!("Tenshi (Japan) (Disk {n})")),
+            in_library: false,
+        }
+    };
+    let plan = build(&[disk(1), disk(2)], &lib, &opts(Mode::Move));
+    assert!(execute(&plan.ops).error.is_none());
+    let dir = format!("{SYS}/Tenshi (Japan)");
+    assert_eq!(
+        tree(&lib),
+        [
+            format!("{dir}/Tenshi (Japan) (Disk 1).fds"),
+            format!("{dir}/Tenshi (Japan) (Disk 2).fds"),
+            format!("{dir}/Tenshi (Japan).m3u"),
+            "_trash/Tenshi (Japan) (Disk 1).zip".to_owned(),
+            "_trash/Tenshi (Japan) (Disk 2).zip".to_owned(),
+        ]
+    );
+    assert_eq!(
+        fs::read_to_string(lib.join(&dir).join("Tenshi (Japan).m3u")).unwrap(),
+        "Tenshi (Japan) (Disk 1).fds\nTenshi (Japan) (Disk 2).fds\n"
+    );
+}

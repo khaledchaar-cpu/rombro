@@ -1,8 +1,8 @@
 //! Placing one picked item at its library path (incl. disc sheets and archived discs).
 
-use super::{Builder, ext_of, file_name};
+use super::{Builder, TRASH_DIR, ext_of, file_name};
 use crate::plan::sheet::rewrite_sheet;
-use crate::plan::{Files, Game, Item, Op};
+use crate::plan::{Files, Game, Item, Mode, Op};
 use crate::{archive, disc, naming};
 use std::path::{Path, PathBuf};
 
@@ -17,7 +17,12 @@ impl Builder<'_> {
             let rel = naming::target_path(&g.system, &g.name, &ext_of(src), multi);
             self.library.join(rel)
         };
-        let primary = target(&name_source(&it.files));
+        // Cores open `.m3u` entries themselves, without RetroArch's archive support.
+        let zipped = multi.then(|| single_zip_member(&it.files)).flatten();
+        let primary = match &zipped {
+            Some(m) => target(Path::new(m)),
+            None => target(&name_source(&it.files)),
+        };
         let (mut ops, sheet) = match &it.files {
             Files::Sheet { sheet, tracks } => (
                 vec![self.transfer(it, sheet, &primary)],
@@ -42,6 +47,20 @@ impl Builder<'_> {
                     chds.iter()
                         .map(|c| self.transfer(it, c, &dir.join(file_name(c)))),
                 );
+                (ops, None)
+            }
+            Files::Single(zip) if zipped.is_some() => {
+                let mut ops = vec![Op::Extract {
+                    archive: zip.clone(),
+                    member: zipped.clone().unwrap_or_default(),
+                    to: primary.clone(),
+                }];
+                if it.in_library || self.opts.mode == Mode::Move {
+                    ops.push(Op::Move {
+                        from: zip.clone(),
+                        to: self.library.join(TRASH_DIR).join(file_name(zip)),
+                    });
+                }
                 (ops, None)
             }
             f => (vec![self.transfer(it, &name_source(f), &primary)], None),
@@ -93,6 +112,20 @@ fn name_source(files: &Files) -> PathBuf {
             PathBuf::from(member)
         }
         f => f.primary().clone(),
+    }
+}
+
+/// The only member of a single-ROM `.zip` (`None` for anything else).
+fn single_zip_member(files: &Files) -> Option<String> {
+    let Files::Single(p) = files else {
+        return None;
+    };
+    if !ext_of(p).eq_ignore_ascii_case("zip") {
+        return None;
+    }
+    match archive::members(p).ok()?.as_slice() {
+        [(m, _)] => Some(m.clone()),
+        _ => None,
     }
 }
 
