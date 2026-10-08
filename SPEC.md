@@ -141,6 +141,11 @@ Architektur v1 muss das vorbereiten: GUI-Navigation per Fokus-System, Daten-Mode
 - Schnitt: **M15a** verwaltetes RetroArch (Download, Prüfung, Install, Update, Config, CLI `rombro ra install`, alle 3 OS);
   **M15b** Starten (`play`, Play-Button, Core-Override, Auto-Core-Install); **M15c** Spielzeit + Favoriten, alten Export entfernen.
   Später: Gamepad-UI-Modus, Savestate-Übersicht, RetroAchievements.
+- Umsetzung M15a: Buildbot liefert keine Prüfsummen → SHA-256 der gepinnten Archive steht im Code (`PINNED_SHA256`),
+  „latest“ wird nur über die 7z-CRCs geprüft. Linux: `linux/x86_64/RetroArch.7z` (AppImage + `.AppImage.home` mit
+  Assets; AppImage setzt `$HOME` darauf, daher immer `--config <root>/retroarch.cfg`), Windows `RetroArch.7z`,
+  macOS `RetroArch_Metal.dmg`. Kein Build für Linux-aarch64 → „nicht unterstützt“. Ordner: `<data>/rombro/retroarch/`
+  mit `versions/<v>/`, `current`, `cores`, `info`, `saves`, `states`, `retroarch.cfg`; nur eine Version bleibt.
 
 ## 7. Architektur
 ```

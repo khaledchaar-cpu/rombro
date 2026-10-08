@@ -24,8 +24,8 @@
 | v0.4.0 Release (Perf, Settings-Umbau) | ✅ released 2026-10-07 |
 | v0.5.0 Release (Firmware/BIOS, Daphne, Disc-Serials, neue UI) | ✅ released 2026-10-08 |
 | v0.5.1 Release (Arcade-DAT-Erkennung, Mehrdisk, Perf) | ✅ released 2026-10-08 |
-| M15a Verwaltetes RetroArch | ⏳ next |
-| M15b Starten | geplant |
+| M15a Verwaltetes RetroArch | ✅ done (Linux e2e; Win/macOS ungetestet, Sichtprüfung offen) |
+| M15b Starten | ⏳ next |
 | M15c Spielzeit & Favoriten | geplant |
 
 ## Aktuell
@@ -67,7 +67,17 @@ RetroArch; aktuelles MAME scheitert weiter (Exit 1). Echte Sammlung (Dry-Run Arc
 mit plausiblen Gründen (fehlend, misnamed, Eltern fehlt, nicht im DAT).
 Nachträge: Eltern-Suche über Scan + Library, Begründung „skipped …“ bei platzierten Sets, `db stats` zeigt
 DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BIOS neben dem Set).
-**Nächster Milestone: M15a Verwaltetes RetroArch** (Schnitt M15a/b/c festgelegt 2026-10-08, SPEC §6).
+**Nächster Milestone: M15b Starten** (Schnitt M15a/b/c festgelegt 2026-10-08, SPEC §6).
+
+M15a (2026-10-08): `retroarch::managed` (Download → SHA-256 bei gepinnter Version → 7z/dmg entpacken in Temp →
+atomarer Rename → `current`-Marker, alte Versionen weg), `managed::config` (eigene `retroarch.cfg`, nur Ordner-Keys
+gesetzt, Rest bleibt; `system_directory` = `<library>/_bios`, wird nicht angelegt). CLI `rombro ra status [--check] |
+install [--version|--latest] [--library] | config`; App: Panel „Managed RetroArch“ im RetroArch-Tab
+(`ra_status`/`ra_install`, `ra://progress` in MB). Streaming-Download `rombro_store::http_download`.
+E2E Linux (Scratch-XDG): 179 MB in 1:43 min, 1.22.2 startet headless fceumm 300 Frames, Saves/States im
+verwalteten Ordner. Offen: Windows/macOS real testen (dmg via `hdiutil`), Sichtprüfung Panel.
+Nächste Schritte M15b: `info`-Dateien + Cores in den verwalteten Ordner (Buildbot `info.zip`), `rombro play`,
+Play-Button, Core-Override, Auto-Core-Install.
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,
