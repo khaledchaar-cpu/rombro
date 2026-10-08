@@ -6,7 +6,8 @@ import { raInstall, raStatus } from "../ipc";
 /** The RetroArch RomBro downloads and runs itself: install, version, update to newest stable. */
 export default function ManagedRetroArchPanel() {
   const [check, setCheck] = createSignal(false);
-  const [status, { refetch }] = createResource(check, raStatus);
+  // Wrapped: a falsy source (`false`) would keep the resource from ever loading.
+  const [status, { refetch }] = createResource(() => ({ check: check() }), (s) => raStatus(s.check));
   const [busy, setBusy] = createSignal(false);
   const [msg, setMsg] = createSignal("");
 
