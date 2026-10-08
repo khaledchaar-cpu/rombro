@@ -29,7 +29,7 @@
 | M15c Spielzeit & Favoriten | ✅ done (Sichtprüfung + ScummVM-Start 2026-10-08) |
 | M15d Altlasten | ✅ done (2026-10-08) |
 | M16a RetroAchievements: Hashing + Library-Badge | ✅ done (Sichtprüfung 2026-10-08) |
-| M16b RA-Login, Hardcore, Fortschritt | ⏳ |
+| M16b RA-Login, Hardcore, Fortschritt | 🔶 gebaut, Sichtprüfung + echter Login offen |
 | M16c RA Disc-Systeme + NDS | ⏳ |
 
 ## Aktuell
@@ -106,6 +106,16 @@ Library-Spalte 🏆 (◌ = andere Version unterstützt), Filter-Chip, Details. E
 2.685/9.083 Dateien mit Achievements (erster Hash-Lauf 1:27 min über CIFS). Niedrige Quoten (N64 35/193) = EU-Versionen,
 die RA nicht führt (geprüft: Mario Kart 64 EU Rev 1 nicht in RA, Dr. Mario 64 `.n64` erkannt).
 Nächste Schritte: M16b (Login → `cheevos_token`, Hardcore-Schalter, Fortschritt je Spiel).
+
+M16b (2026-10-08): `retroarch::managed::cheevos::Cheevos` (Keys `cheevos_enable/username/token/hardcore_mode_enable`,
+`cheevos_password` immer leer), `Managed.cheevos`; Store `ra_account` (Settings `ra.user/ra.token/ra.hardcore`,
+`ra_login` = POST `dorequest.php?r=login2`, 401 = falsches Passwort), `Store::ra_prefs(m)` setzt Display + Cheevos
+überall, wo die Config geschrieben wird. Schema v18 `ra_progress` (`API_GetUserCompletionProgress`, 500/Seite) –
+bei Sync, Login und nach gespielten RA-Spielen (nur betroffene Zeilen gepatcht). Library-Zelle `3/40` bzw. `★ 40`
+(mastered/completed), Details: „x of y unlocked“, Liste via `API_GetGameInfoAndUserProgress` mit ✔/✔ hardcore,
+gesperrte grau. CLI `cheevos login <user>` (Passwort per TTY oder stdin), `logout`, `hardcore on|off`.
+Getestet: Fehlerpfad gegen echten Server; echter Login + Freischaltung in RetroArch noch nicht.
+Nächste Schritte: Sichtprüfung (Settings → RetroArch → Login, Hardcore, Library-Fortschritt, Details); dann M16c.
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,

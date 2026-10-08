@@ -169,6 +169,9 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
   Disc-Systeme (PS1/PS2/Saturn/Sega CD/PCE-CD/DC/3DO …) und NDS eigene Verfahren.
 - Schnitt: **M16a** Hashing Cartridge + Arcade + N64, RA-Spielliste je Konsole (Cache in der DB), Badge/Filter/Hinweis;
   **M16b** Login, Token + Hardcore in der Config, Fortschritt je Spiel; **M16c** Disc-Systeme + NDS.
+- Entschieden (M16b, Default): Token liegt zusätzlich in der rombro-DB (`ra.token`), damit jede neu geschriebene Config
+  ihn trägt. Ein Login nur im RetroArch-Menü bleibt unangetastet, bis man sich in rombro an-/abmeldet (`ra.user` gesetzt).
+  Abmelden setzt `cheevos_enable = false` und löscht Token + Fortschritt. Fortschritt braucht zusätzlich den Web-API-Key.
 
 ## 7. Architektur
 ```

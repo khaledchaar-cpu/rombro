@@ -50,7 +50,7 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Spielen | `… -- play <datei> [--core id [--save]] [--dry-run]` (zählt Spielzeit ≥ 30 s) |
 | Verwaltetes RetroArch | `… -- ra status [--check]` / `ra install [--latest] [--library <lib>]` (Test: `XDG_DATA_HOME=<scratch>`) |
 | Anzeige RetroArch | `… -- ra display [fullscreen|window[:1-6]|auto]` |
-| RetroAchievements | `… -- cheevos key <key>` / `cheevos sync` / `cheevos scan [--list]` |
+| RetroAchievements | `… -- cheevos key <key>` / `cheevos sync` / `cheevos scan [--list]` / `cheevos login <user>` / `logout` / `hardcore [on\|off]` |
 | Undo / Resolve | `… -- undo` / `… -- resolve <file> [n]` |
 | Echte RDBs testen | `cargo test -q --release -p rombro-rdb -- --ignored` |
 | RDB-Ort (Linux) | `~/.config/retroarch/database/rdb/` (146 Dateien), Erkennung: `core::paths` |
