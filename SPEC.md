@@ -124,6 +124,24 @@ Core-Erkennung (`*.info`), Start via RetroArch-CLI (`retroarch -L core rom`), Sp
 Controller-Navigation (Gamepad-UI-Modus), Savestate-Übersicht, RetroAchievements-Status.
 Architektur v1 muss das vorbereiten: GUI-Navigation per Fokus-System, Daten-Modell mit `play_stats`-Tabelle reservieren.
 
+### M15 Launcher-Basis – Entscheidungen (2026-10-08)
+- **Verwaltetes RetroArch** (einzige Variante): offizielle Stable-Builds von buildbot.libretro.com für Linux (AppImage),
+  Windows (zip/7z) und macOS (dmg). Ablage im App-Datenverzeichnis (`~/.local/share/rombro/retroarch/` o. ä.).
+  Version gepinnt (mit ROMBRO-Releases angehoben), dazu „Update auf neueste Stable“ in Settings → RetroArch.
+- Einrichtung beim ersten „Play“ (Dialog mit Größe + Fortschritt) oder in Settings → RetroArch; erst herunterladen und
+  prüfen, dann atomar verschieben, ohne Netz klare Fehlermeldung.
+- Eigene, von ROMBRO geschriebene `retroarch.cfg`. Saves/States/Config bleiben im Standardordner des verwalteten
+  RetroArch (App-Datenverzeichnis); das ROM-Verzeichnis bleibt sauber, nur `system_directory` zeigt auf `<library>/_bios`.
+- Start: Core = Standard-Core (bisherige Core-Wahl) oder Override pro Spiel (Dropdown in der Detailansicht, alle passenden
+  Cores); fehlende Cores werden automatisch installiert. CLI `rombro play <file>` + Play-Button in der App.
+- Spielzeit: Prozesslaufzeit, Läufe < 30 s ignoriert; „zuletzt gespielt“, Gesamtzeit, Starts; Zuordnung über Hash.
+- Favoriten: Stern + Library-Filter, nur in ROMBRO.
+- Der bisherige RetroArch-Export (Playlists, BIOS-Kopie, `--install-cores`, CLI `retroarch`) entfällt am Ende von M15;
+  Core-Wahl/-Installation werden wiederverwendet.
+- Schnitt: **M15a** verwaltetes RetroArch (Download, Prüfung, Install, Update, Config, CLI `rombro ra install`, alle 3 OS);
+  **M15b** Starten (`play`, Play-Button, Core-Override, Auto-Core-Install); **M15c** Spielzeit + Favoriten, alten Export entfernen.
+  Später: Gamepad-UI-Modus, Savestate-Übersicht, RetroAchievements.
+
 ## 7. Architektur
 ```
 rombro/

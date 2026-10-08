@@ -23,6 +23,10 @@
 | v0.3.0 Release + Inbox-Importe | ✅ released 2026-10-06; Nachträge 2026-10-07 (CSO, OpenBOR, Library-Perf) |
 | v0.4.0 Release (Perf, Settings-Umbau) | ✅ released 2026-10-07 |
 | v0.5.0 Release (Firmware/BIOS, Daphne, Disc-Serials, neue UI) | ✅ released 2026-10-08 |
+| v0.5.1 Release (Arcade-DAT-Erkennung, Mehrdisk, Perf) | ✅ released 2026-10-08 |
+| M15a Verwaltetes RetroArch | ⏳ next |
+| M15b Starten | geplant |
+| M15c Spielzeit & Favoriten | geplant |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -51,7 +55,7 @@ Stand 2026-10-08: v0.5.0 veröffentlicht. Danach auf `main` (für v0.5.1), alle 
 - CI: apt-Schritte mit 10-min-Timeout (Linux-Runner hingen stundenlang).
 Stolpersteine: CLI `audit` führt ohne `--dry-run` aus (nur mit `import --dry-run` analysieren!); App läuft im
 Dev-Modus, Codeänderungen starten sie neu → nie während Plan/Import des Users editieren.
-Nächste Schritte: v0.5.1 releasen; Atari-ST-Mehrdisk-Teile (Boot/Data, (A)/(B)) nicht als TIE behandeln;
+v0.5.1 veröffentlicht 2026-10-08. Nächste Schritte: M15a; Atari-ST-Mehrdisk-Teile (Boot/Data, (A)/(B)) nicht als TIE behandeln;
 Sufami-Turbo-Kombi-Images in Zips; M15 Launcher-Basis.
 Stolperstein: App läuft beim User per `pnpm tauri dev` – Code-Änderungen starten sie neu (laufende Scans brechen ab).
 
@@ -63,7 +67,7 @@ RetroArch; aktuelles MAME scheitert weiter (Exit 1). Echte Sammlung (Dry-Run Arc
 mit plausiblen Gründen (fehlend, misnamed, Eltern fehlt, nicht im DAT).
 Nachträge: Eltern-Suche über Scan + Library, Begründung „skipped …“ bei platzierten Sets, `db stats` zeigt
 DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BIOS neben dem Set).
-**Nächster Milestone: M15 Launcher-Basis** (SPEC §6) – Schnitt noch festlegen.
+**Nächster Milestone: M15a Verwaltetes RetroArch** (Schnitt M15a/b/c festgelegt 2026-10-08, SPEC §6).
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,
