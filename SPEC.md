@@ -151,8 +151,8 @@ Architektur v1 muss das vorbereiten: GUI-Navigation per Fokus-System, Daten-Mode
   verliert ihn – bei Bedarf später auf Hash umstellen). Core-Assets beim Auto-Install noch nicht (Library-Schreibzugriff).
 - Umsetzung M15c: Spielzeit/Favoriten unter `sha1:<hex>` der ersten indizierten ROM (Archive: erstes Member), sonst
   `path:<abs>` (Disc-`.m3u`/`.cue` sind nicht gehasht → Umbenennen verliert deren Statistik). Core-Systemdateien
-  lädt `play` und entpackt sie über Plan + Journal nach `_bios`. Offene Frage: Library-`_playlists` (Planner) und
-  ScummVM-Targets (`scummvm.ini`) nach Wegfall des Exports noch nötig?
+  lädt `play` und entpackt sie über Plan + Journal nach `_bios`. ScummVM startet ohne `scummvm.ini`-Targets (geprüft).
+  Offene Frage: Library-`_playlists` (Planner) nach Wegfall des Exports noch nötig?
 
 ## 7. Architektur
 ```

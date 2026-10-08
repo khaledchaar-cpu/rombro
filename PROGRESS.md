@@ -26,7 +26,7 @@
 | v0.5.1 Release (Arcade-DAT-Erkennung, Mehrdisk, Perf) | ✅ released 2026-10-08 |
 | M15a Verwaltetes RetroArch | ✅ done (Linux e2e + Sichtprüfung 2026-10-08; Win/macOS ungetestet) |
 | M15b Starten | ✅ done (Linux e2e + Sichtprüfung 2026-10-08) |
-| M15c Spielzeit & Favoriten | ✅ done (Sichtprüfung App offen) |
+| M15c Spielzeit & Favoriten | ✅ done (Sichtprüfung + ScummVM-Start 2026-10-08) |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -88,9 +88,8 @@ Ersatz: `rombro ra cores [--set Sys=id]`, Settings → RetroArch „Cores per sy
 Top-Ordner der Library). Core-Systemdateien (blueMSX, PPSSPP, Dolphin, PCSX2, ECWolf) lädt jetzt `play` nach
 `download/assets/` und entpackt nach `<library>/_bios` über den Journal (`Store::execute_journaled`, undo-bar).
 Geprüft: `play --dry-run` Coleco → bluemsx + 300 Systemdateien geplant.
-**Offen:** Sichtprüfung (Stern, Filter, Played-Spalte, Spielzeit nach echtem Lauf, Cores-Panel);
-ScummVM-Start ohne `scummvm.ini`-Targets prüfen (Export schrieb sie, `retroarch::scummvm` ist noch da);
-Planner schreibt weiter `_playlists/*.lpl` in die Library (nur noch Altlast → entfernen?).
+Sichtprüfung abgenommen (User, 2026-10-08), 2 ScummVM-Titel starten ohne Export-`scummvm.ini`.
+**Offen:** `retroarch::scummvm` (ini-Targets) evtl. entfernen; Planner schreibt weiter `_playlists/*.lpl` in die Library (nur noch Altlast → entfernen?).
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,
