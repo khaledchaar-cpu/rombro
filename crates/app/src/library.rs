@@ -26,6 +26,8 @@ pub struct Row {
     cheevos: u32,
     /// RA title of another version that has achievements, when this one has none.
     cheevos_other: Option<String>,
+    /// RA game id (this file's game, else the other version's) for the achievement list.
+    cheevos_game: Option<u64>,
 }
 
 fn added(p: &std::path::Path) -> i64 {
@@ -239,8 +241,9 @@ pub async fn library_list(
                     .cloned()
                     .unwrap_or_else(|| format!("path:{}", p.display()));
                 let st = stats.get(&key).copied().unwrap_or_default();
-                let (cheevos, cheevos_other) = ra.lookup(p, &system, &name);
+                let (cheevos, cheevos_other, cheevos_game) = ra.lookup(p, &system, &name);
                 Row {
+                    cheevos_game,
                     cheevos,
                     cheevos_other,
                     favorite: favorites.contains(&key),

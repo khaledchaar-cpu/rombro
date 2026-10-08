@@ -22,7 +22,7 @@ mod snapshot;
 mod tests;
 
 pub use catalog::set_names;
-pub use cheevos::{RaGame, RaSyncReport};
+pub use cheevos::{RaAchievement, RaGame, RaSyncReport, ra_achievements};
 pub use dat::DatInfo;
 pub use dat_sync::{DatSyncReport, http_download, http_get};
 pub use disc::DiscMatch;

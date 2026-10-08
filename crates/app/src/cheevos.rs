@@ -100,6 +100,18 @@ fn hash_library(app: &AppHandle, store: &Store) -> CmdResult<usize> {
     Ok(store.ra_file_games(&library).map_err(err)?.len())
 }
 
+/// Achievements of RA game `game` (fetched on demand for the details view).
+#[tauri::command]
+pub async fn cheevos_achievements(game: u64) -> CmdResult<Vec<rombro_store::RaAchievement>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let (store, _) = open_store()?;
+        let key = store.setting(KEY).map_err(err)?.ok_or("no Web API key")?;
+        rombro_store::ra_achievements(&key, game).map_err(err)
+    })
+    .await
+    .map_err(err)?
+}
+
 /// Library row data: achievements of this exact file, or the title of another version RA
 /// supports.
 pub(crate) struct Index {
@@ -115,16 +127,21 @@ impl Index {
         })
     }
 
-    /// (achievements of this file, RA title of another supported version).
-    pub(crate) fn lookup(&self, path: &Path, system: &str, name: &str) -> (u32, Option<String>) {
+    /// (achievements of this file, RA title of another supported version, RA game id).
+    pub(crate) fn lookup(
+        &self,
+        path: &Path,
+        system: &str,
+        name: &str,
+    ) -> (u32, Option<String>, Option<u64>) {
         if let Some(g) = self.files.get(path) {
-            return (g.achievements, None);
+            return (g.achievements, None, Some(g.id));
         }
         // arcade sets are hashed by name: another version is another set, never a hint
         let other = cheevos::console(system)
             .filter(|c| c.method != cheevos::Method::Arcade)
             .and_then(|c| self.titles.get(&(c.id, cheevos::title_key(name))))
-            .map(|g| g.title.clone());
-        (0, other)
+            .map(|g| (g.title.clone(), g.id));
+        (0, other.as_ref().map(|o| o.0.clone()), other.map(|o| o.1))
     }
 }

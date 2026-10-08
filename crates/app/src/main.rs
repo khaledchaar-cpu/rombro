@@ -48,6 +48,7 @@ fn main() {
             cheevos::cheevos_set_key,
             cheevos::cheevos_sync,
             cheevos::cheevos_hash,
+            cheevos::cheevos_achievements,
             managed_ra::ra_status,
             managed_ra::ra_install,
             managed_ra::ra_display,

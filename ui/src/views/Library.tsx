@@ -14,7 +14,7 @@ import {
 const ROW_H = 26;
 const EMPTY: LibraryRow = {
   path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0,
-  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null,
+  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null,
 };
 type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds" | "cheevos";
 const COLS: { key: Key; label: string }[] = [

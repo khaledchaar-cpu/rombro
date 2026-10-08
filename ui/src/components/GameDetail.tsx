@@ -1,6 +1,7 @@
 import { createResource, For, onCleanup, Show } from "solid-js";
 import Panel from "./Panel";
 import GamePlay from "./GamePlay";
+import CheevosList from "./CheevosList";
 import { thumbnail, type LibraryRow, type ThumbKind } from "../ipc";
 import { formatPlayTime, toggleFavorite } from "../state/libraryStore";
 
@@ -67,6 +68,9 @@ export default function GameDetail(props: { row: LibraryRow }) {
           <dt>Path</dt><dd class="mono">{props.row.path}</dd>
         </dl>
       </div>
+      <Show when={props.row.cheevos_game}>
+        {(g) => <CheevosList game={g()} other={props.row.cheevos ? null : props.row.cheevos_other} />}
+      </Show>
     </Panel>
   );
 }

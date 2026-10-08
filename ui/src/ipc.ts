@@ -324,6 +324,8 @@ export interface LibraryRow {
   cheevos: number;
   /** RA title of another version with achievements, when this one has none. */
   cheevos_other: string | null;
+  /** RA game id (this file's, else the other version's). */
+  cheevos_game: number | null;
 }
 
 export interface Session {
@@ -356,6 +358,7 @@ export async function libraryList(library?: string, rescan = false): Promise<Lib
       last_played: i % 13 ? 0 : Date.now() / 1000 - i * 600,
       cheevos: i % 3 ? 0 : 20 + (i % 40),
       cheevos_other: i % 3 === 1 && i % 5 === 0 ? `Game ${i}` : null,
+      cheevos_game: i % 3 === 0 || i % 5 === 0 ? i : null,
     }));
   }
   return invoke<LibraryRow[]>("library_list", { library, rescan });
@@ -851,4 +854,32 @@ export async function cheevosSync(): Promise<number> {
     return 2685;
   }
   return invoke<number>("cheevos_sync");
+}
+
+export interface RaAchievement {
+  id: number;
+  title: string;
+  description: string;
+  points: number;
+  /** badge image id: https://media.retroachievements.org/Badge/<badge>.png */
+  badge: string;
+  /** progression, win_condition, missable or "" */
+  kind: string;
+  /** share of players who unlocked it (0–1) */
+  rarity: number;
+}
+
+/** Achievements of a RetroAchievements game (one Web API request). */
+export async function cheevosAchievements(game: number): Promise<RaAchievement[]> {
+  if (!inTauri)
+    return Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      title: `Achievement ${i + 1}`,
+      description: "Complete the first act of Green Hill Zone.",
+      points: [1, 3, 5, 10, 25][i % 5],
+      badge: "",
+      kind: i === 11 ? "win_condition" : i % 4 ? "" : "progression",
+      rarity: 1 / (i + 1.5),
+    }));
+  return invoke<RaAchievement[]>("cheevos_achievements", { game });
 }

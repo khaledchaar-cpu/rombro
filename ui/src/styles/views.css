@@ -128,3 +128,12 @@
   .steps li:not(.active) { font-size: 0; gap: 0; }
   .steps li:not(.active) .step-no { font-size: var(--fs-xs); }
 }
+
+.cheevos { margin-top: var(--sp-4); }
+.cheevo-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); max-height: 420px; overflow-y: auto; }
+.cheevo { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: var(--sp-3); align-items: center; }
+.cheevo-badge { width: 40px; height: 40px; border: 1px solid var(--line); background: var(--bg-sunken); object-fit: cover; }
+.cheevo-text { display: flex; flex-direction: column; min-width: 0; }
+.cheevo-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cheevo-meta { white-space: nowrap; }
+@media (max-width: 640px) { .cheevo { grid-template-columns: 32px minmax(0, 1fr); } .cheevo-meta { grid-column: 2; } .cheevo-badge { width: 32px; height: 32px; } }

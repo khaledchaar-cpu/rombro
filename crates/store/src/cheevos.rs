@@ -67,6 +67,78 @@ fn game(r: &rusqlite::Row, at: usize) -> rusqlite::Result<RaGame> {
     })
 }
 
+/// One achievement of a game (`API_GetGameExtended`).
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct RaAchievement {
+    pub id: u64,
+    pub title: String,
+    pub description: String,
+    pub points: u32,
+    /// Badge image: `https://media.retroachievements.org/Badge/<badge>.png`.
+    pub badge: String,
+    /// `progression`, `win_condition`, `missable` or empty.
+    pub kind: String,
+    /// Share of the game's players who unlocked it (0–1).
+    pub rarity: f32,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct ApiExtended {
+    #[serde(default)]
+    num_distinct_players: u64,
+    #[serde(default)]
+    achievements: HashMap<String, ApiAchievement>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct ApiAchievement {
+    #[serde(rename = "ID")]
+    id: u64,
+    title: String,
+    #[serde(default)]
+    description: String,
+    #[serde(default)]
+    points: u32,
+    #[serde(default)]
+    badge_name: String,
+    #[serde(default)]
+    display_order: i64,
+    #[serde(default)]
+    num_awarded: u64,
+    #[serde(rename = "type", default)]
+    kind: Option<String>,
+}
+
+/// The achievements of RA game `game` in display order (one Web API request).
+pub fn ra_achievements(api_key: &str, game: u64) -> std::io::Result<Vec<RaAchievement>> {
+    let url =
+        format!("https://retroachievements.org/API/API_GetGameExtended.php?i={game}&y={api_key}");
+    let body =
+        http_get(&url).map_err(|e| std::io::Error::other(e.to_string().replace(api_key, "***")))?;
+    parse_achievements(&body)
+}
+
+fn parse_achievements(body: &[u8]) -> std::io::Result<Vec<RaAchievement>> {
+    let ext: ApiExtended = serde_json::from_slice(body).map_err(std::io::Error::other)?;
+    let players = ext.num_distinct_players.max(1) as f32;
+    let mut list: Vec<_> = ext.achievements.into_values().collect();
+    list.sort_by_key(|a| (a.display_order, a.id));
+    Ok(list
+        .into_iter()
+        .map(|a| RaAchievement {
+            id: a.id,
+            title: a.title,
+            description: a.description,
+            points: a.points,
+            badge: a.badge_name,
+            kind: a.kind.unwrap_or_default(),
+            rarity: (a.num_awarded as f32 / players).min(1.0),
+        })
+        .collect())
+}
+
 impl Store {
     /// Downloads the game lists of all consoles RomBro can hash (needs the user's Web API key).
     pub fn ra_sync(
@@ -235,6 +307,17 @@ mod tests {
         assert_eq!((g.id, g.achievements, g.title.as_str()), (5, 3, "Game"));
         assert!(s.ra_game("11").unwrap().is_none());
         assert_eq!(s.ra_synced().unwrap(), Some(9));
+    }
+
+    #[test]
+    fn parses_achievements_in_order() {
+        let body = br#"{"NumDistinctPlayers":200,"Achievements":{
+            "9":{"ID":9,"Title":"B","Points":5,"BadgeName":"2","DisplayOrder":2,"NumAwarded":50,"type":null},
+            "3":{"ID":3,"Title":"A","Description":"d","Points":3,"BadgeName":"1","DisplayOrder":1,"NumAwarded":100,"type":"progression"}}}"#;
+        let a = parse_achievements(body).unwrap();
+        assert_eq!((a[0].title.as_str(), a[1].title.as_str()), ("A", "B"));
+        assert_eq!(a[0].kind, "progression");
+        assert!((a[1].rarity - 0.25).abs() < 1e-6);
     }
 
     #[test]
