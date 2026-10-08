@@ -46,7 +46,8 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Import / Audit | `cargo run -q --release -p rombro-cli -- import <inbox> <lib> --dry-run` / `audit <lib>` |
 | Testset bauen | `./scripts/make-testset.sh "<Sammlung>"` → `~/rombro-test`, dann `--db ~/rombro-test/test.db` |
 | Regeln zeigen/laden | `… -- rules [--set rules.json] [--ignore/--unignore <pfad>]` |
-| RetroArch-Export | `… -- retroarch <lib> [--dry-run] [--cfg retroarch.cfg] [--no-playlists/--no-bios] [--install-cores] [--core "Sys=id"] [--list-cores]` |
+| Cores je System | `… -- ra cores [--library <lib>] [--set "Sys=id"]` (`Sys=` = Empfehlung) |
+| Spielen | `… -- play <datei> [--core id [--save]] [--dry-run]` (zählt Spielzeit ≥ 30 s) |
 | Verwaltetes RetroArch | `… -- ra status [--check]` / `ra install [--latest] [--library <lib>]` (Test: `XDG_DATA_HOME=<scratch>`) |
 | Undo / Resolve | `… -- undo` / `… -- resolve <file> [n]` |
 | Echte RDBs testen | `cargo test -q --release -p rombro-rdb -- --ignored` |

@@ -494,33 +494,6 @@ export async function thumbsOnlineSet(on: boolean): Promise<void> {
   return invoke("thumbs_online_set", { on });
 }
 
-export interface RetroArchExport {
-  playlist_dir: string;
-  system_dir: string;
-  cores: number;
-  /** Cores to install (id). */
-  cores_install: string[];
-  /** Wanted cores that are missing and not to be installed (path = core id). */
-  cores_missing: { system: string; path: string }[];
-  /** RetroArch's config names a buildbot to download cores from. */
-  can_install: boolean;
-  /** core = core set as default (installed, or installed by this export); null = RetroArch asks. */
-  playlists: { system: string; core: string | null }[];
-  playlists_unchanged: number;
-  /** Exported playlists of systems without games left, moved to the library trash. */
-  playlists_removed: string[];
-  /** Systems no RetroArch core runs: no playlist exported. */
-  playlists_no_core: string[];
-  bios_copied: string[];
-  bios_present: number;
-  bios_conflicts: string[];
-  bios_missing: { system: string; path: string }[];
-  /** ScummVM targets written to scummvm.ini so games start without asking. */
-  scummvm_targets: string[];
-  /** Operations executed; null for a preview. */
-  executed: number | null;
-}
-
 export interface CoreOption {
   id: string;
   name: string;
@@ -529,14 +502,14 @@ export interface CoreOption {
 }
 export interface SystemCores {
   system: string;
-  /** Core the playlist gets; null = none known. */
+  /** Core games of the system start with; null = none known. */
   chosen: string | null;
   /** Chosen by the user (stored in the rules) rather than recommended. */
   picked: boolean;
   options: CoreOption[];
 }
 
-/** The cores to choose from for each playlist of the library. */
+/** The cores to choose from for each system of the library. */
 export async function retroarchCores(): Promise<SystemCores[]> {
   if (!inTauri) {
     const o = (id: string, installed: boolean, recommended = false) => ({ id, name: id, installed, recommended });
@@ -558,34 +531,6 @@ export async function retroarchCores(): Promise<SystemCores[]> {
   return invoke<SystemCores[]>("retroarch_cores");
 }
 
-/** Plans (dryRun) or executes the export of playlists, BIOS files and (installCores) missing cores. */
-export async function retroarchExport(dryRun: boolean, installCores: boolean): Promise<RetroArchExport> {
-  if (!inTauri) {
-    await mockProgress("retroarch://progress", dryRun ? ["scan"] : ["scan", "download", "write"], phased);
-    return {
-      playlist_dir: "~/.config/retroarch/playlists",
-      system_dir: "~/.config/retroarch/system",
-      cores: 4,
-      cores_install: installCores ? ["snes9x"] : [],
-      cores_missing: installCores ? [] : [{ system: "Nintendo - Super Nintendo Entertainment System", path: "snes9x" }],
-      can_install: true,
-      playlists: [
-        { system: "Nintendo - Super Nintendo Entertainment System", core: "Snes9x" },
-        { system: "Nintendo - Sufami Turbo", core: null },
-      ],
-      playlists_unchanged: 3,
-      playlists_removed: ["MAME.lpl"],
-      playlists_no_core: ["Solarus"],
-      bios_copied: ["STBIOS.bin", "fbneo/neogeo.zip"],
-      bios_present: 2,
-      bios_conflicts: [],
-      bios_missing: [{ system: "Sony - PlayStation", path: "scph5501.bin" }],
-      scummvm_targets: ["monkey2", "atlantis"],
-      executed: dryRun ? null : 4,
-    };
-  }
-  return invoke<RetroArchExport>("retroarch_export", { dryRun, installCores });
-}
 
 export interface FranchiseProgress {
   franchise: string;

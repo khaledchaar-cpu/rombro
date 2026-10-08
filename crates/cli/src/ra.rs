@@ -2,6 +2,7 @@
 
 use anyhow::{Context, Result};
 use rombro_core::retroarch::managed::{self, Managed, Phase};
+use rombro_core::retroarch::pick;
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -29,6 +30,18 @@ pub enum Cmd {
     Config {
         #[arg(long)]
         library: Option<PathBuf>,
+    },
+    /// List the cores for each system of the library (`*` = used, recommended marked)
+    Cores {
+        /// Library (default: the stored one)
+        #[arg(long)]
+        library: Option<PathBuf>,
+        /// Choose the core of a system for good, e.g. `--set "Sony - PlayStation=swanstation"`
+        /// (`SYSTEM=` alone returns to the recommendation)
+        #[arg(long, value_name = "SYSTEM=CORE")]
+        set: Vec<String>,
+        #[arg(long)]
+        db: Option<PathBuf>,
     },
 }
 
@@ -65,6 +78,58 @@ pub fn run(cmd: Cmd) -> Result<()> {
         Cmd::Config { library } => {
             m.write_config(library.as_deref())?;
             println!("{}", m.cfg().display());
+        }
+        Cmd::Cores { library, set, db } => cores(&m, library, &set, db)?,
+    }
+    Ok(())
+}
+
+fn cores(m: &Managed, library: Option<PathBuf>, set: &[String], db: Option<PathBuf>) -> Result<()> {
+    let store = crate::db::open_store(db)?;
+    let library = match library {
+        Some(l) => std::path::absolute(l)?,
+        None => store
+            .library()?
+            .context("no library stored (use --library)")?,
+    };
+    if !set.is_empty() {
+        let mut rules = store.rules()?;
+        for s in set {
+            let (system, id) = s
+                .split_once('=')
+                .with_context(|| format!("--set {s}: expected SYSTEM=CORE"))?;
+            match id.trim() {
+                "" => rules.cores.remove(system.trim()),
+                id => rules.cores.insert(system.trim().to_owned(), id.to_owned()),
+            };
+        }
+        store.set_rules(&rules)?;
+    }
+    m.ensure_info(&rombro_store::http_download, false)
+        .context("loading the core list")?;
+    let cores = m.cores();
+    let picks = store.rules()?.cores;
+    for system in pick::library_systems(&library) {
+        let chosen = pick::resolve(&cores, &system, &picks, true).map(|c| c.id.as_str());
+        let rec = pick::recommended(&system);
+        let list: Vec<String> = pick::options(&cores, &system)
+            .iter()
+            .map(|c| {
+                let mut s = c.id.clone();
+                if Some(c.id.as_str()) == chosen {
+                    s.insert(0, '*');
+                }
+                if Some(c.id.as_str()) == rec {
+                    s.push_str(" (recommended)");
+                }
+                if c.installed {
+                    s.push_str(" [installed]");
+                }
+                s
+            })
+            .collect();
+        if !list.is_empty() {
+            println!("{system}: {}", list.join(", "));
         }
     }
     Ok(())

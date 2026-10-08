@@ -43,7 +43,6 @@ fn main() {
             thumbs::thumbnail,
             thumbs::thumbs_online_get,
             thumbs::thumbs_online_set,
-            retroarch::retroarch_export,
             managed_ra::ra_status,
             managed_ra::ra_install,
             play::game_cores,

@@ -54,11 +54,6 @@ export default function RunReport(props: { rel: (p: string) => string }) {
             <Show when={r().ops.length > SHOWN}>
               <p class="dim">… and {r().ops.length - SHOWN} more</p>
             </Show>
-            <Show when={r().ops.some((op) => outcome(op) !== "playlists")}>
-              <p class="dim">
-                Library changed – export to RetroArch (Settings) to update its playlists.
-              </p>
-            </Show>
           </Panel>
         );
       }}

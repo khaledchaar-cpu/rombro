@@ -3,7 +3,6 @@ mod g1r;
 mod import;
 mod play;
 mod ra;
-mod retroarch;
 mod rules;
 mod scan;
 
@@ -75,8 +74,6 @@ enum Cmd {
         #[arg(long)]
         db: Option<PathBuf>,
     },
-    /// Export playlists (with matching core) and identified BIOS files to RetroArch
-    Retroarch(retroarch::Args),
     /// Install, update and configure the RetroArch rombro manages
     Ra {
         #[command(subcommand)]
@@ -156,7 +153,6 @@ fn main() -> anyhow::Result<()> {
             unignore,
             db,
         } => rules::run(set, &ignore, &unignore, db),
-        Cmd::Retroarch(a) => retroarch::run(a),
         Cmd::Ra { cmd } => ra::run(cmd),
         Cmd::Play(a) => play::run(a),
         Cmd::Undo { db } => import::undo(db),

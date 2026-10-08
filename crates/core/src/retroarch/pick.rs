@@ -65,6 +65,22 @@ pub fn options<'a>(cores: &'a [Core], system: &str) -> Vec<&'a Core> {
     out
 }
 
+/// Systems of the library a core can be chosen for: its top-level system folders
+/// (rombro's own `_…` folders left out), sorted.
+pub fn library_systems(library: &std::path::Path) -> Vec<String> {
+    let mut out: Vec<String> = std::fs::read_dir(library)
+        .map(|rd| {
+            rd.filter_map(|e| e.ok())
+                .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+                .map(|e| e.file_name().to_string_lossy().into_owned())
+                .filter(|n| !n.starts_with('_') && !n.starts_with('.'))
+                .collect()
+        })
+        .unwrap_or_default();
+    out.sort();
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

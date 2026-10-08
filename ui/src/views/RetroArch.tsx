@@ -1,16 +1,17 @@
+import CorePicker from "../components/CorePicker";
 import ManagedRetroArchPanel from "../components/ManagedRetroArchPanel";
-import RetroArchPanel from "../components/RetroArchPanel";
+import Panel from "../components/Panel";
 
-/** Everything RetroArch: the managed RetroArch (launcher base) and the export to an own RetroArch. */
+/** Everything RetroArch: the managed RetroArch and the core per system. */
 export default function RetroArch() {
   return (
     <div class="grid">
       <div class="wide">
         <ManagedRetroArchPanel />
       </div>
-      <div class="wide">
-        <RetroArchPanel />
-      </div>
+      <Panel title="Cores per system" class="wide">
+        <CorePicker />
+      </Panel>
     </div>
   );
 }
