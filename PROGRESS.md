@@ -27,6 +27,7 @@
 | M15a Verwaltetes RetroArch | ✅ done (Linux e2e + Sichtprüfung 2026-10-08; Win/macOS ungetestet) |
 | M15b Starten | ✅ done (Linux e2e + Sichtprüfung 2026-10-08) |
 | M15c Spielzeit & Favoriten | ✅ done (Sichtprüfung + ScummVM-Start 2026-10-08) |
+| M15d Altlasten | ✅ done (2026-10-08) |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -89,7 +90,11 @@ Top-Ordner der Library). Core-Systemdateien (blueMSX, PPSSPP, Dolphin, PCSX2, EC
 `download/assets/` und entpackt nach `<library>/_bios` über den Journal (`Store::execute_journaled`, undo-bar).
 Geprüft: `play --dry-run` Coleco → bluemsx + 300 Systemdateien geplant.
 Sichtprüfung abgenommen (User, 2026-10-08), 2 ScummVM-Titel starten ohne Export-`scummvm.ini`.
-**Offen:** `retroarch::scummvm` (ini-Targets) evtl. entfernen; Planner schreibt weiter `_playlists/*.lpl` in die Library (nur noch Altlast → entfernen?).
+M15d (2026-10-08): Planner schreibt keine `.lpl` mehr (CLI `--playlists/--no-playlists`, `plan::lpl`, `Options.playlists`
+weg); vorhandene `_playlists/*.lpl` wandern beim nächsten Plan nach `_trash/playlists/`. `retroarch::scummvm` +
+`scummvm-engines.tsv` entfernt. `play`: `.m3u` → erste Disk, wenn der Core kein `m3u` kann (FDS/FCEUmm, `Core.extensions`).
+Offen: Sichtprüfung (nächster Import zeigt die `.lpl`-Verschiebungen). Nächster Milestone (User wählt): Gamepad-UI,
+Savestate-Übersicht oder RetroAchievements (SPEC §6).
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,

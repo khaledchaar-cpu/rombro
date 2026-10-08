@@ -152,7 +152,9 @@ Architektur v1 muss das vorbereiten: GUI-Navigation per Fokus-System, Daten-Mode
 - Umsetzung M15c: Spielzeit/Favoriten unter `sha1:<hex>` der ersten indizierten ROM (Archive: erstes Member), sonst
   `path:<abs>` (Disc-`.m3u`/`.cue` sind nicht gehasht → Umbenennen verliert deren Statistik). Core-Systemdateien
   lädt `play` und entpackt sie über Plan + Journal nach `_bios`. ScummVM startet ohne `scummvm.ini`-Targets (geprüft).
-  Offene Frage: Library-`_playlists` (Planner) nach Wegfall des Exports noch nötig?
+  Entschieden (User, 2026-10-08, Aufräumen): Planner schreibt keine `.lpl` mehr; vorhandene `_playlists/*.lpl` →
+  `_trash/playlists/` (Regel `playlist`, undo-bar). `retroarch::scummvm` (ini-Targets) entfernt. `play` gibt Cores ohne
+  `m3u` in `supported_extensions` (FCEUmm/FDS) die erste Disk der `.m3u`.
 
 ## 7. Architektur
 ```
@@ -271,7 +273,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   (kein Serial-Fallback), Tracks werden umbenannt entpackt, Sheet neu geschrieben. Mehrere Sheets im Archiv → Skip.
 - M12: CHD (`DiscKind::Chd`, Crate `chd`): erster Nicht-Audio-Track wird ohne Subcode gestreamt (`disc::chd::ChdTrack`,
   Read+Seek) → Hash + Serial wie bei `.bin`. CHDs werden unverändert als `<Name>.chd` abgelegt; keine Konvertierung.
-- M6: Playlists `.lpl` (v1.5, `core_path: DETECT`) nach `<library>/_playlists/<System>.lpl` (konfigurierbar).
+- M6: Playlists `.lpl` (v1.5, `core_path: DETECT`) nach `<library>/_playlists/<System>.lpl` (konfigurierbar). *Entfällt seit 2026-10-08 (§6 M15).*
 - M6: Journal = JSON der ausgeführten Ops inkl. angelegter Ordner und überschriebener Inhalte; `undo` revertiert
   den letzten Lauf. Ausführung stoppt beim ersten Fehler, Teilfortschritt wird trotzdem journalisiert.
 - M8: TBD-Queue: Rejected → Verdict `keep` (zusätzlich einsortieren) oder `discard` (Move nach `<library>/_trash/`,
