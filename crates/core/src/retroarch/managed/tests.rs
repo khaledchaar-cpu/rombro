@@ -50,6 +50,11 @@ fn installs_switches_and_prunes() {
         "https://buildbot.libretro.com/stable/9.9.0/linux/x86_64/RetroArch.7z"
     );
     assert_eq!(phases.borrow().last(), Some(&Phase::Done));
+    let unpacked = phases.borrow().iter().rev().find_map(|p| match p {
+        Phase::Unpack { done, total } => Some((*done, *total)),
+        _ => None,
+    });
+    assert_eq!(unpacked, Some((10, 10)), "unpack progress ends at the archive size");
     assert!(!m.root.join("download").exists());
     #[cfg(unix)]
     {

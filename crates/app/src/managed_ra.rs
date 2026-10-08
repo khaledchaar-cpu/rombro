@@ -64,7 +64,7 @@ pub async fn ra_install(app: tauri::AppHandle, version: Option<String>) -> CmdRe
         m.install(&version, &rombro_store::http_download, &|p| match p {
             Phase::Download { done, total } => emit("download", done, total.unwrap_or(0)),
             Phase::Verify => emit("verify", 0, 0),
-            Phase::Unpack => emit("unpack", 0, 0),
+            Phase::Unpack { done, total } => emit("unpack", done, total),
             Phase::Done => {}
         })
         .map_err(|e| format!("RetroArch {version}: {e}"))?;

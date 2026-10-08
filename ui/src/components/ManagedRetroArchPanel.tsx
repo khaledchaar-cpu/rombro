@@ -72,7 +72,7 @@ export default function ManagedRetroArchPanel() {
       <Show when={busy()} fallback={<Show when={msg()}><p class="dim small">{msg()}</p></Show>}>
         <PhaseProgress
           event="ra://progress"
-          labels={{ download: "downloading (MB)", verify: "verifying", unpack: "unpacking" }}
+          labels={{ download: "downloading (MB)", verify: "verifying", unpack: "unpacking (MB)" }}
         />
       </Show>
     </Panel>

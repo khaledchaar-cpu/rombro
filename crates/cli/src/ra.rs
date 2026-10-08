@@ -87,7 +87,7 @@ fn show(p: Phase) {
             }
         }
         Phase::Verify => writeln!(err, "\nverify"),
-        Phase::Unpack => writeln!(err, "unpack"),
-        Phase::Done => Ok(()),
+        Phase::Unpack { done, total } => write!(err, "\runpack {}/{} MB", done >> 20, total >> 20),
+        Phase::Done => writeln!(err),
     };
 }

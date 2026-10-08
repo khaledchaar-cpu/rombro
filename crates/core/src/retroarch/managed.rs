@@ -7,6 +7,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 pub mod config;
+mod unpack;
 
 /// Version shipped with this rombro release (raised with releases).
 pub const PINNED: &str = "1.22.2";
@@ -159,11 +160,13 @@ impl Managed {
                     )));
                 }
             }
-            progress(Phase::Unpack);
+            progress(Phase::Unpack { done: 0, total: 0 });
             let tmp = self.root.join("versions").join(format!(".{version}.tmp"));
             let _ = std::fs::remove_dir_all(&tmp);
             std::fs::create_dir_all(&tmp)?;
-            unpack(self.target, &archive, &tmp)?;
+            unpack::unpack(self.target, &archive, &tmp, &|done, total| {
+                progress(Phase::Unpack { done, total })
+            })?;
             let exe = tmp.join(self.target.executable());
             if !exe.is_file() {
                 let _ = std::fs::remove_dir_all(&tmp);
@@ -202,9 +205,16 @@ impl Managed {
 /// Install progress.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Phase {
-    Download { done: u64, total: Option<u64> },
+    Download {
+        done: u64,
+        total: Option<u64>,
+    },
     Verify,
-    Unpack,
+    /// Bytes unpacked of `total` (0 while unknown, e.g. for a disk image).
+    Unpack {
+        done: u64,
+        total: u64,
+    },
     Done,
 }
 
@@ -239,47 +249,6 @@ fn sha256_file(path: &Path) -> io::Result<String> {
         h.update(&buf[..n]);
     }
     Ok(h.finalize().iter().map(|b| format!("{b:02x}")).collect())
-}
-
-fn unpack(target: Target, archive: &Path, dest: &Path) -> io::Result<()> {
-    match target {
-        Target::MacUniversal => unpack_dmg(archive, dest),
-        _ => sevenz_rust2::decompress_file(archive, dest).map_err(io::Error::other),
-    }
-}
-
-/// Copies `RetroArch.app` out of the disk image (`hdiutil`, macOS only).
-fn unpack_dmg(dmg: &Path, dest: &Path) -> io::Result<()> {
-    use std::process::Command;
-    let mount = dest.join(".mnt");
-    let ok = |s: io::Result<std::process::ExitStatus>, what: &str| match s {
-        Ok(s) if s.success() => Ok(()),
-        Ok(s) => Err(io::Error::other(format!("{what} failed: {s}"))),
-        Err(e) => Err(io::Error::other(format!("{what}: {e}"))),
-    };
-    ok(
-        Command::new("hdiutil")
-            .args(["attach", "-nobrowse", "-readonly", "-mountpoint"])
-            .arg(&mount)
-            .arg(dmg)
-            .status(),
-        "hdiutil attach",
-    )?;
-    let copied = ok(
-        Command::new("cp")
-            .arg("-R")
-            .arg(mount.join("RetroArch.app"))
-            .arg(dest)
-            .status(),
-        "copy RetroArch.app",
-    );
-    let detached = ok(
-        Command::new("hdiutil").arg("detach").arg(&mount).status(),
-        "hdiutil detach",
-    );
-    copied.and(detached)?;
-    let _ = std::fs::remove_dir(&mount);
-    Ok(())
 }
 
 #[cfg(unix)]
