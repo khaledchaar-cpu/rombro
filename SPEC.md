@@ -121,8 +121,8 @@ Emulation/Start von Spielen, Cloud-Sync, ScreenScraper-Integration, Netplay.
 
 ## 6. v2-Ausblick – Launcher
 Core-Erkennung (`*.info`), Start via RetroArch-CLI (`retroarch -L core rom`), Spielzeit-Tracking, Favoriten,
-Controller-Navigation (Gamepad-UI-Modus), Savestate-Übersicht, RetroAchievements-Status.
-Architektur v1 muss das vorbereiten: GUI-Navigation per Fokus-System, Daten-Modell mit `play_stats`-Tabelle reservieren.
+Savestate-Übersicht, RetroAchievements-Status.
+Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reservieren.
 
 ### M15 Launcher-Basis – Entscheidungen (2026-10-08)
 - **Verwaltetes RetroArch** (einzige Variante): offizielle Stable-Builds von buildbot.libretro.com für Linux (AppImage),
@@ -140,7 +140,7 @@ Architektur v1 muss das vorbereiten: GUI-Navigation per Fokus-System, Daten-Mode
   Core-Wahl/-Installation werden wiederverwendet.
 - Schnitt: **M15a** verwaltetes RetroArch (Download, Prüfung, Install, Update, Config, CLI `rombro ra install`, alle 3 OS);
   **M15b** Starten (`play`, Play-Button, Core-Override, Auto-Core-Install); **M15c** Spielzeit + Favoriten, alten Export entfernen.
-  Später: Gamepad-UI-Modus, Savestate-Übersicht, RetroAchievements.
+  Später: Savestate-Übersicht, RetroAchievements.
 - Umsetzung M15a: Buildbot liefert keine Prüfsummen → SHA-256 der gepinnten Archive steht im Code (`PINNED_SHA256`),
   „latest“ wird nur über die 7z-CRCs geprüft. Linux: `linux/x86_64/RetroArch.7z` (AppImage + `.AppImage.home` mit
   Assets; AppImage setzt `$HOME` darauf, daher immer `--config <root>/retroarch.cfg`), Windows `RetroArch.7z`,
@@ -399,3 +399,4 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
 - Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?
 - No-Intro-DAT-Import für echte Parent/Clone-Daten in v1 oder später?
+- Entschieden (User, 2026-10-08): Gamepad-/Controller-Bedienung der App ersatzlos gestrichen.
