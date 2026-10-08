@@ -24,7 +24,7 @@
 | v0.4.0 Release (Perf, Settings-Umbau) | ✅ released 2026-10-07 |
 | v0.5.0 Release (Firmware/BIOS, Daphne, Disc-Serials, neue UI) | ✅ released 2026-10-08 |
 | v0.5.1 Release (Arcade-DAT-Erkennung, Mehrdisk, Perf) | ✅ released 2026-10-08 |
-| M15a Verwaltetes RetroArch | ✅ done (Linux e2e; Win/macOS ungetestet, Sichtprüfung offen) |
+| M15a Verwaltetes RetroArch | ✅ done (Linux e2e + Sichtprüfung 2026-10-08; Win/macOS ungetestet) |
 | M15b Starten | ⏳ next |
 | M15c Spielzeit & Favoriten | geplant |
 
@@ -75,7 +75,7 @@ gesetzt, Rest bleibt; `system_directory` = `<library>/_bios`, wird nicht angeleg
 install [--version|--latest] [--library] | config`; App: Panel „Managed RetroArch“ im RetroArch-Tab
 (`ra_status`/`ra_install`, `ra://progress` in MB). Streaming-Download `rombro_store::http_download`.
 E2E Linux (Scratch-XDG): 179 MB in 1:43 min, 1.22.2 startet headless fceumm 300 Frames, Saves/States im
-verwalteten Ordner. Offen: Windows/macOS real testen (dmg via `hdiutil`), Sichtprüfung Panel.
+verwalteten Ordner. Panel inkl. Entpack-Fortschritt vom User abgenommen. Offen: Windows/macOS real testen (dmg via `hdiutil`).
 Nächste Schritte M15b: `info`-Dateien + Cores in den verwalteten Ordner (Buildbot `info.zip`), `rombro play`,
 Play-Button, Core-Override, Auto-Core-Install.
 
