@@ -128,6 +128,8 @@ pub struct Incomplete {
     pub misnamed: Vec<String>,
     /// Split set whose parent set is not next to it.
     pub parent: Option<String>,
+    /// BIOS set the game needs that is neither in the library nor being imported.
+    pub bios: Option<String>,
 }
 
 impl fmt::Display for Incomplete {
@@ -157,14 +159,17 @@ impl fmt::Display for Incomplete {
         if let Some(p) = &self.parent {
             parts.push(format!("parent set {p} missing"));
         }
+        if let Some(b) = &self.bios {
+            parts.push(format!("BIOS {b} missing"));
+        }
         f.write_str(&parts.join(", "))
     }
 }
 
 /// Checks a zip's `members` (name, CRC) and the CHDs next to it (`chds`: file stems in the
 /// set's folder) against `set`. Merged ROMs not in the zip must come from the `romof` chain:
-/// BIOS sets are placed separately (not checked), any other owner must be present
-/// (`has_set`). Extra members (merged clones) are fine; merged disks live with the parent.
+/// every owner, BIOS sets included, must be present (`has_set`). Extra members (merged
+/// clones) are fine; merged disks live with the parent.
 pub fn check<'a>(
     set: &DatSet,
     members: &[(String, u32)],
@@ -188,8 +193,13 @@ pub fn check<'a>(
         if rom.merge
             && let Some(owner) = owner(set, rom.crc, &resolve)
         {
-            if !owner.bios && !has_set(&owner.name) && bad.parent.is_none() {
-                bad.parent = Some(owner.name.clone());
+            let slot = if owner.bios {
+                &mut bad.bios
+            } else {
+                &mut bad.parent
+            };
+            if slot.is_none() && !has_set(&owner.name) {
+                *slot = Some(owner.name.clone());
             }
             continue;
         }
@@ -277,8 +287,10 @@ mod tests {
         // split clone with parent next to it, non-merged clone without
         assert_eq!(run("1943j", &[("j.bin", 3)], &["1943"]), Ok(()));
         assert_eq!(run("1943j", &[("a.bin", 1), ("j.bin", 3)], &[]), Ok(()));
-        // BIOS ROMs are not required in the set
-        assert_eq!(run("mslug", &[("m.bin", 4)], &[]), Ok(()));
+        // BIOS ROMs are not required in the set, but the BIOS set itself is
+        assert_eq!(run("mslug", &[("m.bin", 4)], &["neogeo"]), Ok(()));
+        let e = run("mslug", &[("m.bin", 4)], &[]).unwrap_err();
+        assert_eq!(e.to_string(), "BIOS neogeo missing");
     }
 
     #[test]
