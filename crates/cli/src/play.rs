@@ -56,8 +56,12 @@ pub fn run(a: Args) -> Result<()> {
     println!("{} · {}", l.system, l.core.id);
     if a.dry_run {
         println!("{:?}", l.command);
+        if !l.assets.is_empty() {
+            println!("{} system files to extract", l.assets.len());
+        }
         return Ok(());
     }
+    run_assets(&store, library.as_deref(), &l.assets)?;
     let game = store.game_key(&rom)?;
     let start = std::time::Instant::now();
     let status = l.command.status().context("starting RetroArch")?;
@@ -75,6 +79,26 @@ pub fn run(a: Args) -> Result<()> {
     Ok(())
 }
 
+/// Extracts the core's system files: in a library journaled (`rombro undo` reverts them).
+fn run_assets(
+    store: &rombro_store::Store,
+    library: Option<&std::path::Path>,
+    ops: &[rombro_core::plan::Op],
+) -> Result<()> {
+    if ops.is_empty() {
+        return Ok(());
+    }
+    let root = library.unwrap_or(std::path::Path::new(""));
+    let (id, err) = store.execute_journaled(root, ops)?;
+    if let Some(id) = id {
+        println!("extracted {} system files (journal #{id})", ops.len());
+    }
+    if let Some(e) = err {
+        anyhow::bail!("system files: {e}");
+    }
+    Ok(())
+}
+
 fn now() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -89,5 +113,6 @@ fn show(s: Step) {
         Step::RetroArch(_) => {}
         Step::Info => eprintln!("downloading core info files …"),
         Step::Core(id) => eprintln!("installing core {id} …"),
+        Step::Assets(zip) => eprintln!("downloading system files {zip} …"),
     }
 }

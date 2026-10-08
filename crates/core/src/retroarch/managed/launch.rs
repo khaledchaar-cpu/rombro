@@ -128,6 +128,8 @@ pub enum Step {
     RetroArch(super::Phase),
     Info,
     Core(String),
+    /// Downloading system files a core needs (asset zip name).
+    Assets(String),
 }
 
 /// A game ready to start.
@@ -135,6 +137,9 @@ pub struct Launch {
     pub system: String,
     pub core: Core,
     pub command: Command,
+    /// System files the core still needs (extractions into the system folder). In a library
+    /// this is `_bios`, so the caller executes them like any plan (journaled, undoable).
+    pub assets: Vec<crate::plan::Op>,
 }
 
 /// Inputs of [`Managed::prepare`].
@@ -177,13 +182,45 @@ impl Managed {
             progress(Step::Core(core.id.clone()));
             self.install_core(&core, fetch)?;
         }
+        let assets = self.core_assets(&core, game.library, fetch, progress)?;
         self.write_config(game.library)?;
         let command = self.command(&core, game.rom)?;
         Ok(Launch {
             system,
             core,
             command,
+            assets,
         })
+    }
+
+    /// Downloads the asset zip `core` cannot start without (kept under `download/assets/`)
+    /// and returns the extractions the system folder still lacks.
+    fn core_assets(
+        &self,
+        core: &Core,
+        library: Option<&Path>,
+        fetch: FetchFile,
+        progress: &dyn Fn(Step),
+    ) -> io::Result<Vec<crate::plan::Op>> {
+        use crate::retroarch::assets;
+        let system = library.map_or_else(
+            || self.root.join("system"),
+            |l| l.join(crate::plan::BIOS_DIR),
+        );
+        let Some(name) = assets::missing(&core.id, &system) else {
+            return Ok(vec![]);
+        };
+        let dir = self.root.join("download").join("assets");
+        let zip = dir.join(name);
+        if !zip.is_file() {
+            progress(Step::Assets(name.to_owned()));
+            std::fs::create_dir_all(&dir)?;
+            let url = assets::url(self.target.cores_url(), name);
+            let part = dir.join(format!(".{name}.part"));
+            fetch(&url, &part, &|_, _| {}).map_err(|e| io::Error::other(format!("{url}: {e}")))?;
+            std::fs::rename(&part, &zip)?;
+        }
+        assets::unpack_ops(&zip, &system)
     }
 }
 

@@ -12,6 +12,7 @@ const LABELS = {
   unpack: "unpacking RetroArch (MB)",
   info: "loading core list",
   core: "installing core",
+  assets: "downloading system files",
 };
 
 /** Play button and core choice for one game (managed RetroArch). */

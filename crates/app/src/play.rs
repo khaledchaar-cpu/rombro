@@ -128,8 +128,16 @@ pub async fn play(app: tauri::AppHandle, path: String) -> CmdResult<String> {
                 Step::RetroArch(Phase::Done) => {}
                 Step::Info => emit("info", 0, 0, ""),
                 Step::Core(id) => emit("core", 0, 0, &id),
+                Step::Assets(zip) => emit("assets", 0, 0, &zip),
             })
             .map_err(err)?;
+        if !l.assets.is_empty() {
+            let root = game.library.unwrap_or(Path::new(""));
+            let (_, e) = store.execute_journaled(root, &l.assets).map_err(err)?;
+            if let Some(e) = e {
+                return Err(format!("system files: {e}"));
+            }
+        }
         let key = store.game_key(&rom).map_err(err)?;
         let start = std::time::Instant::now();
         let mut child = l

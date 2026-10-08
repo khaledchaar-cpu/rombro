@@ -27,6 +27,31 @@ pub struct VerdictRow {
 }
 
 impl Store {
+    /// Executes `ops` (e.g. system files for a core) and journals what was done, so `undo`
+    /// reverts it. Returns the journal id, if anything was done, and the error that stopped it.
+    pub fn execute_journaled(
+        &self,
+        library: &std::path::Path,
+        ops: &[rombro_core::plan::Op],
+    ) -> Result<(Option<i64>, Option<String>)> {
+        use rombro_core::plan;
+        let r = plan::execute(ops);
+        let id = if r.done.is_empty() {
+            None
+        } else {
+            let ts = crate::files::now();
+            Some(self.add_journal(
+                ts,
+                &library.to_string_lossy(),
+                &plan::journal_to_json(&r.done),
+            )?)
+        };
+        let err = r
+            .error
+            .map(|(op, e)| format!("{}: {e}", op.target().display()));
+        Ok((id, err))
+    }
+
     pub fn add_journal(&self, ts: i64, library: &str, done: &str) -> Result<i64> {
         self.conn.execute(
             "INSERT INTO journal (ts, library, done, state) VALUES (?1, ?2, ?3, 'done')",
