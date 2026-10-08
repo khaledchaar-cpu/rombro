@@ -156,6 +156,20 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
   `_trash/playlists/` (Regel `playlist`, undo-bar). `retroarch::scummvm` (ini-Targets) entfernt. `play` gibt Cores ohne
   `m3u` in `supported_extensions` (FCEUmm/FDS) die erste Disk der `.m3u`.
 
+### M16 RetroAchievements – Entscheidungen (User, 2026-10-08)
+- Umfang: Login + eigener Fortschritt **und** RA-Unterstützung für jedes Spiel der Library (Badge „🏆 n“, Filter
+  „mit Achievements“, Hinweis wenn die eigene Version nicht unterstützt ist). Erfordert rcheevos-Hashing je System.
+- Hardcore: Default aus (Softcore, Savestates gehen), Schalter in Settings → RetroArch (`cheevos_hardcore_mode_enable`).
+- Zugangsdaten: Passwort nur einmal für den Login (`dorequest.php?r=login2`), gespeichert werden nur Token
+  (`cheevos_token` in der verwalteten `retroarch.cfg`, `cheevos_password` leer) und der Web-API-Key (Setting `ra.api_key`)
+  für `API_GetGameList` (`h=1`, Hashes) / Fortschritt.
+- Hashing nach rcheevos (`src/hash/`): MD5 der ganzen Datei (max. 64 MiB), Header weg bei NES/FDS (16, `NES\x1a`/`FDS\x1a`),
+  Lynx (64, `LYNX\0`), 7800 (128, `ATARI7800` ab Byte 1), SNES (512 wenn Größe mod 8 KiB = 512), PCE (512 wenn Größe & 512);
+  N64 auf z64 umgedreht; Arcade = MD5 des Dateinamens ohne Endung; Zips: Inhalt des Members (Arcade: Zipname).
+  Disc-Systeme (PS1/PS2/Saturn/Sega CD/PCE-CD/DC/3DO …) und NDS eigene Verfahren.
+- Schnitt: **M16a** Hashing Cartridge + Arcade + N64, RA-Spielliste je Konsole (Cache in der DB), Badge/Filter/Hinweis;
+  **M16b** Login, Token + Hardcore in der Config, Fortschritt je Spiel; **M16c** Disc-Systeme + NDS.
+
 ## 7. Architektur
 ```
 rombro/
