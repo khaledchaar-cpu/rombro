@@ -1,3 +1,4 @@
+mod cheevos;
 mod db;
 mod g1r;
 mod import;
@@ -79,6 +80,13 @@ enum Cmd {
         #[command(subcommand)]
         cmd: ra::Cmd,
     },
+    /// RetroAchievements: Web API key, game lists, which library games have achievements
+    Cheevos {
+        #[command(subcommand)]
+        cmd: cheevos::Cmd,
+        #[arg(long, global = true)]
+        db: Option<PathBuf>,
+    },
     /// Start a game in the managed RetroArch (installs RetroArch and the core if missing)
     Play(play::Args),
     /// Revert the most recent import/audit execution
@@ -146,6 +154,7 @@ fn main() -> anyhow::Result<()> {
             db,
         } => rules::run(set, &ignore, &unignore, db),
         Cmd::Ra { cmd } => ra::run(cmd),
+        Cmd::Cheevos { cmd, db } => cheevos::run(cmd, db),
         Cmd::Play(a) => play::run(a),
         Cmd::Undo { db } => import::undo(db),
         Cmd::Resolve { file, pick, db } => import::resolve(file, pick, db),
