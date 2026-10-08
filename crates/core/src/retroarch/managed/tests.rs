@@ -54,7 +54,11 @@ fn installs_switches_and_prunes() {
         Phase::Unpack { done, total } => Some((*done, *total)),
         _ => None,
     });
-    assert_eq!(unpacked, Some((10, 10)), "unpack progress ends at the archive size");
+    assert_eq!(
+        unpacked,
+        Some((10, 10)),
+        "unpack progress ends at the archive size"
+    );
     assert!(!m.root.join("download").exists());
     #[cfg(unix)]
     {
