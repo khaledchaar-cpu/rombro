@@ -30,7 +30,8 @@ pub struct Args {
 
 pub fn run(a: Args) -> Result<()> {
     let store = open_store(a.db)?;
-    let m = store.ra_prefs(Managed::detect().context("no RetroArch stable build for this platform")?)?;
+    let m = store
+        .ra_prefs(Managed::detect().context("no RetroArch stable build for this platform")?)?;
     let rom = std::path::absolute(&a.file)?;
     anyhow::ensure!(rom.is_file(), "{}: not a file", rom.display());
     let library = match a.library {

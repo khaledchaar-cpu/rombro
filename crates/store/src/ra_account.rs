@@ -21,9 +21,11 @@ struct LoginReply {
 
 /// Logs in and returns (user name as RA spells it, token).
 pub fn ra_login(user: &str, password: &str) -> io::Result<(String, String)> {
-    let reply = ureq::post(LOGIN)
-        .header("User-Agent", "rombro")
-        .send_form([("r", "login2"), ("u", user), ("p", password)]);
+    let reply = ureq::post(LOGIN).header("User-Agent", "rombro").send_form([
+        ("r", "login2"),
+        ("u", user),
+        ("p", password),
+    ]);
     // RA answers a wrong password with 401 and the JSON error body.
     let body = match reply {
         Ok(mut r) => r.body_mut().read_to_string(),
@@ -100,8 +102,14 @@ mod tests {
     fn parses_login_reply() {
         let ok = r#"{"Success":true,"User":"KC","Token":"abc","Score":5}"#;
         assert_eq!(parse_login(ok).unwrap(), ("KC".into(), "abc".into()));
-        let bad = r#"{"Success":false,"Error":"Invalid User/Password combination. Please try again"}"#;
-        assert!(parse_login(bad).unwrap_err().to_string().contains("Invalid"));
+        let bad =
+            r#"{"Success":false,"Error":"Invalid User/Password combination. Please try again"}"#;
+        assert!(
+            parse_login(bad)
+                .unwrap_err()
+                .to_string()
+                .contains("Invalid")
+        );
     }
 
     #[test]

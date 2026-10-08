@@ -6,8 +6,8 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-pub mod config;
 pub mod cheevos;
+pub mod config;
 pub mod display;
 pub mod launch;
 mod unpack;
