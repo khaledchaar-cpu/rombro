@@ -26,7 +26,7 @@
 | v0.5.1 Release (Arcade-DAT-Erkennung, Mehrdisk, Perf) | ✅ released 2026-10-08 |
 | M15a Verwaltetes RetroArch | ✅ done (Linux e2e + Sichtprüfung 2026-10-08; Win/macOS ungetestet) |
 | M15b Starten | ✅ done (Linux e2e + Sichtprüfung 2026-10-08) |
-| M15c Spielzeit & Favoriten | ⏳ next |
+| M15c Spielzeit & Favoriten | ✅ done (Sichtprüfung App offen) |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -78,6 +78,19 @@ E2E Linux (Scratch-XDG): 179 MB in 1:43 min, 1.22.2 startet headless fceumm 300 
 verwalteten Ordner. Panel inkl. Entpack-Fortschritt vom User abgenommen. Offen: Windows/macOS real testen (dmg via `hdiutil`).
 Nächste Schritte M15b: `info`-Dateien + Cores in den verwalteten Ordner (Buildbot `info.zip`), `rombro play`,
 Play-Button, Core-Override, Auto-Core-Install.
+
+M15c (2026-10-08): Schema v16 `play_stats` + `favorite`, Schlüssel `sha1:<hex>` der ersten indizierten ROM
+(`Store::game_key/game_keys`, Fallback `path:<abs>` z. B. für `.m3u`/`.cue`). Läufe < 30 s zählen nicht
+(`MIN_PLAY_SECS`). CLI `play` misst und zeigt Spielzeit; App: `play://ended` aktualisiert die Zeile lokal,
+Library-Spalten ★ + „Played“, Filter-Chips „★ favorites“/„played“, Details mit Spielzeit/zuletzt gespielt.
+Alter RetroArch-Export entfernt (core `export`, `Dirs`, CLI `retroarch`, App `retroarch_export`, RetroArchPanel).
+Ersatz: `rombro ra cores [--set Sys=id]`, Settings → RetroArch „Cores per system“ (verwaltete Cores, Systeme =
+Top-Ordner der Library). Core-Systemdateien (blueMSX, PPSSPP, Dolphin, PCSX2, ECWolf) lädt jetzt `play` nach
+`download/assets/` und entpackt nach `<library>/_bios` über den Journal (`Store::execute_journaled`, undo-bar).
+Geprüft: `play --dry-run` Coleco → bluemsx + 300 Systemdateien geplant.
+**Offen:** Sichtprüfung (Stern, Filter, Played-Spalte, Spielzeit nach echtem Lauf, Cores-Panel);
+ScummVM-Start ohne `scummvm.ini`-Targets prüfen (Export schrieb sie, `retroarch::scummvm` ist noch da);
+Planner schreibt weiter `_playlists/*.lpl` in die Library (nur noch Altlast → entfernen?).
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,

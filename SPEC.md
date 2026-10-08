@@ -149,6 +149,10 @@ Architektur v1 muss das vorbereiten: GUI-Navigation per Fokus-System, Daten-Mode
 - Umsetzung M15b: Cores aus `buildbot …/nightly/<os>/<arch>/latest` (macOS arm64/x86_64 je nach Arch), Info-Dateien aus
   `assets/frontend/info.zip`. Core-Override pro Spiel als Setting `core:<absoluter Pfad>` (einfach; Umbenennen
   verliert ihn – bei Bedarf später auf Hash umstellen). Core-Assets beim Auto-Install noch nicht (Library-Schreibzugriff).
+- Umsetzung M15c: Spielzeit/Favoriten unter `sha1:<hex>` der ersten indizierten ROM (Archive: erstes Member), sonst
+  `path:<abs>` (Disc-`.m3u`/`.cue` sind nicht gehasht → Umbenennen verliert deren Statistik). Core-Systemdateien
+  lädt `play` und entpackt sie über Plan + Journal nach `_bios`. Offene Frage: Library-`_playlists` (Planner) und
+  ScummVM-Targets (`scummvm.ini`) nach Wegfall des Exports noch nötig?
 
 ## 7. Architektur
 ```
