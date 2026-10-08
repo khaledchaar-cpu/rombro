@@ -3,6 +3,8 @@
 # Batocera core names translated to libretro file stems; systems Batocera runs with a
 # standalone emulator use that emulator's libretro port (Jaguar, Quake II/III: libretro alternatives). Arcade databases are not listed:
 # their core follows from the set (DAT check).
+# Deviations: Nintendo DS uses melondsds (melonds no longer loads: needs an executable stack,
+# refused by current glibc; 2026-10-08).
 Amstrad - CPC	cap32
 Amstrad - GX4000	cap32
 Arduboy Inc - Arduboy	arduous
@@ -54,7 +56,7 @@ Nintendo - Game Boy Color	gambatte
 Nintendo - GameCube	dolphin
 Nintendo - Nintendo 64	mupen64plus_next
 Nintendo - Nintendo 64DD	mupen64plus_next
-Nintendo - Nintendo DS	melonds
+Nintendo - Nintendo DS	melondsds
 Nintendo - Nintendo Entertainment System	fceumm
 Nintendo - Pokemon Mini	pokemini
 Nintendo - Satellaview	snes9x

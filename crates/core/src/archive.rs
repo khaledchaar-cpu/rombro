@@ -41,6 +41,21 @@ pub fn members(zip: &Path) -> io::Result<Vec<(String, u32)>> {
     Ok(out)
 }
 
+/// Full paths of a zip's files (folders kept); entries escaping the target folder (`..`,
+/// absolute paths) are left out.
+pub fn file_paths(zip: &Path) -> io::Result<Vec<String>> {
+    let mut zip =
+        zip::ZipArchive::new(BufReader::new(File::open(zip)?)).map_err(io::Error::other)?;
+    let mut out = Vec::with_capacity(zip.len());
+    for i in 0..zip.len() {
+        let f = zip.by_index_raw(i).map_err(io::Error::other)?;
+        if f.is_file() && f.enclosed_name().is_some() {
+            out.push(f.name().to_owned());
+        }
+    }
+    Ok(out)
+}
+
 fn write_member(archive: &Path, member: &str, out: &mut impl Write) -> io::Result<()> {
     let ext = archive
         .extension()

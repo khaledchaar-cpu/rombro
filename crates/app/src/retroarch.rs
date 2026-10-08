@@ -134,7 +134,7 @@ pub async fn retroarch_export(
             picks: store.rules().map_err(err)?.cores,
             cache: export::default_cache().ok_or("no cache folder")?,
         };
-        let ex = export::plan(
+        let mut ex = export::plan(
             &library,
             &dirs,
             &cores,
@@ -143,8 +143,8 @@ pub async fn retroarch_export(
             &opts,
         );
         let mut executed = None;
-        if !dry_run && !ex.ops.is_empty() {
-            export::download(&ex, &rombro_store::http_get, &|d, t, name| {
+        if !dry_run && !(ex.ops.is_empty() && ex.downloads.is_empty()) {
+            export::download(&mut ex, &rombro_store::http_get, &|d, t, name| {
                 emit("download", d, t, name)
             })
             .map_err(err)?;
@@ -172,7 +172,15 @@ pub async fn retroarch_export(
             system_dir: dirs.system.display().to_string(),
             cores: cores.iter().filter(|c| c.installed).count(),
             can_install: dirs.buildbot.is_some(),
-            cores_install: ex.cores_install,
+            // asset zips are shown with the cores: both are downloads from the buildbot
+            cores_install: ex
+                .cores_install
+                .into_iter()
+                .chain(ex.assets.iter().map(|(zip, _)| {
+                    let name = zip.file_name().unwrap_or_default().to_string_lossy();
+                    format!("{name} (system files)")
+                }))
+                .collect(),
             cores_missing: ex
                 .cores_missing
                 .into_iter()

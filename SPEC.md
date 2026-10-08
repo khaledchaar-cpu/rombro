@@ -348,6 +348,11 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   Anforderung (`--install-cores` / Checkbox): `<core_updater_buildbot_cores_url>/<core>_libretro.so.zip` → Cache
   `~/.cache/rombro/cores/`, dann `Op::Extract` in `libretro_directory` (Journal, Undo entfernt). Ohne Install bekommt
   die Playlist den besten installierten Core, der gewünschte wird als fehlend gemeldet.
+  Pflicht-Systemdateien (2026-10-08, `retroarch::assets`): Mit `--install-cores` lädt der Export für jeden genutzten
+  Core, dessen Marker im `system`-Ordner fehlt, das Buildbot-Paket `<host>/assets/system/<zip>` (blueMSX `Machines/`,
+  PPSSPP-Atlas, Dolphin `Sys`, PCSX2 `resources`, ECWolf) und entpackt nur fehlende Dateien per `Op::Extract`.
+  Optionale Pakete (Themes, Cheats, Hiscores; ScummVM/NXEngine/PrBoom laufen ohne) nicht.
+  NDS-Empfehlung `melondsds` statt `melonds` (lädt mit aktueller glibc nicht: executable stack).
 - Entschieden (User, 2026-10-06): Kombinierte Sufami-Turbo-Images (`.smc/.sfc`: BIOS 256 KiB ×4 gespiegelt, dann
   1–2 Carts ab `0x100000`, Erkennung über `BANDAI SFC-ADX`) gelten als Pseudo-Archiv (`core::sufami`): Member
   `SuFami Turbo (Japan).sfc` + `Slot A/B.st` werden wie Zip-Member erkannt und extrahiert, das Original geht danach

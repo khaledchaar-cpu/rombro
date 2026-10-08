@@ -74,7 +74,7 @@ pub fn run(a: Args) -> Result<()> {
         picks,
         cache: export::default_cache().context("no cache folder")?,
     };
-    let ex = export::plan(
+    let mut ex = export::plan(
         &library,
         &dirs,
         &cores,
@@ -96,6 +96,10 @@ pub fn run(a: Args) -> Result<()> {
     }
     for id in &ex.cores_install {
         println!("CORE     {id}  (install)");
+    }
+    for (zip, _) in &ex.assets {
+        let name = zip.file_name().unwrap_or_default().to_string_lossy();
+        println!("ASSETS   {name}  (system files a core needs)");
     }
     for (system, id) in &ex.cores_missing {
         println!("NO CORE  {id}  [{system}]  (missing: --install-cores)");
@@ -122,12 +126,12 @@ pub fn run(a: Args) -> Result<()> {
         ex.bios_missing.len(),
         cores.iter().filter(|c| c.installed).count()
     );
-    if a.dry_run || ex.ops.is_empty() {
+    if a.dry_run || ex.ops.is_empty() && ex.downloads.is_empty() {
         return Ok(());
     }
     if !ex.downloads.is_empty() {
-        println!("downloading {} cores …", ex.downloads.len());
-        export::download(&ex, &rombro_store::http_get, &|i, n, name| {
+        println!("downloading {} archives …", ex.downloads.len());
+        export::download(&mut ex, &rombro_store::http_get, &|i, n, name| {
             if !name.is_empty() {
                 println!("  [{}/{n}] {name}", i + 1);
             }

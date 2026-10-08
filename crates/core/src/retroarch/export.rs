@@ -38,8 +38,11 @@ pub struct Export {
     pub playlists: Vec<(String, Option<String>)>,
     /// Cores to install (id), each extracted from an archive in [`Self::downloads`].
     pub cores_install: Vec<String>,
-    /// Core archives to download before executing: (url, file).
+    /// Core and asset archives to download before executing: (url, file).
     pub downloads: Vec<(String, PathBuf)>,
+    /// Downloaded asset zips to unpack into the system folder (zip, system folder); their
+    /// extractions are added to [`Self::ops`] by [`download`].
+    pub assets: Vec<(PathBuf, PathBuf)>,
     /// Wanted cores that are missing and not to be installed (system, core id).
     pub cores_missing: Vec<(String, String)>,
     /// Systems no known core runs (no core info lists them): their playlist is not exported.
@@ -139,6 +142,9 @@ fn plan_playlists(library: &Path, dirs: &Dirs, cores: &[Core], opts: &Options, e
         {
             plan_install(c, url, &opts.cache, ex);
         }
+        if let (Some(c), Some(url), true) = (core, &dirs.buildbot, install) {
+            plan_assets(&c.id, url, dirs, &opts.cache, ex);
+        }
         if let Some(c) = core {
             doc["default_core_path"] = c.path.to_string_lossy().into_owned().into();
             doc["default_core_name"] = c.name.clone().into();
@@ -226,7 +232,7 @@ pub fn playlist_systems(library: &Path) -> Vec<String> {
 /// buildbot serves the latest build under the same name). Reports (done, total, current
 /// file name) to `progress` before each download and once at the end.
 pub fn download(
-    ex: &Export,
+    ex: &mut Export,
     fetch: &dyn Fn(&str) -> std::io::Result<Vec<u8>>,
     progress: &dyn Fn(usize, usize, &str),
 ) -> std::io::Result<()> {
@@ -243,7 +249,24 @@ pub fn download(
         std::fs::rename(tmp, file)?;
     }
     progress(total, total, "");
+    for (zip, system) in &ex.assets {
+        ex.ops.extend(super::assets::unpack_ops(zip, system)?);
+    }
     Ok(())
+}
+
+/// Download of the system files `core` cannot start without, if the system folder lacks them.
+fn plan_assets(core: &str, buildbot: &str, dirs: &Dirs, cache: &Path, ex: &mut Export) {
+    let Some(name) = super::assets::missing(core, &dirs.system) else {
+        return;
+    };
+    let zip = cache.join("assets").join(name);
+    if ex.assets.iter().any(|(z, _)| *z == zip) {
+        return;
+    }
+    ex.downloads
+        .push((super::assets::url(buildbot, name), zip.clone()));
+    ex.assets.push((zip, dirs.system.clone()));
 }
 
 /// Download of `<core file>.zip` from the buildbot, then extraction into the core folder.

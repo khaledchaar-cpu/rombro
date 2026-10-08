@@ -1,6 +1,7 @@
 //! RetroArch integration: its folders (from `retroarch.cfg`), installed cores (`*.info`),
 //! required firmware (libretro `System.dat`) and the export of playlists and BIOS files.
 
+pub mod assets;
 pub mod export;
 pub mod firmware;
 pub mod info;
