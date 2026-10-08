@@ -400,3 +400,4 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?
 - No-Intro-DAT-Import für echte Parent/Clone-Daten in v1 oder später?
 - Entschieden (User, 2026-10-08): Gamepad-/Controller-Bedienung der App ersatzlos gestrichen.
+- Entschieden (User, 2026-10-08): Anzeige des verwalteten RetroArch wählbar (Setting `ra_display`: `fullscreen` | `window:<1–6>` = `video_scale`; unset = RetroArch-Menü entscheidet), wird bei jedem Config-Schreiben gesetzt. Omarchy erzwingt per Fensterregel Vollbild für `com.libretro.RetroArch` → Override in der User-Hypr-Config, nicht in ROMBRO.
