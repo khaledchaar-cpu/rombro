@@ -25,7 +25,7 @@
 | v0.5.0 Release (Firmware/BIOS, Daphne, Disc-Serials, neue UI) | ✅ released 2026-10-08 |
 | v0.5.1 Release (Arcade-DAT-Erkennung, Mehrdisk, Perf) | ✅ released 2026-10-08 |
 | M15a Verwaltetes RetroArch | ✅ done (Linux e2e + Sichtprüfung 2026-10-08; Win/macOS ungetestet) |
-| M15b Starten | ✅ done (CLI e2e Linux; Sichtprüfung App offen) |
+| M15b Starten | ✅ done (Linux e2e + Sichtprüfung 2026-10-08) |
 | M15c Spielzeit & Favoriten | ⏳ next |
 
 ## Aktuell
@@ -231,7 +231,7 @@ unter der Library (sonst nächster Elternordner, den ein Core kennt). Core: Over
 `Store::core_override`) > Systemwahl/Empfehlung > spezialisiertester Core. CLI `rombro play <file> [--core id [--save]]
 [--dry-run]`; App: `game_cores`/`set_game_core`/`play` (`play://progress`), Komponente `GamePlay` in der Detailansicht.
 E2E Linux (Scratch-XDG): leerer Ordner → RetroArch + Info + fceumm in 1:45 min, Befehl korrekt.
-Offen: Sichtprüfung Play-Button (echte App), Core-Assets (`assets::missing`, z. B. Dolphin-Sys) fehlen noch beim
+Play-Button abgenommen; Cores nur aus Buildbot-Index (`cores.index`). Offen: Core-Assets (`assets::missing`, z. B. Dolphin-Sys) fehlen noch beim
 Auto-Install (gehen nach `_bios`, also Library → nur über Planner); Override hängt am Pfad (Umbenennen verliert ihn).
 Nächste Schritte M15c: Spielzeit (Child in `play` abwarten, < 30 s ignorieren, `play_stats` über Hash), Favoriten,
 alten Export (Playlists, `retroarch`-CLI, CorePicker mit System-RetroArch) entfernen.
