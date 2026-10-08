@@ -25,8 +25,8 @@
 | v0.5.0 Release (Firmware/BIOS, Daphne, Disc-Serials, neue UI) | ✅ released 2026-10-08 |
 | v0.5.1 Release (Arcade-DAT-Erkennung, Mehrdisk, Perf) | ✅ released 2026-10-08 |
 | M15a Verwaltetes RetroArch | ✅ done (Linux e2e + Sichtprüfung 2026-10-08; Win/macOS ungetestet) |
-| M15b Starten | ⏳ next |
-| M15c Spielzeit & Favoriten | geplant |
+| M15b Starten | ✅ done (CLI e2e Linux; Sichtprüfung App offen) |
+| M15c Spielzeit & Favoriten | ⏳ next |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -223,3 +223,15 @@ Play-Button, Core-Override, Auto-Core-Install.
 - Neue `Rules`-Felder brauchen Defaults im `Default`-Impl (`#[serde(default)]` nimmt die) – alte gespeicherte JSONs bleiben gültig.
 - Override-Exclude pro System gibt es nur im Backend/JSON, nicht in der UI.
 - Testset: `scripts/make-testset.sh "<Sammlung>"` → `~/rombro-test` (inbox, lib, DB-Kopie); immer mit `--db ~/rombro-test/test.db`, damit Testeinstellungen nicht in der echten DB landen.
+
+M15b (2026-10-08): `retroarch::managed::launch` – `Managed::prepare` installiert bei Bedarf RetroArch (gepinnt),
+Info-Dateien (`assets/frontend/info.zip` → `<root>/info`) und den Core (`nightly/<os>/<arch>/latest/<core>.zip` →
+`<root>/cores`, atomar), schreibt die Config und baut `retroarch --config … -L core rom`. System = oberster Ordner
+unter der Library (sonst nächster Elternordner, den ein Core kennt). Core: Override pro Spiel (Setting `core:<pfad>`,
+`Store::core_override`) > Systemwahl/Empfehlung > spezialisiertester Core. CLI `rombro play <file> [--core id [--save]]
+[--dry-run]`; App: `game_cores`/`set_game_core`/`play` (`play://progress`), Komponente `GamePlay` in der Detailansicht.
+E2E Linux (Scratch-XDG): leerer Ordner → RetroArch + Info + fceumm in 1:45 min, Befehl korrekt.
+Offen: Sichtprüfung Play-Button (echte App), Core-Assets (`assets::missing`, z. B. Dolphin-Sys) fehlen noch beim
+Auto-Install (gehen nach `_bios`, also Library → nur über Planner); Override hängt am Pfad (Umbenennen verliert ihn).
+Nächste Schritte M15c: Spielzeit (Child in `play` abwarten, < 30 s ignorieren, `play_stats` über Hash), Favoriten,
+alten Export (Playlists, `retroarch`-CLI, CorePicker mit System-RetroArch) entfernen.

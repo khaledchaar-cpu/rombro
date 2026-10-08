@@ -146,6 +146,9 @@ Architektur v1 muss das vorbereiten: GUI-Navigation per Fokus-System, Daten-Mode
   Assets; AppImage setzt `$HOME` darauf, daher immer `--config <root>/retroarch.cfg`), Windows `RetroArch.7z`,
   macOS `RetroArch_Metal.dmg`. Kein Build für Linux-aarch64 → „nicht unterstützt“. Ordner: `<data>/rombro/retroarch/`
   mit `versions/<v>/`, `current`, `cores`, `info`, `saves`, `states`, `retroarch.cfg`; nur eine Version bleibt.
+- Umsetzung M15b: Cores aus `buildbot …/nightly/<os>/<arch>/latest` (macOS arm64/x86_64 je nach Arch), Info-Dateien aus
+  `assets/frontend/info.zip`. Core-Override pro Spiel als Setting `core:<absoluter Pfad>` (einfach; Umbenennen
+  verliert ihn – bei Bedarf später auf Hash umstellen). Core-Assets beim Auto-Install noch nicht (Library-Schreibzugriff).
 
 ## 7. Architektur
 ```
