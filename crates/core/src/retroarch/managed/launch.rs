@@ -35,16 +35,42 @@ impl Managed {
     }
 
     /// All cores with an info file, installed or not.
+    /// Buildbot listing of the cores built for this target (`.index-extended`).
+    pub fn index_path(&self) -> PathBuf {
+        self.root.join("cores.index")
+    }
+
+    /// Cores with an info file that are installed or downloadable for this target
+    /// (info files also exist for cores the buildbot does not build, e.g. FBNeo subsets).
     pub fn cores(&self) -> Vec<Core> {
-        info::available(&self.info_dir(), &self.cores_dir())
+        let mut all = info::available(&self.info_dir(), &self.cores_dir());
+        if let Ok(index) = std::fs::read_to_string(self.index_path()) {
+            all.retain(|c| c.installed || on_buildbot(&index, c));
+        }
+        all
+    }
+
+    /// Info files and core index are missing or older than a week.
+    pub fn info_stale(&self) -> bool {
+        let age = std::fs::metadata(self.index_path())
+            .and_then(|m| m.modified())
+            .ok()
+            .and_then(|t| t.elapsed().ok());
+        !has_info(&self.info_dir()) || age.is_none_or(|a| a.as_secs() > 7 * 86_400)
     }
 
     /// Downloads the info files unless present (or `refresh`), replacing the folder atomically.
     pub fn ensure_info(&self, fetch: FetchFile, refresh: bool) -> io::Result<()> {
         let dir = self.info_dir();
-        if !refresh && has_info(&dir) {
+        if !refresh && !self.info_stale() {
             return Ok(());
         }
+        let index_url = format!("{}/.index-extended", self.target.cores_url());
+        let tmp_index = self.root.join("cores.index.tmp");
+        std::fs::create_dir_all(&self.root)?;
+        fetch(&index_url, &tmp_index, &|_, _| {})
+            .map_err(|e| io::Error::other(format!("{index_url}: {e}")))?;
+        std::fs::rename(&tmp_index, self.index_path())?;
         let dl = self.root.join("download");
         std::fs::create_dir_all(&dl)?;
         let zip = dl.join("info.zip");
@@ -131,9 +157,14 @@ impl Managed {
         if self.current().is_none() {
             self.install(super::PINNED, fetch, &|p| progress(Step::RetroArch(p)))?;
         }
-        if !has_info(&self.info_dir()) {
+        if self.info_stale() {
             progress(Step::Info);
-            self.ensure_info(fetch, false)?;
+            // Offline with older info files: start with what is there.
+            if let Err(e) = self.ensure_info(fetch, false)
+                && !has_info(&self.info_dir())
+            {
+                return Err(e);
+            }
         }
         let cores = self.cores();
         let system = system_of(game.rom, game.library, &cores).ok_or_else(|| {
@@ -154,6 +185,17 @@ impl Managed {
             command,
         })
     }
+}
+
+/// `index` (lines `date crc file`) lists the archive of `core`.
+fn on_buildbot(index: &str, core: &Core) -> bool {
+    let Some(file) = core.path.file_name().and_then(|f| f.to_str()) else {
+        return false;
+    };
+    index
+        .lines()
+        .filter_map(|l| l.split_whitespace().nth(2))
+        .any(|f| f.strip_suffix(".zip") == Some(file))
 }
 
 fn has_info(dir: &Path) -> bool {
@@ -248,6 +290,13 @@ mod tests {
             Some("Nintendo - Nintendo Entertainment System")
         );
         assert_eq!(system_of(Path::new("/x/y/a.nes"), None, &cores), None);
+    }
+
+    #[test]
+    fn buildbot_index_lists_core_archives() {
+        let index = "2026-10-08 dcff8275 fbneo_libretro.so.zip\n";
+        assert!(on_buildbot(index, &core("fbneo", &[])));
+        assert!(!on_buildbot(index, &core("fbneo_cps12", &[])));
     }
 
     #[test]
