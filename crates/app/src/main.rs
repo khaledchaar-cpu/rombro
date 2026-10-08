@@ -50,6 +50,7 @@ fn main() {
             cheevos::cheevos_logout,
             cheevos::cheevos_set_hardcore,
             cheevos::cheevos_sync,
+            cheevos::cheevos_progress,
             cheevos::cheevos_hash,
             cheevos::cheevos_achievements,
             managed_ra::ra_status,

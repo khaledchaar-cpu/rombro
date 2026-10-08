@@ -28,6 +28,8 @@ pub struct Row {
     cheevos_other: Option<String>,
     /// RA game id (this file's game, else the other version's) for the achievement list.
     cheevos_game: Option<u64>,
+    /// The user's unlocks in this file's RA game (when logged in).
+    cheevos_progress: Option<rombro_store::RaProgress>,
 }
 
 fn added(p: &std::path::Path) -> i64 {
@@ -243,6 +245,9 @@ pub async fn library_list(
                 let st = stats.get(&key).copied().unwrap_or_default();
                 let (cheevos, cheevos_other, cheevos_game) = ra.lookup(p, &system, &name);
                 Row {
+                    cheevos_progress: cheevos_game
+                        .filter(|_| cheevos > 0)
+                        .and_then(|g| ra.progress(g)),
                     cheevos_game,
                     cheevos,
                     cheevos_other,

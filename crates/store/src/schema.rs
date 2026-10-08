@@ -133,6 +133,14 @@ const MIGRATIONS: &[&str] = &[
         mtime INTEGER NOT NULL,
         hash  TEXT
     );",
+    // v18: RetroAchievements – the logged-in user's unlocks per game
+    "CREATE TABLE ra_progress (
+        game     INTEGER PRIMARY KEY,
+        awarded  INTEGER NOT NULL,
+        hardcore INTEGER NOT NULL,
+        total    INTEGER NOT NULL,
+        award    TEXT
+    );",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

@@ -87,6 +87,10 @@ pub fn run(cmd: Cmd, db: Option<PathBuf>) -> Result<()> {
             for (id, e) in &r.failed {
                 println!("failed: console {id}: {e}");
             }
+            if let Some((user, _)) = store.ra_account()? {
+                let n = store.ra_progress_sync(&key, &user)?;
+                println!("progress of {user}: {n} games");
+            }
         }
         Cmd::Scan { library, list } => {
             let library = match library {

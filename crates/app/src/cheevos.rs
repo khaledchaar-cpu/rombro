@@ -48,9 +48,11 @@ pub async fn cheevos_set_key(key: String) -> CmdResult<()> {
 pub async fn cheevos_login(user: String, password: String) -> CmdResult<String> {
     tauri::async_runtime::spawn_blocking(move || {
         let (user, token) = rombro_store::ra_login(user.trim(), &password).map_err(err)?;
-        let (store, _) = open_store()?;
+        let (mut store, _) = open_store()?;
         store.set_ra_account(Some((&user, &token))).map_err(err)?;
         crate::managed_ra::rewrite_config(&store)?;
+        // the login stands even if the progress (needs the Web API key) fails
+        let _ = progress(&mut store);
         Ok(user)
     })
     .await
@@ -96,10 +98,34 @@ pub async fn cheevos_sync(app: AppHandle) -> CmdResult<usize> {
         {
             return Err(format!("RetroAchievements: {e}"));
         }
-        hash_library(&app, &store)
+        let n = hash_library(&app, &store)?;
+        progress(&mut store)?;
+        Ok(n)
     })
     .await
     .map_err(err)?
+}
+
+/// Downloads the logged-in user's progress (after login and played games); returns the
+/// number of games with progress, 0 without login or key.
+#[tauri::command]
+pub async fn cheevos_progress() -> CmdResult<usize> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let (mut store, _) = open_store()?;
+        progress(&mut store)
+    })
+    .await
+    .map_err(err)?
+}
+
+fn progress(store: &mut Store) -> CmdResult<usize> {
+    let key = store.setting(KEY).map_err(err)?.filter(|k| !k.is_empty());
+    match (key, store.ra_account().map_err(err)?) {
+        (Some(key), Some((user, _))) => store
+            .ra_progress_sync(&key, &user)
+            .map_err(|e| format!("RetroAchievements progress: {e}")),
+        _ => Ok(0),
+    }
 }
 
 /// Hashes library files missing from the cache (after imports); same events as the sync.
@@ -151,6 +177,7 @@ pub async fn cheevos_achievements(game: u64) -> CmdResult<Vec<rombro_store::RaAc
 pub(crate) struct Index {
     files: HashMap<PathBuf, RaGame>,
     titles: HashMap<(u32, String), RaGame>,
+    progress: HashMap<u64, rombro_store::RaProgress>,
 }
 
 impl Index {
@@ -158,7 +185,13 @@ impl Index {
         Ok(Self {
             files: store.ra_file_games(library).map_err(err)?,
             titles: store.ra_titles().map_err(err)?,
+            progress: store.ra_progress().map_err(err)?,
         })
+    }
+
+    /// The user's unlocks in RA game `game`.
+    pub(crate) fn progress(&self, game: u64) -> Option<rombro_store::RaProgress> {
+        self.progress.get(&game).cloned()
     }
 
     /// (achievements of this file, RA title of another supported version, RA game id).

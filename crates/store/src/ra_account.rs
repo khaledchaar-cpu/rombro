@@ -57,8 +57,11 @@ impl Store {
         })
     }
 
-    /// Stores (`Some`) or forgets the login.
+    /// Stores (`Some`) or forgets the login (and the user's progress).
     pub fn set_ra_account(&self, login: Option<(&str, &str)>) -> Result<()> {
+        if login.is_none() {
+            self.ra_progress_clear()?;
+        }
         let (u, t) = login.unwrap_or(("", ""));
         self.set_setting(USER, u)?;
         self.set_setting(TOKEN, t)
