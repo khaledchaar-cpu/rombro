@@ -75,7 +75,10 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    (kein HBMAME-DAT, RDB neuer als Core), Flycast kennt `sgdrvsim` nicht.
    Nachtrag: `awbios`/`naomi` (Flycast-BIOS) werden jetzt auch in MAME-Ordner kopiert, deren DAT sie führt
    (Audit ausgeführt, Journal #87: 5 Kopien). `rumblef` bleibt offen: MAME 2010 will älteres awbios
-   (`bios.ic23_l`), Flycast stürzt headless damit ab (Illegal instruction). FDS-Tenshitachi: Reparatur offen.
+   (`bios.ic23_l`), Flycast stürzt headless damit ab (Illegal instruction). FDS-Tenshitachi repariert: `audit` platziert
+   `.m3u`-Ordner mit Zips neu (außer ST/CPC, deren Cores Zips lesen; Journal #88), FDS-Playlist zeigt auf Disk 1,
+   weil FCEUmm keine `.m3u` lädt (#89/#90, Disk 1 headless OK). Allow-Regeln für CLI audit/import/retroarch/undo
+   in `.claude/settings.local.json`.
 -1. RetroArch-Stichprobe (2026-10-08, 2 Spiele/Playlist, 142 Starts headless): 121 OK. Rest nicht ROMBRO:
    Sega CD `bios_CD_U.bin` fehlt, Satellaview vermutl. `BS-X.bin`, melonDS-Core (exec stack, glibc), PPSSPP-Assets
    fehlen, blueMSX (Coleco/MSX2) „Failed to load content“ ungeklärt, Snes9x ignoriert `--max-frames` (lädt aber).
