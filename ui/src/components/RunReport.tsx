@@ -7,7 +7,7 @@ const SHOWN = 2000;
 
 /** What an operation did, in a word, for grouping the report. */
 function outcome(op: OpView): string {
-  if (op.kind === "write") return op.to.endsWith(".lpl") ? "playlists" : "written";
+  if (op.kind === "write") return "written";
   if (/\/_trash\//.test(op.to)) return "to the trash";
   if (/\/_quarantine\//.test(op.to)) return "quarantined";
   return "placed";

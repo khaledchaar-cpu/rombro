@@ -36,7 +36,6 @@ pub(super) fn opts(mode: Mode) -> Options {
             unknown_to_trash: false,
             ..Default::default()
         },
-        playlists: None,
         verdicts: Default::default(),
         inbox: None,
         ignore: Vec::new(),
@@ -196,9 +195,7 @@ fn multi_disc_cue_sets_get_folder_m3u_and_rewritten_sheets() {
             in_library: false,
         }
     };
-    let mut o = opts(Mode::Move);
-    o.playlists = Some(lib.join("playlists"));
-    let plan = build(&[disc(1), disc(2)], &lib, &o);
+    let plan = build(&[disc(1), disc(2)], &lib, &opts(Mode::Move));
     assert!(execute(&plan.ops).error.is_none());
     let dir = "Sony - PlayStation/FF (USA)";
     assert_eq!(
@@ -209,7 +206,6 @@ fn multi_disc_cue_sets_get_folder_m3u_and_rewritten_sheets() {
             format!("{dir}/FF (USA) (Disc 2).bin"),
             format!("{dir}/FF (USA) (Disc 2).cue"),
             format!("{dir}/FF (USA).m3u"),
-            "playlists/Sony - PlayStation.lpl".into(),
         ]
     );
     let d = lib.join(dir);
@@ -222,8 +218,6 @@ fn multi_disc_cue_sets_get_folder_m3u_and_rewritten_sheets() {
             .unwrap()
             .starts_with("FILE \"FF (USA) (Disc 2).bin\"")
     );
-    let lpl = fs::read_to_string(lib.join("playlists/Sony - PlayStation.lpl")).unwrap();
-    assert!(lpl.contains("\"label\": \"FF (USA)\""));
 }
 
 #[test]

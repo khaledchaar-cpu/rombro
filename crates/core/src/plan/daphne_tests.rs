@@ -18,7 +18,6 @@ fn daphne_collection_moves_whole_and_lists_games_with_video() {
         .collect();
     let o = Options {
         inbox: Some(inbox.clone()),
-        playlists: Some(lib.join("_playlists")),
         ..opts(Mode::Move)
     };
     let plan = build(&items, &lib, &o);
@@ -34,8 +33,6 @@ fn daphne_collection_moves_whole_and_lists_games_with_video() {
         .collect();
     want.sort();
     assert_eq!(got, want);
-    let lpl = std::fs::read_to_string(lib.join("_playlists/Daphne.lpl")).unwrap();
-    assert!(lpl.contains("roms/lair.zip") && !lpl.contains("lair_x"));
     // a library audit leaves the collection alone
     let lib_items: Vec<Item> = want
         .iter()

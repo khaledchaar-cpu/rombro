@@ -96,7 +96,6 @@ pub(super) fn find<'a>(items: &[&'a Item], roots: &[&Path]) -> BTreeMap<PathBuf,
                 system: SYSTEM,
                 name: name.to_string_lossy().into_owned(),
                 key,
-                crc: None,
                 rule: Rule::Msu1,
             },
         );

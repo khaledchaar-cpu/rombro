@@ -3,7 +3,7 @@
 
 use super::{Builder, file_name};
 use crate::naming;
-use crate::plan::{Files, Game, Ident, Item, Mode, Op, TRASH_DIR, lpl};
+use crate::plan::{Files, Game, Ident, Item, Mode, Op, TRASH_DIR};
 use crate::rules::{Rule, Why};
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -127,13 +127,5 @@ impl Builder<'_> {
             self.write(m3u.clone(), text);
             self.plan.placed += 1;
         }
-        self.lpl
-            .entry(system.clone())
-            .or_default()
-            .push(lpl::Entry {
-                path: m3u,
-                label: naming::release_name(&stem),
-                crc: members[0].1.crc,
-            });
     }
 }

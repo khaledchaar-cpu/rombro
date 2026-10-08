@@ -172,7 +172,7 @@ function mockPlan(library: string): PlanView {
     from: i % 50 === 0 ? null : `/inbox/rom_${i}.zip`,
     to: `${library}/Nintendo - Game Boy/Game ${i} (Europe).zip`,
     rule: i % 50 === 0 ? "playlist" : "g1r-pick",
-    why: i % 50 === 0 ? "RetroArch playlist" : "1G1R pick",
+    why: i % 50 === 0 ? "Old RetroArch playlist" : "1G1R pick",
   }));
   return {
     items: 2100,
@@ -670,7 +670,7 @@ export async function rulesCatalog(): Promise<RuleInfo[]> {
       { id: "game-folder", title: "Game folder", explain: "DOS/ScummVM/ports moved as whole folders.", hits: 12 },
       { id: "name-only", title: "Name folder", explain: "Files without hash match whose folder names a system (e.g. solarus, openbor).", hits: 4 },
       { id: "quarantine", title: "Quarantine", explain: "Files without database match go to _quarantine.", hits: 5270 },
-      { id: "playlist", title: "RetroArch playlist", explain: "One .lpl per system.", hits: 30 },
+      { id: "playlist", title: "Old RetroArch playlist", explain: "Old .lpl files go to the trash.", hits: 30 },
     ];
   return invoke<RuleInfo[]>("rules_catalog");
 }

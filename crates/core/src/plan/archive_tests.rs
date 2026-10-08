@@ -44,7 +44,6 @@ fn opts(mode: Mode) -> Options {
             unknown_to_trash: false,
             ..Default::default()
         },
-        playlists: None,
         verdicts: Default::default(),
         inbox: None,
         ignore: Vec::new(),
@@ -409,9 +408,7 @@ fn multi_disk_archive_becomes_one_game_folder_with_m3u() {
         member(&a, d1, game("Afterburner (Europe) (Disk 1)")),
         member(&a, d2, game("Afterburner (Europe)")),
     ];
-    let mut o = opts(Mode::Move);
-    o.playlists = Some(lib.join("_playlists"));
-    let plan = build(&items, &lib, &o);
+    let plan = build(&items, &lib, &opts(Mode::Move));
     assert!(plan.decisions.is_empty(), "{:?}", plan.decisions);
     assert_eq!(plan.placed, 1);
     assert!(execute(&plan.ops).error.is_none());
@@ -422,7 +419,6 @@ fn multi_disk_archive_becomes_one_game_folder_with_m3u() {
             format!("{dir}/Afterburner (Europe) (Disk A).ipf"),
             format!("{dir}/Afterburner (Europe) (Disk B).ipf"),
             format!("{dir}/Afterburner (Europe).m3u"),
-            format!("_playlists/{SYS}.lpl"),
             "_trash/Afterburner (Europe).zip".to_owned(),
         ]
     );
@@ -444,10 +440,10 @@ fn multi_disk_archive_becomes_one_game_folder_with_m3u() {
             in_library: true,
         },
     ];
-    let again = build(&lib_items, &lib, &o);
+    let again = build(&lib_items, &lib, &opts(Mode::Move));
     assert!(again.decisions.is_empty());
     assert_eq!(again.unchanged, 1);
-    assert!(again.ops.iter().all(|op| matches!(op, Op::Write { .. })));
+    assert!(again.ops.is_empty());
 }
 
 #[test]
@@ -594,13 +590,8 @@ fn placed_m3u_of_zips_is_repaired_unless_the_core_reads_zips() {
             .collect();
         let m3u = dir.join("T (Japan).m3u");
         fs::write(&m3u, "T (Japan) (Disk 1).zip\nT (Japan) (Disk 2).zip\n").unwrap();
-        let mut o = opts(Mode::Move);
-        o.playlists = Some(lib.join("_playlists"));
-        let plan = build(&items, &lib, &o);
+        let plan = build(&items, &lib, &opts(Mode::Move));
         assert!(execute(&plan.ops).error.is_none());
-        // FCEUmm cannot read an m3u: its playlist starts disk 1
-        let lpl = fs::read_to_string(lib.join(format!("_playlists/{system}.lpl"))).unwrap();
-        assert_eq!(lpl.contains("(Disk 1).fds"), fixed, "{lpl}");
         let text = fs::read_to_string(&m3u).unwrap();
         assert_eq!(text.contains(".fds"), fixed, "{system}: {text}");
         assert_eq!(dir.join("T (Japan) (Disk 1).zip").exists(), !fixed);

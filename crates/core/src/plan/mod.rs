@@ -7,7 +7,6 @@ mod build;
 #[cfg(test)]
 mod daphne_tests;
 pub mod inbox;
-pub mod lpl;
 mod ops;
 #[cfg(test)]
 mod rules_tests;
@@ -135,8 +134,6 @@ pub struct Item {
 pub struct Options {
     pub mode: Mode,
     pub rules: Rules,
-    /// Directory for RetroArch playlists; `None` disables the export.
-    pub playlists: Option<PathBuf>,
     /// User verdicts on releases 1G1R rejected, keyed by (system, name).
     pub verdicts: HashMap<(String, String), Verdict>,
     /// Inbox root; quarantined files keep their path below it (no clashes on equal names).

@@ -3,7 +3,7 @@
 
 use super::Builder;
 use crate::naming;
-use crate::plan::{Files, Game, Ident, Item, lpl};
+use crate::plan::{Files, Game, Ident, Item};
 use crate::rules::{Rule, Why};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ffi::OsString;
@@ -48,9 +48,8 @@ pub(super) struct FolderGame<'a> {
     pub item: &'a Item,
     pub system: &'a str,
     pub name: String,
-    /// The match that best fits the folder name; the playlist entry points to it.
+    /// The match that best fits the folder name.
     pub key: PathBuf,
-    pub crc: Option<u32>,
     pub rule: Rule,
 }
 
@@ -208,7 +207,6 @@ fn folder_game<'a>(root: &Path, ms: &[Match<'a>], systems: &'a [String]) -> Opti
         system,
         name: stem,
         key: best.key.to_path_buf(),
-        crc: best.game.crc,
         rule: Rule::GameFolder,
     })
 }
@@ -259,15 +257,6 @@ impl Builder<'_> {
             .library
             .join(naming::sanitize_file_name(fg.system))
             .join(naming::sanitize_file_name(&fg.name));
-        let key_rel = fg.key.strip_prefix(root).unwrap_or(&fg.key);
-        self.lpl
-            .entry(fg.system.to_owned())
-            .or_default()
-            .push(lpl::Entry {
-                path: target.join(key_rel),
-                label: fg.name.clone(),
-                crc: fg.crc,
-            });
         if root == target {
             self.plan.unchanged += 1;
             self.repair_launchers(root, &target, fg.system);
@@ -299,7 +288,7 @@ impl Builder<'_> {
     /// Writes the id into broken ScummVM launcher files of a game folder (at its target).
     fn repair_launchers(&mut self, root: &Path, target: &Path, system: &str) {
         // only ScummVM reads launchers; walking every DOS folder costs seconds on a network
-        if system != crate::retroarch::scummvm::SYSTEM {
+        if system != "ScummVM" {
             return;
         }
         let fixes: Vec<_> = walkdir::WalkDir::new(root)

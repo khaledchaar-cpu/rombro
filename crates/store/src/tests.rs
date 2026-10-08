@@ -304,7 +304,6 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
     let opts = Options {
         mode: Mode::Move,
         rules: Default::default(),
-        playlists: None,
         verdicts: Default::default(),
         inbox: None,
         ignore: Vec::new(),

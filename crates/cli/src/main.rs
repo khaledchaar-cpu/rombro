@@ -103,12 +103,6 @@ struct PlanOpts {
     /// How inbox files get into the library
     #[arg(long, value_enum, default_value_t = ModeArg::Move)]
     mode: ModeArg,
-    /// RetroArch playlist directory (default: <library>/_playlists)
-    #[arg(long)]
-    playlists: Option<PathBuf>,
-    /// Do not write playlists
-    #[arg(long)]
-    no_playlists: bool,
     #[arg(long)]
     db: Option<PathBuf>,
 }
@@ -129,8 +123,6 @@ impl PlanOpts {
                 ModeArg::Move => rombro_core::plan::Mode::Move,
                 ModeArg::Copy => rombro_core::plan::Mode::Copy,
             },
-            playlists: self.playlists,
-            no_playlists: self.no_playlists,
             db: self.db,
         }
     }

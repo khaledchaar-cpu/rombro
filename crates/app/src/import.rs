@@ -3,7 +3,7 @@
 use crate::commands::{
     CmdResult, Progress, Throttle, err, indexed_scan, library_snapshot, open_store,
 };
-use rombro_core::plan::{self, Decision, Mode, Op, Options, PLAYLIST_DIR};
+use rombro_core::plan::{self, Decision, Mode, Op, Options};
 use rombro_core::rules::Why;
 use rombro_store::Store;
 use serde::{Deserialize, Serialize};
@@ -179,7 +179,6 @@ pub async fn plan_import(
         let opts = Options {
             mode: mode.into(),
             rules: crate::settings::load_rules(&store)?,
-            playlists: Some(lib.join(PLAYLIST_DIR)),
             verdicts: store.verdicts().map_err(err)?,
             inbox: inbox_root.clone(),
             ignore: store.ignored().map_err(err)?,

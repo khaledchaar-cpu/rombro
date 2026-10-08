@@ -4,7 +4,7 @@
 //! `Daphne/`, structure untouched; each game with a `.daphne` folder gets a playlist entry.
 
 use super::Builder;
-use crate::plan::{Files, Game, Ident, Item, lpl};
+use crate::plan::{Files, Game, Ident, Item};
 use crate::rules::{Rule, Why};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -56,22 +56,9 @@ pub(super) fn find(items: &[&Item], roots: &[&Path], library: &Path) -> BTreeSet
 
 impl Builder<'_> {
     /// Moves a Daphne collection to `Daphne/` file by file (files already there count as
-    /// duplicates) and lists each game whose ROM zip and `.daphne` folder are both present.
+    /// duplicates).
     pub(super) fn daphne(&mut self, root: &Path) {
         let target = self.library.join(SYSTEM);
-        for name in games(root) {
-            let zip = root.join("roms").join(format!("{name}.zip"));
-            if zip.is_file() {
-                self.lpl
-                    .entry(SYSTEM.to_owned())
-                    .or_default()
-                    .push(lpl::Entry {
-                        path: target.join("roms").join(format!("{name}.zip")),
-                        label: name,
-                        crc: None,
-                    });
-            }
-        }
         if root == target {
             self.plan.unchanged += 1;
             return;

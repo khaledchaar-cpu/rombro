@@ -77,7 +77,7 @@ impl Rule {
             Rule::Bios => "BIOS",
             Rule::Quarantine => "Quarantine",
             Rule::FrontendMeta => "Frontend metadata",
-            Rule::Playlist => "RetroArch playlist",
+            Rule::Playlist => "Old RetroArch playlist",
             Rule::NameOnly => "Identified by name",
         }
     }
@@ -140,7 +140,9 @@ impl Rule {
                  gamelist*.xml with backups, _info.txt and scraped images/videos next to them. \
                  Only folders holding a gamelist*.xml count, so game data is never touched."
             }
-            Rule::Playlist => "One RetroArch .lpl playlist per system in _playlists.",
+            Rule::Playlist => {
+                "Old RetroArch playlists in _playlists go to the trash (no longer written)."
+            }
             Rule::NameOnly => {
                 "Files without database match directly in a name folder (e.g. \
                  solarus → Solarus, openbor → OpenBOR) are placed under that system with their file name. 1G1R runs \

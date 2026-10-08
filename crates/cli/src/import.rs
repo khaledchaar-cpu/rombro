@@ -1,6 +1,6 @@
 use crate::db::open_store;
 use anyhow::{Context, Result, bail};
-use rombro_core::plan::{self, Decision, Mode, Op, Options, PLAYLIST_DIR};
+use rombro_core::plan::{self, Decision, Mode, Op, Options};
 use rombro_store::{DiscMatch, Match, Record, candidates};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -10,8 +10,6 @@ pub struct Args {
     pub library: PathBuf,
     pub dry_run: bool,
     pub mode: Mode,
-    pub playlists: Option<PathBuf>,
-    pub no_playlists: bool,
     pub db: Option<PathBuf>,
 }
 
@@ -34,8 +32,6 @@ pub fn run(a: Args) -> Result<()> {
     let opts = Options {
         mode: a.mode,
         rules: store.rules()?,
-        playlists: (!a.no_playlists)
-            .then(|| a.playlists.unwrap_or_else(|| library.join(PLAYLIST_DIR))),
         verdicts: store.verdicts()?,
         inbox: inbox.clone(),
         ignore: store.ignored()?,

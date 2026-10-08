@@ -1,12 +1,12 @@
-//! Building a plan: 1G1R per system, target paths, TBD queue, quarantine, playlists.
+//! Building a plan: 1G1R per system, target paths, TBD queue, quarantine.
 
 use super::{
     BIOS_DIR, Decision, Files, Game, Ident, Item, Mode, Op, Options, PLAYLIST_DIR, Plan,
-    QUARANTINE_DIR, TRASH_DIR, Verdict, lpl,
+    QUARANTINE_DIR, TRASH_DIR, Verdict,
 };
 use crate::rules::{Rule, Why};
 use crate::{g1r, naming};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -43,7 +43,6 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         opts,
         plan: Plan::default(),
         claimed: HashMap::new(),
-        lpl: BTreeMap::new(),
         why: Why::new(Rule::G1rPick, ""),
         members_done: HashMap::new(),
         identified: items
@@ -170,7 +169,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     }
     // multi-disk games already in the library (`<Game>/<Game>.m3u`) are finished units:
     // their disks may carry inconsistent database names and must not be renamed apart
-    let mut placed_sets: BTreeMap<&Path, &Game> = BTreeMap::new();
+    let mut placed_sets: BTreeSet<&Path> = BTreeSet::new();
     let items: Vec<&Item> = items
         .into_iter()
         .filter(|it| {
@@ -185,16 +184,14 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 (Ident::Known(g), Some(dir))
                     if it.in_library && has_own_m3u(dir) && !zip_m3u_unloadable(dir, &g.system) =>
                 {
-                    placed_sets.entry(dir).or_insert(g);
+                    placed_sets.insert(dir);
                     false
                 }
                 _ => true,
             }
         })
         .collect();
-    for (dir, g) in placed_sets {
-        b.placed_set(dir, g);
-    }
+    b.plan.unchanged += placed_sets.len();
     // (system, identified by name only) – name-only releases never compete with verified dumps
     let mut known: BTreeMap<(&str, bool), Vec<(&Item, &Game)>> = BTreeMap::new();
     let mut arcade: Vec<(&Item, &Game)> = Vec::new();
@@ -334,7 +331,6 @@ struct Builder<'a> {
     plan: Plan,
     /// Targets claimed by earlier ops of this plan, with the file they come from.
     claimed: HashMap<PathBuf, Option<PathBuf>>,
-    lpl: BTreeMap<String, Vec<lpl::Entry>>,
     /// Reason attached to the ops added next.
     why: Why,
     /// Members of multi-ROM archives handled so far (extracted, quarantined or discarded).
@@ -355,10 +351,10 @@ impl Builder<'_> {
                 placed.push((p, g));
             }
         }
-        let Some((first, g)) = placed.first() else {
+        let Some((_, g)) = placed.first() else {
             return;
         };
-        let entry = if multi {
+        if multi {
             let m3u = self.library.join(naming::playlist_path(system, &g.name));
             let mut text = String::new();
             for (p, _) in &placed {
@@ -367,24 +363,9 @@ impl Builder<'_> {
             }
             if placed.len() == media.len() {
                 self.why = Why::new(Rule::MultiDisc, "");
-                self.write(m3u.clone(), text);
+                self.write(m3u, text);
             }
-            if NO_M3U_SYSTEMS.contains(&system) {
-                first.clone()
-            } else {
-                m3u
-            }
-        } else {
-            first.clone()
-        };
-        self.lpl
-            .entry(system.to_owned())
-            .or_default()
-            .push(lpl::Entry {
-                path: entry,
-                label: naming::release_name(&g.name),
-                crc: g.crc,
-            });
+        }
     }
 
     /// Unknown files go to `_trash/unknown` (default) or `_quarantine`, keeping their path.
@@ -491,31 +472,6 @@ impl Builder<'_> {
                 }),
             }
         }
-    }
-
-    /// A multi-disc game already in place: keeps its files, gets its playlist entry.
-    fn placed_set(&mut self, dir: &Path, g: &Game) {
-        let Some(name) = dir.file_name().map(|n| n.to_string_lossy().into_owned()) else {
-            return;
-        };
-        self.plan.unchanged += 1;
-        let m3u = dir.join(format!("{name}.m3u"));
-        let path = if NO_M3U_SYSTEMS.contains(&g.system.as_str()) {
-            fs::read_to_string(&m3u)
-                .ok()
-                .and_then(|t| t.lines().next().map(|l| dir.join(l.trim())))
-                .unwrap_or(m3u)
-        } else {
-            m3u
-        };
-        self.lpl
-            .entry(g.system.clone())
-            .or_default()
-            .push(lpl::Entry {
-                path,
-                label: name,
-                crc: g.crc,
-            });
     }
 
     /// The best system whose slot for this set's short name is free: another version under
@@ -757,26 +713,20 @@ impl Builder<'_> {
         self.plan.ops.push(Op::Write { path, contents });
     }
 
+    /// RetroArch playlists of the old export (`_playlists/*.lpl`) go to the trash.
     fn playlists(&mut self) {
-        let Some(dir) = self.opts.playlists.clone() else {
-            return;
-        };
-        self.why = Why::new(Rule::Playlist, "");
-        let mut written = HashSet::new();
-        for (system, entries) in std::mem::take(&mut self.lpl) {
-            let path = dir.join(format!("{}.lpl", naming::sanitize_file_name(&system)));
-            written.insert(path.clone());
-            self.write(path, lpl::render(&system, &entries));
-        }
-        // playlists of systems without any game left (all of it trashed or moved away)
+        let dir = self.library.join(PLAYLIST_DIR);
         let Ok(rd) = fs::read_dir(&dir) else { return };
         let mut stale: Vec<PathBuf> = rd
             .flatten()
             .map(|e| e.path())
-            .filter(|p| p.extension().is_some_and(|e| e == "lpl") && !written.contains(p))
+            .filter(|p| p.extension().is_some_and(|e| e == "lpl"))
             .collect();
         stale.sort();
-        self.why = Why::new(Rule::Playlist, "no games left – playlist to the trash");
+        self.why = Why::new(
+            Rule::Playlist,
+            "playlists are no longer written – to the trash",
+        );
         for p in stale {
             let to = self
                 .library
@@ -817,9 +767,6 @@ fn file_name(p: &Path) -> String {
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default()
 }
-
-/// Systems whose cores cannot load an `.m3u` (FCEUmm): their playlist entry is the first disk.
-const NO_M3U_SYSTEMS: [&str; 1] = ["Nintendo - Family Computer Disk System"];
 
 /// Systems whose cores open zipped disks listed in an `.m3u` (Hatari, Caprice32: verified).
 const ZIP_M3U_SYSTEMS: [&str; 2] = ["Atari - ST", "Amstrad - CPC"];
