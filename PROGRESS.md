@@ -66,6 +66,13 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
 **Nächster Milestone: M15 Launcher-Basis** (SPEC §6) – Schnitt noch festlegen.
 
 ## Nächste Schritte
+-2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,
+   lädt), bekannt: Sega CD/Satellaview-BIOS, PPSSPP headless. Neu → ROMBRO-Fixes: (a) Mehrdisk-Release aus Einzel-Zips
+   bekam `.m3u` auf `.zip` (fceumm lädt das nicht) → Zips werden jetzt entpackt (Hatari/cap32 können Zips, ST/CPC
+   bleiben unangetastet, da platzierte `.m3u`-Ordner fertig sind). Betroffen: FDS „Tenshitachi no Houkago“ (manuell
+   oder neu importieren). (b) DAT-Check verlangt jetzt auch das BIOS-Set (`rumblef` ohne `awbios` lief in MAME 2010
+   nicht) → nächster `audit` quarantänisiert Sets ohne BIOS. Nicht ROMBRO: HBMAME-Core kennt `dimahoo` nicht
+   (kein HBMAME-DAT, RDB neuer als Core), Flycast kennt `sgdrvsim` nicht.
 -1. RetroArch-Stichprobe (2026-10-08, 2 Spiele/Playlist, 142 Starts headless): 121 OK. Rest nicht ROMBRO:
    Sega CD `bios_CD_U.bin` fehlt, Satellaview vermutl. `BS-X.bin`, melonDS-Core (exec stack, glibc), PPSSPP-Assets
    fehlen, blueMSX (Coleco/MSX2) „Failed to load content“ ungeklärt, Snes9x ignoriert `--max-frames` (lädt aber).
