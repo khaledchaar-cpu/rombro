@@ -570,7 +570,10 @@ fn zipped_disks_of_a_multi_disk_release_are_extracted_for_the_m3u() {
 
 #[test]
 fn placed_m3u_of_zips_is_repaired_unless_the_core_reads_zips() {
-    for (system, fixed) in [("Nintendo - FDS", true), ("Atari - ST", false)] {
+    for (system, fixed) in [
+        ("Nintendo - Family Computer Disk System", true),
+        ("Atari - ST", false),
+    ] {
         let tmp = TempDir::new().unwrap();
         let lib = tmp.path().join("lib");
         let dir = lib.join(system).join("T (Japan)");
@@ -591,8 +594,13 @@ fn placed_m3u_of_zips_is_repaired_unless_the_core_reads_zips() {
             .collect();
         let m3u = dir.join("T (Japan).m3u");
         fs::write(&m3u, "T (Japan) (Disk 1).zip\nT (Japan) (Disk 2).zip\n").unwrap();
-        let plan = build(&items, &lib, &opts(Mode::Move));
+        let mut o = opts(Mode::Move);
+        o.playlists = Some(lib.join("_playlists"));
+        let plan = build(&items, &lib, &o);
         assert!(execute(&plan.ops).error.is_none());
+        // FCEUmm cannot read an m3u: its playlist starts disk 1
+        let lpl = fs::read_to_string(lib.join(format!("_playlists/{system}.lpl"))).unwrap();
+        assert_eq!(lpl.contains("(Disk 1).fds"), fixed, "{lpl}");
         let text = fs::read_to_string(&m3u).unwrap();
         assert_eq!(text.contains(".fds"), fixed, "{system}: {text}");
         assert_eq!(dir.join("T (Japan) (Disk 1).zip").exists(), !fixed);

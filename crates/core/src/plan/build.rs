@@ -369,7 +369,11 @@ impl Builder<'_> {
                 self.why = Why::new(Rule::MultiDisc, "");
                 self.write(m3u.clone(), text);
             }
-            m3u
+            if NO_M3U_SYSTEMS.contains(&system) {
+                first.clone()
+            } else {
+                m3u
+            }
         } else {
             first.clone()
         };
@@ -495,11 +499,20 @@ impl Builder<'_> {
             return;
         };
         self.plan.unchanged += 1;
+        let m3u = dir.join(format!("{name}.m3u"));
+        let path = if NO_M3U_SYSTEMS.contains(&g.system.as_str()) {
+            fs::read_to_string(&m3u)
+                .ok()
+                .and_then(|t| t.lines().next().map(|l| dir.join(l.trim())))
+                .unwrap_or(m3u)
+        } else {
+            m3u
+        };
         self.lpl
             .entry(g.system.clone())
             .or_default()
             .push(lpl::Entry {
-                path: dir.join(format!("{name}.m3u")),
+                path,
                 label: name,
                 crc: g.crc,
             });
@@ -804,6 +817,9 @@ fn file_name(p: &Path) -> String {
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default()
 }
+
+/// Systems whose cores cannot load an `.m3u` (FCEUmm): their playlist entry is the first disk.
+const NO_M3U_SYSTEMS: [&str; 1] = ["Nintendo - Family Computer Disk System"];
 
 /// Systems whose cores open zipped disks listed in an `.m3u` (Hatari, Caprice32: verified).
 const ZIP_M3U_SYSTEMS: [&str; 2] = ["Atari - ST", "Amstrad - CPC"];
