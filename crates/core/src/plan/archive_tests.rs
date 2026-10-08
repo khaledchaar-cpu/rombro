@@ -567,3 +567,34 @@ fn zipped_disks_of_a_multi_disk_release_are_extracted_for_the_m3u() {
         "Tenshi (Japan) (Disk 1).fds\nTenshi (Japan) (Disk 2).fds\n"
     );
 }
+
+#[test]
+fn placed_m3u_of_zips_is_repaired_unless_the_core_reads_zips() {
+    for (system, fixed) in [("Nintendo - FDS", true), ("Atari - ST", false)] {
+        let tmp = TempDir::new().unwrap();
+        let lib = tmp.path().join("lib");
+        let dir = lib.join(system).join("T (Japan)");
+        let items: Vec<Item> = (1..=2)
+            .map(|n| {
+                let a = dir.join(format!("T (Japan) (Disk {n}).zip"));
+                zip(&a, &[&format!("T (Japan) (Disk {n}).fds")]);
+                Item {
+                    files: Files::Single(a),
+                    ident: Ident::Known(Game {
+                        system: system.into(),
+                        name: format!("T (Japan) (Disk {n})"),
+                        crc: Some(1),
+                    }),
+                    in_library: true,
+                }
+            })
+            .collect();
+        let m3u = dir.join("T (Japan).m3u");
+        fs::write(&m3u, "T (Japan) (Disk 1).zip\nT (Japan) (Disk 2).zip\n").unwrap();
+        let plan = build(&items, &lib, &opts(Mode::Move));
+        assert!(execute(&plan.ops).error.is_none());
+        let text = fs::read_to_string(&m3u).unwrap();
+        assert_eq!(text.contains(".fds"), fixed, "{system}: {text}");
+        assert_eq!(dir.join("T (Japan) (Disk 1).zip").exists(), !fixed);
+    }
+}

@@ -182,7 +182,9 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
                 return false;
             }
             match (&it.ident, it.files.primary().parent()) {
-                (Ident::Known(g), Some(dir)) if it.in_library && has_own_m3u(dir) => {
+                (Ident::Known(g), Some(dir))
+                    if it.in_library && has_own_m3u(dir) && !zip_m3u_unloadable(dir, &g.system) =>
+                {
                     placed_sets.entry(dir).or_insert(g);
                     false
                 }
@@ -801,6 +803,22 @@ fn file_name(p: &Path) -> String {
     p.file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default()
+}
+
+/// Systems whose cores open zipped disks listed in an `.m3u` (Hatari, Caprice32: verified).
+const ZIP_M3U_SYSTEMS: [&str; 2] = ["Atari - ST", "Amstrad - CPC"];
+
+/// A placed multi-disk folder whose `.m3u` lists zips its system's core cannot open: it is
+/// placed again, which extracts the disks.
+fn zip_m3u_unloadable(dir: &Path, system: &str) -> bool {
+    if ZIP_M3U_SYSTEMS.contains(&system) {
+        return false;
+    }
+    let Some(name) = dir.file_name() else {
+        return false;
+    };
+    let m3u = dir.join(format!("{}.m3u", name.to_string_lossy()));
+    fs::read_to_string(m3u).is_ok_and(|t| t.lines().any(|l| is_zip(Path::new(l.trim()))))
 }
 
 fn is_zip(p: &Path) -> bool {
