@@ -1,5 +1,6 @@
 import { createResource, For, onCleanup, Show } from "solid-js";
 import Panel from "./Panel";
+import GamePlay from "./GamePlay";
 import { thumbnail, type LibraryRow, type ThumbKind } from "../ipc";
 
 const KINDS: { kind: ThumbKind; label: string }[] = [
@@ -33,6 +34,7 @@ export default function GameDetail(props: { row: LibraryRow }) {
   const date = () => (props.row.added ? new Date(props.row.added * 1000).toLocaleString() : "–");
   return (
     <Panel title="Details" class="wide">
+      <GamePlay path={props.row.path} />
       <div class="detail">
         <div class="thumbs">
           <For each={KINDS}>{(k) => <Thumb row={props.row} kind={k.kind} label={k.label} />}</For>

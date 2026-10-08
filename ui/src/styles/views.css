@@ -73,6 +73,8 @@
 .lrow.vrow { cursor: pointer; }
 .lrow.vrow:hover { background: var(--bg-sunken); }
 .lrow.vrow.sel { outline: 1px solid var(--accent); outline-offset: -1px; }
+.game-play { margin-bottom: var(--sp-4); }
+.game-play .row { display: flex; gap: var(--sp-2); align-items: center; flex-wrap: wrap; }
 .detail { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--sp-4); }
 .thumbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
 .thumb { margin: 0; display: grid; gap: var(--sp-1); }

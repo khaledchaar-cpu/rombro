@@ -21,10 +21,10 @@ pub struct MissingView {
 
 #[derive(Serialize)]
 pub struct CoreOption {
-    id: String,
-    name: String,
-    installed: bool,
-    recommended: bool,
+    pub(crate) id: String,
+    pub(crate) name: String,
+    pub(crate) installed: bool,
+    pub(crate) recommended: bool,
 }
 
 #[derive(Serialize)]

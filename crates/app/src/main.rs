@@ -8,6 +8,7 @@ mod gamify;
 mod import;
 mod library;
 mod managed_ra;
+mod play;
 mod retroarch;
 mod settings;
 mod thumbs;
@@ -45,6 +46,9 @@ fn main() {
             retroarch::retroarch_export,
             managed_ra::ra_status,
             managed_ra::ra_install,
+            play::game_cores,
+            play::set_game_core,
+            play::play,
             retroarch::retroarch_cores,
             gamify::gamify_stats,
             gamify::gamify_enabled_get,

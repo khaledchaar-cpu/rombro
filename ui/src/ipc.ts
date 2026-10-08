@@ -790,3 +790,50 @@ export async function raInstall(version: string | null): Promise<string> {
   }
   return invoke<string>("ra_install", { version });
 }
+
+export interface GameCores {
+  system: string | null;
+  chosen: string | null;
+  /** Chosen for this game only. */
+  overridden: boolean;
+  options: CoreOption[];
+}
+
+/** Cores that run a library game (`path` as listed, relative to the library). */
+export async function gameCores(path: string): Promise<GameCores> {
+  if (!inTauri) {
+    const chosen = mockGameCore.get(path) ?? "snes9x";
+    return {
+      system: "Nintendo - Super Nintendo Entertainment System",
+      chosen,
+      overridden: mockGameCore.has(path),
+      options: [
+        { id: "snes9x", name: "Snes9x", installed: true, recommended: true },
+        { id: "bsnes", name: "bsnes", installed: false, recommended: false },
+      ],
+    };
+  }
+  return invoke<GameCores>("game_cores", { path });
+}
+const mockGameCore = new Map<string, string>();
+
+/** Sets (or with null clears) the core of one game. */
+export async function setGameCore(path: string, core: string | null): Promise<void> {
+  if (!inTauri) {
+    if (core) mockGameCore.set(path, core);
+    else mockGameCore.delete(path);
+    return;
+  }
+  return invoke<void>("set_game_core", { path, core });
+}
+
+/** Installs what is missing (RetroArch, core) and starts the game; progress on `play://progress`. */
+export async function play(path: string): Promise<string> {
+  if (!inTauri) {
+    if (!mockRa) await mockProgress("play://progress", ["download", "verify", "unpack"], phased);
+    mockRa = mockRa ?? "1.22.2";
+    await mockProgress("play://progress", ["core"], (p, d, t) => [p, { done: d, total: t }, "snes9x"]);
+    return mockGameCore.get(path) ?? "snes9x";
+  }
+  return invoke<string>("play", { path });
+}
