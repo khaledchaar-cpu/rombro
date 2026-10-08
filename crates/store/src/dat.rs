@@ -232,6 +232,27 @@ impl Store {
         self.check_known(system, name, members, chds, has_set, working_only)
     }
 
+    /// The first BIOS set up the `romof` chain of `system`'s set `name` that `has_set` lacks.
+    pub fn missing_bios(
+        &self,
+        system: &str,
+        name: &str,
+        has_set: impl Fn(&str) -> bool,
+    ) -> Result<Option<String>> {
+        let mut next = self.dat_set_rc(system, name)?.and_then(|s| s.romof.clone());
+        for _ in 0..8 {
+            let Some(n) = next.take() else { break };
+            let Some(s) = self.dat_set_rc(system, &n)? else {
+                break;
+            };
+            if s.bios && !has_set(&s.name) {
+                return Ok(Some(s.name.clone()));
+            }
+            next = s.romof.clone();
+        }
+        Ok(None)
+    }
+
     /// [`Store::check_set`] for a `system` whose DAT is loaded.
     fn check_known(
         &self,

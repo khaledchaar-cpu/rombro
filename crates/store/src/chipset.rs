@@ -41,11 +41,34 @@ impl Store {
             .iter()
             .find(|(name, _)| stem.eq_ignore_ascii_case(name))
         {
-            return Ok(Some(item(Ident::Bios(Game {
-                name: format!("{system} BIOS"),
-                system: system.to_owned(),
-                crc: None,
-            }))));
+            // MAME cores listing it as BIOS get a copy next to their sets (e.g. `rumblef`)
+            let crcs: Vec<(String, u32)> = members
+                .iter()
+                .filter_map(|r| Some((r.member.clone()?, r.hashes.crc)))
+                .collect();
+            let alt = self
+                .bios_systems(&stem, &crcs)?
+                .into_iter()
+                .map(|system| Game {
+                    system,
+                    name: stem.clone().into_owned(),
+                    crc: None,
+                })
+                .collect();
+            return Ok(Some(Item {
+                files: Files::Set {
+                    archive: whole.path.clone(),
+                    chds: Vec::new(),
+                    alt,
+                    dat_note: String::new(),
+                },
+                ident: Ident::Bios(Game {
+                    name: format!("{system} BIOS"),
+                    system: system.to_owned(),
+                    crc: None,
+                }),
+                in_library,
+            }));
         }
         for rom in members {
             let Some(member) = rom.member.as_deref() else {

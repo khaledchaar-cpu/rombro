@@ -175,11 +175,30 @@ impl Store {
                 }
                 rank(system)
             }
-            Ok(None) => records
-                .iter()
-                .map(|r| rank(&r.system))
-                .min()
-                .unwrap_or_default(),
+            Ok(None) => {
+                let Some(r) = records.iter().min_by_key(|r| rank(&r.system)) else {
+                    return Ok(None);
+                };
+                // a certain match skips the DAT check, but the BIOS set must still be there
+                let stem = whole.path.file_stem().map(|s| s.to_string_lossy());
+                let has_set = |n: &str| known.contains(&n.to_ascii_lowercase());
+                if arcade::is_arcade(&r.system)
+                    && let Some(stem) = stem
+                    && let Some(b) = self.missing_bios(&r.system, &stem, has_set)?
+                {
+                    return Ok(Some(Item {
+                        files: Files::Set {
+                            archive: whole.path.clone(),
+                            chds: set_chds(&whole.path),
+                            alt: Vec::new(),
+                            dat_note: String::new(),
+                        },
+                        ident: Ident::Incomplete(format!("{}: BIOS {b} missing", r.system)),
+                        in_library,
+                    }));
+                }
+                rank(&r.system)
+            }
             Err(reason) => {
                 // a set on a Flycast board runs there whatever MAME's driver status says
                 let crcs: Vec<u32> = rombro_core::archive::members(&whole.path)
