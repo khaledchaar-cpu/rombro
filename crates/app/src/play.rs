@@ -99,9 +99,12 @@ pub async fn set_favorite(path: String, on: bool) -> CmdResult<()> {
 #[tauri::command]
 pub async fn play(app: tauri::AppHandle, path: String) -> CmdResult<String> {
     tauri::async_runtime::spawn_blocking(move || {
-        let m = managed()?;
         let (rom, library) = game_path(&path)?;
         let (store, _) = open_store()?;
+        let m = Managed {
+            display: store.ra_display().map_err(err)?,
+            ..managed()?
+        };
         let over = store.core_override(&rom).map_err(err)?;
         let picks = store.rules().map_err(err)?.cores;
         let game = Game {

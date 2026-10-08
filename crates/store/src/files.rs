@@ -51,6 +51,26 @@ impl Store {
         Ok(())
     }
 
+    /// Display mode of the managed RetroArch (setting `ra_display`); unset or unreadable → `None`.
+    pub fn ra_display(&self) -> Result<Option<rombro_core::retroarch::managed::display::Display>> {
+        Ok(self.setting("ra_display")?.and_then(|s| s.parse().ok()))
+    }
+
+    /// Stores (`Some`) or clears the display mode.
+    pub fn set_ra_display(
+        &self,
+        d: Option<rombro_core::retroarch::managed::display::Display>,
+    ) -> Result<()> {
+        match d {
+            Some(d) => self.set_setting("ra_display", &d.to_string()),
+            None => {
+                self.conn
+                    .execute("DELETE FROM settings WHERE key = 'ra_display'", [])?;
+                Ok(())
+            }
+        }
+    }
+
     /// Stored 1G1R rules (setting `rules`, JSON), or the defaults when none or unreadable.
     pub fn rules(&self) -> Result<rombro_core::g1r::Rules> {
         Ok(self

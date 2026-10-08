@@ -31,6 +31,13 @@ pub enum Cmd {
         #[arg(long)]
         library: Option<PathBuf>,
     },
+    /// Show or set how games are shown: `fullscreen`, `window`, `window:<1-6>` (scale) or
+    /// `auto` (leave it to RetroArch's menu)
+    Display {
+        mode: Option<String>,
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
     /// List the cores for each system of the library (`*` = used, recommended marked)
     Cores {
         /// Library (default: the stored one)
@@ -46,7 +53,11 @@ pub enum Cmd {
 }
 
 pub fn run(cmd: Cmd) -> Result<()> {
-    let m = Managed::detect().context("no RetroArch stable build for this platform")?;
+    let mut m = Managed::detect().context("no RetroArch stable build for this platform")?;
+    // the stored display mode belongs into every config rombro writes
+    m.display = crate::db::open_store(None)
+        .ok()
+        .and_then(|s| s.ra_display().ok().flatten());
     match cmd {
         Cmd::Status { check } => {
             println!("folder:    {}", m.root.display());
@@ -80,6 +91,24 @@ pub fn run(cmd: Cmd) -> Result<()> {
             println!("{}", m.cfg().display());
         }
         Cmd::Cores { library, set, db } => cores(&m, library, &set, db)?,
+        Cmd::Display { mode, db } => {
+            let store = crate::db::open_store(db)?;
+            if let Some(mode) = mode {
+                let d = match mode.as_str() {
+                    "auto" => None,
+                    s => Some(s.parse().map_err(anyhow::Error::msg)?),
+                };
+                store.set_ra_display(d)?;
+                m.display = d;
+                if m.current().is_some() {
+                    m.write_config(store.library()?.as_deref())?;
+                }
+            }
+            match store.ra_display()? {
+                Some(d) => println!("{d}"),
+                None => println!("auto (RetroArch's own setting)"),
+            }
+        }
     }
     Ok(())
 }

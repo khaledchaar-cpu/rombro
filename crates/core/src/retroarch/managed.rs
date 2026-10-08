@@ -7,6 +7,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 pub mod config;
+pub mod display;
 pub mod launch;
 mod unpack;
 
@@ -99,6 +100,8 @@ impl Target {
 pub struct Managed {
     pub root: PathBuf,
     pub target: Target,
+    /// Fullscreen or window, written into the config; `None` keeps RetroArch's setting.
+    pub display: Option<display::Display>,
 }
 
 impl Managed {
@@ -107,6 +110,7 @@ impl Managed {
         Some(Self {
             root: dirs::data_dir()?.join("rombro/retroarch"),
             target: Target::current()?,
+            display: None,
         })
     }
 

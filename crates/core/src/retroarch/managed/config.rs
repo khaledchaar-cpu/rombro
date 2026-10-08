@@ -1,4 +1,5 @@
-//! The `retroarch.cfg` of the managed RetroArch. rombro owns the folder settings; every other
+//! The `retroarch.cfg` of the managed RetroArch. rombro owns the folder settings (and the display
+//! mode, if chosen); every other
 //! line (the user's menu changes, saved on exit) is kept.
 
 use super::Managed;
@@ -27,6 +28,9 @@ impl Managed {
             ("sort_savefiles_enable", "true".into()),
             ("sort_savestates_enable", "true".into()),
         ];
+        if let Some(d) = self.display {
+            keys.extend(d.keys());
+        }
         if let Some(a) = self.target.assets() {
             keys.push(("assets_directory", dir(&self.version_dir(version).join(a))));
         }

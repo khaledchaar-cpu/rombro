@@ -1,7 +1,8 @@
 import { createResource, createSignal, Show } from "solid-js";
 import Panel from "./Panel";
 import PhaseProgress from "./PhaseProgress";
-import { raInstall, raStatus } from "../ipc";
+import Select from "./Select";
+import { raDisplay, raInstall, raSetDisplay, raStatus } from "../ipc";
 
 /** The RetroArch RomBro downloads and runs itself: install, version, update to newest stable. */
 export default function ManagedRetroArchPanel() {
@@ -22,6 +23,22 @@ export default function ManagedRetroArchPanel() {
       setMsg(String(e));
     } finally {
       setBusy(false);
+    }
+  };
+  const [display, { mutate: setDisplay }] = createResource(raDisplay);
+  const displayOptions = [
+    { value: "", label: "RetroArch decides", hint: "its own menu setting" },
+    { value: "fullscreen", label: "Fullscreen" },
+    ...[1, 2, 3, 4, 5, 6].map((n) => ({ value: `window:${n}`, label: `Window ×${n}`, hint: `${320 * n}×${240 * n} for 320×240` })),
+  ];
+  const changeDisplay = async (v: string) => {
+    const prev = display() ?? null;
+    setDisplay(v || null);
+    try {
+      await raSetDisplay(v || null);
+    } catch (e) {
+      setDisplay(prev);
+      setMsg(String(e));
     }
   };
   const newer = () => {
@@ -60,6 +77,10 @@ export default function ManagedRetroArchPanel() {
               >
                 Check for updates
               </button>
+            </div>
+            <div class="row">
+              <span class="dim small">Games start in</span>
+              <Select value={display() ?? ""} options={displayOptions} onChange={(v) => void changeDisplay(v)} />
             </div>
             <Show when={check() && !status.loading && !newer() && s().installed}>
               <p class="dim small">

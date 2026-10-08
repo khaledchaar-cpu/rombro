@@ -745,6 +745,21 @@ export async function raInstall(version: string | null): Promise<string> {
   return invoke<string>("ra_install", { version });
 }
 
+/** Display mode of the managed RetroArch: `fullscreen`, `window:<1-6>`, null = RetroArch's own. */
+export async function raDisplay(): Promise<string | null> {
+  if (!inTauri) return mockDisplay;
+  return invoke<string | null>("ra_display");
+}
+let mockDisplay: string | null = null;
+
+export async function raSetDisplay(mode: string | null): Promise<void> {
+  if (!inTauri) {
+    mockDisplay = mode;
+    return;
+  }
+  return invoke<void>("ra_set_display", { mode });
+}
+
 export interface GameCores {
   system: string | null;
   chosen: string | null;

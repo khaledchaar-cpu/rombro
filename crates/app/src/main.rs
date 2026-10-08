@@ -45,6 +45,8 @@ fn main() {
             thumbs::thumbs_online_set,
             managed_ra::ra_status,
             managed_ra::ra_install,
+            managed_ra::ra_display,
+            managed_ra::ra_set_display,
             play::game_cores,
             play::set_game_core,
             play::play,

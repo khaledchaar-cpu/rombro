@@ -6,6 +6,7 @@ fn linux(root: &Path) -> Managed {
     Managed {
         root: root.to_path_buf(),
         target: Target::LinuxX64,
+        display: None,
     }
 }
 
@@ -157,4 +158,12 @@ fn config_keeps_user_lines_and_sets_folders() {
     assert!(cfg.contains("AppImage.home/.config/retroarch/assets"));
     assert!(t.path().join("saves").is_dir() && t.path().join("cores").is_dir());
     assert!(!lib.exists(), "library untouched");
+    let m = Managed {
+        display: Some(super::display::Display::Window { scale: 2 }),
+        ..m
+    };
+    m.write_config(None).unwrap();
+    let cfg = std::fs::read_to_string(m.cfg()).unwrap();
+    assert!(cfg.contains("video_fullscreen = \"false\"") && cfg.contains("video_scale = \"2\""));
+    assert!(!cfg.contains("video_fullscreen = \"true\""));
 }

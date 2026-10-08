@@ -70,9 +70,37 @@ pub async fn ra_install(app: tauri::AppHandle, version: Option<String>) -> CmdRe
         .map_err(|e| format!("RetroArch {version}: {e}"))?;
         let (store, _) = open_store()?;
         let library = store.library().map_err(err)?;
+        let m = Managed {
+            display: store.ra_display().map_err(err)?,
+            ..m
+        };
         m.write_config(library.as_deref()).map_err(err)?;
         Ok(version)
     })
     .await
     .map_err(err)?
+}
+
+/// Display mode (`fullscreen`, `window:<scale>`), `None` = RetroArch's own setting.
+#[tauri::command]
+pub fn ra_display() -> CmdResult<Option<String>> {
+    let (store, _) = open_store()?;
+    Ok(store.ra_display().map_err(err)?.map(|d| d.to_string()))
+}
+
+/// Stores the display mode (`None` = leave it to RetroArch) and rewrites the config if installed.
+#[tauri::command]
+pub fn ra_set_display(mode: Option<String>) -> CmdResult<()> {
+    let display = mode.map(|m| m.parse()).transpose()?;
+    let (store, _) = open_store()?;
+    store.set_ra_display(display).map_err(err)?;
+    let m = Managed {
+        display,
+        ..managed()?
+    };
+    if m.current().is_some() {
+        m.write_config(store.library().map_err(err)?.as_deref())
+            .map_err(err)?;
+    }
+    Ok(())
 }
