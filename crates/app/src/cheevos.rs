@@ -15,6 +15,9 @@ const KEY: &str = "ra.api_key";
 #[derive(Serialize)]
 pub struct Status {
     has_key: bool,
+    /// Logged-in RetroAchievements user (for RetroArch).
+    user: Option<String>,
+    hardcore: bool,
     /// Unix seconds of the last game list sync.
     synced: Option<i64>,
 }
@@ -27,6 +30,8 @@ pub async fn cheevos_status() -> CmdResult<Status> {
             .setting(KEY)
             .map_err(err)?
             .is_some_and(|k| !k.is_empty()),
+        user: store.ra_account().map_err(err)?.map(|(u, _)| u),
+        hardcore: store.ra_hardcore().map_err(err)?,
         synced: store.ra_synced().map_err(err)?,
     })
 }
@@ -35,6 +40,35 @@ pub async fn cheevos_status() -> CmdResult<Status> {
 pub async fn cheevos_set_key(key: String) -> CmdResult<()> {
     let (store, _) = open_store()?;
     store.set_setting(KEY, key.trim()).map_err(err)
+}
+
+/// Logs in (the password is only sent, never stored) and writes the token into the
+/// RetroArch config. Returns the user name as RetroAchievements spells it.
+#[tauri::command]
+pub async fn cheevos_login(user: String, password: String) -> CmdResult<String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let (user, token) = rombro_store::ra_login(user.trim(), &password).map_err(err)?;
+        let (store, _) = open_store()?;
+        store.set_ra_account(Some((&user, &token))).map_err(err)?;
+        crate::managed_ra::rewrite_config(&store)?;
+        Ok(user)
+    })
+    .await
+    .map_err(err)?
+}
+
+#[tauri::command]
+pub fn cheevos_logout() -> CmdResult<()> {
+    let (store, _) = open_store()?;
+    store.set_ra_account(None).map_err(err)?;
+    crate::managed_ra::rewrite_config(&store)
+}
+
+#[tauri::command]
+pub fn cheevos_set_hardcore(on: bool) -> CmdResult<()> {
+    let (store, _) = open_store()?;
+    store.set_ra_hardcore(on).map_err(err)?;
+    crate::managed_ra::rewrite_config(&store)
 }
 
 /// Downloads the game lists, then hashes the library. Emits `cheevos://progress`

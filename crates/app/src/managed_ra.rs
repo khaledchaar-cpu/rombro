@@ -91,7 +91,15 @@ pub fn ra_set_display(mode: Option<String>) -> CmdResult<()> {
     let display = mode.map(|m| m.parse()).transpose()?;
     let (store, _) = open_store()?;
     store.set_ra_display(display).map_err(err)?;
-    let m = store.ra_prefs(managed()?).map_err(err)?;
+    rewrite_config(&store)
+}
+
+/// Rewrites the config of the installed managed RetroArch with the stored preferences.
+pub fn rewrite_config(store: &rombro_store::Store) -> CmdResult<()> {
+    let Some(m) = Managed::detect() else {
+        return Ok(());
+    };
+    let m = store.ra_prefs(m).map_err(err)?;
     if m.current().is_some() {
         m.write_config(store.library().map_err(err)?.as_deref())
             .map_err(err)?;

@@ -831,14 +831,45 @@ export async function play(path: string): Promise<string> {
 
 export interface CheevosStatus {
   has_key: boolean;
+  /** logged-in RetroAchievements user (for RetroArch) */
+  user: string | null;
+  hardcore: boolean;
   /** unix seconds of the last game list sync */
   synced: number | null;
 }
 
 /** Whether a RetroAchievements Web API key is stored and when the game lists were synced. */
 export async function cheevosStatus(): Promise<CheevosStatus> {
-  if (!inTauri) return { has_key: true, synced: Date.now() / 1000 - 3600 };
+  if (!inTauri) return { has_key: true, user: mockRaUser, hardcore: mockHardcore, synced: Date.now() / 1000 - 3600 };
   return invoke<CheevosStatus>("cheevos_status");
+}
+
+let mockRaUser: string | null = null;
+let mockHardcore = false;
+
+/** Logs in for RetroArch; only the token is stored. Returns the user name as RA spells it. */
+export async function cheevosLogin(user: string, password: string): Promise<string> {
+  if (!inTauri) {
+    if (password !== "secret") throw new Error("invalid user name or password");
+    return (mockRaUser = user);
+  }
+  return invoke<string>("cheevos_login", { user, password });
+}
+
+export async function cheevosLogout(): Promise<void> {
+  if (!inTauri) {
+    mockRaUser = null;
+    return;
+  }
+  return invoke<void>("cheevos_logout");
+}
+
+export async function cheevosSetHardcore(on: boolean): Promise<void> {
+  if (!inTauri) {
+    mockHardcore = on;
+    return;
+  }
+  return invoke<void>("cheevos_set_hardcore", { on });
 }
 
 export async function cheevosSetKey(key: string): Promise<void> {
