@@ -73,7 +73,7 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
    `audit` ausgeführt (Journal #84, 40 BIOS-Kopien), MAME 2010 findet `neogeo.zip`.
    Folge-Fixes: Export lädt Pflicht-Systemdateien der Cores (`retroarch::assets`, blueMSX lief damit),
    NDS → `melondsds`. PPSSPP stürzt headless ab (braucht GL/Vulkan, Null-Treiber) – Testgrenze, nicht ROMBRO.
-   **Offen:** Export mit `--install-cores` auf echter RetroArch-Installation (lädt blueMSX/PPSSPP-Pakete, melondsds).
+   Export mit `--install-cores` ausgeführt (Journal #86); Nachtest: Coleco, MSX2, NDS (melondsds), MAME 2010 laden.
 0. Nachträge 2026-10-06 (abends): RetroArch-Export räumt verwaiste Playlists (alle Einträge in der Library, System
    leer oder ohne Core) nach `_trash/playlists`; Systeme ohne jeden Core (Solarus) bekommen keine RA-Playlist.
    Name-Ordner (`rules.name_folders`, Regel `name-only`, `Ident::Named`, SPEC 11a): n64dd-Cartridge-Umbauten → N64,
