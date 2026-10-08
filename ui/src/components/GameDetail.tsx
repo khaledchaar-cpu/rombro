@@ -59,7 +59,9 @@ export default function GameDetail(props: { row: LibraryRow }) {
           <dt>Last played</dt><dd>{at(props.row.last_played)}</dd>
           <dt>Achievements</dt>
           <dd>
-            {props.row.cheevos
+            {props.row.cheevos_progress
+              ? `${props.row.cheevos_progress.awarded} of ${props.row.cheevos_progress.total} unlocked${props.row.cheevos_progress.award ? ` · ${props.row.cheevos_progress.award}` : ""}`
+              : props.row.cheevos
               ? `${props.row.cheevos} (RetroAchievements)`
               : props.row.cheevos_other
                 ? `none for this version – supported: ${props.row.cheevos_other}`

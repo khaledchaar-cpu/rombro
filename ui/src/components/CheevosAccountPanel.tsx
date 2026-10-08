@@ -1,6 +1,7 @@
 import { createResource, createSignal, Show } from "solid-js";
 import Panel from "./Panel";
 import { cheevosLogin, cheevosLogout, cheevosSetHardcore, cheevosStatus } from "../ipc";
+import { refreshProgress } from "../state/libraryStore";
 
 /** RetroAchievements login for RetroArch (unlocks while playing) and hardcore mode. */
 export default function CheevosAccountPanel() {
@@ -17,6 +18,7 @@ export default function CheevosAccountPanel() {
       await cheevosLogin(user().trim(), password());
       setUser("");
       void refetch();
+      void refreshProgress();
     } catch (e) {
       setMsg(String(e));
     } finally {
@@ -27,6 +29,7 @@ export default function CheevosAccountPanel() {
   const logout = async () => {
     await cheevosLogout();
     void refetch();
+    void refreshProgress();
   };
   const hardcore = async (on: boolean) => {
     const s = status();

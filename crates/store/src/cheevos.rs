@@ -80,6 +80,9 @@ pub struct RaAchievement {
     pub kind: String,
     /// Share of the game's players who unlocked it (0–1).
     pub rarity: f32,
+    /// When the logged-in user unlocked it (RA date text), `None` = locked or no user.
+    pub earned: Option<String>,
+    pub earned_hardcore: Option<String>,
 }
 
 #[derive(serde::Deserialize)]
@@ -109,12 +112,27 @@ struct ApiAchievement {
     num_awarded: u64,
     #[serde(rename = "type", default)]
     kind: Option<String>,
+    #[serde(default)]
+    date_earned: Option<String>,
+    #[serde(default)]
+    date_earned_hardcore: Option<String>,
 }
 
-/// The achievements of RA game `game` in display order (one Web API request).
-pub fn ra_achievements(api_key: &str, game: u64) -> std::io::Result<Vec<RaAchievement>> {
-    let url =
-        format!("https://retroachievements.org/API/API_GetGameExtended.php?i={game}&y={api_key}");
+/// The achievements of RA game `game` in display order (one Web API request), with `user`'s
+/// unlock dates when given.
+pub fn ra_achievements(
+    api_key: &str,
+    game: u64,
+    user: Option<&str>,
+) -> std::io::Result<Vec<RaAchievement>> {
+    let url = match user {
+        Some(u) => format!(
+            "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g={game}&u={u}&y={api_key}"
+        ),
+        None => format!(
+            "https://retroachievements.org/API/API_GetGameExtended.php?i={game}&y={api_key}"
+        ),
+    };
     let body =
         http_get(&url).map_err(|e| std::io::Error::other(e.to_string().replace(api_key, "***")))?;
     parse_achievements(&body)
@@ -135,6 +153,8 @@ fn parse_achievements(body: &[u8]) -> std::io::Result<Vec<RaAchievement>> {
             badge: a.badge_name,
             kind: a.kind.unwrap_or_default(),
             rarity: (a.num_awarded as f32 / players).min(1.0),
+            earned: a.date_earned,
+            earned_hardcore: a.date_earned_hardcore,
         })
         .collect())
 }
@@ -312,12 +332,17 @@ mod tests {
     #[test]
     fn parses_achievements_in_order() {
         let body = br#"{"NumDistinctPlayers":200,"Achievements":{
-            "9":{"ID":9,"Title":"B","Points":5,"BadgeName":"2","DisplayOrder":2,"NumAwarded":50,"type":null},
+            "9":{"ID":9,"Title":"B","Points":5,"BadgeName":"2","DisplayOrder":2,"NumAwarded":50,"type":null,"DateEarned":"2024-05-01 10:00:00"},
             "3":{"ID":3,"Title":"A","Description":"d","Points":3,"BadgeName":"1","DisplayOrder":1,"NumAwarded":100,"type":"progression"}}}"#;
         let a = parse_achievements(body).unwrap();
         assert_eq!((a[0].title.as_str(), a[1].title.as_str()), ("A", "B"));
         assert_eq!(a[0].kind, "progression");
         assert!((a[1].rarity - 0.25).abs() < 1e-6);
+        assert_eq!(a[1].earned.as_deref(), Some("2024-05-01 10:00:00"));
+        assert_eq!(
+            (a[0].earned.clone(), a[1].earned_hardcore.clone()),
+            (None, None)
+        );
     }
 
     #[test]

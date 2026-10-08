@@ -7,14 +7,14 @@ import Segments from "../components/Segments";
 import { createLibraryFilter } from "./LibraryFilters";
 import { onScanProgress, type LibraryRow, type ScanProgress } from "../ipc";
 import {
-  formatPlayTime, library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary,
+  cheevosCell, cheevosTitle, formatPlayTime, library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary,
   setLibrary, toggleFavorite,
 } from "../state/libraryStore";
 
 const ROW_H = 26;
 const EMPTY: LibraryRow = {
   path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0,
-  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null,
+  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null, cheevos_progress: null,
 };
 type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds" | "cheevos";
 const COLS: { key: Key; label: string }[] = [
@@ -122,9 +122,9 @@ export default function Library() {
                       <span class="dim">{r().seconds ? formatPlayTime(r().seconds) : ""}</span>
                       <span
                         class="dim"
-                        title={r().cheevos ? `${r().cheevos} achievements` : r().cheevos_other ? `Another version has achievements: ${r().cheevos_other}` : ""}
+                        title={cheevosTitle(r())}
                       >
-                        {r().cheevos ? r().cheevos : r().cheevos_other ? "◌" : ""}
+                        {cheevosCell(r())}
                       </span>
                     </div>
                   );

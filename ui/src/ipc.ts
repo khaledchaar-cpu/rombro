@@ -326,6 +326,17 @@ export interface LibraryRow {
   cheevos_other: string | null;
   /** RA game id (this file's, else the other version's). */
   cheevos_game: number | null;
+  /** The user's unlocks in this file's RA game (logged in and synced). */
+  cheevos_progress: RaProgress | null;
+}
+
+export interface RaProgress {
+  awarded: number;
+  /** of `awarded`, unlocked in hardcore */
+  hardcore: number;
+  total: number;
+  /** highest award: mastered, completed, beaten-hardcore, beaten-softcore */
+  award: string | null;
 }
 
 export interface Session {
@@ -359,6 +370,8 @@ export async function libraryList(library?: string, rescan = false): Promise<Lib
       cheevos: i % 3 ? 0 : 20 + (i % 40),
       cheevos_other: i % 3 === 1 && i % 5 === 0 ? `Game ${i}` : null,
       cheevos_game: i % 3 === 0 || i % 5 === 0 ? i : null,
+      cheevos_progress:
+        i % 3 || i % 2 ? null : { awarded: i % 9 ? (i % 20) : 20 + (i % 40), hardcore: 0, total: 20 + (i % 40), award: i % 9 ? null : "mastered" },
     }));
   }
   return invoke<LibraryRow[]>("library_list", { library, rescan });
@@ -872,6 +885,12 @@ export async function cheevosSetHardcore(on: boolean): Promise<void> {
   return invoke<void>("cheevos_set_hardcore", { on });
 }
 
+/** Refreshes the user's progress from RetroAchievements; per RA game id. */
+export async function cheevosProgress(): Promise<Record<number, RaProgress>> {
+  if (!inTauri) return {};
+  return invoke<Record<number, RaProgress>>("cheevos_progress");
+}
+
 export async function cheevosSetKey(key: string): Promise<void> {
   if (!inTauri) return;
   return invoke<void>("cheevos_set_key", { key });
@@ -898,6 +917,9 @@ export interface RaAchievement {
   kind: string;
   /** share of players who unlocked it (0–1) */
   rarity: number;
+  /** when the logged-in user unlocked it (RA date text); null = locked or not logged in */
+  earned: string | null;
+  earned_hardcore: string | null;
 }
 
 /** Achievements of a RetroAchievements game (one Web API request). */
@@ -911,6 +933,8 @@ export async function cheevosAchievements(game: number): Promise<RaAchievement[]
       badge: "",
       kind: i === 11 ? "win_condition" : i % 4 ? "" : "progression",
       rarity: 1 / (i + 1.5),
+      earned: i < 4 ? "2026-10-01 20:15:00" : null,
+      earned_hardcore: i < 2 ? "2026-10-01 20:15:00" : null,
     }));
   return invoke<RaAchievement[]>("cheevos_achievements", { game });
 }

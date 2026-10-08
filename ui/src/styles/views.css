@@ -136,4 +136,6 @@
 .cheevo-text { display: flex; flex-direction: column; min-width: 0; }
 .cheevo-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cheevo-meta { white-space: nowrap; }
+.cheevo.locked .cheevo-badge { filter: grayscale(1); opacity: 0.5; }
+.cheevo.locked .cheevo-title { color: var(--text-dim); }
 @media (max-width: 640px) { .cheevo { grid-template-columns: 32px minmax(0, 1fr); } .cheevo-meta { grid-column: 2; } .cheevo-badge { width: 32px; height: 32px; } }
