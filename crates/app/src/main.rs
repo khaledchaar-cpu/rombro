@@ -7,6 +7,7 @@ mod exceptions;
 mod gamify;
 mod import;
 mod library;
+mod managed_ra;
 mod retroarch;
 mod settings;
 mod thumbs;
@@ -42,6 +43,8 @@ fn main() {
             thumbs::thumbs_online_get,
             thumbs::thumbs_online_set,
             retroarch::retroarch_export,
+            managed_ra::ra_status,
+            managed_ra::ra_install,
             retroarch::retroarch_cores,
             gamify::gamify_stats,
             gamify::gamify_enabled_get,

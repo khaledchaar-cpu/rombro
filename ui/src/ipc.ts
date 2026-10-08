@@ -757,3 +757,36 @@ export async function ignoreSet(paths: string[]): Promise<void> {
 export async function resolutionClear(sha1: string): Promise<void> {
   if (inTauri) await invoke("resolution_clear", { sha1 });
 }
+
+export interface ManagedRetroArch {
+  supported: boolean;
+  folder: string | null;
+  installed: string | null;
+  pinned: string;
+  latest: string | null;
+}
+
+/** State of the RetroArch rombro manages; `checkLatest` asks the buildbot for the newest stable. */
+export async function raStatus(checkLatest: boolean): Promise<ManagedRetroArch> {
+  if (!inTauri) {
+    return {
+      supported: true,
+      folder: "~/.local/share/rombro/retroarch",
+      installed: mockRa,
+      pinned: "1.22.2",
+      latest: checkLatest ? "1.22.3" : null,
+    };
+  }
+  return invoke<ManagedRetroArch>("ra_status", { checkLatest });
+}
+let mockRa: string | null = null;
+
+/** Downloads, verifies and installs RetroArch (`version` null = pinned); progress on `ra://progress`. */
+export async function raInstall(version: string | null): Promise<string> {
+  if (!inTauri) {
+    await mockProgress("ra://progress", ["download", "verify", "unpack"], phased);
+    mockRa = version ?? "1.22.2";
+    return mockRa;
+  }
+  return invoke<string>("ra_install", { version });
+}
