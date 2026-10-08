@@ -7,7 +7,7 @@ use crate::{Result, Store, http_get};
 use rombro_core::cheevos::{self, Method};
 use rusqlite::{OptionalExtension, params};
 use std::path::Path;
-use std::time::UNIX_EPOCH;
+use std::time::{Duration, UNIX_EPOCH};
 
 const API: &str = "https://retroachievements.org/API/API_GetGameList.php";
 
@@ -43,6 +43,19 @@ struct ApiGame {
     hashes: Vec<String>,
 }
 
+/// GET with a pause before each request and retries on HTTP 429 (the Web API rate-limits).
+fn polite_get(url: &str) -> std::io::Result<Vec<u8>> {
+    let mut wait = Duration::from_millis(1500);
+    for _ in 0..4 {
+        std::thread::sleep(wait);
+        match http_get(url) {
+            Err(e) if e.to_string().contains("429") => wait *= 3,
+            r => return r,
+        }
+    }
+    http_get(url)
+}
+
 impl Store {
     /// Downloads the game lists of all consoles RomBro can hash (needs the user's Web API key).
     pub fn ra_sync(
@@ -51,7 +64,7 @@ impl Store {
         now: i64,
         progress: &dyn Fn(usize, usize),
     ) -> Result<RaSyncReport> {
-        self.ra_sync_with(&http_get, api_key, now, progress)
+        self.ra_sync_with(&polite_get, api_key, now, progress)
     }
 
     pub fn ra_sync_with(
