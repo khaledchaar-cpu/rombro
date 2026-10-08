@@ -146,15 +146,15 @@ impl Store {
         Ok((!reasons.is_empty()).then(|| reasons.join("; ")))
     }
 
-    /// Core (system) whose DAT names `name` as a BIOS set and knows most of `members`:
-    /// re-packed BIOS zips (`neogeo.zip`, `stvbios.zip`) never match a database by whole-file
-    /// hash. The best-ranked core in the placement order wins.
-    pub fn bios_set(&self, name: &str, members: &[(String, u32)]) -> Result<Option<String>> {
+    /// Cores (systems, best-ranked first in the placement order) whose DAT names `name` as a
+    /// BIOS set and knows most of `members`: re-packed BIOS zips (`neogeo.zip`,
+    /// `stvbios.zip`) never match a database by whole-file hash.
+    pub fn bios_systems(&self, name: &str, members: &[(String, u32)]) -> Result<Vec<String>> {
         if members.is_empty() {
-            return Ok(None);
+            return Ok(Vec::new());
         }
         let order = self.rules()?.arcade_order;
-        let mut best: Option<String> = None;
+        let mut found = Vec::new();
         for info in self.dats()? {
             let Some(set) = self.dat_set_rc(&info.system, name)? else {
                 continue;
@@ -163,15 +163,12 @@ impl Store {
                 .iter()
                 .filter(|(_, crc)| set.roms.iter().any(|r| r.crc == *crc))
                 .count();
-            if !set.bios || hits * 4 < members.len() * 3 {
-                continue;
-            }
-            let rank = |s: &str| rombro_core::arcade::rank_in(&order, s);
-            if best.as_deref().is_none_or(|b| rank(&info.system) < rank(b)) {
-                best = Some(info.system);
+            if set.bios && hits * 4 >= members.len() * 3 {
+                found.push(info.system);
             }
         }
-        Ok(best)
+        found.sort_by_key(|s| rombro_core::arcade::rank_in(&order, s));
+        Ok(found)
     }
 
     /// Cores (best-ranked first) whose DAT has a working set `name` that `members` and
@@ -364,9 +361,14 @@ mod tests {
         .unwrap();
         s.import_dat("MAME", "0.289", 1, &sets).unwrap();
         let m = vec![("a".to_string(), 1), ("b".to_string(), 2)];
-        assert_eq!(s.bios_set("neogeo", &m).unwrap().as_deref(), Some("MAME"));
-        assert_eq!(s.bios_set("game", &m).unwrap(), None);
-        assert_eq!(s.bios_set("neogeo", &[("x".into(), 9)]).unwrap(), None);
+        s.import_dat("MAME 2010", "1", 1, &sets).unwrap();
+        assert_eq!(s.bios_systems("neogeo", &m).unwrap(), ["MAME", "MAME 2010"]);
+        assert!(s.bios_systems("game", &m).unwrap().is_empty());
+        assert!(
+            s.bios_systems("neogeo", &[("x".into(), 9)])
+                .unwrap()
+                .is_empty()
+        );
     }
 
     #[test]

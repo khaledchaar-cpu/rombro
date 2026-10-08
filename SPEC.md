@@ -357,6 +357,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - Entschieden: Quarantäne übernimmt den Pfad relativ zum Inbox (`_quarantine/<unterordner>/<datei>`), damit gleiche Namen nicht kollidieren.
 - Entschieden: OS-Müll (`.DS_Store`, `._*`, `Thumbs.db`, `desktop.ini`) und leere Dateien werden beim Scan ignoriert und nie verschoben.
 - Entschieden: MAME-Cores (2000/2003/2003-Plus/aktuell) suchen BIOS nur im Romset-Ordner → BIOS-Zips liegen neben den Sets (`<System>/neogeo.zip`, in der UI ausgeblendet); nur FBNeo nutzt `_bios/fbneo/`.
+  Ein Arcade-BIOS wird zusätzlich in jeden vorhandenen MAME-Ordner kopiert, dessen DAT es als BIOS mit passenden Membern führt (auch aus `_bios/fbneo/` heraus; 2026-10-08, Anlass: MAME 2010 fand `neogeo.zip` nicht).
 - Discs in Archiven (`.zip`/`.7z` mit cue/bin) und `.chd` – in M6 nicht umgesetzt; Vorschlag: eigener Schritt nach M8.
 - ZIP als Default-Format in der Library oder entpackt? (Vorschlag: Cartridges zippen, Discs als CHD/entpackt).
 - Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?

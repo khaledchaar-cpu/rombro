@@ -211,7 +211,12 @@ fn places_romsets_by_short_name_with_chds_and_bios_apart() {
             in_library: false,
         },
         Item {
-            files: set("neogeo.zip", vec![]),
+            files: Files::Set {
+                archive: inbox.join("neogeo.zip"),
+                chds: vec![],
+                alt: vec![arcade("MAME", "neogeo"), arcade("MAME 2010", "neogeo")],
+                dat_note: String::new(),
+            },
             ident: Ident::Bios(arcade(fb, "Neo Geo")),
             in_library: false,
         },
@@ -230,6 +235,7 @@ fn places_romsets_by_short_name_with_chds_and_bios_apart() {
             "FBNeo - Arcade Games/burningfh.zip",
             "MAME/kinst.zip",
             "MAME/kinst/kinst.chd",
+            "MAME/neogeo.zip",
             "_bios/fbneo/neogeo.zip"
         ]
     );
@@ -260,8 +266,13 @@ fn places_romsets_by_short_name_with_chds_and_bios_apart() {
             it.in_library = true;
             it
         })
-        .filter(|it| !matches!(it.ident, Ident::Bios(_)))
         .collect();
+    let mut lib_items = lib_items;
+    let mut copy = lib_items.last().unwrap().clone();
+    if let Files::Set { archive, .. } = &mut copy.files {
+        *archive = lib.join("MAME/neogeo.zip");
+    }
+    lib_items.push(copy);
     let again = build(&lib_items, &lib, &opts(Mode::Move));
     assert!(
         again.ops.iter().all(|op| matches!(op, Op::Write { .. })),

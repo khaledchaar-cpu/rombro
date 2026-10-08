@@ -282,21 +282,25 @@ impl Store {
         } else {
             scanned
         };
-        let files = Files::Set {
-            archive: whole.path.clone(),
-            chds: Vec::new(),
-            alt: Vec::new(),
-            dat_note: String::new(),
-        };
-        if let Some(system) = self.bios_set(&stem, &members)? {
-            let ident = Ident::Bios(Game {
+        let mut bios = self
+            .bios_systems(&stem, &members)?
+            .into_iter()
+            .map(|system| Game {
                 system,
-                name: stem.into_owned(),
+                name: stem.clone().into_owned(),
                 crc: None,
             });
+        if let Some(g) = bios.next() {
+            // the other cores knowing it: the MAME ones get a copy next to their sets
+            let files = Files::Set {
+                archive: whole.path.clone(),
+                chds: Vec::new(),
+                alt: bios.collect(),
+                dat_note: String::new(),
+            };
             return Ok(Some(Item {
                 files,
-                ident,
+                ident: Ident::Bios(g),
                 in_library,
             }));
         }

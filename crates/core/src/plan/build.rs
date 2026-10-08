@@ -60,7 +60,9 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         // quarantined files stay put, except frontend metadata (below)
         .filter(|it| {
             let p = it.files.primary();
-            p.starts_with(&quarantine) || !managed.iter().any(|m| p.starts_with(m))
+            p.starts_with(&quarantine)
+                || !managed.iter().any(|m| p.starts_with(m))
+                || matches!(it.ident, Ident::Bios(_)) && p.starts_with(library.join(BIOS_DIR))
         })
         .filter(|it| {
             let p = it.files.archive().unwrap_or(it.files.primary());
@@ -194,15 +196,14 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     // (system, identified by name only) – name-only releases never compete with verified dumps
     let mut known: BTreeMap<(&str, bool), Vec<(&Item, &Game)>> = BTreeMap::new();
     let mut arcade: Vec<(&Item, &Game)> = Vec::new();
+    let mut bios: Vec<(&Item, &Game)> = Vec::new();
     for &it in &items {
         match &it.ident {
             Ident::Known(g) if matches!(it.files, Files::Set { .. }) => arcade.push((it, g)),
             Ident::Known(g) => known.entry((&g.system, false)).or_default().push((it, g)),
             Ident::Named(g) => known.entry((&g.system, true)).or_default().push((it, g)),
-            Ident::Bios(g) => {
-                b.why = Why::new(Rule::Bios, "");
-                b.bios(it, g);
-            }
+            // after the romsets: a BIOS is also copied to the MAME folders they fill
+            Ident::Bios(g) => bios.push((it, g)),
             Ident::Firmware(paths) => b.firmware(it, paths),
             Ident::Ambiguous(c) => b.plan.decisions.push(Decision::Ambiguous {
                 path: it.files.primary().clone(),
@@ -226,6 +227,10 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         }
     }
     b.arcade(&arcade);
+    for (it, g) in bios {
+        b.why = Why::new(Rule::Bios, "");
+        b.bios(it, g);
+    }
     for ((system, by_name), list) in &known {
         let rules = opts.rules.for_system(system);
         for gp in g1r::select(list, |(_, g)| &g.name, &rules) {
@@ -521,14 +526,51 @@ impl Builder<'_> {
             .library
             .join(crate::arcade::bios_dir(&g.system))
             .join(file_name(from));
-        let ops = vec![self.transfer(it, from, &to)];
-        let ops = ops
+        // copies first: the last op may move the source away
+        let mut ops: Vec<Op> = self
+            .mame_bios_copies(it, &to)
             .into_iter()
-            .filter(|op| op.source() != Some(op.target()))
-            .collect::<Vec<_>>();
+            .map(|t| Op::Copy {
+                from: from.clone(),
+                to: t,
+            })
+            .collect();
+        // a copy already next to another core's sets stays there
+        let alt = match &it.files {
+            Files::Set { alt, .. } => alt.as_slice(),
+            _ => &[],
+        };
+        let placed = it.in_library
+            && alt.iter().any(|a| {
+                *from
+                    == self
+                        .library
+                        .join(crate::arcade::bios_dir(&a.system))
+                        .join(file_name(from))
+            });
+        if !placed {
+            ops.push(self.transfer(it, from, &to));
+        }
+        ops.retain(|op| op.source() != Some(op.target()));
         if !ops.is_empty() {
             self.commit(it, ops);
         }
+    }
+
+    /// Further places for an arcade BIOS set: the folders of the other MAME cores whose DAT
+    /// lists it (they only search the romset folder), if the library has them and the set
+    /// is still missing there.
+    fn mame_bios_copies(&self, it: &Item, to: &Path) -> Vec<PathBuf> {
+        let (Files::Set { alt, .. }, Some(name)) = (&it.files, to.file_name()) else {
+            return Vec::new();
+        };
+        alt.iter()
+            .filter(|g| g.system.starts_with("MAME"))
+            .map(|g| self.library.join(&g.system))
+            .filter(|dir| dir.is_dir() || self.claimed.keys().any(|t| t.starts_with(dir)))
+            .map(|dir| dir.join(name))
+            .filter(|t| t != to && !t.exists() && !self.claimed.contains_key(t))
+            .collect()
     }
 
     /// A file of the old `_quarantine` to `_trash/unknown/<path in quarantine>`.
