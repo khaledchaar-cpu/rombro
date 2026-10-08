@@ -54,10 +54,10 @@ pub enum Cmd {
 
 pub fn run(cmd: Cmd) -> Result<()> {
     let mut m = Managed::detect().context("no RetroArch stable build for this platform")?;
-    // the stored display mode belongs into every config rombro writes
-    m.display = crate::db::open_store(None)
-        .ok()
-        .and_then(|s| s.ra_display().ok().flatten());
+    // the stored display mode and achievement login belong into every config rombro writes
+    if let Ok(s) = crate::db::open_store(None) {
+        m = s.ra_prefs(m)?;
+    }
     match cmd {
         Cmd::Status { check } => {
             println!("folder:    {}", m.root.display());

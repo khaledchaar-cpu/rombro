@@ -7,6 +7,7 @@ fn linux(root: &Path) -> Managed {
         root: root.to_path_buf(),
         target: Target::LinuxX64,
         display: None,
+        cheevos: None,
     }
 }
 

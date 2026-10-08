@@ -7,6 +7,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 pub mod config;
+pub mod cheevos;
 pub mod display;
 pub mod launch;
 mod unpack;
@@ -102,6 +103,8 @@ pub struct Managed {
     pub target: Target,
     /// Fullscreen or window, written into the config; `None` keeps RetroArch's setting.
     pub display: Option<display::Display>,
+    /// RetroAchievements login + hardcore; `None` keeps RetroArch's settings.
+    pub cheevos: Option<cheevos::Cheevos>,
 }
 
 impl Managed {
@@ -111,6 +114,7 @@ impl Managed {
             root: dirs::data_dir()?.join("rombro/retroarch"),
             target: Target::current()?,
             display: None,
+            cheevos: None,
         })
     }
 

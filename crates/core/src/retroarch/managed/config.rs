@@ -1,5 +1,5 @@
 //! The `retroarch.cfg` of the managed RetroArch. rombro owns the folder settings (and the display
-//! mode, if chosen); every other
+//! mode and achievement login, if chosen); every other
 //! line (the user's menu changes, saved on exit) is kept.
 
 use super::Managed;
@@ -30,6 +30,9 @@ impl Managed {
         ];
         if let Some(d) = self.display {
             keys.extend(d.keys());
+        }
+        if let Some(c) = &self.cheevos {
+            keys.extend(c.keys());
         }
         if let Some(a) = self.target.assets() {
             keys.push(("assets_directory", dir(&self.version_dir(version).join(a))));

@@ -14,6 +14,8 @@ mod import;
 mod journal;
 mod lookup;
 mod play;
+mod ra_account;
+pub use ra_account::ra_login;
 pub use play::{MIN_PLAY_SECS, PlayStats};
 mod record;
 mod schema;

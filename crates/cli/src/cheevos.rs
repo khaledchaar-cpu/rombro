@@ -1,4 +1,5 @@
-//! `rombro cheevos`: which library games have RetroAchievements.
+//! `rombro cheevos`: which library games have RetroAchievements; login and hardcore for the
+//! managed RetroArch.
 
 use anyhow::{Context, Result};
 use rombro_core::cheevos;
@@ -11,6 +12,15 @@ const KEY: &str = "ra.api_key";
 pub enum Cmd {
     /// Store your Web API key (retroachievements.org → Settings → Keys)
     Key { key: String },
+    /// Log in (asks for the password; only the token is stored, also in the RetroArch config)
+    Login { user: String },
+    /// Forget the login and turn achievements off in RetroArch
+    Logout,
+    /// Show or set hardcore mode (no savestates, rewind or cheats)
+    Hardcore {
+        #[arg(value_parser = ["on", "off"])]
+        mode: Option<String>,
+    },
     /// Download the game lists (with hashes) of all supported consoles
     Sync,
     /// Count the library games with achievements per system
@@ -30,6 +40,34 @@ pub fn run(cmd: Cmd, db: Option<PathBuf>) -> Result<()> {
         Cmd::Key { key } => {
             store.set_setting(KEY, key.trim())?;
             println!("Web API key stored");
+        }
+        Cmd::Login { user } => {
+            use std::io::IsTerminal;
+            let password = if std::io::stdin().is_terminal() {
+                rpassword::prompt_password("RetroAchievements password: ")?
+            } else {
+                // piped: first line of stdin
+                let mut line = String::new();
+                std::io::stdin().read_line(&mut line)?;
+                line.trim_end_matches(['\r', '\n']).to_owned()
+            };
+            let (user, token) = rombro_store::ra_login(&user, &password)?;
+            store.set_ra_account(Some((&user, &token)))?;
+            println!("logged in as {user}");
+            write_config(&store)?;
+        }
+        Cmd::Logout => {
+            store.set_ra_account(None)?;
+            println!("logged out");
+            write_config(&store)?;
+        }
+        Cmd::Hardcore { mode } => {
+            if let Some(m) = mode {
+                store.set_ra_hardcore(m == "on")?;
+                write_config(&store)?;
+            }
+            let on = store.ra_hardcore()?;
+            println!("hardcore: {}", if on { "on" } else { "off" });
         }
         Cmd::Sync => {
             let key = store
@@ -92,6 +130,19 @@ pub fn run(cmd: Cmd, db: Option<PathBuf>) -> Result<()> {
             }
             println!("total: {hit}/{all} games with achievements");
         }
+    }
+    Ok(())
+}
+
+/// Rewrites the managed RetroArch config (if installed) so it carries the achievement settings.
+fn write_config(store: &rombro_store::Store) -> Result<()> {
+    let Some(m) = rombro_core::retroarch::managed::Managed::detect() else {
+        return Ok(());
+    };
+    let m = store.ra_prefs(m)?;
+    if m.current().is_some() {
+        m.write_config(store.library()?.as_deref())?;
+        println!("config: {}", m.cfg().display());
     }
     Ok(())
 }
