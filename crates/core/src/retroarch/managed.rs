@@ -7,6 +7,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 pub mod config;
+pub mod launch;
 mod unpack;
 
 /// Version shipped with this rombro release (raised with releases).

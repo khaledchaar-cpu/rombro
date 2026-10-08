@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 const LIBRARY_KEY: &str = "library";
 
-fn key(p: &Path) -> String {
+pub(crate) fn key(p: &Path) -> String {
     p.to_string_lossy().into_owned()
 }
 

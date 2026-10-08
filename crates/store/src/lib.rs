@@ -12,6 +12,7 @@ mod identify;
 mod import;
 mod journal;
 mod lookup;
+mod play;
 mod record;
 mod schema;
 mod snapshot;

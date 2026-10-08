@@ -1,6 +1,7 @@
 mod db;
 mod g1r;
 mod import;
+mod play;
 mod ra;
 mod retroarch;
 mod rules;
@@ -81,6 +82,8 @@ enum Cmd {
         #[command(subcommand)]
         cmd: ra::Cmd,
     },
+    /// Start a game in the managed RetroArch (installs RetroArch and the core if missing)
+    Play(play::Args),
     /// Revert the most recent import/audit execution
     Undo {
         #[arg(long)]
@@ -155,6 +158,7 @@ fn main() -> anyhow::Result<()> {
         } => rules::run(set, &ignore, &unignore, db),
         Cmd::Retroarch(a) => retroarch::run(a),
         Cmd::Ra { cmd } => ra::run(cmd),
+        Cmd::Play(a) => play::run(a),
         Cmd::Undo { db } => import::undo(db),
         Cmd::Resolve { file, pick, db } => import::resolve(file, pick, db),
     }
