@@ -145,6 +145,9 @@ Daten migriert). Bewusst unverändert: Tauri-ID `dev.rombro.app`, localStorage-K
 Nächste Schritte: v0.6.0 (M15–M16) releasen.
 
 ## Nächste Schritte
+**Als Nächstes (User, 2026-10-09), nacheinander autonom:** (a) Windows-CI-e2e-Job für verwaltetes RetroArch
+(ra install/status, Core + synthetische Test-ROM headless) bis grün; (b) Atari-ST-Mehrdisk-Teile (Boot/Data, (A)/(B))
+nicht als TIE; (c) Sufami-Turbo-Kombi-Images in Zips (echte Sammlung nur lesend ansehen). Wikipedia-Ratings: verworfen.
 Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
 1. v0.8.1 (RDB-Download vom Buildbot, README neu) getaggt 2026-10-09; Claude veröffentlicht nach CI. (v0.8.0 = M17–M21.) (v0.7.0 = M16 + Umbenennung.)
 2. Später (User, 2026-10-09): verwaltetes RetroArch auf Windows/macOS testen – Windows per CI-e2e-Job (ra install, status, Core + Test-ROM headless), macOS manuell durch den User.
