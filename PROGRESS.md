@@ -141,7 +141,7 @@ Nächste Schritte: v0.6.0 (M15–M16) releasen.
 Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
 1. v0.7.0 (M16 RetroAchievements + Umbenennung Romburak) getaggt 2026-10-09; Claude veröffentlicht nach CI. (v0.6.0 = M15, 2026-10-08.)
 2. Später (User, 2026-10-09): verwaltetes RetroArch auf Windows/macOS testen – Windows per CI-e2e-Job (ra install, status, Core + Test-ROM headless), macOS manuell durch den User.
-3. v2 Launcher: als Nächstes (User, 2026-10-09) Anforderungen per `grilling`-Skill klären → SPEC §6. Gebaut: M15/M16; offen laut §6 nur Savestate-Übersicht; Umfang darüber hinaus (Vollbild/Controller, Cover, Zuletzt gespielt …) unklar.
+3. v2 Launcher geklärt (Grilling 2026-10-09, SPEC §6): M17 Cover → M18 Dashboard → M19 Savestates → M20 globale RA-Einstellungen → M21 Statistik. **Nächster Milestone: M17 Cover.**
 
 ## Stolpersteine
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie

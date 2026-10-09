@@ -176,6 +176,20 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
   Sega CD, Saturn, PCE-CD, Dreamcast, 3DO, NDS/DSi. Offen/nicht: PS1-`.pbp`, PCE-GameExpress, PC-FX, Neo Geo CD,
   Jaguar CD, Disc-Images in Zips.
 
+### v2 Launcher – Entscheidungen (User, Grilling 2026-10-09)
+- Leitbild: **nur Desktop** (Maus/Tastatur), kein Couch-/Controller-Modus.
+- **M17 Cover**: libretro-thumbnails (kein Account). Boxart in Liste/Grid, Detailansicht zusätzlich Snap + Title.
+  Library umschaltbar Liste ↔ Grid. Unscharfer Namensabgleich (Region/Tags ignorieren), sonst Platzhalter-Kachel.
+  Lazy bei Anzeige, Cache im App-Datenverzeichnis (nie in der Library), offline → Platzhalter.
+- **M18 Dashboard**: „Weiterspielen“-Reihe (zuletzt gespielt + Favoriten); Library-Sortierung/-Filter danach.
+- **M19 Savestates**: Liste je Spiel (Slot, Datum, Screenshot-`.png`), Löschen, „Mit diesem State starten“.
+- **M20 Globale Einstellungen** (Settings → RetroArch, kein Pro-Spiel): Shader-Preset (alle aus `shaders_slang`,
+  durchsuchbar, Paket wird automatisch geladen), Seitenverhältnis, Fenster/Vollbild (heute CLI `ra display`).
+- Controller: RetroArch-Autoconfig; verwalteter Build bringt keine Profile mit → `assets/frontend/autoconfig.zip` beim
+  Install mitladen (Default).
+- **M21 Statistik-Seite**: Top-Spiele nach Zeit, Zeit je System, Verlauf (Woche/Monat; braucht Session-Log mit
+  Zeitstempel je Lauf), Achievements-Fortschritt.
+
 ## 7. Architektur
 ```
 romburak/
