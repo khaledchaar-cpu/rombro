@@ -3099,7 +3099,7 @@ dependencies = [
 
 [[package]]
 name = "romburak-app"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "romburak-core",
@@ -3114,7 +3114,7 @@ dependencies = [
 
 [[package]]
 name = "romburak-cli"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -3128,7 +3128,7 @@ dependencies = [
 
 [[package]]
 name = "romburak-core"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "chd",
  "crc32fast",
@@ -3152,7 +3152,7 @@ dependencies = [
 
 [[package]]
 name = "romburak-rdb"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "criterion",
  "thiserror 2.0.21",
@@ -3160,7 +3160,7 @@ dependencies = [
 
 [[package]]
 name = "romburak-store"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "crc32fast",
  "flate2",

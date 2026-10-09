@@ -30,6 +30,7 @@
 | M15d Altlasten | ✅ done (2026-10-08) |
 | M16a RetroAchievements: Hashing + Library-Badge | ✅ done (Sichtprüfung 2026-10-08) |
 | M16b RA-Login, Hardcore, Fortschritt | ✅ done (echter Login + Freischaltung + Sichtprüfung 2026-10-09) |
+| v0.6.0 Release (M15 Launcher-Basis) | ✅ released 2026-10-08 |
 | M16c RA Disc-Systeme + NDS | ✅ done (2026-10-09, gegen rcheevos verifiziert; Sichtprüfung PSP + PS1-.pbp-Hinweis ok) |
 
 ## Aktuell
@@ -138,7 +139,7 @@ Nächste Schritte: v0.6.0 (M15–M16) releasen.
 
 ## Nächste Schritte
 Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
-1. v0.6.0 releasen (M15–M16: verwaltetes RetroArch, Starten, Spielzeit/Favoriten, RetroAchievements).
+1. v0.7.0 (M16 RetroAchievements + Umbenennung Romburak) getaggt 2026-10-09; Draft veröffentlicht der User. (v0.6.0 = M15, 2026-10-08.)
 2. Später (User, 2026-10-09): verwaltetes RetroArch auf Windows/macOS testen – Windows per CI-e2e-Job (ra install, status, Core + Test-ROM headless), macOS manuell durch den User.
 3. v2 Launcher (SPEC §6) – erst ganz zum Schluss.
 
