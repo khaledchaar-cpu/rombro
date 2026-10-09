@@ -70,7 +70,8 @@
 @media (max-width: 640px) { .filters { grid-template-columns: 1fr; } }
 
 .lpage { position: relative; overflow: hidden; background: var(--bg-sunken); border: 1px solid var(--line); }
-.lpage > .vrow { position: static; }
+.lpage > .vrow { position: static; min-height: 26px; box-sizing: border-box; white-space: nowrap; }
+.lpage > .vrow > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lrow.vrow { cursor: pointer; }
 .star { color: var(--text-dim); padding: 0; line-height: 1; }
 .star:hover, .star.on { color: var(--accent); }
@@ -216,3 +217,8 @@
   .libview.with-detail { grid-template-columns: minmax(0, 1fr) minmax(340px, 30%); align-items: start; }
 }
 .libview > .panel { grid-column: auto; }
+/* details in the narrow side column: images on top, facts below */
+@media (min-width: 1200px) {
+  .libview.with-detail .detail { grid-template-columns: minmax(0, 1fr); }
+  .libview.with-detail .meta dd { overflow-wrap: break-word; }
+}

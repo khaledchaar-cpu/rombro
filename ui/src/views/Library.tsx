@@ -76,7 +76,9 @@ export default function Library(props: { onSettings: () => void }) {
 
   const [listEl, setListEl] = createSignal<HTMLDivElement>();
   const [gridEl, setGridEl] = createSignal<HTMLDivElement>();
-  const listRows = fitCount(listEl, ROW_H, 76);
+  // real row height (themes differ in font size), read from a rendered row
+  const rowH = () => listEl()?.querySelector(".vrow")?.getBoundingClientRect().height || ROW_H;
+  const listRows = fitCount(listEl, rowH, 76);
   const gridRows = fitCount(gridEl, TILE_H, 76, 1);
   const [cols, setCols] = createSignal(4);
   const observer = new ResizeObserver(([e]) => setCols(Math.max(1, Math.floor(e.contentRect.width / TILE_W))));
@@ -143,7 +145,7 @@ export default function Library(props: { onSettings: () => void }) {
               )}
             </For>
           </div>
-          <div class="lpage" ref={setListEl} style={{ height: `${listRows() * ROW_H}px` }}>
+          <div class="lpage" ref={setListEl}>
               <For each={paged.items()}>
                 {(row) => {
                   const r = () => row;
@@ -152,7 +154,7 @@ export default function Library(props: { onSettings: () => void }) {
                       class="vrow lrow small"
                       classList={{ sel: selPath() === r().path }}
                       onClick={() => setSelPath(r().path)}
-                      style={{ height: `${ROW_H}px` }}>
+>
                       <button
                         class="star"
                         classList={{ on: r().favorite }}

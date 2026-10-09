@@ -39,13 +39,15 @@ export function createPaged<T>(all: Accessor<T[]>, size: Accessor<number>, reset
  * How many `itemH`-high lines fit between the top of `el` and the bottom of the window,
  * leaving `reserve` px (pager, padding). Re-measured on resize and layout changes.
  */
-export function fitCount(el: Accessor<HTMLElement | undefined>, itemH: number, reserve = 56, min = 3): Accessor<number> {
+export function fitCount(el: Accessor<HTMLElement | undefined>, itemH: number | (() => number), reserve = 56, min = 3): Accessor<number> {
+  // read at measure time (not tracked): a function can return the live height of a rendered item
+  const h = typeof itemH === "number" ? () => itemH : itemH;
   const [n, setN] = createSignal(min);
   const measure = () => {
     const e = el();
     if (!e) return;
     const avail = window.innerHeight - e.getBoundingClientRect().top - reserve;
-    setN(Math.max(min, Math.floor(avail / itemH)));
+    setN(Math.max(min, Math.floor(avail / Math.max(1, h()))));
   };
   let frame = 0;
   const schedule = () => (cancelAnimationFrame(frame), (frame = requestAnimationFrame(measure)));
