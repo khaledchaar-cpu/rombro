@@ -14,7 +14,6 @@ pub const MAX_AGE: i64 = 30 * 24 * 3600;
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "PascalCase")]
 struct ApiPlayers {
-    #[serde(default)]
     num_distinct_players: u64,
 }
 
