@@ -414,6 +414,36 @@ fn scan_zip(path: &Path) -> Result<Vec<ScannedRom>, ScanError> {
         }
         let name = f.name().to_owned();
         let size = f.size();
+        if crate::sufami::candidate(Path::new(&name), size) {
+            let mut data = Vec::with_capacity(size as usize);
+            { f }.read_to_end(&mut data)?;
+            if let Some(layout) = crate::sufami::parse(&data) {
+                // combined image in a zip: its parts are members `<image>/<part>`
+                for (part, range) in layout {
+                    let bytes = &data[range.start as usize..range.end as usize];
+                    let (hashes, header, headerless) =
+                        hash_rom(bytes, bytes.len() as u64, &ext_of(Path::new(&part)))?;
+                    out.push(ScannedRom {
+                        path: path.to_path_buf(),
+                        member: Some(format!("{name}/{part}")),
+                        hashes,
+                        header,
+                        headerless,
+                    });
+                }
+                continue;
+            }
+            let (hashes, header, headerless) =
+                hash_rom(data.as_slice(), size, &ext_of(Path::new(&name)))?;
+            out.push(ScannedRom {
+                path: path.to_path_buf(),
+                member: Some(name),
+                hashes,
+                header,
+                headerless,
+            });
+            continue;
+        }
         let (hashes, header, headerless) = hash_rom(f, size, &ext_of(Path::new(&name)))?;
         out.push(ScannedRom {
             path: path.to_path_buf(),

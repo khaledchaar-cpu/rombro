@@ -1,7 +1,7 @@
 //! Extracting single members from ZIP and 7z archives (and combined Sufami Turbo images).
 
 use std::fs::{self, File};
-use std::io::{self, BufReader, BufWriter, Write};
+use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::path::Path;
 
 /// Writes `member` of `archive` to the new file `to` (fails if `to` exists).
@@ -65,6 +65,25 @@ fn write_member(archive: &Path, member: &str, out: &mut impl Write) -> io::Resul
         "zip" => {
             let mut zip = zip::ZipArchive::new(BufReader::new(File::open(archive)?))
                 .map_err(io::Error::other)?;
+            if zip.index_for_name(member).is_none()
+                && let Some((image, part)) = member.rsplit_once('/')
+            {
+                // part of a combined Sufami Turbo image inside the zip
+                let mut data = Vec::new();
+                zip.by_name(image)
+                    .map_err(io::Error::other)?
+                    .read_to_end(&mut data)?;
+                let range = crate::sufami::parse(&data)
+                    .and_then(|l| l.into_iter().find(|(n, _)| n == part))
+                    .map(|(_, r)| r)
+                    .ok_or_else(|| {
+                        io::Error::new(
+                            io::ErrorKind::NotFound,
+                            format!("{member} not in {}", archive.display()),
+                        )
+                    })?;
+                return out.write_all(&data[range.start as usize..range.end as usize]);
+            }
             let mut f = zip.by_name(member).map_err(io::Error::other)?;
             io::copy(&mut f, out).map(|_| ())
         }

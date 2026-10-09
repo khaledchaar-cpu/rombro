@@ -22,17 +22,20 @@ pub type Layout = Vec<(String, Range<u64>)>;
 /// Member name of the BIOS (`.sfc`: the databases list it as a Super Famicom ROM).
 pub const BIOS_MEMBER: &str = "SuFami Turbo (Japan).sfc";
 
-/// The members of a combined image at `path` (name, byte range), or `None` if it is none.
-pub fn layout(path: &Path) -> io::Result<Option<Layout>> {
-    let ext = path
+/// Whether a file with this name and size may be a combined image (worth reading whole).
+pub fn candidate(name: &Path, len: u64) -> bool {
+    let ext = name
         .extension()
         .map(|e| e.to_string_lossy().to_lowercase())
         .unwrap_or_default();
-    if !matches!(ext.as_str(), "smc" | "sfc" | "swc" | "fig") {
-        return Ok(None);
-    }
+    matches!(ext.as_str(), "smc" | "sfc" | "swc" | "fig")
+        && (BIOS_AREA + HALF..=MAX_LEN).contains(&len)
+}
+
+/// The members of a combined image at `path` (name, byte range), or `None` if it is none.
+pub fn layout(path: &Path) -> io::Result<Option<Layout>> {
     let len = std::fs::metadata(path)?.len();
-    if !(BIOS_AREA + HALF..=MAX_LEN).contains(&len) {
+    if !candidate(path, len) {
         return Ok(None);
     }
     let mut data = Vec::with_capacity(len as usize);
@@ -40,7 +43,8 @@ pub fn layout(path: &Path) -> io::Result<Option<Layout>> {
     Ok(parse(&data))
 }
 
-fn parse(data: &[u8]) -> Option<Layout> {
+/// Members of a combined image held in memory (e.g. a zip member).
+pub fn parse(data: &[u8]) -> Option<Layout> {
     let hdr = (data.len() % 0x400) as u64;
     let body = &data[hdr as usize..];
     let len = body.len() as u64;
@@ -151,6 +155,29 @@ mod tests {
         assert_eq!(roms[1].hashes.crc, crc32fast::hash(&a));
         let out = tmp.path().join("a.st");
         crate::archive::extract(&p, "Slot A.st", &out).unwrap();
+        assert_eq!(std::fs::read(out).unwrap(), a);
+    }
+
+    #[test]
+    fn scans_and_extracts_parts_of_a_zipped_image() {
+        let tmp = tempfile::tempdir().unwrap();
+        let p = tmp.path().join("combo.zip");
+        let a = cart(5, HALF);
+        let mut z = zip::ZipWriter::new(File::create(&p).unwrap());
+        z.start_file("combo.smc", zip::write::SimpleFileOptions::default())
+            .unwrap();
+        z.write_all(&image(std::slice::from_ref(&a))).unwrap();
+        z.finish().unwrap();
+        let roms = crate::scan::scan_file(&p).unwrap();
+        let members: Vec<_> = roms.iter().map(|r| r.member.as_deref()).collect();
+        let part = "combo.smc/Slot A.st";
+        assert_eq!(
+            members,
+            [None, Some(&*format!("combo.smc/{BIOS_MEMBER}")), Some(part)]
+        );
+        assert_eq!(roms[2].hashes.crc, crc32fast::hash(&a));
+        let out = tmp.path().join("a.st");
+        crate::archive::extract(&p, part, &out).unwrap();
         assert_eq!(std::fs::read(out).unwrap(), a);
     }
 }
