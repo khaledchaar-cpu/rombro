@@ -34,7 +34,7 @@
 | M16c RA Disc-Systeme + NDS | ✅ done (2026-10-09, gegen rcheevos verifiziert; Sichtprüfung PSP + PS1-.pbp-Hinweis ok) |
 | M17 Cover | ✅ done (Sichtprüfung 2026-10-09) |
 | M18 Dashboard | ✅ done (Sichtprüfung 2026-10-09) |
-| M19 Savestates | 🔶 gebaut 2026-10-09, Sichtprüfung offen |
+| M19 Savestates | ✅ done (Sichtprüfung 2026-10-09) |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -151,7 +151,7 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
    Klick startet), Library-Sortauswahl (auch Grid): System/Name/zuletzt gespielt/Spielzeit/neu/Favoriten. Sichtprüfung ok.
    M19 gebaut: `retroarch::states` (alle Core-Ordner unter `states/`, Slot/Auto, `.png`), Details → Savestates mit
    Screenshot (`thumb://localhost/state/<pfad>`, nur aus dem States-Ordner), Löschen mit Inline-Bestätigung, Start per
-   `--entryslot=N` (vor der ROM) mit dem Core des States. Auto-State nicht per Slot startbar. **Offen: Sichtprüfung M19.**
+   `--entryslot=N` (vor der ROM) mit dem Core des States. Auto-State nicht per Slot startbar. Sichtprüfung ok. **Nächster: M20 globale Einstellungen.**
 
 ## Stolpersteine
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie
