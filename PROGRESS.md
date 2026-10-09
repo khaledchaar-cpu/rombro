@@ -36,6 +36,7 @@
 | M18 Dashboard | ✅ done (Sichtprüfung 2026-10-09) |
 | M19 Savestates | ✅ done (Sichtprüfung 2026-10-09) |
 | M20 Globale RA-Einstellungen | ✅ done (Sichtprüfung 2026-10-09) |
+| M21 Statistik | 🔶 gebaut 2026-10-09, Sichtprüfung offen |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -159,7 +160,10 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
    Ordner wird einmalig kopiert (ohne Presets). UI Settings → RetroArch → Picture; CLI `ra shader`/`ra aspect`.
    Live-Shaderwechsel: `stdin_cmd_enable`, App hält stdin des Kinds (`live.rs`), `SET_SHADER <preset>` / leer = aus
    (echt verifiziert Linux; Windows-stdin ungetestet). Linux immer `video_driver = glcore`.
-   Sichtprüfung ok (inkl. Live-Wechsel). **Nächster: M21 Statistik.**
+   Sichtprüfung ok (inkl. Live-Wechsel).
+   M21 gebaut: Schema v19 `play_session` (je gezähltem Lauf; Altbestand = 1 Lauf je Spiel am letzten Spieltag), Seite „Stats“
+   (Ctrl+7): Übersicht, Verlauf 7/30 Tage/12 Monate (lokale Zeit), meistgespielt, Zeit je System, Achievements.
+   **Offen: Sichtprüfung M21.**
 
 ## Stolpersteine
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie

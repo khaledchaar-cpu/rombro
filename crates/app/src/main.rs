@@ -77,6 +77,7 @@ fn main() {
             play::set_game_core,
             play::play,
             play::set_favorite,
+            play::play_sessions,
             retroarch::retroarch_cores,
             gamify::gamify_stats,
             gamify::gamify_enabled_get,

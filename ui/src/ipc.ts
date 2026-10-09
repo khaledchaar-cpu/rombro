@@ -808,6 +808,16 @@ export async function raSetShader(shader: string | null): Promise<boolean> {
   return invoke<boolean>("ra_set_shader", { shader });
 }
 
+/** Counted runs since `since` (unix seconds) as [start, seconds], oldest first. */
+export async function playSessions(since: number): Promise<[number, number][]> {
+  if (!inTauri) {
+    const now = Date.now() / 1000;
+    return Array.from({ length: 80 }, (_, i) => [now - 86400 * 400 + i * 86400 * 5 + (i % 7) * 3600, 600 + ((i * 937) % 7200)] as [number, number])
+      .filter(([s]) => s >= since);
+  }
+  return invoke<[number, number][]>("play_sessions", { since });
+}
+
 /** Library path of the game running in RetroArch (started from Romburak), if any. */
 export async function raRunning(): Promise<string | null> {
   if (!inTauri) return "SNES/Game (USA).zip";

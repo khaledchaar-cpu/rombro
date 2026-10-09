@@ -141,6 +141,15 @@ const MIGRATIONS: &[&str] = &[
         total    INTEGER NOT NULL,
         award    TEXT
     );",
+    // v19: launcher – one row per counted run (statistics history); existing totals become
+    // one run each, ending at the last play
+    "CREATE TABLE play_session (
+        game    TEXT NOT NULL,
+        start   INTEGER NOT NULL,
+        seconds INTEGER NOT NULL
+    );
+    CREATE INDEX play_session_start ON play_session(start);
+    INSERT INTO play_session (game, start, seconds) SELECT game, last - seconds, seconds FROM play_stats;",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

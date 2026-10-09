@@ -81,7 +81,20 @@ impl Store {
              ON CONFLICT(game) DO UPDATE SET plays = plays + 1, seconds = seconds + ?2, last = ?3",
             params![game, seconds as i64, at],
         )?;
+        self.conn.execute(
+            "INSERT INTO play_session (game, start, seconds) VALUES (?1, ?2, ?3)",
+            params![game, at - seconds as i64, seconds as i64],
+        )?;
         Ok(true)
+    }
+
+    /// Counted runs starting at or after `since` as (start, seconds), oldest first.
+    pub fn play_sessions(&self, since: i64) -> Result<Vec<(i64, u64)>> {
+        let mut stmt = self.conn.prepare_cached(
+            "SELECT start, seconds FROM play_session WHERE start >= ?1 ORDER BY start",
+        )?;
+        let rows = stmt.query_map([since], |r| Ok((r.get(0)?, r.get::<_, i64>(1)? as u64)))?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
     }
 
     pub fn play_stats(&self, game: &str) -> Result<PlayStats> {
@@ -170,6 +183,16 @@ mod tests {
         assert_eq!(s.core_override(g).unwrap().as_deref(), Some("nestopia"));
         s.set_core_override(g, None).unwrap();
         assert_eq!(s.core_override(g).unwrap(), None);
+    }
+
+    #[test]
+    fn logs_sessions() {
+        let s = Store::open_in_memory().unwrap();
+        assert!(s.record_play("g", 100, 1000).unwrap());
+        assert!(!s.record_play("g", 5, 2000).unwrap());
+        assert!(s.record_play("h", 60, 3000).unwrap());
+        assert_eq!(s.play_sessions(0).unwrap(), [(900, 100), (2940, 60)]);
+        assert_eq!(s.play_sessions(1000).unwrap(), [(2940, 60)]);
     }
 
     #[test]

@@ -10,6 +10,7 @@ import Rules from "./views/Rules";
 import Sidebar from "./components/Sidebar";
 import Import from "./views/Import";
 import Library from "./views/Library";
+import Stats from "./views/Stats";
 import { execute, plan, undo } from "./state/importStore";
 import { initLibrary } from "./state/libraryStore";
 import { effects, setEffects, setTheme, THEMES } from "./state/appearance";
@@ -78,6 +79,9 @@ export default function App() {
           </Match>
           <Match when={view() === "library"}>
             <Library />
+          </Match>
+          <Match when={view() === "stats"}>
+            <Stats />
           </Match>
           <Match when={view() === "retroarch"}>
             <RetroArch />

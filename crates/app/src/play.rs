@@ -85,6 +85,13 @@ pub async fn set_game_core(path: String, core: Option<String>) -> CmdResult<()> 
     store.set_core_override(&rom, core.as_deref()).map_err(err)
 }
 
+/// Counted runs since `since` (unix seconds) as `[start, seconds]`, oldest first.
+#[tauri::command]
+pub async fn play_sessions(since: i64) -> CmdResult<Vec<(i64, u64)>> {
+    let (store, _) = open_store()?;
+    store.play_sessions(since).map_err(err)
+}
+
 /// Marks (`on`) or unmarks a game as favorite.
 #[tauri::command]
 pub async fn set_favorite(path: String, on: bool) -> CmdResult<()> {
