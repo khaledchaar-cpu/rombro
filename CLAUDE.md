@@ -57,6 +57,7 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | rcheevos-Referenzhash | `git clone --depth 1 https://github.com/RetroAchievements/rcheevos`, `gcc -o rh rh.c -Ircheevos/include -Ircheevos/src rcheevos/src/hash/*.c rcheevos/src/util/*.c` (rh.c: `rc_hash_init_default_cdreader` + `rc_hash_generate_from_file`; kann kein CHD/CSO) |
 | RetroArch-e2e | `XDG_DATA_HOME=<scratch> ./scripts/e2e-ra.sh` (CI: `e2e-retroarch` auf Windows + macOS) |
 | App-Bundle lokal | `cd ui && pnpm tauri build --bundles deb` |
+| Release-Notes | `docs/releases/<tag>.md` vor dem Taggen schreiben (sonst generiert `./scripts/release-notes.sh <tag>` aus feat/fix-Commits; CI nutzt es als Draft-Text) |
 
 ## Code-Konventionen
 - Rust edition 2024, `cargo fmt`, `clippy -D warnings`. Libs: `thiserror`; Bins: `anyhow`. Kein `unwrap()` außerhalb Tests.
