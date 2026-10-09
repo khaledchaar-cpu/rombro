@@ -112,3 +112,25 @@ fn rules_json_fills_missing_fields_with_defaults() {
     let back: Rules = serde_json::from_str(&serde_json::to_string(&r).unwrap()).unwrap();
     assert_eq!(back, r);
 }
+
+#[test]
+fn atari_st_disk_parts_are_one_release() {
+    let names = [
+        "Disciples of Steel [cr Elite]",
+        "Disciples of Steel (Intro)[cr Elite]",
+        "Disciples of Steel (Boot)[cr Elite]",
+        "Explora - Time run (France) [m Tom Pouce][Disk 3 and 4]",
+        "Explora - Time run (France) [m Tom Pouce][Disk 1 and 2]",
+    ];
+    let picks = select(&names, |n| n, &Rules::default());
+    assert!(picks.iter().all(|g| !g.needs_decision && g.rejected.is_empty()));
+    let disciples: Vec<_> = picks[0].picked.iter().map(|n| **n).collect();
+    assert_eq!(
+        disciples,
+        [
+            "Disciples of Steel (Boot)[cr Elite]",
+            "Disciples of Steel (Intro)[cr Elite]",
+            "Disciples of Steel [cr Elite]"
+        ]
+    );
+}

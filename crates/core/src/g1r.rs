@@ -161,7 +161,10 @@ pub fn select<'a, T>(
     }
     groups
         .into_iter()
-        .map(|(key, g)| {
+        .map(|(key, mut g)| {
+            for media in g.releases.values_mut() {
+                media.sort_by_key(|m| naming::media_rank(name(m)));
+            }
             let mut pick = pick_group(key, g.releases, rules);
             pick.rejected
                 .extend(g.dups.into_iter().map(|d| (d, Reason::Duplicate)));

@@ -54,24 +54,53 @@ pub fn sanitize_file_name(name: &str) -> String {
         .collect()
 }
 
-/// Release name without its `(Disc N)` / `(Disk N)` / `(Side X)` tag.
+/// Release name without its media tags: `(Disc N)` / `(Disk N)` / `(Side X)`, the parts of
+/// a multi-disk set (`(Boot)`, `(Game Disk)`, `(Intro)`, `(Data Disk - Volume 1)`, Atari ST)
+/// and `[Disk 1 and 2]`.
 pub fn release_name(name: &str) -> String {
     let mut out = String::with_capacity(name.len());
     let mut rest = name;
-    while let Some(i) = rest.find('(') {
-        let end = rest[i..].find(')').map_or(rest.len(), |e| i + e + 1);
+    while let Some(i) = rest.find(['(', '[']) {
+        let close = if rest.as_bytes()[i] == b'(' { ')' } else { ']' };
+        let end = rest[i..].find(close).map_or(rest.len(), |e| i + e + 1);
         let tag = rest[i + 1..end.saturating_sub(1).max(i + 1)].to_ascii_lowercase();
         out.push_str(&rest[..i]);
-        if !["disc ", "disk ", "side "]
-            .iter()
-            .any(|p| tag.starts_with(p))
-        {
+        let media = if close == ')' {
+            ["disc ", "disk ", "side "]
+                .iter()
+                .any(|p| tag.starts_with(p))
+                || part_rank(&tag).is_some()
+        } else {
+            tag.starts_with("disk ") || tag.starts_with("disks ")
+        };
+        if !media {
             out.push_str(&rest[i..end]);
         }
         rest = &rest[end..];
     }
     out.push_str(rest);
     out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// Order of a multi-disk part tag (lowercase, without parentheses): boot, intro, game, data.
+fn part_rank(tag: &str) -> Option<u8> {
+    match tag {
+        "boot" | "boot disk" => Some(0),
+        "intro" | "intro disk" | "intro and play" => Some(1),
+        "game" | "game disk" | "play disk" | "program disk" => Some(2),
+        t if t == "data" || t.starts_with("data disk") => Some(3),
+        _ => None,
+    }
+}
+
+/// Position of a medium within its release (`(Boot)` before the game before data disks);
+/// media without a part tag count as the game. Disc numbers order by name.
+pub fn media_rank(name: &str) -> u8 {
+    name.split('(')
+        .skip(1)
+        .filter_map(|t| part_rank(&t.split(')').next()?.to_ascii_lowercase()))
+        .next()
+        .unwrap_or(2)
 }
 
 /// Library path (relative to the library root) for one file of a release, per SPEC F4:
@@ -117,6 +146,28 @@ mod tests {
         assert_eq!(release_name("FF7 (USA) (Disc 2)"), "FF7 (USA)");
         assert_eq!(release_name("Game (Disk B) (Europe)"), "Game (Europe)");
         assert_eq!(release_name("Game (Europe)"), "Game (Europe)");
+        assert_eq!(
+            release_name("Disciples of Steel (Boot)[cr Elite]"),
+            "Disciples of Steel [cr Elite]"
+        );
+        assert_eq!(
+            release_name("Explora (France) [m Tom Pouce][Disk 3 and 4]"),
+            "Explora (France) [m Tom Pouce]"
+        );
+        assert_eq!(
+            release_name("Bloodwych (Europe) (Data Disk - Volume 1)"),
+            "Bloodwych (Europe)"
+        );
+        assert_eq!(
+            release_name("Game [cr Elite][data disk]"),
+            "Game [cr Elite][data disk]"
+        );
+        assert_eq!(
+            release_name("Kristal [2 Disks Version]"),
+            "Kristal [2 Disks Version]"
+        );
+        assert!(media_rank("X (Boot)[cr]") < media_rank("X [cr]"));
+        assert!(media_rank("X [cr]") < media_rank("X (Data Disk)"));
         assert_eq!(
             target_path("Sony - PlayStation", "FF7 (USA) (Disc 2)", "chd", true),
             PathBuf::from("Sony - PlayStation/FF7 (USA)/FF7 (USA) (Disc 2).chd")
