@@ -126,6 +126,10 @@ zu rcheevos (Referenz-Binary, s. CLAUDE.md), CSO entpackt identisch. Echte Libra
 3DO 5/35, NDS 20/67, PSP 27/111, Saturn 0/8 (RA führt diese Dumps nicht, Hashes = rcheevos). Nicht unterstützt:
 PS1-`.pbp` (rcheevos auch nicht), PCE-GameExpress (BOOT.BIN), PC-FX, Neo Geo CD, Jaguar CD, Discs in Zips.
 Sichtprüfung 2026-10-09 (PSP ok). PS1-`.pbp` (RetroArch erkennt sie auch nicht): Library zeigt `⊘` + Hinweis „convert to CHD or CUE/BIN“ (`cheevosUnhashable`); automatische Umwandlung bewusst nicht gebaut.
+Doppelte Spielordner (2026-10-09): gleicher Titel (System + RDB-Name) in zwei Spielordnern → TBD „Duplicate“ mit
+behaltenem Ordner (Library vor Inbox, mehr Dateien, Pfad; `plan::build::dup_folders`); Discard trasht den ganzen Ordner
+nach `_trash/<Ordner>/`. Echt: `Quake/quake` verworfen (Journal #93), `Quake/tyrquake` behalten. Offen: loses
+`Quake/tyrquake/pak0.pak` (bitgleich zu `id1/pak0.pak`) muss der User von Hand entfernen.
 Nächste Schritte: v0.6.0 (M15–M16) releasen.
 
 ## Nächste Schritte
