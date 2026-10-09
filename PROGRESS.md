@@ -145,7 +145,7 @@ Daten migriert). Bewusst unverändert: Tauri-ID `dev.rombro.app`, localStorage-K
 Nächste Schritte: v0.6.0 (M15–M16) releasen.
 
 ## Nächste Schritte
-**Als Nächstes (User, 2026-10-09), nacheinander autonom:** (a) Windows-CI-e2e-Job für verwaltetes RetroArch
+**Als Nächstes (User, 2026-10-09), nacheinander autonom:** (a) ✅ 2026-10-09: CI-Job `e2e-retroarch` (`scripts/e2e-ra.sh`, Windows grün: install/status, fceumm, synthetische NES-ROM 120 Frames headless) – war: Windows-CI-e2e-Job für verwaltetes RetroArch
 (ra install/status, Core + synthetische Test-ROM headless) bis grün; (b) Atari-ST-Mehrdisk-Teile (Boot/Data, (A)/(B))
 nicht als TIE; (c) Sufami-Turbo-Kombi-Images in Zips (echte Sammlung nur lesend ansehen). Wikipedia-Ratings: verworfen.
 Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
