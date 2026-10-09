@@ -19,7 +19,10 @@ export default function CommandPalette(props: {
 
   const paged = createPaged(matches, () => 10, query);
   // the page follows the arrow-key selection
-  createEffect(() => paged.show(sel()));
+  createEffect(() => {
+    const c = matches()[sel()];
+    if (c) paged.show(c);
+  });
 
   createEffect(() => {
     if (props.open) {

@@ -11,19 +11,26 @@ export interface Paged<T> {
   offset: Accessor<number>;
   go: (p: number) => void;
   step: (d: number) => void;
-  /** Turns to the page holding item `i`. */
-  show: (i: number) => void;
+  /** Keeps `item` in view: its page follows size and list changes until the user turns pages. */
+  show: (item: T) => void;
 }
 
 /** `reset`: back to page 1 when it changes (default: when the item count changes). */
 export function createPaged<T>(all: Accessor<T[]>, size: Accessor<number>, reset?: Accessor<unknown>): Paged<T> {
   const [raw, setRaw] = createSignal(0);
+  // item to keep in view (`show`): its page follows when the page size changes (window
+  // measured later, row height known only after rendering) or the list changes
+  const [anchor, setAnchor] = createSignal<T | null>(null);
   const per = () => Math.max(1, size());
   const pages = () => Math.max(1, Math.ceil(all().length / per()));
-  const page = () => Math.min(raw(), pages() - 1);
+  const page = () => {
+    const a = anchor();
+    const i = a == null ? -1 : all().indexOf(a);
+    return Math.min(i < 0 ? raw() : Math.floor(i / per()), pages() - 1);
+  };
   // a new filter result starts on page 1; replaced rows (same count) keep the page
   createEffect(on(reset ?? (() => all().length), () => setRaw(0), { defer: true }));
-  const go = (p: number) => setRaw(Math.max(0, Math.min(pages() - 1, p)));
+  const go = (p: number) => (setAnchor(null), setRaw(Math.max(0, Math.min(pages() - 1, p))));
   return {
     items: () => all().slice(page() * per(), page() * per() + per()),
     page,
@@ -31,7 +38,7 @@ export function createPaged<T>(all: Accessor<T[]>, size: Accessor<number>, reset
     offset: () => page() * per(),
     go,
     step: (d) => go(page() + d),
-    show: (i) => go(Math.floor(i / per())),
+    show: (item) => setAnchor(() => item),
   };
 }
 
@@ -64,7 +71,7 @@ export function fitCount(el: Accessor<HTMLElement | undefined>, itemH: number | 
   return n;
 }
 
-export default function Pager(props: { paged: Paged<unknown>; class?: string }) {
+export default function Pager<T>(props: { paged: Paged<T>; class?: string }) {
   const p = props.paged;
   return (
     <Show when={p.pages() > 1}>

@@ -85,22 +85,27 @@ export default function Library(props: { onSettings: () => void }) {
   const observer = new ResizeObserver(([e]) => setCols(Math.max(1, Math.floor(e.contentRect.width / TILE_W))));
   onCleanup(() => observer.disconnect());
   const paged = createPaged(view, () => (mode() === "grid" ? cols() * gridRows() : listRows()));
-  // a jump from the dashboard: apply its filter, select + page to its game
+  // a jump from the dashboard: apply its filter, select its game and page to it once the
+  // rows are there (the first visit loads them after the jump arrives)
+  const [pending, setPending] = createSignal<string | null>(null);
   createEffect(on(libraryJump, (j) => {
     if (!j) return;
     filter.apply(j);
     setSelPath(j.path ?? null);
-    queueMicrotask(() => {
-      const i = j.path ? view().findIndex((r) => r.path === j.path) : -1;
-      if (i >= 0) paged.show(i);
-      setLibraryJump(null);
-    });
+    setPending(j.path ?? null);
+    setLibraryJump(null);
   }));
+  createEffect(() => {
+    const p = pending();
+    if (!p) return;
+    const r = view().find((r) => r.path === p);
+    if (r) (paged.show(r), setPending(null));
+  });
 
   // keep the selected game in sight when switching list ↔ grid
   createEffect(on(mode, () => {
-    const i = view().findIndex((r) => r.path === selPath());
-    if (i >= 0) paged.show(i);
+    const r = view().find((r) => r.path === selPath());
+    if (r) paged.show(r);
   }, { defer: true }));
 
   return (
