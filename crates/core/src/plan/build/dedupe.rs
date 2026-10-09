@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 /// (or arcade core) folder, across systems. Kept is a copy whose folder's database lists it
 /// under its file name (a core finds sets only by their short name), among those the best
 /// arcade core ([`arcade::PRIORITY`]), then the first path. Game folders,
-/// multi-disc folders and `_bios` are left alone (shared files there are intended).
+/// multi-disc folders, `_bios` and BIOS sets (one per core) are left alone (shared files there are intended).
 /// Returns the items still to plan.
 pub(super) fn run<'a>(b: &mut Builder<'_>, items: Vec<&'a Item>) -> Vec<&'a Item> {
     if b.opts.hashes.is_empty() {
@@ -88,7 +88,15 @@ fn candidate<'a>(library: &Path, it: &'a Item) -> Option<&'a PathBuf> {
         return None;
     }
     match (&it.ident, &it.files) {
-        (Ident::Unknown | Ident::Incomplete(_) | Ident::Skip(_), _) => return None,
+        // BIOS sets are copied next to each core's sets on purpose
+        (
+            Ident::Unknown
+            | Ident::Incomplete(_)
+            | Ident::Skip(_)
+            | Ident::Bios(_)
+            | Ident::Firmware(_),
+            _,
+        ) => return None,
         (_, Files::Set { chds, .. }) if !chds.is_empty() => return None,
         (_, Files::Single(_) | Files::Set { .. }) => {}
         _ => return None,

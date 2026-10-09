@@ -225,7 +225,7 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
 - Teil von „Audit library“ (und jedem Plan mit Library), Ergebnis direkt im Plan → `_trash` (Regel `library-duplicate`, Undo).
 - Nur **bit-gleiche** Dateien (SHA1 der ganzen Datei aus dem Hash-Cache), **systemübergreifend**; auch Arcade-Sets nur bei Bitgleichheit
   (abweichende Set-Versionen in mehreren Cores bleiben).
-- Geprüft werden erkannte Dateien direkt in einem System-/Core-Ordner; Spiel-/Mehrdisk-Ordner und `_bios` nie (geteilte Dateien gewollt).
+- Geprüft werden erkannte Dateien direkt in einem System-/Core-Ordner; Spiel-/Mehrdisk-Ordner, `_bios` und BIOS-Sets (eins je Core) nie (Kopien gewollt).
 - Behalten wird: eine Kopie, deren Ordner-Core sie unter diesem Dateinamen kennt (RDB-System/`alt`, bei Arcade zusätzlich der
   Set-Name im DAT des Ordners, z. B. FBNeo `twsoc96` statt `tws96`), dann bester Core (`arcade::PRIORITY`), dann erster Pfad.
 - Erster Lauf (2026-10-10, Dry-Run): 1396 Doppelte, fast alle in MAME 2016/MAME gegenüber FBNeo/MAME.

@@ -109,3 +109,34 @@ fn identical_set_keeps_the_name_its_core_knows() {
         .collect();
     assert_eq!(trashed, [fb_mame_name.as_path()], "{:?}", plan.ops);
 }
+
+/// Arcade BIOS lies next to each core's sets on purpose: never a duplicate.
+#[test]
+fn bios_copies_per_core_stay() {
+    let tmp = TempDir::new().unwrap();
+    let lib = tmp.path().join("lib");
+    let a = file(&lib, "MAME/neogeo.zip", "b");
+    let b = file(&lib, "MAME 2016/neogeo.zip", "b");
+    let bios = |p: &PathBuf, sys: &str| Item {
+        files: Files::Single(p.clone()),
+        ident: Ident::Bios(Game {
+            system: sys.into(),
+            name: "neogeo".into(),
+            crc: None,
+        }),
+        in_library: true,
+    };
+    let items = [bios(&a, "MAME"), bios(&b, "MAME 2016")];
+    let mut o = opts(Mode::Move);
+    o.hashes.insert(a.clone(), [5; 20]);
+    o.hashes.insert(b.clone(), [5; 20]);
+    let plan = build(&items, &lib, &o);
+    assert!(
+        !plan
+            .ops
+            .iter()
+            .any(|op| op.target().starts_with(lib.join(TRASH_DIR))),
+        "{:?}",
+        plan.ops
+    );
+}

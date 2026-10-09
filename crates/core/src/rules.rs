@@ -154,7 +154,11 @@ impl Rule {
                  decision, nothing is trashed by name alone."
             }
             Rule::LibraryDuplicate => {
-                "Audit: bit-identical copies of an identified file directly in system folders                  (across systems) – one stays, the others go to the trash. The copy in its own                  system's folder wins, among arcade cores the best one (FBNeo, MAME, older MAME).                  Game folders, multi-disc folders and _bios are left alone."
+                "Audit: bit-identical copies of an identified file directly in system folders \
+                 (across systems) – one stays, the others go to the trash. Kept is a copy its \
+                 folder's core knows under that file name, then the best arcade core (FBNeo, \
+                 MAME, older MAME). Game folders, multi-disc folders, _bios and BIOS sets (one \
+                 per core) are left alone."
             }
         }
     }
