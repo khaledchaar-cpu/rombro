@@ -29,7 +29,7 @@
 | M15c Spielzeit & Favoriten | ✅ done (Sichtprüfung + ScummVM-Start 2026-10-08) |
 | M15d Altlasten | ✅ done (2026-10-08) |
 | M16a RetroAchievements: Hashing + Library-Badge | ✅ done (Sichtprüfung 2026-10-08) |
-| M16b RA-Login, Hardcore, Fortschritt | 🔶 gebaut, Sichtprüfung + echter Login offen |
+| M16b RA-Login, Hardcore, Fortschritt | ✅ done (echter Login + Freischaltung + Sichtprüfung 2026-10-09) |
 | M16c RA Disc-Systeme + NDS | ⏳ |
 
 ## Aktuell
@@ -114,8 +114,8 @@ M16b (2026-10-08): `retroarch::managed::cheevos::Cheevos` (Keys `cheevos_enable/
 bei Sync, Login und nach gespielten RA-Spielen (nur betroffene Zeilen gepatcht). Library-Zelle `3/40` bzw. `★ 40`
 (mastered/completed), Details: „x of y unlocked“, Liste via `API_GetGameInfoAndUserProgress` mit ✔/✔ hardcore,
 gesperrte grau. CLI `cheevos login <user>` (Passwort per TTY oder stdin), `logout`, `hardcore on|off`.
-Getestet: Fehlerpfad gegen echten Server; echter Login + Freischaltung in RetroArch noch nicht.
-Nächste Schritte: Sichtprüfung (Settings → RetroArch → Login, Hardcore, Library-Fortschritt, Details); dann M16c.
+Getestet 2026-10-09: echter Login, Freischaltung in RetroArch (Metal Slug 4, FBNeo), Sichtprüfung. Fix: Liste lädt neu, wenn sich die Zahl der Freischaltungen ändert.
+Nächste Schritte: M16c (Disc-Systeme + NDS hashen).
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,
