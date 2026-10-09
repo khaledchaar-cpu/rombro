@@ -101,7 +101,11 @@ jobs:
 
   e2e-retroarch:
     needs: check
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -111,7 +115,7 @@ jobs:
       - name: Managed RetroArch end to end
         shell: bash
         env:
-          BIN: target/release/romburak.exe
+          BIN: target/release/romburak${{ runner.os == 'Windows' && '.exe' || '' }}
         run: ./scripts/e2e-ra.sh
 
   release:
