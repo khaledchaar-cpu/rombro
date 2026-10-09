@@ -152,3 +152,8 @@ export const prefer = (d: DecisionView, c: Choice) =>
     await setVerdict(c, "prefer", `1G1R tie with ${others.join(", ")}`);
     mark(d, `→ ${c.name}`);
   });
+
+/** Trashes every open 1G1R-rejected release (one verdict each, in order). */
+export async function trashAllRejected(ds: DecisionView[]) {
+  for (const d of ds) if (d.kind === "rejected" && d.options.length) await judge(d, "discard");
+}

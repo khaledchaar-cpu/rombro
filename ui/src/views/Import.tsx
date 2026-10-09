@@ -10,6 +10,7 @@ import type { DecisionView } from "../ipc";
 import {
   busy,
   decided,
+  trashAllRejected,
   decisionKey,
   execute,
   executing,
@@ -147,6 +148,19 @@ function Decisions() {
   const shown = () => (kind() === "all" ? all() : all().filter((d) => d.kind === kind()));
   // decided items drop out: stay on the page, only a new filter starts over
   const paged = createPaged(shown, () => 6, kind);
+  const rejected = () => all().filter((d) => d.kind === "rejected" && d.options.length);
+  const [confirmAll, setConfirmAll] = createSignal(false);
+  const [trashing, setTrashing] = createSignal(false);
+  const trashAll = async () => {
+    if (!confirmAll()) return setConfirmAll(true);
+    setConfirmAll(false);
+    setTrashing(true);
+    try {
+      await trashAllRejected(rejected());
+    } finally {
+      setTrashing(false);
+    }
+  };
   return (
     <>
       <div class="row wrap">
@@ -168,6 +182,21 @@ function Decisions() {
             </button>
           )}
         </For>
+        <Show when={rejected().length}>
+          <button
+            class="btn ghost"
+            disabled={trashing()}
+            onClick={trashAll}
+            onBlur={() => setConfirmAll(false)}
+            title="Trash every open rejected release (undo via Settings → Rules → exceptions)"
+          >
+            {trashing()
+              ? "Trashing…"
+              : confirmAll()
+                ? `Really trash ${rejected().length}?`
+                : `Trash all rejected (${rejected().length})`}
+          </button>
+        </Show>
       </div>
       <ul class="decisions">
         <For each={paged.items()}>
