@@ -35,7 +35,7 @@
 | M17 Cover | ✅ done (Sichtprüfung 2026-10-09) |
 | M18 Dashboard | ✅ done (Sichtprüfung 2026-10-09) |
 | M19 Savestates | ✅ done (Sichtprüfung 2026-10-09) |
-| M20 Globale RA-Einstellungen | 🔶 gebaut 2026-10-09, Sichtprüfung offen |
+| M20 Globale RA-Einstellungen | ✅ done (Sichtprüfung 2026-10-09) |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -159,7 +159,7 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
    Ordner wird einmalig kopiert (ohne Presets). UI Settings → RetroArch → Picture; CLI `ra shader`/`ra aspect`.
    Live-Shaderwechsel: `stdin_cmd_enable`, App hält stdin des Kinds (`live.rs`), `SET_SHADER <preset>` / leer = aus
    (echt verifiziert Linux; Windows-stdin ungetestet). Linux immer `video_driver = glcore`.
-   **Offen: Sichtprüfung M20.**
+   Sichtprüfung ok (inkl. Live-Wechsel). **Nächster: M21 Statistik.**
 
 ## Stolpersteine
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie
