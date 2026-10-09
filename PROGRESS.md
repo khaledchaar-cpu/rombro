@@ -33,6 +33,7 @@
 | v0.6.0 Release (M15 Launcher-Basis) | ✅ released 2026-10-08 |
 | M16c RA Disc-Systeme + NDS | ✅ done (2026-10-09, gegen rcheevos verifiziert; Sichtprüfung PSP + PS1-.pbp-Hinweis ok) |
 | M17 Cover | ✅ done (Sichtprüfung 2026-10-09) |
+| M18 Dashboard | 🔶 gebaut 2026-10-09, Sichtprüfung offen |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -144,7 +145,9 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
 2. Später (User, 2026-10-09): verwaltetes RetroArch auf Windows/macOS testen – Windows per CI-e2e-Job (ra install, status, Core + Test-ROM headless), macOS manuell durch den User.
 3. v2 Launcher geklärt (Grilling 2026-10-09, SPEC §6): M17 Cover → M18 Dashboard → M19 Savestates → M20 globale RA-Einstellungen → M21 Statistik. M17 gebaut: `thumb://`-Protokoll (`thumbs::protocol`, Browser lädt lazy + cached), unscharfer Abgleich über die
    Server-Verzeichnisliste (`thumbnail::best_match`, Liste 30 Tage in `.index`), Library Liste ↔ Grid (`rombro.libraryView`),
-   Mini-Boxart in der Liste. Sichtprüfung ok. **Nächster: M18 Dashboard.**
+   Mini-Boxart in der Liste. Sichtprüfung ok.
+   M18 gebaut: Dashboard „Continue playing“ (`DashboardContinue`, zuletzt gespielt, dann ungespielte Favoriten, max. 12,
+   Klick startet), Library-Sortauswahl (auch Grid): System/Name/zuletzt gespielt/Spielzeit/neu/Favoriten. **Offen: Sichtprüfung M18.**
 
 ## Stolpersteine
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie

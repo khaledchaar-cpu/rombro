@@ -159,3 +159,8 @@
 .tile.sel { border-color: var(--accent); }
 .tile-cover { width: 100%; height: 100%; min-height: 0; }
 .tile-cover.cover-ph { font-size: 1.6rem; }
+
+/* continue playing (M18) */
+.shelf { display: grid; grid-auto-flow: column; grid-auto-columns: 140px; gap: var(--sp-2); overflow-x: auto; padding-bottom: var(--sp-2); margin-bottom: var(--sp-2); }
+.shelf-tile { height: 220px; }
+.shelf-tile:disabled { opacity: .6; cursor: progress; }

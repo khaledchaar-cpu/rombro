@@ -5,6 +5,7 @@ import Cover from "../components/Cover";
 import GameDetail from "../components/GameDetail";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
+import Select from "../components/Select";
 import { createLibraryFilter } from "./LibraryFilters";
 import { onScanProgress, type LibraryRow, type ScanProgress } from "../ipc";
 import {
@@ -27,7 +28,15 @@ const EMPTY: LibraryRow = {
   path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0,
   favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null, cheevos_progress: null,
 };
-type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds" | "cheevos";
+type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds" | "cheevos" | "last_played" | "added";
+const SORTS: { value: Key; label: string }[] = [
+  { value: "system", label: "Sort: system" },
+  { value: "name", label: "Sort: name" },
+  { value: "last_played", label: "Sort: last played" },
+  { value: "seconds", label: "Sort: play time" },
+  { value: "added", label: "Sort: recently added" },
+  { value: "favorite", label: "Sort: favorites first" },
+];
 const COLS: { key: Key; label: string }[] = [
   { key: "favorite", label: "★" },
   { key: "state", label: "State" },
@@ -117,6 +126,7 @@ export default function Library() {
             {view().length} / {rows().length} items
           </p>
           <div class="seg-toggle" role="group" aria-label="View">
+            <Select value={sort().key} onChange={(key) => setSort({ key, asc: true })} options={SORTS} placeholder="Sort: column" />
             <button class="btn ghost small" classList={{ on: mode() === "list" }} onClick={() => setMode("list")}>☰ List</button>
             <button class="btn ghost small" classList={{ on: mode() === "grid" }} onClick={() => setMode("grid")}>▦ Grid</button>
           </div>
