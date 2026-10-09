@@ -596,13 +596,32 @@ impl Builder<'_> {
             .into_iter()
             .map(|f| Op::Move {
                 from: f.clone(),
-                to: dir.join(file_name(f)),
+                to: self.free_trash_target(&dir, f),
             })
             .filter(|_| !members)
             .collect();
         if self.commit(it, ops) {
             self.plan.discarded += 1;
         }
+    }
+
+    /// `dir/<name>`, numbered (`name (2).ext`) while taken – trashing must never clash, or
+    /// an identical file already in the trash would make it a duplicate to discard again.
+    fn free_trash_target(&self, dir: &Path, f: &Path) -> PathBuf {
+        let name = file_name(f);
+        let taken = |p: &Path| self.claimed.contains_key(p) || (p.exists() && p != f);
+        let first = dir.join(&name);
+        if !taken(&first) {
+            return first;
+        }
+        let (stem, ext) = match name.rsplit_once('.') {
+            Some((s, e)) if !s.is_empty() => (s, format!(".{e}")),
+            _ => (name.as_str(), String::new()),
+        };
+        (2..)
+            .map(|n| dir.join(format!("{stem} ({n}){ext}")))
+            .find(|p| !taken(p))
+            .unwrap_or(first)
     }
 
     fn transfer(&self, it: &Item, from: &Path, to: &Path) -> Op {
