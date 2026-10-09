@@ -30,7 +30,7 @@
 | M15d Altlasten | ✅ done (2026-10-08) |
 | M16a RetroAchievements: Hashing + Library-Badge | ✅ done (Sichtprüfung 2026-10-08) |
 | M16b RA-Login, Hardcore, Fortschritt | ✅ done (echter Login + Freischaltung + Sichtprüfung 2026-10-09) |
-| M16c RA Disc-Systeme + NDS | ✅ done (2026-10-09, gegen rcheevos verifiziert; Sichtprüfung App offen) |
+| M16c RA Disc-Systeme + NDS | ✅ done (2026-10-09, gegen rcheevos verifiziert; Sichtprüfung PSP + PS1-.pbp-Hinweis ok) |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -125,7 +125,8 @@ CLI `cheevos scan` nutzt jetzt `library_files`. Verifiziert: alle cue/iso/nds/PS
 zu rcheevos (Referenz-Binary, s. CLAUDE.md), CSO entpackt identisch. Echte Library: PCE-CD 10/22, DC 4/18, Sega CD 5/10,
 3DO 5/35, NDS 20/67, PSP 27/111, Saturn 0/8 (RA führt diese Dumps nicht, Hashes = rcheevos). Nicht unterstützt:
 PS1-`.pbp` (rcheevos auch nicht), PCE-GameExpress (BOOT.BIN), PC-FX, Neo Geo CD, Jaguar CD, Discs in Zips.
-Nächste Schritte: Sichtprüfung in der App (Settings → Databases → RetroAchievements: Sync + Hashing neu laufen lassen).
+Sichtprüfung 2026-10-09 (PSP ok). PS1-`.pbp` (RetroArch erkennt sie auch nicht): Library zeigt `⊘` + Hinweis „convert to CHD or CUE/BIN“ (`cheevosUnhashable`); automatische Umwandlung bewusst nicht gebaut.
+Nächste Schritte: v0.6.0 (M15–M16) releasen.
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,
