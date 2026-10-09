@@ -1,5 +1,5 @@
 //! System files some cores cannot start without (blueMSX machine definitions, PPSSPP's UI
-//! atlas, Dolphin's `Sys` folder …): RetroArch's buildbot serves them as zips under
+//! atlas, Dolphin's `Sys` folder, DirkSimple's game scripts …): RetroArch's buildbot serves them as zips under
 //! `assets/system/`, unpacked into the system folder as they are.
 
 use crate::plan::Op;
@@ -8,12 +8,18 @@ use std::path::{Path, PathBuf};
 /// Core id → (asset zip on the buildbot, path inside the system folder that shows it is there).
 /// Only files the core cannot start without; optional extras (themes, cheats, hiscores) and
 /// cores that run without their zip (ScummVM, NXEngine, PrBoom) are left out.
-const ASSETS: [(&str, &str, &str); 5] = [
+const ASSETS: [(&str, &str, &str); 7] = [
     ("bluemsx", "blueMSX.zip", "Machines/COL - ColecoVision"),
     ("ppsspp", "PPSSPP.zip", "PPSSPP/ppge_atlas.zim"),
     ("dolphin", "Dolphin.zip", "dolphin-emu/Sys"),
     ("pcsx2", "LRPS2.zip", "pcsx2/resources"),
     ("ecwolf", "ECWolf.zip", "ecwolf.pk3"),
+    (
+        "dirksimple",
+        "DirkSimple.zip",
+        "DirkSimple/data/games/lair/game.lua",
+    ),
+    ("qemu", "QEMU.zip", "qemu/bios.bin"),
 ];
 
 /// The asset zip `core` needs, if its marker is missing from `system`.
