@@ -12,6 +12,7 @@ export interface LibraryJump {
   favorite?: boolean;
   played?: boolean;
   cheevos?: boolean;
+  franchises?: string[];
   query?: string;
 }
 

@@ -179,7 +179,7 @@ M23 (2026-10-09): Blättern statt Scrollen (`components/Pager.tsx`: `createPaged
 misst live), Library-Filter Mehrfachauswahl + Jahrzehnte (`year` aus RDB), Suche Name+System inkl. Kürzel,
 Library-Pfad/Needs attention/Trash → Settings → Library, Details mit Reitern, Stats im Dashboard aufgegangen,
 Dashboard-Einträge springen in die Library (`state/jump.ts`), Graph „Library growth“, Core-Override am Inhalt.
-Offen: Dashboard scrollt als Seite; Franchise-Sprung nur per Namenssuche; Gamification-Zahlen ≠ Library-Filterzahlen.
+Nachträge 2026-10-09: Dashboard in Reiter Play/Stats/Collection/Goals (jede Seite passt ohne Scrollen, Stats-Listen 5 je Seite); Library-Zeilen tragen `franchise` (`Store::release_meta`), Filter „franchise“, Franchise-Ziele springen dorthin; Gamification-Sprünge filtern auf `known` (gleiche Basis wie die Zahlen). Rest-Abweichung gewollt: Completeness/Franchise zählen 1G1R-Gruppen, die Library jede Fassung (Tooltip). Offen: Sichtprüfung User, dann v0.10.0.
 
 ## Stolpersteine
 - Chrome-Tab im Hintergrund (`visibilityState: hidden`): kein rAF, Screenshots hängen – Tests per JS, `fitCount` misst erst sichtbar.

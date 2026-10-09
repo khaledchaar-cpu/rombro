@@ -34,6 +34,8 @@ pub struct Row {
     cheevos_players: Option<u64>,
     /// Release year from the RetroArch database, when known.
     year: Option<u16>,
+    /// Franchise from the RetroArch database, when known.
+    franchise: Option<String>,
 }
 
 fn added(p: &std::path::Path) -> i64 {
@@ -108,8 +110,10 @@ pub async fn library_list(
         let stats = store.all_play_stats().map_err(err)?;
         let favorites = store.favorites().map_err(err)?;
         let ra = crate::cheevos::Index::load(&store, &library)?;
-        let mut years: std::collections::HashMap<String, std::collections::HashMap<String, u16>> =
-            Default::default();
+        let mut years: std::collections::HashMap<
+            String,
+            std::collections::HashMap<String, romburak_store::ReleaseMeta>,
+        > = Default::default();
         let mut folder_systems = rules.folder_systems;
         // MSU-1 games: no database knows them; the ROM in `<MSU-1>/<Game>/` is the game,
         // named after its folder
@@ -251,12 +255,17 @@ pub async fn library_list(
                 let st = stats.get(&key).copied().unwrap_or_default();
                 let (cheevos, cheevos_other, cheevos_game) = ra.lookup(p, &system, &name);
                 if !system.is_empty() && !years.contains_key(&system) {
-                    let y = store.release_years(&system).unwrap_or_default();
+                    let y = store.release_meta(&system).unwrap_or_default();
                     years.insert(system.clone(), y);
                 }
-                let year = years.get(&system).and_then(|y| y.get(&name)).copied();
+                let (year, franchise) = years
+                    .get(&system)
+                    .and_then(|y| y.get(&name))
+                    .cloned()
+                    .unwrap_or_default();
                 Row {
                     year,
+                    franchise,
                     cheevos_players: cheevos_game
                         .filter(|_| cheevos > 0)
                         .and_then(|g| ra.players(g)),

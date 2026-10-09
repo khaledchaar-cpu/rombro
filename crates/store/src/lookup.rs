@@ -66,12 +66,26 @@ impl Store {
     }
 
     /// Release year per game name of `system` (earliest when entries disagree).
-    pub fn release_years(&self, system: &str) -> Result<std::collections::HashMap<String, u16>> {
+    pub fn release_meta(
+        &self,
+        system: &str,
+    ) -> Result<std::collections::HashMap<String, ReleaseMeta>> {
         let mut stmt = self.conn.prepare_cached(
-            "SELECT name, MIN(release_year) FROM entry
-             WHERE system = ?1 AND release_year BETWEEN 1950 AND 2100 GROUP BY name",
+            "SELECT name,
+                    MIN(CASE WHEN release_year BETWEEN 1950 AND 2100 THEN release_year END),
+                    MAX(NULLIF(franchise, ''))
+             FROM entry WHERE system = ?1 GROUP BY name
+             HAVING COUNT(release_year) + COUNT(NULLIF(franchise, '')) > 0",
         )?;
-        let rows = stmt.query_map([system], |r| Ok((r.get(0)?, r.get::<_, i64>(1)? as u16)))?;
+        let rows = stmt.query_map([system], |r| {
+            Ok((
+                r.get(0)?,
+                (r.get::<_, Option<i64>>(1)?.map(|y| y as u16), r.get(2)?),
+            ))
+        })?;
         Ok(rows.collect::<rusqlite::Result<_>>()?)
     }
 }
+
+/// Release year and franchise of a database game name.
+pub type ReleaseMeta = (Option<u16>, Option<String>);

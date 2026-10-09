@@ -1,4 +1,4 @@
-// Filter bar for the Library table: text (name + system), systems, regions, release decades (all
+// Filter bar for the Library table: text (name + system), systems, regions, release decades, franchises (all
 // multiple choice), favorite/played/achievement and state chips.
 import { createMemo, createSignal, For, Show, type Accessor } from "solid-js";
 import MultiSelect from "../components/MultiSelect";
@@ -42,6 +42,7 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
   const [systems, setSystems] = createSignal<Set<string>>(new Set());
   const [regions, setRegions] = createSignal<Set<string>>(new Set());
   const [decades, setDecades] = createSignal<Set<string>>(new Set());
+  const [franchises, setFranchises] = createSignal<Set<string>>(new Set());
   const [states, setStates] = createSignal<Set<string>>(new Set());
   const [favOnly, setFavOnly] = createSignal(false);
   const [playedOnly, setPlayedOnly] = createSignal(false);
@@ -58,6 +59,7 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
   const decadeOpts = createMemo(() =>
     opts(count((r) => [decade(r)]).sort((a, b) => +(a[0] === UNKNOWN_YEAR) - +(b[0] === UNKNOWN_YEAR) || a[0].localeCompare(b[0]))),
   );
+  const franchiseOpts = createMemo(() => opts(count((r) => [r.franchise ?? ""])));
   const stateCounts = createMemo(() => new Map(count((r) => [r.state])));
   const favCount = createMemo(() => rows().filter((r) => r.favorite).length);
   const playedCount = createMemo(() => rows().filter((r) => r.plays > 0).length);
@@ -66,12 +68,13 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
   const filtered = createMemo(() => {
     // every word must occur in name or system ("arkanoid cpc")
     const words = query().toLowerCase().split(/\s+/).filter(Boolean);
-    const [sys, reg, dec, st, fav, played, ach] = [systems(), regions(), decades(), states(), favOnly(), playedOnly(), cheevosOnly()];
+    const [sys, reg, dec, fr, st, fav, played, ach] = [systems(), regions(), decades(), franchises(), states(), favOnly(), playedOnly(), cheevosOnly()];
     return rows().filter(
       (r) =>
         (!sys.size || sys.has(r.system)) &&
         (!reg.size || r.regions.some((x) => reg.has(x))) &&
         (!dec.size || dec.has(decade(r))) &&
+        (!fr.size || (r.franchise != null && fr.has(r.franchise))) &&
         (!st.size || st.has(r.state)) &&
         (!fav || r.favorite) &&
         (!played || r.plays > 0) &&
@@ -80,9 +83,9 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
     );
   });
 
-  const active = () => !!(query() || systems().size || regions().size || decades().size || states().size || favOnly() || playedOnly() || cheevosOnly());
+  const active = () => !!(query() || systems().size || regions().size || decades().size || franchises().size || states().size || favOnly() || playedOnly() || cheevosOnly());
   const reset = () => (
-    setQuery(""), setSystems(new Set<string>()), setRegions(new Set<string>()), setDecades(new Set<string>()), setStates(new Set<string>()), setFavOnly(false), setPlayedOnly(false), setCheevosOnly(false)
+    setQuery(""), setSystems(new Set<string>()), setRegions(new Set<string>()), setDecades(new Set<string>()), setFranchises(new Set<string>()), setStates(new Set<string>()), setFavOnly(false), setPlayedOnly(false), setCheevosOnly(false)
   );
   /** Replaces all filters with those of a jump (a jump to a game clears them). */
   const apply = (j: LibraryJump) => {
@@ -91,6 +94,7 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
     setSystems(new Set(j.systems ?? []));
     setRegions(new Set(j.regions ?? []));
     setDecades(new Set(j.decades ?? []));
+    setFranchises(new Set(j.franchises ?? []));
     setStates(new Set(j.states ?? []));
     setFavOnly(!!j.favorite);
     setPlayedOnly(!!j.played);
@@ -105,6 +109,9 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
         <MultiSelect values={systems()} onChange={setSystems} options={systemOpts()} all="All systems" noun="systems" />
         <MultiSelect values={regions()} onChange={setRegions} options={regionOpts()} all="All regions" noun="regions" />
         <MultiSelect values={decades()} onChange={setDecades} options={decadeOpts()} all="Any release year" noun="decades" />
+        <Show when={franchiseOpts().length}>
+          <MultiSelect values={franchises()} onChange={setFranchises} options={franchiseOpts()} all="Any franchise" noun="franchises" />
+        </Show>
         <div class="chips">
           <button class="chip" classList={{ on: favOnly() }} disabled={!favCount()} onClick={() => setFavOnly((v) => !v)}>
             ★ favorites {favCount()}

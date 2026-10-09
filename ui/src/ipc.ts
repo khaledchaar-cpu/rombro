@@ -335,6 +335,8 @@ export interface LibraryRow {
   cheevos_players: number | null;
   /** Release year from the RetroArch database. */
   year: number | null;
+  /** Franchise from the RetroArch database. */
+  franchise: string | null;
 }
 
 export interface RaProgress {
@@ -415,6 +417,7 @@ function demoRows(): LibraryRow[] {
     cheevos_progress: i % 3 ? null : { awarded: (i * 3) % 40, hardcore: 0, total: 40 + (i % 20), award: i === 3 ? "mastered" : null },
     cheevos_players: (i * 7919) % 50000,
     year: i % 6 ? 1978 + ((i * 7) % 40) : null,
+    franchise: name.includes("Mario") ? "Mario" : name.includes("Zelda") ? "Zelda" : null,
   }));
 }
 
@@ -440,6 +443,7 @@ export async function libraryList(library?: string, rescan = false): Promise<Lib
         i % 3 || i % 2 ? null : { awarded: i % 9 ? (i % 20) : 20 + (i % 40), hardcore: 0, total: 20 + (i % 40), award: i % 9 ? null : "mastered" },
       cheevos_players: i % 3 ? null : (i * 7919) % 90000,
       year: i % 5 ? 1980 + (i % 30) : null,
+      franchise: i % 11 ? null : i % 2 ? "Mario" : "Zelda",
     }));
   }
   return invoke<LibraryRow[]>("library_list", { library, rescan });

@@ -38,6 +38,7 @@ pub use gamify::Stats;
 pub use identify::{Match, candidates};
 pub use import::SyncReport;
 pub use journal::{JournalEntry, VerdictRow};
+pub use lookup::ReleaseMeta;
 pub use record::Record;
 pub use snapshot::Snapshot;
 

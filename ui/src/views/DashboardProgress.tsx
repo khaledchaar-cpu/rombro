@@ -36,9 +36,9 @@ export function ProgressPanel() {
               </div>
               <Segments value={l().xp - l().floor} max={l().next - l().floor} />
               <div class="mix">
-                <Mix title="Regions" items={top(k().regions, 5)} jump={(r) => ({ regions: [r] })} />
+                <Mix title="Regions" items={top(k().regions, 5)} jump={(r) => ({ regions: [r], states: ["known"] })} />
                 <Mix title="Genres" items={top(k().genres, 5)} />
-                <Mix title="Decades" items={Object.entries(k().decades).map(([d, n]) => [`${d}s`, n] as [string, number])} jump={(d) => ({ decades: [d] })} />
+                <Mix title="Decades" items={Object.entries(k().decades).map(([d, n]) => [`${d}s`, n] as [string, number])} jump={(d) => ({ decades: [d], states: ["known"] })} />
               </div>
             </>
           );
@@ -71,7 +71,7 @@ export function CompletenessPanel() {
       <ul class="complete">
         <For each={paged.items()} fallback={<li class="dim">No identified games yet.</li>}>
           {(s) => (
-            <li {...(s.owned ? jumpProps({ systems: [s.system] }) : {})}>
+            <li title="Distinct games, one per 1G1R group; the library lists every release" {...(s.owned ? jumpProps({ systems: [s.system], states: ["known"] }) : {})}>
               <div class="row">
                 <span class="ellipsis">{s.system}</span>
                 <span class="spacer" />
@@ -96,7 +96,7 @@ export function FranchisePanel() {
       <ul class="complete">
         <For each={paged.items()} fallback={<li class="dim">No franchise started yet.</li>}>
           {(f) => (
-            <li {...jumpProps({ query: f.franchise })}>
+            <li title="Distinct games, one per 1G1R group; the library lists every release" {...jumpProps({ franchises: [f.franchise], states: ["known"] })}>
               <div class="row">
                 <span class="ellipsis">{f.franchise}</span>
                 <span class="spacer" />

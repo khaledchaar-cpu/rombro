@@ -95,9 +95,9 @@ export default function PlayStats() {
   const unlocked = createMemo(() => cheevos().reduce((s, r) => s + r.cheevos_progress.awarded, 0));
   const mastered = createMemo(() => cheevos().filter((r) => r.cheevos_progress.award === "mastered").length);
 
-  const pTop = createPaged(top, () => 10);
-  const pSys = createPaged(perSystem, () => 10);
-  const pAch = createPaged(cheevos, () => 10);
+  const pTop = createPaged(top, () => 5);
+  const pSys = createPaged(perSystem, () => 5);
+  const pAch = createPaged(cheevos, () => 5);
   return (
     <>
       <Panel title="Overview" class="wide">
