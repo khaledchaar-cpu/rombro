@@ -51,7 +51,7 @@ impl Builder<'_> {
                 self.why = Why::new(Rule::ArchiveExtracted, "");
                 let op = Op::Move {
                     from: archive.to_path_buf(),
-                    to: self.library.join(TRASH_DIR).join(file_name(archive)),
+                    to: self.free_trash_target(&self.library.join(TRASH_DIR), archive),
                 };
                 self.commit(&it, vec![op]);
             }

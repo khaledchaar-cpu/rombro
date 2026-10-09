@@ -44,6 +44,7 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
         opts,
         plan: Plan::default(),
         claimed: HashMap::new(),
+        trash_names: HashSet::new(),
         why: Why::new(Rule::G1rPick, ""),
         members_done: HashMap::new(),
         identified: items
@@ -337,6 +338,9 @@ struct Builder<'a> {
     plan: Plan,
     /// Targets claimed by earlier ops of this plan, with the file they come from.
     claimed: HashMap<PathBuf, Option<PathBuf>>,
+    /// Lower-cased trash targets of this plan: the library may sit on a case-insensitive
+    /// file system (CIFS), where `Berzerk.zip` and `BerZerk.zip` are the same file.
+    trash_names: HashSet<String>,
     /// Reason attached to the ops added next.
     why: Why,
     /// Members of multi-ROM archives handled so far (extracted, quarantined or discarded).
@@ -590,16 +594,18 @@ impl Builder<'_> {
         let dir = self.library.join(TRASH_DIR);
         // A member is discarded by not extracting it; the archive is trashed once emptied.
         let members = it.files.archive().is_some();
-        let ops = it
-            .files
-            .all()
-            .into_iter()
-            .map(|f| Op::Move {
-                from: f.clone(),
-                to: self.free_trash_target(&dir, f),
-            })
-            .filter(|_| !members)
-            .collect();
+        let ops = if members {
+            Vec::new()
+        } else {
+            it.files
+                .all()
+                .into_iter()
+                .map(|f| Op::Move {
+                    from: f.clone(),
+                    to: self.free_trash_target(&dir, f),
+                })
+                .collect()
+        };
         if self.commit(it, ops) {
             self.plan.discarded += 1;
         }
@@ -607,21 +613,29 @@ impl Builder<'_> {
 
     /// `dir/<name>`, numbered (`name (2).ext`) while taken – trashing must never clash, or
     /// an identical file already in the trash would make it a duplicate to discard again.
-    fn free_trash_target(&self, dir: &Path, f: &Path) -> PathBuf {
+    fn free_trash_target(&mut self, dir: &Path, f: &Path) -> PathBuf {
         let name = file_name(f);
-        let taken = |p: &Path| self.claimed.contains_key(p) || (p.exists() && p != f);
+        let taken = |p: &Path| {
+            let lower = p.to_string_lossy().to_lowercase();
+            self.claimed.contains_key(p)
+                || self.trash_names.contains(&lower)
+                || (p.exists() && p != f)
+        };
         let first = dir.join(&name);
-        if !taken(&first) {
-            return first;
-        }
         let (stem, ext) = match name.rsplit_once('.') {
             Some((s, e)) if !s.is_empty() => (s, format!(".{e}")),
             _ => (name.as_str(), String::new()),
         };
-        (2..)
-            .map(|n| dir.join(format!("{stem} ({n}){ext}")))
-            .find(|p| !taken(p))
-            .unwrap_or(first)
+        let to = if !taken(&first) {
+            first
+        } else {
+            (2..)
+                .map(|n| dir.join(format!("{stem} ({n}){ext}")))
+                .find(|p| !taken(p))
+                .unwrap_or(first)
+        };
+        self.trash_names.insert(to.to_string_lossy().to_lowercase());
+        to
     }
 
     fn transfer(&self, it: &Item, from: &Path, to: &Path) -> Op {

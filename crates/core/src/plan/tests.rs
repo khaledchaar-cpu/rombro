@@ -772,3 +772,27 @@ fn discarding_a_duplicate_already_in_the_trash_gets_a_numbered_name() {
     execute(&plan.ops);
     assert!(lib.join("_trash/m (2).sfc").exists());
 }
+
+#[test]
+fn trash_targets_differing_only_in_case_get_numbered() {
+    let tmp = TempDir::new().unwrap();
+    let (inbox, lib) = (tmp.path().join("inbox"), tmp.path().join("lib"));
+    file(&lib, &format!("{SYS}/Mario (USA).sfc"), "a");
+    let items = [
+        item(file(&inbox, "a/Mario.sfc", "a"), game("Mario (USA)"), false),
+        item(file(&inbox, "b/MARIO.sfc", "a"), game("Mario (USA)"), false),
+    ];
+    let mut o = opts(Mode::Move);
+    o.verdicts
+        .insert((SYS.into(), "Mario (USA)".into()), Verdict::Discard);
+    let plan = build(&items, &lib, &o);
+    assert_eq!(plan.discarded, 2, "{:?}", plan.decisions);
+    let mut lower: Vec<String> = plan
+        .ops
+        .iter()
+        .map(|op| op.target().to_string_lossy().to_lowercase())
+        .collect();
+    lower.sort();
+    lower.dedup();
+    assert_eq!(lower.len(), 2, "{:?}", plan.ops);
+}

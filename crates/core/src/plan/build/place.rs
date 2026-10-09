@@ -58,7 +58,7 @@ impl Builder<'_> {
                 if it.in_library || self.opts.mode == Mode::Move {
                     ops.push(Op::Move {
                         from: zip.clone(),
-                        to: self.library.join(TRASH_DIR).join(file_name(zip)),
+                        to: self.free_trash_target(&self.library.join(TRASH_DIR), zip),
                     });
                 }
                 (ops, None)
