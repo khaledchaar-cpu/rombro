@@ -2,7 +2,7 @@ import { createResource, Show } from "solid-js";
 import Panel from "../components/Panel";
 import { ContinuePanel } from "./DashboardContinue";
 import { PopularPanel } from "./DashboardPopular";
-import { LibraryPanel, RunsPanel } from "./DashboardHistory";
+import { LibraryPanel } from "./DashboardHistory";
 import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
 import {
   AchievementsPanel,
@@ -41,7 +41,6 @@ export default function Dashboard(props: {
       <LibraryPanel onOpen={props.onLibrary} />
       <OpenDecisionsPanel onReview={props.onReview} />
       <TrashPanel />
-      <RunsPanel />
     </div>
   );
 }

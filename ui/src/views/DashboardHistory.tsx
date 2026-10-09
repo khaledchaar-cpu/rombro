@@ -1,8 +1,6 @@
-// Dashboard panels: library summary (from the file index) and recent import runs.
-import { createResource, For, Show } from "solid-js";
+// Dashboard panel: library summary (from the file index).
+import { For, Show } from "solid-js";
 import Panel from "../components/Panel";
-import { journalList } from "../ipc";
-import { busy, status, undo } from "../state/importStore";
 import { librarySummary } from "../state/libraryStore";
 
 const fmt = new Intl.NumberFormat("en-US");
@@ -41,40 +39,6 @@ export function LibraryPanel(props: { onOpen: () => void }) {
           </>
         )}
       </Show>
-    </Panel>
-  );
-}
-
-export function RunsPanel() {
-  const [runs, { refetch }] = createResource(journalList);
-  const undoLatest = async () => {
-    await undo();
-    refetch();
-  };
-  const latestDone = () => runs()?.find((r) => r.state === "done");
-  return (
-    <Panel title="Recent runs" class="wide">
-      <Show when={runs()?.length} fallback={<p class="dim">{runs.error ? String(runs.error) : "No runs yet."}</p>}>
-        <ul class="rows mono small">
-          <For each={runs()}>
-            {(r) => (
-              <li classList={{ dim: r.state === "undone" }}>
-                <span>#{r.id} · {new Date(r.ts * 1000).toLocaleString()}</span>
-                <span class="ellipsis" title={r.library}>{r.library}</span>
-                <span>{r.ops} ops · {r.state}</span>
-              </li>
-            )}
-          </For>
-        </ul>
-      </Show>
-      <div class="row">
-        <button class="btn ghost" onClick={refetch}>Refresh</button>
-        <span class="spacer" />
-        <button class="btn ghost" disabled={busy() || !latestDone()} onClick={undoLatest}>
-          Undo #{latestDone()?.id ?? "–"}
-        </button>
-      </div>
-      <Show when={status()}>{(s) => <p class={`mono small ${s().ok ? "ok" : "err"}`}>{s().text}</p>}</Show>
     </Panel>
   );
 }
