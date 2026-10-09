@@ -3102,6 +3102,7 @@ name = "romburak-app"
 version = "0.7.0"
 dependencies = [
  "anyhow",
+ "percent-encoding",
  "romburak-core",
  "romburak-store",
  "serde",

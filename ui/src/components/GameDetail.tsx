@@ -1,8 +1,9 @@
-import { createResource, For, onCleanup, Show } from "solid-js";
+import { For, Show } from "solid-js";
+import Cover from "./Cover";
 import Panel from "./Panel";
 import GamePlay from "./GamePlay";
 import CheevosList from "./CheevosList";
-import { thumbnail, type LibraryRow, type ThumbKind } from "../ipc";
+import { type LibraryRow, type ThumbKind } from "../ipc";
 import { CHEEVOS_PBP_HINT, cheevosUnhashable, formatPlayTime, toggleFavorite } from "../state/libraryStore";
 
 const KINDS: { kind: ThumbKind; label: string }[] = [
@@ -12,21 +13,9 @@ const KINDS: { kind: ThumbKind; label: string }[] = [
 ];
 
 function Thumb(props: { row: LibraryRow; kind: ThumbKind; label: string }) {
-  const [src] = createResource(
-    () => [props.row.system, props.row.name] as const,
-    async ([system, name]) => (system ? thumbnail(system, name, props.kind) : null),
-  );
-  onCleanup(() => {
-    const s = src.latest;
-    if (s) URL.revokeObjectURL(s);
-  });
   return (
     <figure class="thumb">
-      <Show when={!src.loading} fallback={<div class="thumb-ph dim small">loading…</div>}>
-        <Show when={src()} fallback={<div class="thumb-ph dim small">{src.error ? "offline" : "no image"}</div>}>
-          {(s) => <img src={s()} alt={props.label} />}
-        </Show>
-      </Show>
+      <Cover system={props.row.system} name={props.row.name} kind={props.kind} />
       <figcaption class="dim small">{props.label}</figcaption>
     </figure>
   );

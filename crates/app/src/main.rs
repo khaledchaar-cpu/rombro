@@ -20,6 +20,9 @@ fn main() {
     }
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .register_asynchronous_uri_scheme_protocol("thumb", |_ctx, req, res| {
+            thumbs::protocol(req, res)
+        })
         .manage(import::Pending::default())
         .manage(import::Leftovers::default())
         .invoke_handler(tauri::generate_handler![

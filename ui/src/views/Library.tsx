@@ -1,6 +1,7 @@
 import { createVirtualizer } from "@tanstack/solid-virtual";
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 import DirField from "../components/DirField";
+import Cover from "../components/Cover";
 import GameDetail from "../components/GameDetail";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
@@ -12,6 +13,16 @@ import {
 } from "../state/libraryStore";
 
 const ROW_H = 26;
+const TILE_W = 148;
+const TILE_H = 228;
+const VIEW_KEY = "rombro.libraryView";
+const savedMode = (): "list" | "grid" => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
+  } catch {
+    return "list";
+  }
+};
 const EMPTY: LibraryRow = {
   path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0,
   favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null, cheevos_progress: null,
@@ -50,12 +61,31 @@ export default function Library() {
   const selected = createMemo(() => rows().find((r) => r.path === selPath()) ?? null);
   const toggle = (key: Key) => setSort((s) => ({ key, asc: s.key === key ? !s.asc : true }));
 
+  const [mode, setModeRaw] = createSignal(savedMode());
+  const setMode = (m: "list" | "grid") => {
+    setModeRaw(m);
+    try {
+      localStorage.setItem(VIEW_KEY, m);
+    } catch { /* per-device convenience only */ }
+  };
+
   let scroller!: HTMLDivElement;
   const v = createVirtualizer({
     get count() { return view().length; },
     getScrollElement: () => scroller,
     estimateSize: () => ROW_H,
     overscan: 12,
+  });
+
+  let gridScroller!: HTMLDivElement;
+  const [cols, setCols] = createSignal(4);
+  const observer = new ResizeObserver(([e]) => setCols(Math.max(1, Math.floor(e.contentRect.width / TILE_W))));
+  onCleanup(() => observer.disconnect());
+  const g = createVirtualizer({
+    get count() { return Math.ceil(view().length / cols()); },
+    getScrollElement: () => gridScroller,
+    estimateSize: () => TILE_H,
+    overscan: 3,
   });
 
   return (
@@ -82,10 +112,37 @@ export default function Library() {
         <Show when={error()}>
           <p class="err mono">{error()}</p>
         </Show>
-        <p class="dim small">
-          {view().length} / {rows().length} items
-        </p>
-        <div class="ltable">
+        <div class="row spread">
+          <p class="dim small">
+            {view().length} / {rows().length} items
+          </p>
+          <div class="seg-toggle" role="group" aria-label="View">
+            <button class="btn ghost small" classList={{ on: mode() === "list" }} onClick={() => setMode("list")}>☰ List</button>
+            <button class="btn ghost small" classList={{ on: mode() === "grid" }} onClick={() => setMode("grid")}>▦ Grid</button>
+          </div>
+        </div>
+        <Show when={mode() === "grid"}>
+          <div class="vlist cgrid" ref={(el) => ((gridScroller = el), observer.observe(el))}>
+            <div style={{ height: `${g.getTotalSize()}px`, position: "relative" }}>
+              <For each={g.getVirtualItems()}>
+                {(line) => (
+                  <div class="cgrid-row" style={{ transform: `translateY(${line.start}px)`, height: `${TILE_H}px`, "grid-template-columns": `repeat(${cols()}, minmax(0, 1fr))` }}>
+                    <For each={view().slice(line.index * cols(), line.index * cols() + cols())}>
+                      {(r) => (
+                        <button class="tile" classList={{ sel: selPath() === r.path }} title={`${r.name}\n${r.system}`} onClick={() => setSelPath(r.path)}>
+                          <Cover system={r.system} name={r.name} class="tile-cover" />
+                          <span class="tile-name ellipsis small">{r.favorite ? "★ " : ""}{r.name}</span>
+                          <span class="tile-sys ellipsis dim small">{r.system}</span>
+                        </button>
+                      )}
+                    </For>
+                  </div>
+                )}
+              </For>
+            </div>
+          </div>
+        </Show>
+        <div class="ltable" classList={{ hidden: mode() === "grid" }}>
           <div class="lrow lhead">
             <For each={COLS}>
               {(c) => (
@@ -117,7 +174,10 @@ export default function Library() {
                       </button>
                       <span class={`tag tag-${r().state}`}>{r().state}</span>
                       <span class="ellipsis dim" title={r().system}>{r().system}</span>
-                      <span class="ellipsis" title={r().name}>{r().name}</span>
+                      <span class="lname" title={r().name}>
+                        <Cover system={r().system} name={r().name} class="cover-mini" />
+                        <span class="ellipsis">{r().name}</span>
+                      </span>
                       <span class="ellipsis mono dim" title={r().path}>{r().path}</span>
                       <span class="dim">{r().seconds ? formatPlayTime(r().seconds) : ""}</span>
                       <span

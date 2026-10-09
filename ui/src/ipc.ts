@@ -1,6 +1,6 @@
 // Thin typed wrappers around Tauri commands. Outside Tauri (plain `vite dev`)
 // they return mock data so the UI can be developed in a browser.
-import { invoke } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export interface SystemCount {
@@ -492,17 +492,10 @@ export async function rulesSet(rules: Rules | null): Promise<Rules> {
 
 export type ThumbKind = "boxart" | "title" | "snap";
 
-/** Object URL of a libretro thumbnail, or null if the server has none. Cached on disk by the backend. */
-export async function thumbnail(
-  system: string,
-  name: string,
-  kind: ThumbKind,
-): Promise<string | null> {
-  if (!inTauri) return null;
-  const buf = await invoke<ArrayBuffer>("thumbnail", { system, name, kind });
-  return buf.byteLength
-    ? URL.createObjectURL(new Blob([buf], { type: "image/png" }))
-    : null;
+/** URL of a libretro thumbnail (`thumb://` protocol, cached on disk by the backend; 404 if none). */
+export function thumbUrl(system: string, name: string, kind: ThumbKind): string | null {
+  if (!inTauri || !system) return null;
+  return convertFileSrc(`${kind}/${system}/${name}`, "thumb");
 }
 
 /** Whether missing thumbnails are downloaded from libretro (default on). */
