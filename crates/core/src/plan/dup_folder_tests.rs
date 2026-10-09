@@ -18,7 +18,11 @@ fn duplicate_game_folder_is_a_decision() {
     let lib = tmp.path().join("lib");
     let items = [
         item(file(&lib, "Quake/quake/id1/pak0.pak", "p"), quake(), true),
-        item(file(&lib, "Quake/tyrquake/id1/pak0.pak", "p"), quake(), true),
+        item(
+            file(&lib, "Quake/tyrquake/id1/pak0.pak", "p"),
+            quake(),
+            true,
+        ),
         item(
             file(&lib, "Quake/tyrquake/id1/rogue/pak0.pak", "r"),
             Ident::Unknown,
