@@ -99,31 +99,31 @@ pub fn run(cmd: Cmd, db: Option<PathBuf>) -> Result<()> {
                     .library()?
                     .context("no library stored (use --library)")?,
             };
-            let mut systems: Vec<_> = std::fs::read_dir(&library)?
-                .filter_map(|e| e.ok())
-                .filter(|e| e.path().is_dir())
-                .filter_map(|e| {
-                    let name = e.file_name().to_string_lossy().into_owned();
-                    cheevos::console(&name).map(|c| (name, e.path(), c))
-                })
-                .collect();
-            systems.sort_by(|a, b| a.0.cmp(&b.0));
+            let mut by_system: std::collections::BTreeMap<String, Vec<_>> = Default::default();
+            for (p, console) in cheevos::library_files(&library)? {
+                let Ok(rel) = p.strip_prefix(&library) else {
+                    continue;
+                };
+                let system = rel
+                    .components()
+                    .next()
+                    .map(|c| c.as_os_str().to_string_lossy().into_owned());
+                by_system
+                    .entry(system.unwrap_or_default())
+                    .or_default()
+                    .push((p, console));
+            }
             let (mut all, mut hit) = (0, 0);
-            for (name, dir, console) in systems {
-                let (mut n, mut found) = (0, 0);
-                for f in std::fs::read_dir(&dir)?.filter_map(|e| e.ok()) {
-                    let p = f.path();
-                    let fname = f.file_name().to_string_lossy().into_owned();
-                    if !p.is_file() || fname.starts_with('.') {
-                        continue;
-                    }
-                    n += 1;
+            for (name, files) in by_system {
+                let (n, mut found) = (files.len(), 0);
+                for (p, console) in files {
                     let Some(h) = store.ra_hash(&p, console.method)? else {
                         continue;
                     };
                     if let Some(g) = store.ra_game(&h)? {
                         found += 1;
                         if list {
+                            let fname = p.file_name().unwrap_or_default().to_string_lossy();
                             println!("  {fname} → {} ({} achievements)", g.title, g.achievements);
                         }
                     }

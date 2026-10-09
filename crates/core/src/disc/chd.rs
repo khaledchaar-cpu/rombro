@@ -83,6 +83,19 @@ fn layout(entries: &[String]) -> Vec<TrackInfo> {
     out
 }
 
+/// Tracks of a CHD image from its CD / GD-ROM metadata.
+fn tracks_of(chd: &mut Chd<BufReader<File>>) -> io::Result<Vec<TrackInfo>> {
+    let metas: Vec<Metadata> = chd.metadata_refs().try_into()?;
+    let entries: Vec<String> = metas
+        .iter()
+        .filter(|m| {
+            KnownMetadata::is_cdrom(m.metatag()) || m.metatag() == KnownMetadata::GdRomTrack as u32
+        })
+        .map(|m| String::from_utf8_lossy(&m.value).into_owned())
+        .collect();
+    Ok(layout(&entries))
+}
+
 /// Sector data of one CHD track, readable and seekable like a `.bin` file.
 pub struct ChdTrack {
     chd: Chd<BufReader<File>>,
@@ -108,19 +121,34 @@ struct Lead {
 impl ChdTrack {
     /// Opens the first data (non-audio) track; `None` if the CHD holds no CD data track.
     pub fn open(path: &Path) -> io::Result<Option<Self>> {
+        Self::open_with(path, |ts| ts.iter().position(|t| t.kind != "AUDIO"))
+    }
+
+    /// Track numbers of the image with whether each is an audio track, in order.
+    pub fn track_list(path: &Path) -> io::Result<Vec<(u32, bool)>> {
+        Ok(
+            tracks_of(&mut Chd::open(BufReader::new(File::open(path)?), None)?)?
+                .into_iter()
+                .map(|t| (t.number, t.kind == "AUDIO"))
+                .collect(),
+        )
+    }
+
+    /// Opens track `number` (1-based); `None` if the image has no such track.
+    pub fn open_number(path: &Path, number: u32) -> io::Result<Option<Self>> {
+        Self::open_with(path, |ts| ts.iter().position(|t| t.number == number))
+    }
+
+    fn open_with(
+        path: &Path,
+        pick: impl FnOnce(&[TrackInfo]) -> Option<usize>,
+    ) -> io::Result<Option<Self>> {
         let mut chd = Chd::open(BufReader::new(File::open(path)?), None)?;
-        let metas: Vec<Metadata> = chd.metadata_refs().try_into()?;
-        let entries: Vec<String> = metas
-            .iter()
-            .filter(|m| {
-                KnownMetadata::is_cdrom(m.metatag())
-                    || m.metatag() == KnownMetadata::GdRomTrack as u32
-            })
-            .map(|m| String::from_utf8_lossy(&m.value).into_owned())
-            .collect();
-        let Some(track) = layout(&entries).into_iter().find(|t| t.kind != "AUDIO") else {
+        let mut tracks = tracks_of(&mut chd)?;
+        let Some(i) = pick(&tracks) else {
             return Ok(None);
         };
+        let track = tracks.swap_remove(i);
         let hunk_bytes = u64::from(chd.header().hunk_size());
         Ok(Some(Self {
             hunk: chd.get_hunksized_buffer(),

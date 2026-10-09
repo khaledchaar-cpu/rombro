@@ -127,7 +127,7 @@ pub fn read_text(path: &Path) -> io::Result<String> {
     Ok(String::from_utf8_lossy(&fs::read(path)?).into_owned())
 }
 
-fn resolve(p: &Path) -> Option<PathBuf> {
+pub(crate) fn resolve(p: &Path) -> Option<PathBuf> {
     if p.is_file() {
         return Some(p.to_path_buf());
     }

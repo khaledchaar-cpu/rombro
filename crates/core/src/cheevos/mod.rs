@@ -3,9 +3,12 @@
 
 use std::fs::File;
 use std::io::{self, BufReader, Read};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use md5::{Digest, Md5};
+
+mod cd;
+mod disc;
 
 const TABLE: &str = include_str!("consoles.tsv");
 
@@ -33,6 +36,38 @@ pub enum Method {
     N64,
     /// MD5 of the file name without extension (romset name).
     Arcade,
+    /// Boot executable from `SYSTEM.CNF` (`BOOT`), or `PSX.EXE`.
+    Psx,
+    /// Boot executable from `SYSTEM.CNF` (`BOOT2`).
+    Ps2,
+    /// `PARAM.SFO` + `EBOOT.BIN`; `.pbp` whole.
+    Psp,
+    /// First 512 bytes of the disc (Sega CD, Saturn).
+    SegaCd,
+    /// Boot header and program sectors of the first data track.
+    PceCd,
+    /// IP.BIN meta + boot file.
+    Dreamcast,
+    /// Opera volume header + `LaunchMe`.
+    ThreeDo,
+    /// Header, ARM9/ARM7 code and icon block.
+    Nds,
+}
+
+impl Method {
+    /// Content is a disc image (sheets, CHD, ISO …) rather than a single ROM file.
+    pub fn is_disc(self) -> bool {
+        matches!(
+            self,
+            Self::Psx
+                | Self::Ps2
+                | Self::Psp
+                | Self::SegaCd
+                | Self::PceCd
+                | Self::Dreamcast
+                | Self::ThreeDo
+        )
+    }
 }
 
 /// A system RetroAchievements supports, with its console id and hash method.
@@ -58,6 +93,14 @@ pub fn console(system: &str) -> Option<Console> {
             "scv" => Method::Scv,
             "n64" => Method::N64,
             "arcade" => Method::Arcade,
+            "psx" => Method::Psx,
+            "ps2" => Method::Ps2,
+            "psp" => Method::Psp,
+            "segacd" => Method::SegaCd,
+            "pcecd" => Method::PceCd,
+            "dreamcast" => Method::Dreamcast,
+            "3do" => Method::ThreeDo,
+            "nds" => Method::Nds,
             _ => return None,
         };
         Some(Console { id, method })
@@ -77,13 +120,18 @@ pub fn console_ids() -> Vec<u32> {
 }
 
 /// Files RetroAchievements can hash in `library`: every file directly in a system folder
-/// whose system is supported (dot files left out), with its console.
-pub fn library_files(library: &Path) -> io::Result<Vec<(std::path::PathBuf, Console)>> {
+/// whose system is supported (dot files left out), with its console. Disc systems: each disc
+/// (sheet, CHD, ISO …, also in multi-disc game folders), not the track files of a sheet.
+pub fn library_files(library: &Path) -> io::Result<Vec<(PathBuf, Console)>> {
     let mut out = Vec::new();
     for dir in std::fs::read_dir(library)?.filter_map(|e| e.ok()) {
         let Some(console) = console(&dir.file_name().to_string_lossy()) else {
             continue;
         };
+        if console.method.is_disc() {
+            disc_files(&dir.path(), console, 1, &mut out)?;
+            continue;
+        }
         for f in std::fs::read_dir(dir.path())?.filter_map(|e| e.ok()) {
             if f.file_type().is_ok_and(|t| t.is_file())
                 && !f.file_name().to_string_lossy().starts_with('.')
@@ -94,6 +142,52 @@ pub fn library_files(library: &Path) -> io::Result<Vec<(std::path::PathBuf, Cons
     }
     out.sort_by(|a, b| a.0.cmp(&b.0));
     Ok(out)
+}
+
+/// Discs in `dir` (and `depth` levels of game folders below it).
+fn disc_files(
+    dir: &Path,
+    console: Console,
+    depth: u32,
+    out: &mut Vec<(PathBuf, Console)>,
+) -> io::Result<()> {
+    const DISC: [&str; 8] = ["cue", "gdi", "chd", "iso", "cso", "pbp", "bin", "img"];
+    let (mut files, mut tracks) = (Vec::new(), std::collections::HashSet::new());
+    for e in std::fs::read_dir(dir)?.filter_map(|e| e.ok()) {
+        let (path, name) = (e.path(), e.file_name().to_string_lossy().into_owned());
+        if name.starts_with('.') || name.starts_with('_') {
+            continue;
+        }
+        if e.file_type().is_ok_and(|t| t.is_dir()) {
+            if depth > 0 {
+                disc_files(&path, console, depth - 1, out)?;
+            }
+            continue;
+        }
+        let ext = name
+            .rsplit_once('.')
+            .map(|(_, e)| e.to_ascii_lowercase())
+            .unwrap_or_default();
+        if let Some(kind @ (crate::disc::DiscKind::Cue | crate::disc::DiscKind::Gdi)) =
+            crate::disc::DiscKind::from_ext(&ext)
+        {
+            tracks.extend(
+                crate::disc::tracks(&path, kind)
+                    .map(|t| t.0)
+                    .unwrap_or_default(),
+            );
+        }
+        if DISC.contains(&ext.as_str()) {
+            files.push(path);
+        }
+    }
+    out.extend(
+        files
+            .into_iter()
+            .filter(|f| !tracks.contains(f))
+            .map(|f| (f, console)),
+    );
+    Ok(())
 }
 
 /// Title key for matching a library name against RA titles across versions: text before the
@@ -115,6 +209,9 @@ pub fn title_key(name: &str) -> String {
 /// file's content, except arcade sets (by name). `None` if the content is not hashable
 /// (e.g. an N64 file with an unknown byte order).
 pub fn hash_file(path: &Path, method: Method) -> io::Result<Option<String>> {
+    if method.is_disc() || method == Method::Nds {
+        return disc::hash(path, method);
+    }
     if method == Method::Arcade {
         let stem = path
             .file_stem()

@@ -45,6 +45,18 @@ impl<R: Read + Seek> Track<R> {
         Ok(buf)
     }
 
+    /// Address in the header of raw sector `lba`; `None` for cooked 2048-byte sectors.
+    pub fn raw_lba(&mut self, lba: u32) -> io::Result<Option<u32>> {
+        if self.sector_size != 2352 {
+            return Ok(None);
+        }
+        let mut head = [0u8; 16];
+        self.inner
+            .seek(SeekFrom::Start(u64::from(lba) * self.sector_size))?;
+        read_full(&mut self.inner, &mut head)?;
+        Ok(super::cdsector::header_lba(&head))
+    }
+
     /// Reads a file from the ISO9660 root directory (case-insensitive, `;1` version ignored).
     /// `None` if the track has no ISO9660 volume or the file does not exist.
     pub fn read_root_file(&mut self, name: &str, max_len: u32) -> io::Result<Option<Vec<u8>>> {
