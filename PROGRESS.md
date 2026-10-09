@@ -42,7 +42,7 @@
 | v0.8.2 Release (Atari-ST-Teile, Sufami-Turbo-Zips, CI-e2e Win/macOS) | ✅ released 2026-10-09 |
 | M22 Beliebtheit (RA-Spielerzahlen) | ✅ done (Sichtprüfung 2026-10-09) |
 | v0.9.0 Release (M22 Beliebtheit) | ✅ released 2026-10-09 |
-| M23 UX: Blättern statt Scrollen, Library-Filter | 🔶 gebaut 2026-10-09, Sichtprüfung User offen |
+| M23 UX-Überarbeitung | ✅ gebaut 2026-10-09 (Stichproben User; Details SPEC §6 „M23“) |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -175,7 +175,14 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
    (Ctrl+7): Übersicht, Verlauf 7/30 Tage/12 Monate (lokale Zeit), meistgespielt, Zeit je System, Achievements.
    Sichtprüfung ok. v2 Launcher (M17–M21) komplett.
 
+M23 (2026-10-09): Blättern statt Scrollen (`components/Pager.tsx`: `createPaged` mit Anker-Item, `fitCount`
+misst live), Library-Filter Mehrfachauswahl + Jahrzehnte (`year` aus RDB), Suche Name+System inkl. Kürzel,
+Library-Pfad/Needs attention/Trash → Settings → Library, Details mit Reitern, Stats im Dashboard aufgegangen,
+Dashboard-Einträge springen in die Library (`state/jump.ts`), Graph „Library growth“, Core-Override am Inhalt.
+Offen: Dashboard scrollt als Seite; Franchise-Sprung nur per Namenssuche; Gamification-Zahlen ≠ Library-Filterzahlen.
+
 ## Stolpersteine
+- Chrome-Tab im Hintergrund (`visibilityState: hidden`): kein rAF, Screenshots hängen – Tests per JS, `fitCount` misst erst sichtbar.
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie
   `--appendconfig`** – hat am 2026-10-06 die Null-Treiber in die echte `retroarch.cfg` gespeichert.
   (Exit 0 = läuft). Schreibt in `playlists/builtin/content_history.lpl` → Testeinträge danach entfernen.
