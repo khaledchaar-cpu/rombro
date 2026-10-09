@@ -10,6 +10,7 @@ import { onScanProgress, type LibraryRow, type ScanProgress } from "../ipc";
 import {
   cheevosCell, cheevosTitle, formatPlayTime, library, libraryBusy as busy, libraryError as error, libraryRows as rows, toggleFavorite,
 } from "../state/libraryStore";
+import { libraryJump, setLibraryJump } from "../state/jump";
 import { popularityRank, rankLabel, rankTitle } from "../state/popularity";
 
 const ROW_H = 26;
@@ -84,6 +85,18 @@ export default function Library(props: { onSettings: () => void }) {
   const observer = new ResizeObserver(([e]) => setCols(Math.max(1, Math.floor(e.contentRect.width / TILE_W))));
   onCleanup(() => observer.disconnect());
   const paged = createPaged(view, () => (mode() === "grid" ? cols() * gridRows() : listRows()));
+  // a jump from the dashboard: apply its filter, select + page to its game
+  createEffect(on(libraryJump, (j) => {
+    if (!j) return;
+    filter.apply(j);
+    setSelPath(j.path ?? null);
+    queueMicrotask(() => {
+      const i = j.path ? view().findIndex((r) => r.path === j.path) : -1;
+      if (i >= 0) paged.show(i);
+      setLibraryJump(null);
+    });
+  }));
+
   // keep the selected game in sight when switching list ↔ grid
   createEffect(on(mode, () => {
     const i = view().findIndex((r) => r.path === selPath());

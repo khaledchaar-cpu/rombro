@@ -222,3 +222,18 @@
   .libview.with-detail .detail { grid-template-columns: minmax(0, 1fr); }
   .libview.with-detail .meta dd { overflow-wrap: break-word; }
 }
+
+/* dashboard items that jump into the Library (state/jump.ts) */
+[data-jump] { cursor: pointer; transition: color var(--dur), background var(--dur); }
+[data-jump]:hover { color: var(--accent); }
+li[data-jump]:hover, .stat[data-jump]:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+[data-jump]:focus { outline: none; }
+[data-jump]:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.shelf-tile { position: relative; }
+.tile-play {
+  position: absolute; top: var(--sp-2); right: var(--sp-2); width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; padding: 0; cursor: pointer; font-size: 12px;
+  background: var(--accent); color: var(--bg); border: 0; opacity: 0; transition: opacity var(--dur);
+}
+.shelf-tile:hover .tile-play, .tile-play:focus-visible { opacity: 1; }
+.tile-play:disabled { opacity: 0.4; cursor: wait; }

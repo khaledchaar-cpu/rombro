@@ -4,6 +4,7 @@ import Cover from "../components/Cover";
 import Pager, { createPaged } from "../components/Pager";
 import Panel from "../components/Panel";
 import { play, type LibraryRow } from "../ipc";
+import { jumpProps } from "../state/jump";
 import { formatPlayTime, libraryRows } from "../state/libraryStore";
 
 const MAX = 12;
@@ -62,16 +63,20 @@ export function Shelf(props: {
         <div class="shelf" ref={(el) => ro.observe(el)}>
           <For each={paged.items()}>
             {(r) => (
-              <button
-                class="tile shelf-tile"
-                disabled={!!busy()}
-                title={`Play ${r.name}\n${r.system}`}
-                onClick={() => void start(r)}
-              >
+              <div class="tile shelf-tile" title={`${r.name}\n${r.system}`} {...jumpProps({ path: r.path })}>
                 <Cover system={r.system} name={r.name} class="tile-cover" />
                 <span class="tile-name ellipsis small">{r.favorite ? "★ " : ""}{r.name}</span>
                 <span class="tile-sys ellipsis dim small">{props.sub(r)}</span>
-              </button>
+                <button
+                  class="tile-play"
+                  disabled={!!busy()}
+                  title={`Play ${r.name}`}
+                  onClick={(e) => (e.stopPropagation(), void start(r))}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  ▶
+                </button>
+              </div>
             )}
           </For>
         </div>

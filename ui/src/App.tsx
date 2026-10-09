@@ -1,4 +1,4 @@
-import { createSignal, Match, onCleanup, onMount, Switch } from "solid-js";
+import { createEffect, createSignal, Match, onCleanup, onMount, Switch } from "solid-js";
 import Topbar from "./components/Topbar";
 import Toasts from "./components/Toasts";
 import CommandPalette, { type Command } from "./components/CommandPalette";
@@ -8,6 +8,7 @@ import System from "./views/System";
 import RetroArch from "./views/RetroArch";
 import Rules from "./views/Rules";
 import Sidebar from "./components/Sidebar";
+import { libraryJump } from "./state/jump";
 import Import from "./views/Import";
 import Library from "./views/Library";
 import { execute, plan, undo } from "./state/importStore";
@@ -57,6 +58,9 @@ export default function App() {
     void initLibrary().then(refreshPlayers);
   });
   onCleanup(() => window.removeEventListener("keydown", onKey));
+
+  // dashboard items jump into the Library (it applies the jump itself)
+  createEffect(() => libraryJump() && setView("library"));
 
   const title = () => VIEWS.find((v) => v.id === view())?.label ?? "";
 

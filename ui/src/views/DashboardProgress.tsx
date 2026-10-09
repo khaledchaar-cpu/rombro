@@ -1,4 +1,5 @@
 // Dashboard gamification panels (SPEC F6): level/XP, KPIs, completeness per system, achievements.
+import { jumpProps, type LibraryJump } from "../state/jump";
 import { createMemo, For, Show } from "solid-js";
 import Pager, { createPaged } from "../components/Pager";
 import Panel from "../components/Panel";
@@ -27,7 +28,7 @@ export function ProgressPanel() {
             <>
               <div class="kpis">
                 <div><div class="kpi">LV {l().level}</div><p class="dim small">{fmt.format(l().xp)} / {fmt.format(l().next)} XP</p></div>
-                <div><div class="kpi">{fmt.format(k().games)}</div><p class="dim small">verified games</p></div>
+                <div {...jumpProps({ states: ["known"] })}><div class="kpi">{fmt.format(k().games)}</div><p class="dim small">verified games</p></div>
                 <div><div class="kpi">{pct(k().games, verified())}</div><p class="dim small">verified quota</p></div>
                 <div><div class="kpi">{k().streak}</div><p class="dim small">day streak</p></div>
                 <div><div class="kpi">{fmt.format(k().trashed)}</div><p class="dim small">files trashed</p></div>
@@ -35,9 +36,9 @@ export function ProgressPanel() {
               </div>
               <Segments value={l().xp - l().floor} max={l().next - l().floor} />
               <div class="mix">
-                <Mix title="Regions" items={top(k().regions, 5)} />
+                <Mix title="Regions" items={top(k().regions, 5)} jump={(r) => ({ regions: [r] })} />
                 <Mix title="Genres" items={top(k().genres, 5)} />
-                <Mix title="Decades" items={Object.entries(k().decades).map(([d, n]) => [`${d}s`, n] as [string, number])} />
+                <Mix title="Decades" items={Object.entries(k().decades).map(([d, n]) => [`${d}s`, n] as [string, number])} jump={(d) => ({ decades: [d] })} />
               </div>
             </>
           );
@@ -47,13 +48,13 @@ export function ProgressPanel() {
   );
 }
 
-function Mix(props: { title: string; items: [string, number][] }) {
+function Mix(props: { title: string; items: [string, number][]; jump?: (k: string) => LibraryJump }) {
   return (
     <div>
       <h3 class="dim small">{props.title}</h3>
       <ul class="rows small">
         <For each={props.items} fallback={<li class="dim">–</li>}>
-          {([k, n]) => (<li><span class="ellipsis">{k}</span><span class="mono">{fmt.format(n)}</span></li>)}
+          {([k, n]) => (<li {...(props.jump ? jumpProps(props.jump(k)) : {})}><span class="ellipsis">{k}</span><span class="mono">{fmt.format(n)}</span></li>)}
         </For>
       </ul>
     </div>
@@ -70,7 +71,7 @@ export function CompletenessPanel() {
       <ul class="complete">
         <For each={paged.items()} fallback={<li class="dim">No identified games yet.</li>}>
           {(s) => (
-            <li>
+            <li {...(s.owned ? jumpProps({ systems: [s.system] }) : {})}>
               <div class="row">
                 <span class="ellipsis">{s.system}</span>
                 <span class="spacer" />
@@ -95,7 +96,7 @@ export function FranchisePanel() {
       <ul class="complete">
         <For each={paged.items()} fallback={<li class="dim">No franchise started yet.</li>}>
           {(f) => (
-            <li>
+            <li {...jumpProps({ query: f.franchise })}>
               <div class="row">
                 <span class="ellipsis">{f.franchise}</span>
                 <span class="spacer" />

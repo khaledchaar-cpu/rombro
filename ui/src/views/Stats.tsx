@@ -1,4 +1,5 @@
 // Statistics: play time totals, history (week/month/year), top games, time per system, achievements.
+import { jumpProps } from "../state/jump";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import Cover from "../components/Cover";
 import Pager, { createPaged } from "../components/Pager";
@@ -101,10 +102,10 @@ export default function PlayStats() {
     <>
       <Panel title="Overview" class="wide">
         <div class="stat-tiles">
-          <div class="stat"><strong>{total() ? formatPlayTime(total()) : "0 min"}</strong><span class="dim small">played in total</span></div>
-          <div class="stat"><strong>{played().length}</strong><span class="dim small">games played</span></div>
-          <div class="stat"><strong>{runs()}</strong><span class="dim small">sessions</span></div>
-          <div class="stat"><strong>{unlocked()}</strong><span class="dim small">achievements · {mastered()} mastered</span></div>
+          <div class="stat" {...jumpProps({ played: true })}><strong>{total() ? formatPlayTime(total()) : "0 min"}</strong><span class="dim small">played in total</span></div>
+          <div class="stat" {...jumpProps({ played: true })}><strong>{played().length}</strong><span class="dim small">games played</span></div>
+          <div class="stat" {...jumpProps({ played: true })}><strong>{runs()}</strong><span class="dim small">sessions</span></div>
+          <div class="stat" {...jumpProps({ cheevos: true })}><strong>{unlocked()}</strong><span class="dim small">achievements · {mastered()} mastered</span></div>
         </div>
       </Panel>
 
@@ -129,7 +130,7 @@ export default function PlayStats() {
           <ol class="rank" start={pTop.offset() + 1}>
             <For each={pTop.items()}>
               {(r) => (
-                <li>
+                <li {...jumpProps({ path: r.path })}>
                   <Cover system={r.system} name={r.name} class="cover-mini" />
                   <span class="rank-name">
                     <span class="ellipsis small" title={r.name}>{r.name}</span>
@@ -149,7 +150,7 @@ export default function PlayStats() {
           <ol class="rank" start={pSys.offset() + 1}>
             <For each={pSys.items()}>
               {([sys, secs]) => (
-                <li>
+                <li {...jumpProps({ systems: [sys], played: true })}>
                   <span class="rank-name">
                     <span class="ellipsis small" title={sys}>{sys}</span>
                     <Meter value={secs} max={perSystem()[0][1]} />
@@ -168,7 +169,7 @@ export default function PlayStats() {
           <ol class="rank" start={pAch.offset() + 1}>
             <For each={pAch.items()}>
               {(r) => (
-                <li>
+                <li {...jumpProps({ path: r.path })}>
                   <Cover system={r.system} name={r.name} class="cover-mini" />
                   <span class="rank-name">
                     <span class="ellipsis small" title={r.name}>

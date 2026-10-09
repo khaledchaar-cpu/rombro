@@ -1,4 +1,5 @@
 // Dashboard panel: library summary (from the file index).
+import { jumpProps } from "../state/jump";
 import { For, Show } from "solid-js";
 import Panel from "../components/Panel";
 import { librarySummary } from "../state/libraryStore";
@@ -11,14 +12,14 @@ export function LibraryPanel(props: { onOpen: () => void }) {
       <Show when={librarySummary()} fallback={<p class="dim">No library yet – choose one in the Library view.</p>}>
         {(s) => (
           <>
-            <div class="kpi">{fmt.format(s().total)}</div>
+            <div class="kpi" {...jumpProps({})}>{fmt.format(s().total)}</div>
             <p class="dim small">
               items · {s().systems.length} systems · scanned {new Date(s().ts).toLocaleString()}
             </p>
             <ul class="rows">
               <For each={Object.entries(s().states)}>
                 {([k, n]) => (
-                  <li>
+                  <li {...jumpProps({ states: [k] })}>
                     <span>{k}</span>
                     <span class="mono">{fmt.format(n)}</span>
                   </li>
@@ -28,7 +29,7 @@ export function LibraryPanel(props: { onOpen: () => void }) {
             <ul class="rows small">
               <For each={s().systems.slice(0, 5)}>
                 {([sys, n]) => (
-                  <li>
+                  <li {...jumpProps({ systems: [sys] })}>
                     <span class="ellipsis">{sys}</span>
                     <span class="mono">{fmt.format(n)}</span>
                   </li>

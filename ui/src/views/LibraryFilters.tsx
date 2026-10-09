@@ -4,6 +4,7 @@ import { createMemo, createSignal, For, Show, type Accessor } from "solid-js";
 import MultiSelect from "../components/MultiSelect";
 import type { Option } from "../components/Select";
 import type { LibraryRow } from "../ipc";
+import type { LibraryJump } from "../state/jump";
 
 const opts = (list: [string, number][]): Option<string>[] => list.map(([s, n]) => ({ value: s, label: s, hint: String(n) }));
 
@@ -83,6 +84,18 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
   const reset = () => (
     setQuery(""), setSystems(new Set<string>()), setRegions(new Set<string>()), setDecades(new Set<string>()), setStates(new Set<string>()), setFavOnly(false), setPlayedOnly(false), setCheevosOnly(false)
   );
+  /** Replaces all filters with those of a jump (a jump to a game clears them). */
+  const apply = (j: LibraryJump) => {
+    reset();
+    setQuery(j.query ?? "");
+    setSystems(new Set(j.systems ?? []));
+    setRegions(new Set(j.regions ?? []));
+    setDecades(new Set(j.decades ?? []));
+    setStates(new Set(j.states ?? []));
+    setFavOnly(!!j.favorite);
+    setPlayedOnly(!!j.played);
+    setCheevosOnly(!!j.cheevos);
+  };
   const toggleState = (s: string) => setStates((cur) => toggled(cur, s));
 
   function Bar() {
@@ -122,5 +135,5 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
     );
   }
 
-  return { filtered, Bar };
+  return { filtered, Bar, apply };
 }
