@@ -30,7 +30,7 @@
 | M15d Altlasten | ✅ done (2026-10-08) |
 | M16a RetroAchievements: Hashing + Library-Badge | ✅ done (Sichtprüfung 2026-10-08) |
 | M16b RA-Login, Hardcore, Fortschritt | ✅ done (echter Login + Freischaltung + Sichtprüfung 2026-10-09) |
-| M16c RA Disc-Systeme + NDS | ⏳ |
+| M16c RA Disc-Systeme + NDS | ✅ done (2026-10-09, gegen rcheevos verifiziert; Sichtprüfung App offen) |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -116,6 +116,16 @@ bei Sync, Login und nach gespielten RA-Spielen (nur betroffene Zeilen gepatcht).
 gesperrte grau. CLI `cheevos login <user>` (Passwort per TTY oder stdin), `logout`, `hardcore on|off`.
 Getestet 2026-10-09: echter Login, Freischaltung in RetroArch (Metal Slug 4, FBNeo), Sichtprüfung. Fix: Liste lädt neu, wenn sich die Zahl der Freischaltungen ändert.
 Nächste Schritte: M16c (Disc-Systeme + NDS hashen).
+
+M16c (2026-10-09): `cheevos::cd` (Tracks nach Nummer/erster Daten-/letzter Track, absolute LBA aus Raw-Header bzw.
+`.gdi`, cue mit `INDEX 01`-Offset, ISO9660-Suche wie `rc_cd_find_file_sector`), `cheevos::disc` (PS1, PS2, PSP inkl.
+`.pbp` ganz, Sega CD/Saturn, PCE-CD, Dreamcast, 3DO, NDS/DSi); `ChdTrack::open_number/track_list`.
+`library_files` liefert bei Disc-Systemen jede Disc (auch in Mehrdisk-Ordnern), keine Track-Dateien eines Sheets.
+CLI `cheevos scan` nutzt jetzt `library_files`. Verifiziert: alle cue/iso/nds/PSP-ISO der echten Library bit-identisch
+zu rcheevos (Referenz-Binary, s. CLAUDE.md), CSO entpackt identisch. Echte Library: PCE-CD 10/22, DC 4/18, Sega CD 5/10,
+3DO 5/35, NDS 20/67, PSP 27/111, Saturn 0/8 (RA führt diese Dumps nicht, Hashes = rcheevos). Nicht unterstützt:
+PS1-`.pbp` (rcheevos auch nicht), PCE-GameExpress (BOOT.BIN), PC-FX, Neo Geo CD, Jaguar CD, Discs in Zips.
+Nächste Schritte: Sichtprüfung in der App (Settings → Databases → RetroAchievements: Sync + Hashing neu laufen lassen).
 
 ## Nächste Schritte
 -2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,

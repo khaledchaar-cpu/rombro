@@ -54,6 +54,7 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Undo / Resolve | `… -- undo` / `… -- resolve <file> [n]` |
 | Echte RDBs testen | `cargo test -q --release -p rombro-rdb -- --ignored` |
 | RDB-Ort (Linux) | `~/.config/retroarch/database/rdb/` (146 Dateien), Erkennung: `core::paths` |
+| rcheevos-Referenzhash | `git clone --depth 1 https://github.com/RetroAchievements/rcheevos`, `gcc -o rh rh.c -Ircheevos/include -Ircheevos/src rcheevos/src/hash/*.c rcheevos/src/util/*.c` (rh.c: `rc_hash_init_default_cdreader` + `rc_hash_generate_from_file`; kann kein CHD/CSO) |
 | App-Bundle lokal | `cd ui && pnpm tauri build --bundles deb` |
 
 ## Code-Konventionen

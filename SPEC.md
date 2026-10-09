@@ -172,6 +172,9 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
 - Entschieden (M16b, Default): Token liegt zusätzlich in der rombro-DB (`ra.token`), damit jede neu geschriebene Config
   ihn trägt. Ein Login nur im RetroArch-Menü bleibt unangetastet, bis man sich in rombro an-/abmeldet (`ra.user` gesetzt).
   Abmelden setzt `cheevos_enable = false` und löscht Token + Fortschritt. Fortschritt braucht zusätzlich den Web-API-Key.
+- M16c (Default): jede Disc wird einzeln gehasht (RA führt Hashes je Disc), nicht die `.m3u`. Unterstützt: PS1, PS2, PSP,
+  Sega CD, Saturn, PCE-CD, Dreamcast, 3DO, NDS/DSi. Offen/nicht: PS1-`.pbp`, PCE-GameExpress, PC-FX, Neo Geo CD,
+  Jaguar CD, Disc-Images in Zips.
 
 ## 7. Architektur
 ```
