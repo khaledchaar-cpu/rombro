@@ -6,6 +6,8 @@ mod archive_tests;
 mod build;
 #[cfg(test)]
 mod daphne_tests;
+#[cfg(test)]
+mod dup_folder_tests;
 pub mod inbox;
 mod ops;
 #[cfg(test)]

@@ -15,6 +15,7 @@ const UNKNOWN_TRASH: &str = "unknown";
 
 mod archives;
 mod daphne;
+mod dup_folders;
 mod firmware;
 mod folders;
 mod frontend;
@@ -148,7 +149,12 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     for root in &daphne {
         b.daphne(root);
     }
+    let dup_folders = dup_folders::find(&folder_games, library);
     for (root, fg) in &folder_games {
+        if let Some(kept) = dup_folders.get(root) {
+            b.duplicate_folder(root, fg, kept);
+            continue;
+        }
         b.folder_game(root, fg);
         if fg.rule == Rule::Msu1
             && let Some(rel) = msu::missing_marker(root, &fg.key)
