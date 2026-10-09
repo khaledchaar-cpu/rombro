@@ -36,7 +36,7 @@
 | M18 Dashboard | ✅ done (Sichtprüfung 2026-10-09) |
 | M19 Savestates | ✅ done (Sichtprüfung 2026-10-09) |
 | M20 Globale RA-Einstellungen | ✅ done (Sichtprüfung 2026-10-09) |
-| M21 Statistik | 🔶 gebaut 2026-10-09, Sichtprüfung offen |
+| M21 Statistik | ✅ done (Sichtprüfung 2026-10-09) |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -163,7 +163,7 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
    Sichtprüfung ok (inkl. Live-Wechsel).
    M21 gebaut: Schema v19 `play_session` (je gezähltem Lauf; Altbestand = 1 Lauf je Spiel am letzten Spieltag), Seite „Stats“
    (Ctrl+7): Übersicht, Verlauf 7/30 Tage/12 Monate (lokale Zeit), meistgespielt, Zeit je System, Achievements.
-   **Offen: Sichtprüfung M21.**
+   Sichtprüfung ok. v2 Launcher (M17–M21) komplett.
 
 ## Stolpersteine
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie
