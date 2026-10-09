@@ -75,7 +75,7 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Skill | Zweck |
 |---|---|
 | `grilling` (global) | Anforderungen klären |
-| *(projektspezifische Skills hier eintragen, sobald angelegt)* | |
+| `inbox-analyze` | Inbox vor dem Import nur lesend analysieren (`scripts/inbox-report.sh`) |
 
 ## Erkenntnisse / Stolpersteine
 - RetroArch headless **nie mit `--appendconfig`** (bei `config_save_on_exit` landen die Null-Treiber in der echten
