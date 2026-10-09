@@ -237,3 +237,18 @@ li[data-jump]:hover, .stat[data-jump]:hover { background: color-mix(in srgb, var
 }
 .shelf-tile:hover .tile-play, .tile-play:focus-visible { opacity: 1; }
 .tile-play:disabled { opacity: 0.4; cursor: wait; }
+
+/* Dashboard → Library growth (DashboardGrowth.tsx): one series, accent line over a faint area */
+.growth { position: relative; }
+.growth svg { display: block; width: 100%; height: 180px; overflow: visible; }
+.growth-grid { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.growth-axis { fill: var(--text-dim); font: var(--fs-xs) var(--font-mono); }
+.growth-line { fill: none; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.growth-area { fill: color-mix(in srgb, var(--accent) 14%, transparent); }
+.growth-cross { stroke: var(--text-dim); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.growth-dot { fill: var(--accent); stroke: var(--bg-raised); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.growth-tip {
+  position: absolute; top: 0; transform: translateX(-50%); pointer-events: none; white-space: nowrap;
+  padding: 2px var(--sp-2); font-size: var(--fs-xs); color: var(--text);
+  background: var(--bg-raised); border: 1px solid var(--line-strong);
+}

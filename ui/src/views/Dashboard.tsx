@@ -4,6 +4,7 @@ import { ContinuePanel } from "./DashboardContinue";
 import { PopularPanel } from "./DashboardPopular";
 import { LibraryPanel } from "./DashboardHistory";
 import PlayStats from "./Stats";
+import { GrowthPanel } from "./DashboardGrowth";
 import {
   AchievementsPanel,
   CompletenessPanel,
@@ -34,6 +35,7 @@ export default function Dashboard(props: {
       <PopularPanel onLibrary={props.onLibrary} />
       <PlayStats />
       <LibraryPanel onOpen={props.onLibrary} />
+      <GrowthPanel />
       <Show when={gamifyEnabled()}>
         <CompletenessPanel />
         <FranchisePanel />
