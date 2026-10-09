@@ -180,3 +180,4 @@
 .preset { display: block; width: 100%; text-align: left; padding: 3px var(--sp-2); background: none; border: 0; color: inherit; cursor: pointer; overflow-wrap: anywhere; }
 .preset:hover { background: var(--bg-raised); }
 .preset.sel { color: var(--accent); outline: 1px solid var(--accent); outline-offset: -1px; }
+.live-note { color: var(--accent); margin: 0 0 var(--sp-2); }

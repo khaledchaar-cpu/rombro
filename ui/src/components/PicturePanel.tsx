@@ -1,8 +1,8 @@
 // Settings → RetroArch → Picture: global shader preset (searchable) and aspect ratio.
-import { createMemo, createResource, createSignal, For, Show } from "solid-js";
+import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import Panel from "./Panel";
 import Select from "./Select";
-import { raSetAspect, raSetShader, raShaders, raVideo } from "../ipc";
+import { onPlayEnded, raRunning, raSetAspect, raSetShader, raShaders, raVideo } from "../ipc";
 
 const ASPECTS = [
   { value: "", label: "RetroArch decides", hint: "its own menu setting" },
@@ -18,16 +18,20 @@ export default function PicturePanel() {
   const [video, { refetch }] = createResource(raVideo);
   const [load, setLoad] = createSignal(false);
   const [presets] = createResource(load, () => raShaders());
+  const [running, { refetch: refetchRunning }] = createResource(raRunning);
+  const poll = setInterval(() => void refetchRunning(), 3000);
+  const unlisten = onPlayEnded(() => void refetchRunning());
+  onCleanup(() => (clearInterval(poll), void unlisten.then((f) => f())));
   const [query, setQuery] = createSignal("");
   const [msg, setMsg] = createSignal("");
   const matches = createMemo(() => {
     const words = query().toLowerCase().split(/\s+/).filter(Boolean);
     return (presets() ?? []).filter((p) => words.every((w) => p.toLowerCase().includes(w)));
   });
-  const run = async (f: () => Promise<void>, ok: string) => {
+  const run = async (f: () => Promise<unknown>, ok: string) => {
     try {
-      await f();
-      setMsg(ok);
+      const live = await f();
+      setMsg(live === true ? `${ok} · applied to the running game` : ok);
     } catch (e) {
       setMsg(String(e));
     }
@@ -38,7 +42,10 @@ export default function PicturePanel() {
     shader() === null ? "RetroArch decides" : shader() === "off" ? "Off" : shader()!.replace(/\.slangp$/, "");
   return (
     <Panel title="Picture" class="wide">
-      <p class="dim small">Applies to every game started from Romburak. Changes take effect on the next start.</p>
+      <p class="dim small">Applies to every game started from Romburak. Aspect ratio: next start.</p>
+      <Show when={running()}>
+        {(p) => <p class="small live-note">● Running: <span class="mono">{p()}</span> – shader changes apply live.</p>}
+      </Show>
       <div class="row wrap">
         <label class="dim small">Aspect ratio</label>
         <Select

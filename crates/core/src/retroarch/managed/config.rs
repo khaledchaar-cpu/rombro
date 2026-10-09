@@ -27,7 +27,13 @@ impl Managed {
             ("core_assets_directory", sub("downloads")),
             ("sort_savefiles_enable", "true".into()),
             ("sort_savestates_enable", "true".into()),
+            // romburak sends commands (live shader switch) over the child's stdin
+            ("stdin_cmd_enable", "true".into()),
         ];
+        if self.target == super::Target::LinuxX64 {
+            // the default `gl` driver cannot run slang shaders (also when switched live)
+            keys.push(("video_driver", "glcore".into()));
+        }
         if let Some(d) = self.display {
             keys.extend(d.keys());
         }

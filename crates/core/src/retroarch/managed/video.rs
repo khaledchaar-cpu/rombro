@@ -5,7 +5,7 @@
 //! The preset is applied as RetroArch's global auto preset (`<root>/config/global.slangp`
 //! with a `#reference`), shaders come from the RetroArch bundle or the buildbot package.
 
-use super::{FetchFile, Managed, Target};
+use super::{FetchFile, Managed};
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -173,10 +173,6 @@ impl Managed {
                 std::fs::write(&global, format!("#reference \"{}\"\n", s.join(p).display()))?;
                 keys.push(("video_shader_enable", "true".into()));
                 keys.push(("auto_shaders_enable", "true".into()));
-                if self.target == Target::LinuxX64 {
-                    // the default `gl` driver cannot run slang shaders
-                    keys.push(("video_driver", "glcore".into()));
-                }
             }
             (Some(_), _) => {
                 let _ = std::fs::remove_file(&global);

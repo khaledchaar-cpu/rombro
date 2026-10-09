@@ -8,6 +8,7 @@ mod exceptions;
 mod gamify;
 mod import;
 mod library;
+mod live;
 mod managed_ra;
 mod play;
 mod ra_video;
@@ -69,6 +70,7 @@ fn main() {
             ra_video::ra_video,
             ra_video::ra_shaders,
             ra_video::ra_set_shader,
+            live::ra_running,
             ra_video::ra_set_aspect,
             managed_ra::ra_set_display,
             play::game_cores,

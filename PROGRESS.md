@@ -157,6 +157,8 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
    echt verifiziert: RetroArch lädt + kompiliert), Seitenverhältnis (`aspect_ratio_index`), Shader-/Autoconfig-Ordner aus dem
    RA-Bundle, sonst Buildbot-Paket (`ensure_package`; Autoconfig beim Start). `rgui_config_directory` = `<root>/config`, alter
    Ordner wird einmalig kopiert (ohne Presets). UI Settings → RetroArch → Picture; CLI `ra shader`/`ra aspect`.
+   Live-Shaderwechsel: `stdin_cmd_enable`, App hält stdin des Kinds (`live.rs`), `SET_SHADER <preset>` / leer = aus
+   (echt verifiziert Linux; Windows-stdin ungetestet). Linux immer `video_driver = glcore`.
    **Offen: Sichtprüfung M20.**
 
 ## Stolpersteine

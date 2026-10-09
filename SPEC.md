@@ -189,6 +189,8 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
   Install mitladen (Default).
 - M20 (Default): Shader-Wahl gilt global über RetroArchs Auto-Preset `global.slangp` im verwalteten Config-Ordner; „RetroArch decides“
   lässt RetroArch-Menü-Einstellungen unangetastet. Verwalteter Config-Ordner statt `~/.config/retroarch/config` (einmalige Kopie).
+  Live-Wechsel (User 2026-10-09): Preset-Wahl in Picture gilt sofort fürs laufende Spiel – über stdin (kein Netzwerk-Port), nur
+  für aus Romburak gestartete Spiele; Linux immer `glcore`, damit Slang auch ohne gespeicherten Shader live geht.
 - **M21 Statistik-Seite**: Top-Spiele nach Zeit, Zeit je System, Verlauf (Woche/Monat; braucht Session-Log mit
   Zeitstempel je Lauf), Achievements-Fortschritt.
 

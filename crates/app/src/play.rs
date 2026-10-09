@@ -152,11 +152,14 @@ pub async fn play(
         let start = std::time::Instant::now();
         let mut child = l
             .command
+            .stdin(std::process::Stdio::piped())
             .spawn()
             .map_err(|e| format!("starting RetroArch: {e}"))?;
+        crate::live::started(&path, child.stdin.take());
         // Reap the process and count its run time; the UI refreshes on `play://ended`.
         std::thread::spawn(move || {
             let _ = child.wait();
+            crate::live::ended(&path);
             let secs = start.elapsed().as_secs();
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

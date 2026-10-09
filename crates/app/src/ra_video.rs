@@ -54,10 +54,23 @@ fn set(key: &str, value: Option<String>) -> CmdResult<()> {
     rewrite_config(&store)
 }
 
-/// `None` = leave to RetroArch, `"off"`, or a preset path from [`ra_shaders`].
+/// `None` = leave to RetroArch, `"off"`, or a preset path from [`ra_shaders`]. A running game
+/// switches right away (not for `None`); returns whether it did.
 #[tauri::command]
-pub fn ra_set_shader(shader: Option<String>) -> CmdResult<()> {
-    set("ra_shader", shader)
+pub fn ra_set_shader(shader: Option<String>) -> CmdResult<bool> {
+    let live = match shader.as_deref() {
+        None => None,
+        Some("off") => Some(String::new()),
+        Some(p) => Managed::detect()
+            .and_then(|m| Some(m.package_dir(&m.current()?, "shaders_slang")?.join(p)))
+            .filter(|f| f.is_file())
+            .map(|f| f.to_string_lossy().into_owned()),
+    };
+    set("ra_shader", shader)?;
+    match live {
+        Some(f) => crate::live::send(format!("SET_SHADER {f}").trim_end()),
+        None => Ok(false),
+    }
 }
 
 /// `None` = leave to RetroArch, else one of core/4:3/16:9/square/full.

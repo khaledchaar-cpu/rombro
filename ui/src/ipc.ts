@@ -799,12 +799,19 @@ export async function raShaders(): Promise<string[]> {
   return invoke<string[]>("ra_shaders");
 }
 
-export async function raSetShader(shader: string | null): Promise<void> {
+/** Saves the shader; a running game switches right away (returns true then, not for null). */
+export async function raSetShader(shader: string | null): Promise<boolean> {
   if (!inTauri) {
     mockVideo = { ...mockVideo, shader };
-    return;
+    return shader !== null;
   }
-  return invoke("ra_set_shader", { shader });
+  return invoke<boolean>("ra_set_shader", { shader });
+}
+
+/** Library path of the game running in RetroArch (started from Romburak), if any. */
+export async function raRunning(): Promise<string | null> {
+  if (!inTauri) return "SNES/Game (USA).zip";
+  return invoke<string | null>("ra_running");
 }
 
 export async function raSetAspect(aspect: string | null): Promise<void> {
