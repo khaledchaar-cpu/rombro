@@ -43,7 +43,7 @@
 | M22 Beliebtheit (RA-Spielerzahlen) | ✅ done (Sichtprüfung 2026-10-09) |
 | v0.9.0 Release (M22 Beliebtheit) | ✅ released 2026-10-09 |
 | M23 UX-Überarbeitung | ✅ gebaut 2026-10-09 (Stichproben User; Details SPEC §6 „M23“) |
-| v0.10.0 Release (M23 UX) | ✅ getaggt 2026-10-09 |
+| v0.10.0 Release (M23 UX) | ✅ released 2026-10-09 |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
