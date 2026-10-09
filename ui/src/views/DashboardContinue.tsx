@@ -20,6 +20,23 @@ export function continueList(rows: LibraryRow[]): LibraryRow[] {
 
 export function ContinuePanel(props: { onLibrary: () => void }) {
   const list = createMemo(() => continueList(libraryRows()));
+  return (
+    <Shelf
+      title="Continue playing"
+      list={list()}
+      sub={(r) => (r.last_played ? `${ago(r.last_played)} · ${formatPlayTime(r.seconds)}` : "favorite · not played yet")}
+      onLibrary={props.onLibrary}
+    />
+  );
+}
+
+/** A row of game tiles; a click starts the game. */
+export function Shelf(props: {
+  title: string;
+  list: LibraryRow[];
+  sub: (r: LibraryRow) => string;
+  onLibrary: () => void;
+}) {
   const [busy, setBusy] = createSignal<string | null>(null);
   const [msg, setMsg] = createSignal("");
   const start = async (r: LibraryRow) => {
@@ -34,10 +51,10 @@ export function ContinuePanel(props: { onLibrary: () => void }) {
     }
   };
   return (
-    <Show when={list().length}>
-      <Panel title="Continue playing" class="wide">
+    <Show when={props.list.length}>
+      <Panel title={props.title} class="wide">
         <div class="shelf">
-          <For each={list()}>
+          <For each={props.list}>
             {(r) => (
               <button
                 class="tile shelf-tile"
@@ -47,9 +64,7 @@ export function ContinuePanel(props: { onLibrary: () => void }) {
               >
                 <Cover system={r.system} name={r.name} class="tile-cover" />
                 <span class="tile-name ellipsis small">{r.favorite ? "★ " : ""}{r.name}</span>
-                <span class="tile-sys ellipsis dim small">
-                  {r.last_played ? `${ago(r.last_played)} · ${formatPlayTime(r.seconds)}` : "favorite · not played yet"}
-                </span>
+                <span class="tile-sys ellipsis dim small">{props.sub(r)}</span>
               </button>
             )}
           </For>

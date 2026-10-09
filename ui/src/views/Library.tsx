@@ -12,6 +12,7 @@ import {
   cheevosCell, cheevosTitle, formatPlayTime, library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary,
   setLibrary, toggleFavorite,
 } from "../state/libraryStore";
+import { popularityRank, rankLabel, rankTitle } from "../state/popularity";
 
 const ROW_H = 26;
 const TILE_W = 148;
@@ -26,9 +27,9 @@ const savedMode = (): "list" | "grid" => {
 };
 const EMPTY: LibraryRow = {
   path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0,
-  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null, cheevos_progress: null,
+  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null, cheevos_progress: null, cheevos_players: null,
 };
-type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds" | "cheevos" | "last_played" | "added";
+type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds" | "cheevos" | "cheevos_players" | "last_played" | "added";
 const SORTS: { value: Key; label: string }[] = [
   { value: "system", label: "Sort: system" },
   { value: "name", label: "Sort: name" },
@@ -36,6 +37,7 @@ const SORTS: { value: Key; label: string }[] = [
   { value: "seconds", label: "Sort: play time" },
   { value: "added", label: "Sort: recently added" },
   { value: "favorite", label: "Sort: favorites first" },
+  { value: "cheevos_players", label: "Sort: popularity" },
 ];
 const COLS: { key: Key; label: string }[] = [
   { key: "favorite", label: "★" },
@@ -45,6 +47,7 @@ const COLS: { key: Key; label: string }[] = [
   { key: "path", label: "Path" },
   { key: "seconds", label: "Played" },
   { key: "cheevos", label: "🏆" },
+  { key: "cheevos_players", label: "Rank" },
 ];
 
 const cmp = (a: LibraryRow, b: LibraryRow, key: Key) => {
@@ -195,6 +198,9 @@ export default function Library() {
                         title={cheevosTitle(r())}
                       >
                         {cheevosCell(r())}
+                      </span>
+                      <span class="dim" title={`${rankLabel(r())} · ${rankTitle(r())}`}>
+                        {popularityRank(r()) ? `#${popularityRank(r())}` : ""}
                       </span>
                     </div>
                   );

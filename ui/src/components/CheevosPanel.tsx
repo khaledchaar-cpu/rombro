@@ -3,6 +3,8 @@ import Panel from "./Panel";
 import PhaseProgress from "./PhaseProgress";
 import { cheevosSetKey, cheevosStatus, cheevosSync } from "../ipc";
 import { refreshLibrary } from "../state/libraryStore";
+import { cancelPlayers, playersError, playersProgress, refreshPlayers } from "../state/popularity";
+import Segments from "./Segments";
 
 /** RetroAchievements: Web API key and game lists, so the library shows which games have achievements. */
 export default function CheevosPanel() {
@@ -23,7 +25,7 @@ export default function CheevosPanel() {
       const n = await cheevosSync();
       setMsg(`${n} library games have achievements`);
       void refetch();
-      void refreshLibrary();
+      void refreshLibrary().then(refreshPlayers);
     } catch (e) {
       setMsg(String(e));
     } finally {
@@ -64,6 +66,16 @@ export default function CheevosPanel() {
           event="cheevos://progress"
           labels={{ sync: "downloading game lists", hash: "hashing library" }}
         />
+      </Show>
+      <Show when={playersProgress()?.total}>
+        <Segments value={playersProgress()?.done ?? 0} max={playersProgress()?.total ?? 0} />
+        <p class="dim small">
+          fetching player counts (popularity) {playersProgress()?.done}/{playersProgress()?.total} ·{" "}
+          <button class="btn ghost sm" onClick={cancelPlayers}>Stop</button>
+        </p>
+      </Show>
+      <Show when={playersError()}>
+        <p class="dim small">Popularity: {playersError()}</p>
       </Show>
     </Panel>
   );

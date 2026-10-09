@@ -1,5 +1,6 @@
 import { Show } from "solid-js";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { cancelPlayers, playersProgress } from "../state/popularity";
 
 const inTauri = "__TAURI_INTERNALS__" in window;
 
@@ -13,6 +14,12 @@ export default function Topbar(props: Props) {
     <header class="topbar" data-tauri-drag-region>
       <h1 class="view-title" data-tauri-drag-region>{props.title}</h1>
       <div class="drag-fill" data-tauri-drag-region />
+      <Show when={playersProgress()?.total}>
+        <span class="topbar-task dim small" title="Fetching RetroAchievements player counts (popularity)">
+          Popularity {playersProgress()?.done}/{playersProgress()?.total}
+          <button class="btn ghost sm" title="Stop" onClick={cancelPlayers}>✕</button>
+        </span>
+      </Show>
       <button class="palette-trigger" onClick={props.onPalette}>
         <span class="dim">Command…</span> <kbd>Ctrl K</kbd>
       </button>

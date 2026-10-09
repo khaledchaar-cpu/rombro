@@ -150,6 +150,12 @@ const MIGRATIONS: &[&str] = &[
     );
     CREATE INDEX play_session_start ON play_session(start);
     INSERT INTO play_session (game, start, seconds) SELECT game, last - seconds, seconds FROM play_stats;",
+    // v20: RetroAchievements – distinct players per game (popularity), kept across list syncs
+    "CREATE TABLE ra_players (
+        game    INTEGER PRIMARY KEY,
+        players INTEGER NOT NULL,
+        fetched INTEGER NOT NULL
+    );",
 ];
 
 pub fn migrate(conn: &Connection) -> Result<()> {

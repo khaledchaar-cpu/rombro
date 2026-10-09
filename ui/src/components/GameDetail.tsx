@@ -6,6 +6,7 @@ import SaveStates from "./SaveStates";
 import CheevosList from "./CheevosList";
 import { type LibraryRow, type ThumbKind } from "../ipc";
 import { CHEEVOS_PBP_HINT, cheevosUnhashable, formatPlayTime, toggleFavorite } from "../state/libraryStore";
+import { rankLabel, rankTitle } from "../state/popularity";
 
 const KINDS: { kind: ThumbKind; label: string }[] = [
   { kind: "boxart", label: "Boxart" },
@@ -60,6 +61,9 @@ export default function GameDetail(props: { row: LibraryRow }) {
                 ? `none for this version – supported: ${props.row.cheevos_other}`
                 : "–"}
           </dd>
+          <Show when={rankLabel(props.row)}>
+            <dt>Popularity</dt><dd title={rankTitle(props.row)}>{rankLabel(props.row)}</dd>
+          </Show>
           <dt>Path</dt><dd class="mono">{props.row.path}</dd>
         </dl>
       </div>

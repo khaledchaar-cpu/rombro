@@ -45,7 +45,7 @@ struct ApiGame {
 }
 
 /// GET with a pause before each request and retries on HTTP 429 (the Web API rate-limits).
-fn polite_get(url: &str) -> std::io::Result<Vec<u8>> {
+pub(crate) fn polite_get(url: &str) -> std::io::Result<Vec<u8>> {
     let mut wait = Duration::from_millis(1500);
     for _ in 0..4 {
         std::thread::sleep(wait);
@@ -118,13 +118,13 @@ struct ApiAchievement {
     date_earned_hardcore: Option<String>,
 }
 
-/// The achievements of RA game `game` in display order (one Web API request), with `user`'s
-/// unlock dates when given.
+/// Distinct players and the achievements of RA game `game` in display order (one Web API
+/// request), with `user`'s unlock dates when given.
 pub fn ra_achievements(
     api_key: &str,
     game: u64,
     user: Option<&str>,
-) -> std::io::Result<Vec<RaAchievement>> {
+) -> std::io::Result<(u64, Vec<RaAchievement>)> {
     let url = match user {
         Some(u) => format!(
             "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g={game}&u={u}&y={api_key}"
@@ -138,25 +138,28 @@ pub fn ra_achievements(
     parse_achievements(&body)
 }
 
-fn parse_achievements(body: &[u8]) -> std::io::Result<Vec<RaAchievement>> {
+fn parse_achievements(body: &[u8]) -> std::io::Result<(u64, Vec<RaAchievement>)> {
     let ext: ApiExtended = serde_json::from_slice(body).map_err(std::io::Error::other)?;
-    let players = ext.num_distinct_players.max(1) as f32;
+    let total = ext.num_distinct_players;
+    let players = total.max(1) as f32;
     let mut list: Vec<_> = ext.achievements.into_values().collect();
     list.sort_by_key(|a| (a.display_order, a.id));
-    Ok(list
-        .into_iter()
-        .map(|a| RaAchievement {
-            id: a.id,
-            title: a.title,
-            description: a.description,
-            points: a.points,
-            badge: a.badge_name,
-            kind: a.kind.unwrap_or_default(),
-            rarity: (a.num_awarded as f32 / players).min(1.0),
-            earned: a.date_earned,
-            earned_hardcore: a.date_earned_hardcore,
-        })
-        .collect())
+    Ok((
+        total,
+        list.into_iter()
+            .map(|a| RaAchievement {
+                id: a.id,
+                title: a.title,
+                description: a.description,
+                points: a.points,
+                badge: a.badge_name,
+                kind: a.kind.unwrap_or_default(),
+                rarity: (a.num_awarded as f32 / players).min(1.0),
+                earned: a.date_earned,
+                earned_hardcore: a.date_earned_hardcore,
+            })
+            .collect(),
+    ))
 }
 
 impl Store {
@@ -334,7 +337,8 @@ mod tests {
         let body = br#"{"NumDistinctPlayers":200,"Achievements":{
             "9":{"ID":9,"Title":"B","Points":5,"BadgeName":"2","DisplayOrder":2,"NumAwarded":50,"type":null,"DateEarned":"2024-05-01 10:00:00"},
             "3":{"ID":3,"Title":"A","Description":"d","Points":3,"BadgeName":"1","DisplayOrder":1,"NumAwarded":100,"type":"progression"}}}"#;
-        let a = parse_achievements(body).unwrap();
+        let (players, a) = parse_achievements(body).unwrap();
+        assert_eq!(players, 200);
         assert_eq!((a[0].title.as_str(), a[1].title.as_str()), ("A", "B"));
         assert_eq!(a[0].kind, "progression");
         assert!((a[1].rarity - 0.25).abs() < 1e-6);

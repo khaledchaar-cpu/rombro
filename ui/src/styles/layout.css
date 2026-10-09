@@ -80,6 +80,7 @@
 }
 .topbar > * { align-self: center; }
 .drag-fill { flex: 1; align-self: stretch; }
+.topbar-task { display: flex; align-items: center; gap: var(--sp-2); white-space: nowrap; }
 
 .logo {
   position: relative;

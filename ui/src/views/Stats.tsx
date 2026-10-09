@@ -4,6 +4,7 @@ import Cover from "../components/Cover";
 import Panel from "../components/Panel";
 import { onPlayEnded, playSessions, type LibraryRow } from "../ipc";
 import { formatPlayTime, libraryRows } from "../state/libraryStore";
+import { PopularStats } from "./StatsPopular";
 
 type Range = "week" | "month" | "year";
 const RANGES: { id: Range; label: string }[] = [
@@ -177,6 +178,8 @@ export default function Stats() {
           </ol>
         </Show>
       </Panel>
+
+      <PopularStats />
     </div>
   );
 }

@@ -32,6 +32,15 @@ pub enum Cmd {
         #[arg(long)]
         list: bool,
     },
+    /// Fetch missing player counts (popularity) of the library's RA games, then show the top
+    Players {
+        /// Library (default: the stored one)
+        #[arg(long)]
+        library: Option<PathBuf>,
+        /// Games shown
+        #[arg(long, default_value_t = 10)]
+        top: usize,
+    },
 }
 
 pub fn run(cmd: Cmd, db: Option<PathBuf>) -> Result<()> {
@@ -133,6 +142,41 @@ pub fn run(cmd: Cmd, db: Option<PathBuf>) -> Result<()> {
                 hit += found;
             }
             println!("total: {hit}/{all} games with achievements");
+        }
+        Cmd::Players { library, top } => {
+            let library = match library {
+                Some(l) => l,
+                None => store
+                    .library()?
+                    .context("no library stored (use --library)")?,
+            };
+            let key = store
+                .setting(KEY)?
+                .filter(|k| !k.is_empty())
+                .context("no Web API key (cheevos key <key>)")?;
+            let mut games: Vec<_> = store.ra_file_games(&library)?.into_values().collect();
+            games.sort_by_key(|g| g.id);
+            games.dedup_by_key(|g| g.id);
+            let ids: Vec<u64> = games.iter().map(|g| g.id).collect();
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)?
+                .as_secs() as i64;
+            let stale = store.ra_players_stale(&ids, now)?;
+            let r = store.ra_players_fetch(
+                &key,
+                &stale,
+                now,
+                &std::sync::atomic::AtomicBool::new(false),
+                &|done, total| eprint!("\rplayers {done}/{total}"),
+            )?;
+            eprintln!();
+            println!("fetched {} (failed {})", r.fetched, r.failed);
+            let players = store.ra_players()?;
+            games.sort_by_key(|g| std::cmp::Reverse(players.get(&g.id).copied().unwrap_or(0)));
+            for g in games.iter().take(top) {
+                let n = players.get(&g.id).copied().unwrap_or(0);
+                println!("{n:>8}  {}", g.title);
+            }
         }
     }
     Ok(())

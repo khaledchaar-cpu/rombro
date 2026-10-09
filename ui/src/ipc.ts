@@ -331,6 +331,8 @@ export interface LibraryRow {
   cheevos_game: number | null;
   /** The user's unlocks in this file's RA game (logged in and synced). */
   cheevos_progress: RaProgress | null;
+  /** Distinct RetroAchievements players of this file's RA game (popularity), once fetched. */
+  cheevos_players: number | null;
 }
 
 export interface RaProgress {
@@ -409,6 +411,7 @@ function demoRows(): LibraryRow[] {
     cheevos_other: null,
     cheevos_game: i,
     cheevos_progress: i % 3 ? null : { awarded: (i * 3) % 40, hardcore: 0, total: 40 + (i % 20), award: i === 3 ? "mastered" : null },
+    cheevos_players: (i * 7919) % 50000,
   }));
 }
 
@@ -432,6 +435,7 @@ export async function libraryList(library?: string, rescan = false): Promise<Lib
       cheevos_game: i % 3 === 0 || i % 5 === 0 ? i : null,
       cheevos_progress:
         i % 3 || i % 2 ? null : { awarded: i % 9 ? (i % 20) : 20 + (i % 40), hardcore: 0, total: 20 + (i % 40), award: i % 9 ? null : "mastered" },
+      cheevos_players: i % 3 ? null : (i * 7919) % 90000,
     }));
   }
   return invoke<LibraryRow[]>("library_list", { library, rescan });
@@ -1056,6 +1060,26 @@ export async function cheevosSync(): Promise<number> {
     return 2685;
   }
   return invoke<number>("cheevos_sync");
+}
+
+/** Fetches missing player counts of the library's RA games (`cheevos://players` progress).
+ * Returns all counts per RA game id, null when nothing new was fetched. */
+export async function cheevosPlayers(): Promise<Record<number, number> | null> {
+  if (!inTauri) {
+    await mockProgress("cheevos://players", ["players"], (_p, done, total) => ({ done, total }));
+    return null;
+  }
+  return invoke<Record<number, number> | null>("cheevos_players");
+}
+
+export async function cheevosPlayersCancel(): Promise<void> {
+  if (!inTauri) return;
+  return invoke<void>("cheevos_players_cancel");
+}
+
+export function onPlayersProgress(cb: (p: ScanProgress) => void): Promise<UnlistenFn> {
+  if (!inTauri) return mockListen("cheevos://players", cb);
+  return listen<ScanProgress>("cheevos://players", (e) => cb(e.payload));
 }
 
 export interface RaAchievement {

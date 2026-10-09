@@ -1,6 +1,7 @@
 import { createResource, Show } from "solid-js";
 import Panel from "../components/Panel";
 import { ContinuePanel } from "./DashboardContinue";
+import { PopularPanel } from "./DashboardPopular";
 import { LibraryPanel, RunsPanel } from "./DashboardHistory";
 import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
 import {
@@ -30,6 +31,7 @@ export default function Dashboard(props: {
         </Panel>
       </Show>
       <ContinuePanel onLibrary={props.onLibrary} />
+      <PopularPanel onLibrary={props.onLibrary} />
       <Show when={gamifyEnabled()}>
         <ProgressPanel />
         <CompletenessPanel />

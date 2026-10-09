@@ -13,6 +13,7 @@ import Library from "./views/Library";
 import Stats from "./views/Stats";
 import { execute, plan, undo } from "./state/importStore";
 import { initLibrary } from "./state/libraryStore";
+import { refreshPlayers } from "./state/popularity";
 import { effects, setEffects, setTheme, THEMES } from "./state/appearance";
 import { VIEWS, type ViewId } from "./views";
 import { SECTIONS, setSystemSection } from "./state/settingsNav";
@@ -54,7 +55,7 @@ export default function App() {
   };
   onMount(() => {
     window.addEventListener("keydown", onKey);
-    void initLibrary();
+    void initLibrary().then(refreshPlayers);
   });
   onCleanup(() => window.removeEventListener("keydown", onKey));
 

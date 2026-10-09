@@ -64,6 +64,8 @@ fn main() {
             cheevos::cheevos_progress,
             cheevos::cheevos_hash,
             cheevos::cheevos_achievements,
+            cheevos::cheevos_players,
+            cheevos::cheevos_players_cancel,
             managed_ra::ra_status,
             managed_ra::ra_install,
             managed_ra::ra_display,
