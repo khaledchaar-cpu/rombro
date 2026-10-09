@@ -38,7 +38,7 @@
 | M20 Globale RA-Einstellungen | ✅ done (Sichtprüfung 2026-10-09) |
 | M21 Statistik | ✅ done (Sichtprüfung 2026-10-09) |
 | v0.8.0 Release (v2 Launcher M17–M21) | ✅ released 2026-10-09 |
-| v0.8.1 Release (RDB-Download, README) | 🔶 getaggt 2026-10-09 |
+| v0.8.1 Release (RDB-Download, README) | ✅ released 2026-10-09 |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
