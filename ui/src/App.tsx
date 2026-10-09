@@ -70,7 +70,6 @@ export default function App() {
         <Switch fallback={<Placeholder title={title()} />}>
           <Match when={view() === "dashboard"}>
             <Dashboard
-              onReview={() => setView("import")}
               onLibrary={() => setView("library")}
               onDatabases={() => (setSystemSection("databases"), setView("system"))}
             />
@@ -91,7 +90,7 @@ export default function App() {
             <Rules />
           </Match>
           <Match when={view() === "system"}>
-            <System />
+            <System onReview={() => setView("import")} />
           </Match>
         </Switch>
       </main>

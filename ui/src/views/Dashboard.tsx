@@ -3,7 +3,6 @@ import Panel from "../components/Panel";
 import { ContinuePanel } from "./DashboardContinue";
 import { PopularPanel } from "./DashboardPopular";
 import { LibraryPanel } from "./DashboardHistory";
-import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
 import {
   AchievementsPanel,
   CompletenessPanel,
@@ -14,7 +13,6 @@ import { gamifyEnabled } from "../state/gamify";
 import { dbStats } from "../ipc";
 
 export default function Dashboard(props: {
-  onReview: () => void;
   onLibrary: () => void;
   onDatabases: () => void;
 }) {
@@ -39,8 +37,6 @@ export default function Dashboard(props: {
         <AchievementsPanel />
       </Show>
       <LibraryPanel onOpen={props.onLibrary} />
-      <OpenDecisionsPanel onReview={props.onReview} />
-      <TrashPanel />
     </div>
   );
 }

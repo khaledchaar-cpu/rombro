@@ -1,6 +1,7 @@
 import { createResource, For, Match, Switch } from "solid-js";
 import CheevosPanel from "../components/CheevosPanel";
 import DatabasePanel from "../components/DatabasePanel";
+import { OpenDecisionsPanel, TrashPanel } from "./DashboardQueue";
 import DirField from "../components/DirField";
 import Panel from "../components/Panel";
 import { thumbsOnlineGet, thumbsOnlineSet } from "../ipc";
@@ -9,7 +10,7 @@ import { gamifyEnabled, setGamifyEnabled } from "../state/gamify";
 import { effects, setEffects, setTheme, theme, THEMES } from "../state/appearance";
 import { SECTIONS, setSystemSection, systemSection } from "../state/settingsNav";
 
-function LibrarySettings() {
+function LibrarySettings(props: { onReview: () => void }) {
   return (
     <div class="settings">
       <Panel title="Library">
@@ -25,6 +26,8 @@ function LibrarySettings() {
           </button>
         </div>
       </Panel>
+      <OpenDecisionsPanel onReview={props.onReview} />
+      <TrashPanel />
     </div>
   );
 }
@@ -72,7 +75,7 @@ function Appearance() {
 }
 
 /** Maintenance and preferences: library folder, game databases, appearance. */
-export default function System() {
+export default function System(props: { onReview: () => void }) {
   return (
     <div class="settings-shell">
       <nav class="settings-nav">
@@ -92,7 +95,7 @@ export default function System() {
       <div class="settings-body">
         <Switch>
           <Match when={systemSection() === "library"}>
-            <LibrarySettings />
+            <LibrarySettings onReview={props.onReview} />
           </Match>
           <Match when={systemSection() === "databases"}>
             <div class="settings">
