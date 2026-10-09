@@ -1,6 +1,7 @@
 // "Continue playing" row: recently played games first, then unplayed favorites.
-import { createMemo, createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 import Cover from "../components/Cover";
+import Pager, { createPaged, wheelPage } from "../components/Pager";
 import Panel from "../components/Panel";
 import { play, type LibraryRow } from "../ipc";
 import { formatPlayTime, libraryRows } from "../state/libraryStore";
@@ -50,11 +51,16 @@ export function Shelf(props: {
       setBusy(null);
     }
   };
+  // as many tiles as fit the width, the rest on further pages
+  const [width, setWidth] = createSignal(0);
+  const ro = new ResizeObserver(([e]) => setWidth(e.contentRect.width));
+  onCleanup(() => ro.disconnect());
+  const paged = createPaged(() => props.list, () => Math.max(1, Math.floor((width() + 8) / 148)));
   return (
     <Show when={props.list.length}>
       <Panel title={props.title} class="wide">
-        <div class="shelf">
-          <For each={props.list}>
+        <div class="shelf" ref={(el) => ro.observe(el)} {...wheelPage(paged)}>
+          <For each={paged.items()}>
             {(r) => (
               <button
                 class="tile shelf-tile"
@@ -69,6 +75,7 @@ export function Shelf(props: {
             )}
           </For>
         </div>
+        <Pager paged={paged} />
         <div class="row spread">
           <p class="dim small">{msg()}</p>
           <button class="btn ghost small" onClick={() => props.onLibrary()}>Open library</button>

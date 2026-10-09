@@ -229,7 +229,7 @@
   border: 1px solid var(--line-strong);
   outline: none;
 }
-.palette-list { list-style: none; margin: var(--sp-2) 0 0; padding: 0; max-height: 50vh; overflow: auto; }
+.palette-list { list-style: none; margin: var(--sp-2) 0 0; padding: 0; }
 .palette-list li { display: flex; justify-content: space-between; padding: var(--sp-2) var(--sp-3); cursor: pointer; }
 .palette-list li.selected { background: var(--bg-sunken); color: var(--accent); border-left: 2px solid var(--accent); }
 

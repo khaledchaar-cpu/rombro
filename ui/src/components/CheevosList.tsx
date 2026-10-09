@@ -1,4 +1,5 @@
 import { createResource, For, Show } from "solid-js";
+import Pager, { createPaged, wheelPage } from "./Pager";
 import { cheevosAchievements, cheevosStatus } from "../ipc";
 
 const KIND: Record<string, string> = { progression: "progression", win_condition: "win", missable: "missable" };
@@ -14,6 +15,7 @@ export default function CheevosList(props: { game: number; other: string | null;
   const total = () => (list() ?? []).reduce((s, a) => s + a.points, 0);
   const unlocked = () => (list() ?? []).filter((a) => a.earned).length;
   // locked achievements are dimmed only when there is a user to unlock them
+  const paged = createPaged(() => list() ?? [], () => 6);
   const locked = (earned: string | null) => !!status()?.user && !props.other && !earned;
   return (
     <div class="cheevos">
@@ -25,8 +27,8 @@ export default function CheevosList(props: { game: number; other: string | null;
       </h3>
       <Show when={!list.loading} fallback={<p class="dim small">loading…</p>}>
         <Show when={!list.error} fallback={<p class="err small">{String(list.error)}</p>}>
-          <ul class="cheevo-list">
-            <For each={list()}>
+          <ul class="cheevo-list" {...wheelPage(paged)}>
+            <For each={paged.items()}>
               {(a) => (
                 <li class="cheevo" classList={{ locked: locked(a.earned) }}>
                   <Show when={a.badge} fallback={<div class="cheevo-badge" />}>
@@ -48,6 +50,7 @@ export default function CheevosList(props: { game: number; other: string | null;
               )}
             </For>
           </ul>
+          <Pager paged={paged} />
         </Show>
       </Show>
     </div>

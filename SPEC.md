@@ -208,6 +208,16 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
   library“ (alle, gespielt oder nicht, max. 12, Klick startet), Stats „Most popular“ (Top 10, Systemfilter).
 - CLI: `cheevos players [--top n]`.
 
+### M23 UX-Überarbeitung – Entscheidungen (User, 2026-10-09)
+- Kein Scrollen in Blöcken: Listen werden **geblättert** (`components/Pager.tsx`, ◀ n/m ▶, Mausrad + Bild↑/↓).
+  Library-Liste/-Grid: Seitengröße passt sich der Fensterhöhe an; kleinere Listen feste Seitengröße.
+  Seitenscrollen von Dashboard/Stats bei vielen Panels bleibt (Offen: ggf. später umbauen).
+- Library: Pfad + „Rescan“ nach Settings → Library; Pfad-Spalte entfernt (Pfad steht in Details).
+- Filter Systeme/Regionen/Erscheinungsjahr = Mehrfachauswahl (Popup mehrspaltig, ohne Scrollen).
+  „Added“-Filter ersetzt durch **Erscheinungsjahrzehnt** (RDB `releaseyear`, frühestes Jahr je Name; „unknown“).
+- Suchfeld: jedes Wort muss in Name oder System vorkommen; System auch per Kürzel der Wortanfänge (NES, SNES, GBA).
+- Details: Reiter Info / Savestates / Achievements, neben der Liste ab 1200 px Fensterbreite.
+
 ## 7. Architektur
 ```
 romburak/

@@ -1,6 +1,7 @@
 // Statistics: play time totals, history (week/month/year), top games, time per system, achievements.
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import Cover from "../components/Cover";
+import Pager, { createPaged, wheelPage } from "../components/Pager";
 import Panel from "../components/Panel";
 import { onPlayEnded, playSessions, type LibraryRow } from "../ipc";
 import { formatPlayTime, libraryRows } from "../state/libraryStore";
@@ -93,6 +94,9 @@ export default function Stats() {
   const unlocked = createMemo(() => cheevos().reduce((s, r) => s + r.cheevos_progress.awarded, 0));
   const mastered = createMemo(() => cheevos().filter((r) => r.cheevos_progress.award === "mastered").length);
 
+  const pTop = createPaged(top, () => 10);
+  const pSys = createPaged(perSystem, () => 10);
+  const pAch = createPaged(cheevos, () => 10);
   return (
     <div class="grid">
       <Panel title="Overview" class="wide">
@@ -122,8 +126,8 @@ export default function Stats() {
 
       <Panel title="Most played">
         <Show when={top().length} fallback={<p class="dim small">Play something – it shows up here.</p>}>
-          <ol class="rank">
-            <For each={top()}>
+          <ol class="rank" start={pTop.offset() + 1} {...wheelPage(pTop)}>
+            <For each={pTop.items()}>
               {(r) => (
                 <li>
                   <Cover system={r.system} name={r.name} class="cover-mini" />
@@ -136,13 +140,14 @@ export default function Stats() {
               )}
             </For>
           </ol>
+          <Pager paged={pTop} />
         </Show>
       </Panel>
 
       <Panel title="Time per system">
         <Show when={perSystem().length} fallback={<p class="dim small">No play time yet.</p>}>
-          <ol class="rank">
-            <For each={perSystem()}>
+          <ol class="rank" start={pSys.offset() + 1} {...wheelPage(pSys)}>
+            <For each={pSys.items()}>
               {([sys, secs]) => (
                 <li>
                   <span class="rank-name">
@@ -154,13 +159,14 @@ export default function Stats() {
               )}
             </For>
           </ol>
+          <Pager paged={pSys} />
         </Show>
       </Panel>
 
       <Panel title="Achievements" class="wide">
         <Show when={cheevos().length} fallback={<p class="dim small">No unlocks yet (log in under RetroArch → RetroAchievements).</p>}>
-          <ol class="rank">
-            <For each={cheevos()}>
+          <ol class="rank" start={pAch.offset() + 1} {...wheelPage(pAch)}>
+            <For each={pAch.items()}>
               {(r) => (
                 <li>
                   <Cover system={r.system} name={r.name} class="cover-mini" />
@@ -176,6 +182,7 @@ export default function Stats() {
               )}
             </For>
           </ol>
+          <Pager paged={pAch} />
         </Show>
       </Panel>
 

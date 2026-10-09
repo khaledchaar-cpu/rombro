@@ -1,7 +1,7 @@
-import { createVirtualizer } from "@tanstack/solid-virtual";
-import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from "solid-js";
 import Cover from "../components/Cover";
 import GameDetail from "../components/GameDetail";
+import Pager, { createPaged, fitCount, wheelPage } from "../components/Pager";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import Select from "../components/Select";
@@ -22,10 +22,6 @@ const savedMode = (): "list" | "grid" => {
   } catch {
     return "list";
   }
-};
-const EMPTY: LibraryRow = {
-  path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0,
-  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null, cheevos_progress: null, cheevos_players: null, year: null,
 };
 type Key = "favorite" | "system" | "name" | "state" | "seconds" | "cheevos" | "cheevos_players" | "last_played" | "added";
 const SORTS: { value: Key; label: string }[] = [
@@ -78,28 +74,24 @@ export default function Library(props: { onSettings: () => void }) {
     } catch { /* per-device convenience only */ }
   };
 
-  let scroller!: HTMLDivElement;
-  const v = createVirtualizer({
-    get count() { return view().length; },
-    getScrollElement: () => scroller,
-    estimateSize: () => ROW_H,
-    overscan: 12,
-  });
-
-  let gridScroller!: HTMLDivElement;
+  const [listEl, setListEl] = createSignal<HTMLDivElement>();
+  const [gridEl, setGridEl] = createSignal<HTMLDivElement>();
+  const listRows = fitCount(listEl, ROW_H, 76);
+  const gridRows = fitCount(gridEl, TILE_H, 76, 1);
   const [cols, setCols] = createSignal(4);
   const observer = new ResizeObserver(([e]) => setCols(Math.max(1, Math.floor(e.contentRect.width / TILE_W))));
   onCleanup(() => observer.disconnect());
-  const g = createVirtualizer({
-    get count() { return Math.ceil(view().length / cols()); },
-    getScrollElement: () => gridScroller,
-    estimateSize: () => TILE_H,
-    overscan: 3,
-  });
+  const paged = createPaged(view, () => (mode() === "grid" ? cols() * gridRows() : listRows()));
+  const turn = wheelPage(paged);
+  // keep the selected game in sight when switching list ↔ grid
+  createEffect(on(mode, () => {
+    const i = view().findIndex((r) => r.path === selPath());
+    if (i >= 0) paged.show(i);
+  }, { defer: true }));
 
   return (
-    <div class="grid">
-      <Panel title="Library" class="wide">
+    <div class="libview" classList={{ "with-detail": !!selected() }}>
+      <Panel title="Library" class="lib-main">
         <Show when={!library()}>
           <p class="dim">
             No library folder set –{" "}
@@ -127,12 +119,9 @@ export default function Library(props: { onSettings: () => void }) {
           </div>
         </div>
         <Show when={mode() === "grid"}>
-          <div class="vlist cgrid" ref={(el) => ((gridScroller = el), observer.observe(el))}>
-            <div style={{ height: `${g.getTotalSize()}px`, position: "relative" }}>
-              <For each={g.getVirtualItems()}>
-                {(line) => (
-                  <div class="cgrid-row" style={{ transform: `translateY(${line.start}px)`, height: `${TILE_H}px`, "grid-template-columns": `repeat(${cols()}, minmax(0, 1fr))` }}>
-                    <For each={view().slice(line.index * cols(), line.index * cols() + cols())}>
+          <div class="cgrid" tabIndex={0} {...turn} ref={(el) => (setGridEl(el), observer.observe(el))}>
+            <div class="cgrid-page" style={{ "grid-template-columns": `repeat(${cols()}, minmax(0, 1fr))`, "grid-auto-rows": `${TILE_H - 8}px` }}>
+                    <For each={paged.items()}>
                       {(r) => (
                         <button class="tile" classList={{ sel: selPath() === r.path }} title={`${r.name}\n${r.system}`} onClick={() => setSelPath(r.path)}>
                           <Cover system={r.system} name={r.name} class="tile-cover" />
@@ -141,9 +130,6 @@ export default function Library(props: { onSettings: () => void }) {
                         </button>
                       )}
                     </For>
-                  </div>
-                )}
-              </For>
             </div>
           </div>
         </Show>
@@ -158,17 +144,16 @@ export default function Library(props: { onSettings: () => void }) {
               )}
             </For>
           </div>
-          <div class="vlist" ref={scroller}>
-            <div style={{ height: `${v.getTotalSize()}px`, position: "relative" }}>
-              <For each={v.getVirtualItems()}>
-                {(it) => {
-                  const r = () => view()[it.index] ?? EMPTY;
+          <div class="lpage" tabIndex={0} {...turn} ref={setListEl} style={{ height: `${listRows() * ROW_H}px` }}>
+              <For each={paged.items()}>
+                {(row) => {
+                  const r = () => row;
                   return (
                     <div
                       class="vrow lrow small"
                       classList={{ sel: selPath() === r().path }}
                       onClick={() => setSelPath(r().path)}
-                      style={{ transform: `translateY(${it.start}px)`, height: `${ROW_H}px` }}>
+                      style={{ height: `${ROW_H}px` }}>
                       <button
                         class="star"
                         classList={{ on: r().favorite }}
@@ -197,9 +182,9 @@ export default function Library(props: { onSettings: () => void }) {
                   );
                 }}
               </For>
-            </div>
           </div>
         </div>
+        <Pager paged={paged} />
       </Panel>
       <Show when={selected()}>{(row) => <GameDetail row={row()} />}</Show>
     </div>

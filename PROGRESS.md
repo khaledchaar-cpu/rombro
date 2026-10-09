@@ -42,6 +42,7 @@
 | v0.8.2 Release (Atari-ST-Teile, Sufami-Turbo-Zips, CI-e2e Win/macOS) | ✅ released 2026-10-09 |
 | M22 Beliebtheit (RA-Spielerzahlen) | ✅ done (Sichtprüfung 2026-10-09) |
 | v0.9.0 Release (M22 Beliebtheit) | ✅ released 2026-10-09 |
+| M23 UX: Blättern statt Scrollen, Library-Filter | 🔶 gebaut 2026-10-09, Sichtprüfung User offen |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),

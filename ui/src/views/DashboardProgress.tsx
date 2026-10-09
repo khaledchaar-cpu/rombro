@@ -1,5 +1,6 @@
 // Dashboard gamification panels (SPEC F6): level/XP, KPIs, completeness per system, achievements.
 import { createMemo, For, Show } from "solid-js";
+import Pager, { createPaged, wheelPage } from "../components/Pager";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import { stats } from "../state/gamify";
@@ -63,10 +64,11 @@ export function CompletenessPanel() {
   const systems = createMemo(() =>
     [...(stats()?.kpis.systems ?? [])].sort((a, b) => b.owned / b.total - a.owned / a.total || b.owned - a.owned),
   );
+  const paged = createPaged(systems, () => 8);
   return (
     <Panel title="Completeness (1G1R)">
-      <ul class="complete">
-        <For each={systems()} fallback={<li class="dim">No identified games yet.</li>}>
+      <ul class="complete" {...wheelPage(paged)}>
+        <For each={paged.items()} fallback={<li class="dim">No identified games yet.</li>}>
           {(s) => (
             <li>
               <div class="row">
@@ -79,17 +81,19 @@ export function CompletenessPanel() {
           )}
         </For>
       </ul>
+      <Pager paged={paged} />
     </Panel>
   );
 }
 
 /** Franchise goals: started franchises with at least 3 games on the owned systems, closest first. */
 export function FranchisePanel() {
-  const goals = () => stats()?.kpis.franchises.slice(0, 12) ?? [];
+  const goals = () => stats()?.kpis.franchises ?? [];
+  const paged = createPaged(goals, () => 8);
   return (
     <Panel title="Franchise goals">
-      <ul class="complete">
-        <For each={goals()} fallback={<li class="dim">No franchise started yet.</li>}>
+      <ul class="complete" {...wheelPage(paged)}>
+        <For each={paged.items()} fallback={<li class="dim">No franchise started yet.</li>}>
           {(f) => (
             <li>
               <div class="row">
@@ -102,6 +106,7 @@ export function FranchisePanel() {
           )}
         </For>
       </ul>
+      <Pager paged={paged} />
     </Panel>
   );
 }
@@ -112,10 +117,11 @@ export function AchievementsPanel() {
   );
   const isNew = (id: string) => stats()?.new.includes(id) ?? false;
   const unlocked = () => list().filter(([a]) => a.unlocked).length;
+  const paged = createPaged(list, () => 8);
   return (
     <Panel title={`Achievements ${unlocked()}/${list().length}`}>
-      <ul class="achs">
-        <For each={list()}>
+      <ul class="achs" {...wheelPage(paged)}>
+        <For each={paged.items()}>
           {([a, at]) => (
             <li classList={{ locked: !a.unlocked }} title={at ? `unlocked ${new Date(at * 1000).toLocaleString()}` : "locked"}>
               <div class="row">
@@ -129,6 +135,7 @@ export function AchievementsPanel() {
           )}
         </For>
       </ul>
+      <Pager paged={paged} />
     </Panel>
   );
 }

@@ -1,5 +1,6 @@
 // Settings → RetroArch → Picture: global shader preset (searchable) and aspect ratio.
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
+import Pager, { createPaged, wheelPage } from "./Pager";
 import Panel from "./Panel";
 import Select from "./Select";
 import { onPlayEnded, raRunning, raSetAspect, raSetShader, raShaders, raVideo } from "../ipc";
@@ -12,7 +13,6 @@ const ASPECTS = [
   { value: "square", label: "Square pixels", hint: "1:1 PAR" },
   { value: "full", label: "Stretch to window" },
 ];
-const SHOWN = 150;
 
 export default function PicturePanel() {
   const [video, { refetch }] = createResource(raVideo);
@@ -28,6 +28,7 @@ export default function PicturePanel() {
     const words = query().toLowerCase().split(/\s+/).filter(Boolean);
     return (presets() ?? []).filter((p) => words.every((w) => p.toLowerCase().includes(w)));
   });
+  const paged = createPaged(matches, () => 12);
   const run = async (f: () => Promise<unknown>, ok: string) => {
     try {
       const live = await f();
@@ -77,8 +78,8 @@ export default function PicturePanel() {
               value={query()}
               onInput={(e) => setQuery(e.currentTarget.value)}
             />
-            <ul class="preset-list">
-              <For each={matches().slice(0, SHOWN)}>
+            <ul class="preset-list" {...wheelPage(paged)}>
+              <For each={paged.items()}>
                 {(p) => (
                   <li>
                     <button
@@ -92,9 +93,7 @@ export default function PicturePanel() {
                 )}
               </For>
             </ul>
-            <Show when={matches().length > SHOWN}>
-              <p class="dim small">{matches().length - SHOWN} more – refine the search.</p>
-            </Show>
+            <Pager paged={paged} />
           </Show>
         </Show>
       </Show>

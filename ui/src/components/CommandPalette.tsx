@@ -1,4 +1,5 @@
 import { createEffect, createSignal, For, Show } from "solid-js";
+import Pager, { createPaged } from "./Pager";
 
 export interface Command { id: string; label: string; hint?: string; run: () => void }
 
@@ -15,6 +16,10 @@ export default function CommandPalette(props: {
     const q = query().toLowerCase();
     return props.commands.filter((c) => c.label.toLowerCase().includes(q));
   };
+
+  const paged = createPaged(matches, () => 10, query);
+  // the page follows the arrow-key selection
+  createEffect(() => paged.show(sel()));
 
   createEffect(() => {
     if (props.open) {
@@ -56,11 +61,11 @@ export default function CommandPalette(props: {
             onKeyDown={onKey}
           />
           <ul class="palette-list">
-            <For each={matches()}>
+            <For each={paged.items()}>
               {(c, i) => (
                 <li
-                  classList={{ selected: i() === sel() }}
-                  onMouseEnter={() => setSel(i())}
+                  classList={{ selected: paged.offset() + i() === sel() }}
+                  onMouseEnter={() => setSel(paged.offset() + i())}
                   onClick={() => run(c)}
                 >
                   <span>{c.label}</span>
@@ -69,6 +74,7 @@ export default function CommandPalette(props: {
               )}
             </For>
           </ul>
+          <Pager paged={paged} />
         </div>
       </div>
     </Show>

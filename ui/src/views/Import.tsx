@@ -1,5 +1,5 @@
-import { createVirtualizer } from "@tanstack/solid-virtual";
 import { createMemo, createSignal, For, Show } from "solid-js";
+import Pager, { createPaged, fitCount, wheelPage } from "../components/Pager";
 import Panel from "../components/Panel";
 import ScanProgress from "../components/ScanProgress";
 import InboxLeftovers from "../components/InboxLeftovers";
@@ -35,51 +35,34 @@ function rel(p: string) {
 const isBios = (o: { rule: string }) => o.rule === "bios";
 
 function OpList() {
-  let scroller!: HTMLDivElement;
-  const ops = () => plan()?.ops ?? [];
-  const v = createVirtualizer({
-    get count() {
-      return ops().length;
-    },
-    getScrollElement: () => scroller,
-    estimateSize: () => ROW_H,
-    overscan: 12,
-  });
+  const [el, setEl] = createSignal<HTMLDivElement>();
+  const paged = createPaged(() => plan()?.ops ?? [], fitCount(el, ROW_H, 72, 8));
   return (
-    <div class="vlist" ref={scroller}>
-      <div style={{ height: `${v.getTotalSize()}px`, position: "relative" }}>
-        <For each={v.getVirtualItems()}>
-          {(row) => {
-            const op = () =>
-              ops()[row.index] ?? { kind: "move", from: null, to: "", rule: "", why: "" };
-            return (
-              <div
-                class={`vrow oprow mono small${isBios(op()) ? " bios" : ""}`}
-                style={{
-                  transform: `translateY(${row.start}px)`,
-                  height: `${ROW_H}px`,
-                }}
-              >
-                <span class={`tag tag-${op().kind}`}>{op().kind}</span>
-                <span class="dim ellipsis" title={op().from ?? ""}>
-                  {op().from ?? ""}
-                </span>
-                <span class="arrow">→</span>
-                <span class="ellipsis" title={op().to}>
-                  {rel(op().to)}
-                </span>
-                <span class="ellipsis why" title={`rule: ${op().rule}`}>
-                  <Show when={isBios(op())}>
-                    <span class="tag tag-bios">BIOS</span>{" "}
-                  </Show>
-                  {op().why}
-                </span>
-              </div>
-            );
-          }}
+    <>
+      <div class="lpage" tabIndex={0} {...wheelPage(paged)} ref={setEl}>
+        <For each={paged.items()}>
+          {(op) => (
+            <div class={`vrow oprow mono small${isBios(op) ? " bios" : ""}`} style={{ height: `${ROW_H}px` }}>
+              <span class={`tag tag-${op.kind}`}>{op.kind}</span>
+              <span class="dim ellipsis" title={op.from ?? ""}>
+                {op.from ?? ""}
+              </span>
+              <span class="arrow">→</span>
+              <span class="ellipsis" title={op.to}>
+                {rel(op.to)}
+              </span>
+              <span class="ellipsis why" title={`rule: ${op.rule}`}>
+                <Show when={isBios(op)}>
+                  <span class="tag tag-bios">BIOS</span>{" "}
+                </Show>
+                {op.why}
+              </span>
+            </div>
+          )}
         </For>
       </div>
-    </div>
+      <Pager paged={paged} />
+    </>
   );
 }
 
@@ -161,11 +144,9 @@ function Decisions() {
     for (const d of all()) c.set(d.kind, (c.get(d.kind) ?? 0) + 1);
     return c;
   });
-  const shown = () =>
-    (kind() === "all" ? all() : all().filter((d) => d.kind === kind())).slice(
-      0,
-      500,
-    );
+  const shown = () => (kind() === "all" ? all() : all().filter((d) => d.kind === kind()));
+  // decided items drop out: stay on the page, only a new filter starts over
+  const paged = createPaged(shown, () => 6, kind);
   return (
     <>
       <div class="row wrap">
@@ -188,8 +169,8 @@ function Decisions() {
           )}
         </For>
       </div>
-      <ul class="decisions">
-        <For each={shown()}>
+      <ul class="decisions" {...wheelPage(paged)}>
+        <For each={paged.items()}>
           {(d) => (
             <li>
               <div class="row dhead">
@@ -215,6 +196,7 @@ function Decisions() {
           )}
         </For>
       </ul>
+      <Pager paged={paged} />
     </>
   );
 }

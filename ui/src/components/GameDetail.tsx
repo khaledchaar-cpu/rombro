@@ -1,4 +1,4 @@
-import { For, Show } from "solid-js";
+import { createSignal, For, Match, Show, Switch } from "solid-js";
 import Cover from "./Cover";
 import Panel from "./Panel";
 import GamePlay from "./GamePlay";
@@ -23,7 +23,18 @@ function Thumb(props: { row: LibraryRow; kind: ThumbKind; label: string }) {
   );
 }
 
+type Tab = "info" | "states" | "cheevos";
+// kept across games: browsing the list keeps the chosen tab
+const [tab, setTab] = createSignal<Tab>("info");
+
 export default function GameDetail(props: { row: LibraryRow }) {
+  const tabs = (): { id: Tab; label: string }[] => [
+    { id: "info", label: "Info" },
+    { id: "states", label: "Savestates" },
+    ...(props.row.cheevos_game ? [{ id: "cheevos" as const, label: "Achievements" }] : []),
+  ];
+  // a game without achievements falls back to its info
+  const shown = (): Tab => (tab() === "cheevos" && !props.row.cheevos_game ? "info" : tab());
   const at = (t: number) => (t ? new Date(t * 1000).toLocaleString() : "–");
   return (
     <Panel title="Details" class="wide">
@@ -33,7 +44,23 @@ export default function GameDetail(props: { row: LibraryRow }) {
         </button>
       </div>
       <GamePlay path={props.row.path} />
-      <SaveStates path={props.row.path} />
+      <div class="row detail-tabs" role="tablist">
+        <For each={tabs()}>
+          {(t) => (
+            <button role="tab" class="btn ghost small" classList={{ active: shown() === t.id }} aria-selected={shown() === t.id} onClick={() => setTab(t.id)}>
+              {t.label}
+            </button>
+          )}
+        </For>
+      </div>
+      <Switch>
+      <Match when={shown() === "states"}>
+        <SaveStates path={props.row.path} />
+      </Match>
+      <Match when={shown() === "cheevos" && props.row.cheevos_game}>
+        {(g) => <CheevosList game={g()} other={props.row.cheevos ? null : props.row.cheevos_other} unlocked={props.row.cheevos_progress?.awarded} />}
+      </Match>
+      <Match when={shown() === "info"}>
       <div class="detail">
         <div class="thumbs">
           <For each={KINDS}>{(k) => <Thumb row={props.row} kind={k.kind} label={k.label} />}</For>
@@ -43,6 +70,7 @@ export default function GameDetail(props: { row: LibraryRow }) {
           <dt>Name</dt><dd>{props.row.name || "–"}</dd>
           <dt>System</dt><dd>{props.row.system || "–"}</dd>
           <dt>State</dt><dd class={`tag-${props.row.state}`}>{props.row.state}</dd>
+          <dt>Released</dt><dd>{props.row.year ?? "–"}</dd>
           <dt>Regions</dt><dd>{props.row.regions.join(", ") || "–"}</dd>
           <dt>Files</dt><dd>{props.row.files}</dd>
           <dt>Added</dt><dd>{at(props.row.added)}</dd>
@@ -67,9 +95,8 @@ export default function GameDetail(props: { row: LibraryRow }) {
           <dt>Path</dt><dd class="mono">{props.row.path}</dd>
         </dl>
       </div>
-      <Show when={props.row.cheevos_game}>
-        {(g) => <CheevosList game={g()} other={props.row.cheevos ? null : props.row.cheevos_other} unlocked={props.row.cheevos_progress?.awarded} />}
-      </Show>
+      </Match>
+      </Switch>
     </Panel>
   );
 }

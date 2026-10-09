@@ -1,9 +1,9 @@
 import { For, Show } from "solid-js";
+import Pager, { createPaged, wheelPage } from "./Pager";
 import Panel from "./Panel";
 import { lastRun } from "../state/importStore";
 import type { OpView } from "../ipc";
 
-const SHOWN = 2000;
 
 /** What an operation did, in a word, for grouping the report. */
 function outcome(op: OpView): string {
@@ -23,6 +23,7 @@ export default function RunReport(props: { rel: (p: string) => string }) {
           for (const op of r().ops) c.set(outcome(op), (c.get(outcome(op)) ?? 0) + 1);
           return [...c];
         };
+        const paged = createPaged(() => r().ops, () => 12);
         return (
           <Panel title="Last run" class="wide">
             <p class={r().error ? "err" : "ok"}>
@@ -41,8 +42,8 @@ export default function RunReport(props: { rel: (p: string) => string }) {
                 )}
               </For>
             </div>
-            <div class="oplist">
-            <For each={r().ops.slice(0, SHOWN)}>
+            <div class="oplist" {...wheelPage(paged)}>
+            <For each={paged.items()}>
               {(op) => (
                 <div class="row mono">
                   <span>{props.rel(op.from ?? op.to)}</span>
@@ -51,9 +52,7 @@ export default function RunReport(props: { rel: (p: string) => string }) {
               )}
             </For>
             </div>
-            <Show when={r().ops.length > SHOWN}>
-              <p class="dim">… and {r().ops.length - SHOWN} more</p>
-            </Show>
+            <Pager paged={paged} />
           </Panel>
         );
       }}

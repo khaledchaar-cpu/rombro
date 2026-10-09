@@ -11,6 +11,22 @@ export const UNKNOWN_YEAR = "unknown";
 /** Release decade of a row, e.g. `1990s`, or `unknown`. */
 export const decade = (r: LibraryRow) => (r.year ? `${Math.floor(r.year / 10) * 10}s` : UNKNOWN_YEAR);
 
+/** Search text of a system: its name plus acronyms of multi-word parts ("Nintendo Entertainment System" → nes). */
+const sysWords = new Map<string, string>();
+function systemText(system: string): string {
+  let t = sysWords.get(system);
+  if (t == null) {
+    const acr = system
+      .split(" - ")
+      .map((part) => part.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)))
+      .filter((w) => w.length > 1)
+      .map((w) => w.map((x) => x[0]).join(""));
+    t = `${system} ${acr.join(" ")}`.toLowerCase();
+    sysWords.set(system, t);
+  }
+  return t;
+}
+
 const toggled = (cur: Set<string>, s: string) => {
   const n = new Set(cur);
   if (n.has(s)) n.delete(s);
@@ -59,7 +75,7 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
         (!fav || r.favorite) &&
         (!played || r.plays > 0) &&
         (!ach || r.cheevos > 0) &&
-        (!words.length || ((h) => words.every((w) => h.includes(w)))(`${r.name} ${r.system}`.toLowerCase())),
+        (!words.length || ((h) => words.every((w) => h.includes(w)))(`${r.name.toLowerCase()} ${systemText(r.system)}`)),
     );
   });
 

@@ -1,4 +1,5 @@
 import { For, Show, createResource, createSignal } from "solid-js";
+import Pager, { createPaged, wheelPage } from "../components/Pager";
 import Panel from "../components/Panel";
 import DirField from "../components/DirField";
 import { exceptionsGet, ignoreSet, resolutionClear, setVerdict, type Exceptions as Ex } from "../ipc";
@@ -12,6 +13,7 @@ export function VerdictList(props: { verdicts: Verdict[]; onChange: () => void }
     const words = q().toLowerCase().split(/\s+/).filter(Boolean);
     return props.verdicts.filter((v) => words.every((w) => `${v.verdict} ${v.name} ${v.system}`.toLowerCase().includes(w)));
   };
+  const paged = createPaged(shown, () => 8);
   return (
     <>
       <p class="dim small">keep = always place in addition · discard = move to _trash · prefer = wins a 1G1R tie. Remove a decision to be asked again on the next plan.</p>
@@ -19,7 +21,8 @@ export function VerdictList(props: { verdicts: Verdict[]; onChange: () => void }
         <Show when={props.verdicts.length > 8}>
           <input class="field preset-search" placeholder={`Filter ${props.verdicts.length} decisions…`} value={q()} onInput={(e) => setQ(e.currentTarget.value)} />
         </Show>
-        <For each={shown()}>
+        <div {...wheelPage(paged)}>
+        <For each={paged.items()}>
           {(v) => (
             <div class="row ex-row">
               <span class="tag mono">{v.verdict}</span>
@@ -35,6 +38,8 @@ export function VerdictList(props: { verdicts: Verdict[]; onChange: () => void }
             </div>
           )}
         </For>
+        </div>
+        <Pager paged={paged} />
       </Show>
     </>
   );
