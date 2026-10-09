@@ -197,6 +197,17 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
 - **M21 Statistik-Seite**: Top-Spiele nach Zeit, Zeit je System, Verlauf (Woche/Monat; braucht Session-Log mit
   Zeitstempel je Lauf), Achievements-Fortschritt.
 
+### M22 Beliebtheit – Entscheidungen (User, Grilling 2026-10-09)
+- Quelle: RetroAchievements `NumDistinctPlayers` (nur per Spiel über `API_GetGameExtended`; die Spielliste je System
+  hat keine Spielerzahl) → Rangliste **nur für Library-Spiele mit RA-Unterstützung** (keine Wunschliste).
+- Abruf automatisch nach `cheevos sync` und nach dem Library-Laden, gedrosselt (`polite_get`), nur fehlende oder
+  > 30 Tage alte Werte (Tabelle `ra_players`, Schema v20, überlebt den Listen-Sync); abbrechbar. Spielerzahl beim Öffnen
+  der Details wird mitgespeichert. Fortschritt in Settings → RetroAchievements und in der Titelleiste.
+- Anzeige als **Rang je System** („#3 on SNES“, Versionen desselben RA-Spiels teilen den Rang), exakte Zahl im Tooltip.
+- Orte: Library (Spalte „Rank“, Sortierung „popularity“, Detail „Popularity“), Dashboard-Kachel „Popular in your
+  library“ (alle, gespielt oder nicht, max. 12, Klick startet), Stats „Most popular“ (Top 10, Systemfilter).
+- CLI: `cheevos players [--top n]`.
+
 ## 7. Architektur
 ```
 romburak/
