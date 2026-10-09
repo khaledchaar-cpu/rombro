@@ -249,6 +249,6 @@ unter der Library (sonst nächster Elternordner, den ein Core kennt). Core: Over
 [--dry-run]`; App: `game_cores`/`set_game_core`/`play` (`play://progress`), Komponente `GamePlay` in der Detailansicht.
 E2E Linux (Scratch-XDG): leerer Ordner → RetroArch + Info + fceumm in 1:45 min, Befehl korrekt.
 Play-Button abgenommen; Cores nur aus Buildbot-Index (`cores.index`). Core-Assets (`assets::missing`) werden beim Start geladen und journaled nach `_bios` entpackt (5f35a85; 2026-10-09 + DirkSimple, QEMU).
-Offen: Override hängt am Pfad (Umbenennen verliert ihn).
+Override hängt seit 2026-10-09 am Inhalt (`core:sha1:…`, alter Pfad-Schlüssel wird noch gelesen).
 Nächste Schritte M15c: Spielzeit (Child in `play` abwarten, < 30 s ignorieren, `play_stats` über Hash), Favoriten,
 alten Export (Playlists, `retroarch`-CLI, CorePicker mit System-RetroArch) entfernen.

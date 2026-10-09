@@ -1,5 +1,5 @@
-//! Launcher data: the core chosen for a single game (setting `core:<path>`), play time and
-//! favorites. Play time and favorites follow the game's content (`sha1:<hex>` of its first
+//! Launcher data: the core chosen for a single game (setting `core:<game key>`), play time and
+//! favorites. All three follow the game's content (`sha1:<hex>` of its first
 //! indexed ROM), so they survive renames and moves; unindexed files fall back to `path:<abs>`.
 
 use crate::files::{key, prefix};
@@ -33,7 +33,8 @@ fn content_key(roms: &str) -> Option<String> {
     Some(s)
 }
 
-fn override_key(game: &Path) -> String {
+/// Pre-v0.9.1 override key (by path); still read so existing choices keep working.
+fn legacy_override_key(game: &Path) -> String {
     format!("core:{}", key(game))
 }
 
@@ -154,18 +155,22 @@ impl Store {
 
     /// Core id the user chose for `game`, overriding the system's core.
     pub fn core_override(&self, game: &Path) -> Result<Option<String>> {
-        self.setting(&override_key(game))
+        if let Some(c) = self.setting(&format!("core:{}", self.game_key(game)?))? {
+            return Ok(Some(c));
+        }
+        self.setting(&legacy_override_key(game))
     }
 
     /// Sets (`Some`) or clears (`None`) the core override of `game`.
     pub fn set_core_override(&self, game: &Path, core: Option<&str>) -> Result<()> {
+        let k = format!("core:{}", self.game_key(game)?);
+        self.conn.execute(
+            "DELETE FROM settings WHERE key IN (?1, ?2)",
+            params![k, legacy_override_key(game)],
+        )?;
         match core {
-            Some(c) => self.set_setting(&override_key(game), c),
-            None => {
-                self.conn
-                    .execute("DELETE FROM settings WHERE key = ?1", [override_key(game)])?;
-                Ok(())
-            }
+            Some(c) => self.set_setting(&k, c),
+            None => Ok(()),
         }
     }
 }
@@ -234,6 +239,14 @@ mod tests {
         let st = s.play_stats(&k).unwrap();
         assert_eq!((st.plays, st.seconds, st.last), (2, 90, 300));
         assert_eq!(s.all_play_stats().unwrap()[&k], st);
+
+        s.set_core_override(Path::new("/lib/NES/a.nes"), Some("mesen"))
+            .unwrap();
+        s.conn
+            .execute("UPDATE file SET path = '/lib/NES/b.nes'", [])
+            .unwrap();
+        let renamed = s.core_override(Path::new("/lib/NES/b.nes")).unwrap();
+        assert_eq!(renamed.as_deref(), Some("mesen"));
 
         s.set_favorite(&k, true).unwrap();
         s.set_favorite(&k, true).unwrap();
