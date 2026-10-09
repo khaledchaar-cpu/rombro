@@ -123,7 +123,11 @@ fn atari_st_disk_parts_are_one_release() {
         "Explora - Time run (France) [m Tom Pouce][Disk 1 and 2]",
     ];
     let picks = select(&names, |n| n, &Rules::default());
-    assert!(picks.iter().all(|g| !g.needs_decision && g.rejected.is_empty()));
+    assert!(
+        picks
+            .iter()
+            .all(|g| !g.needs_decision && g.rejected.is_empty())
+    );
     let disciples: Vec<_> = picks[0].picked.iter().map(|n| **n).collect();
     assert_eq!(
         disciples,
