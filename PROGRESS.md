@@ -139,7 +139,7 @@ Nächste Schritte: v0.6.0 (M15–M16) releasen.
 
 ## Nächste Schritte
 Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
-1. v0.7.0 (M16 RetroAchievements + Umbenennung Romburak) getaggt 2026-10-09; Draft veröffentlicht der User. (v0.6.0 = M15, 2026-10-08.)
+1. v0.7.0 (M16 RetroAchievements + Umbenennung Romburak) getaggt 2026-10-09; Claude veröffentlicht nach CI. (v0.6.0 = M15, 2026-10-08.)
 2. Später (User, 2026-10-09): verwaltetes RetroArch auf Windows/macOS testen – Windows per CI-e2e-Job (ra install, status, Core + Test-ROM headless), macOS manuell durch den User.
 3. v2 Launcher (SPEC §6) – erst ganz zum Schluss.
 
@@ -151,7 +151,7 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
 - DOS/ScummVM-RDBs identifizieren über *eine* Datei, die oft zwischen Spielen geteilt ist (`dosbox.bat`, `ADL.DRV`) → Ordnername statt DB-Name.
 - Kompletter Probelauf: `romburak import "<Sammlung>" <scratch-lib> --dry-run` (nur lesend), ~3 h für 1,2 TB.
 - Leere Dateien matchen RDB-Einträge mit Leer-Hash (z. B. PSP-DLC) → Scanner ignoriert 0-Byte-Dateien.
-- Release: CI erstellt nur einen Draft; Veröffentlichen (`gh release edit --draft=false`) macht der User. CLI-Assets heißen `romburak-<os>-<arch>`.
+- Release: CI erstellt nur einen Draft; Veröffentlichen (`gh release edit --draft=false --latest`) macht Claude selbst. CLI-Assets heißen `romburak-<os>-<arch>`.
 - Arcade-RDB-Einträge (FBNeo/MAME) hashen das **ganze Zip** → `ScanReport.archives`; Treffer werden `Files::Set` (Kurzname, kein 1G1R, CHDs aus `<set>/`), BIOS → `Ident::Bios` → FBNeo `_bios/fbneo/`, MAME-Cores neben die Sets (`arcade::bios_dir`).
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
 - rusqlite braucht Feature `fallible_uint` für u64.
