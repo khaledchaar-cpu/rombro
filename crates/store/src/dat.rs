@@ -6,6 +6,12 @@ use rusqlite::{OptionalExtension, params};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
+/// Whole-file hashes shared within the library, and the misnamed arcade archives among them.
+pub type DuplicateCheck = (
+    std::collections::HashMap<PathBuf, [u8; 20]>,
+    HashSet<PathBuf>,
+);
+
 /// Parsed sets per (system, name): identifying a library checks thousands of zips against
 /// every DAT, with the same parents and BIOS sets over and over.
 pub(crate) type DatCache = std::collections::HashMap<(String, String), Option<std::rc::Rc<DatSet>>>;
@@ -146,13 +152,7 @@ impl Store {
 
     /// Inputs of the library duplicate check: hashes of shared whole files below `library`
     /// and the misnamed arcade archives among them.
-    pub fn duplicate_check(
-        &self,
-        library: &Path,
-    ) -> Result<(
-        std::collections::HashMap<PathBuf, [u8; 20]>,
-        HashSet<PathBuf>,
-    )> {
+    pub fn duplicate_check(&self, library: &Path) -> Result<DuplicateCheck> {
         let hashes = self.whole_hashes(library)?;
         let paths: Vec<&Path> = hashes.keys().map(PathBuf::as_path).collect();
         let misnamed = self.dat_misnamed(&paths)?;

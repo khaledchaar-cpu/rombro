@@ -1,5 +1,6 @@
 use super::tests::{file, item, opts, tree};
 use super::*;
+use std::path::Path;
 use tempfile::TempDir;
 
 fn known(system: &str, name: &str) -> Ident {
@@ -11,10 +12,10 @@ fn known(system: &str, name: &str) -> Ident {
 }
 
 /// An arcade set item whose databases list it under its file name: `system`, then `alt`.
-fn set(archive: &PathBuf, system: &str, alt: &[&str]) -> Item {
+fn set(archive: &Path, system: &str, alt: &[&str]) -> Item {
     Item {
         files: Files::Set {
-            archive: archive.clone(),
+            archive: archive.to_path_buf(),
             chds: Vec::new(),
             alt: alt
                 .iter()
