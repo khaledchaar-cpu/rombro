@@ -1,5 +1,5 @@
 import { createMemo, createSignal, For, Show } from "solid-js";
-import Pager, { createPaged, fitCount, wheelPage } from "../components/Pager";
+import Pager, { createPaged, fitCount } from "../components/Pager";
 import Panel from "../components/Panel";
 import ScanProgress from "../components/ScanProgress";
 import InboxLeftovers from "../components/InboxLeftovers";
@@ -39,7 +39,7 @@ function OpList() {
   const paged = createPaged(() => plan()?.ops ?? [], fitCount(el, ROW_H, 72, 8));
   return (
     <>
-      <div class="lpage" tabIndex={0} {...wheelPage(paged)} ref={setEl}>
+      <div class="lpage" ref={setEl}>
         <For each={paged.items()}>
           {(op) => (
             <div class={`vrow oprow mono small${isBios(op) ? " bios" : ""}`} style={{ height: `${ROW_H}px` }}>
@@ -169,7 +169,7 @@ function Decisions() {
           )}
         </For>
       </div>
-      <ul class="decisions" {...wheelPage(paged)}>
+      <ul class="decisions">
         <For each={paged.items()}>
           {(d) => (
             <li>

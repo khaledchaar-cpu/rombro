@@ -1,5 +1,5 @@
 import { For, Show, createResource, createSignal } from "solid-js";
-import Pager, { createPaged, wheelPage } from "../components/Pager";
+import Pager, { createPaged } from "../components/Pager";
 import Panel from "../components/Panel";
 import DirField from "../components/DirField";
 import { exceptionsGet, ignoreSet, resolutionClear, setVerdict, type Exceptions as Ex } from "../ipc";
@@ -21,7 +21,7 @@ export function VerdictList(props: { verdicts: Verdict[]; onChange: () => void }
         <Show when={props.verdicts.length > 8}>
           <input class="field preset-search" placeholder={`Filter ${props.verdicts.length} decisions…`} value={q()} onInput={(e) => setQ(e.currentTarget.value)} />
         </Show>
-        <div {...wheelPage(paged)}>
+        <div>
         <For each={paged.items()}>
           {(v) => (
             <div class="row ex-row">

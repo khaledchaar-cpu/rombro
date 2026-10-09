@@ -1,5 +1,5 @@
 import { For, Show } from "solid-js";
-import Pager, { createPaged, wheelPage } from "./Pager";
+import Pager, { createPaged } from "./Pager";
 import Panel from "./Panel";
 import { lastRun } from "../state/importStore";
 import type { OpView } from "../ipc";
@@ -42,7 +42,7 @@ export default function RunReport(props: { rel: (p: string) => string }) {
                 )}
               </For>
             </div>
-            <div class="oplist" {...wheelPage(paged)}>
+            <div class="oplist">
             <For each={paged.items()}>
               {(op) => (
                 <div class="row mono">

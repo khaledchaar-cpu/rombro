@@ -1,6 +1,6 @@
 // Settings → RetroArch → Picture: global shader preset (searchable) and aspect ratio.
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
-import Pager, { createPaged, wheelPage } from "./Pager";
+import Pager, { createPaged } from "./Pager";
 import Panel from "./Panel";
 import Select from "./Select";
 import { onPlayEnded, raRunning, raSetAspect, raSetShader, raShaders, raVideo } from "../ipc";
@@ -78,7 +78,7 @@ export default function PicturePanel() {
               value={query()}
               onInput={(e) => setQuery(e.currentTarget.value)}
             />
-            <ul class="preset-list" {...wheelPage(paged)}>
+            <ul class="preset-list">
               <For each={paged.items()}>
                 {(p) => (
                   <li>

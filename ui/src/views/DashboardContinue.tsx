@@ -1,7 +1,7 @@
 // "Continue playing" row: recently played games first, then unplayed favorites.
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 import Cover from "../components/Cover";
-import Pager, { createPaged, wheelPage } from "../components/Pager";
+import Pager, { createPaged } from "../components/Pager";
 import Panel from "../components/Panel";
 import { play, type LibraryRow } from "../ipc";
 import { formatPlayTime, libraryRows } from "../state/libraryStore";
@@ -59,7 +59,7 @@ export function Shelf(props: {
   return (
     <Show when={props.list.length}>
       <Panel title={props.title} class="wide">
-        <div class="shelf" ref={(el) => ro.observe(el)} {...wheelPage(paged)}>
+        <div class="shelf" ref={(el) => ro.observe(el)}>
           <For each={paged.items()}>
             {(r) => (
               <button

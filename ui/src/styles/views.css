@@ -69,7 +69,7 @@
 .chip:disabled { opacity: 0.2; cursor: default; }
 @media (max-width: 640px) { .filters { grid-template-columns: 1fr; } }
 
-.lpage { position: relative; overflow: hidden; background: var(--bg-sunken); border: 1px solid var(--line); outline: none; }
+.lpage { position: relative; overflow: hidden; background: var(--bg-sunken); border: 1px solid var(--line); }
 .lpage > .vrow { position: static; }
 .lrow.vrow { cursor: pointer; }
 .star { color: var(--text-dim); padding: 0; line-height: 1; }
@@ -152,7 +152,7 @@
 .lname { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .cover-mini { width: 18px; height: 22px; flex: none; font-size: 8px; border: 0; }
 .cover-mini.cover-ph { border: 1px dashed var(--line); }
-.cgrid { background: var(--bg-sunken); border: 1px solid var(--line); outline: none; }
+.cgrid { background: var(--bg-sunken); border: 1px solid var(--line); }
 .cgrid-page { display: grid; gap: var(--sp-2); padding: var(--sp-2); }
 .tile { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; gap: 2px; min-width: 0; padding: var(--sp-1); background: none; border: 1px solid transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
 .tile:hover { border-color: var(--line); background: var(--bg-raised); }
@@ -201,8 +201,14 @@
 .preset-search { width: 100%; }
 
 /* paging instead of scrolling (components/Pager.tsx) */
-.pager { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); margin-top: var(--sp-2); }
-.pager .mono { min-width: 6ch; text-align: center; color: var(--text-dim); }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: 2px; margin-top: var(--sp-1); font: var(--fs-xs) var(--font-mono); color: var(--text-dim); opacity: 0.7; transition: opacity var(--dur); }
+.pager:hover { opacity: 1; }
+.pager > span { min-width: 6ch; text-align: center; }
+.pager-btn { padding: 0 6px; line-height: 1.4; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
+.pager-btn:hover:not(:disabled) { color: var(--accent); }
+.pager-btn:disabled { opacity: 0.3; cursor: default; }
+.pager-btn:focus { outline: none; }
+.pager-btn:focus-visible { color: var(--accent); }
 
 /* Library: list + detail side by side when the window is wide enough */
 .libview { display: grid; gap: var(--sp-4); grid-template-columns: minmax(0, 1fr); }

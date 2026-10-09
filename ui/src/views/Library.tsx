@@ -1,7 +1,7 @@
 import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from "solid-js";
 import Cover from "../components/Cover";
 import GameDetail from "../components/GameDetail";
-import Pager, { createPaged, fitCount, wheelPage } from "../components/Pager";
+import Pager, { createPaged, fitCount } from "../components/Pager";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import Select from "../components/Select";
@@ -82,7 +82,6 @@ export default function Library(props: { onSettings: () => void }) {
   const observer = new ResizeObserver(([e]) => setCols(Math.max(1, Math.floor(e.contentRect.width / TILE_W))));
   onCleanup(() => observer.disconnect());
   const paged = createPaged(view, () => (mode() === "grid" ? cols() * gridRows() : listRows()));
-  const turn = wheelPage(paged);
   // keep the selected game in sight when switching list ↔ grid
   createEffect(on(mode, () => {
     const i = view().findIndex((r) => r.path === selPath());
@@ -119,7 +118,7 @@ export default function Library(props: { onSettings: () => void }) {
           </div>
         </div>
         <Show when={mode() === "grid"}>
-          <div class="cgrid" tabIndex={0} {...turn} ref={(el) => (setGridEl(el), observer.observe(el))}>
+          <div class="cgrid" ref={(el) => (setGridEl(el), observer.observe(el))}>
             <div class="cgrid-page" style={{ "grid-template-columns": `repeat(${cols()}, minmax(0, 1fr))`, "grid-auto-rows": `${TILE_H - 8}px` }}>
                     <For each={paged.items()}>
                       {(r) => (
@@ -144,7 +143,7 @@ export default function Library(props: { onSettings: () => void }) {
               )}
             </For>
           </div>
-          <div class="lpage" tabIndex={0} {...turn} ref={setListEl} style={{ height: `${listRows() * ROW_H}px` }}>
+          <div class="lpage" ref={setListEl} style={{ height: `${listRows() * ROW_H}px` }}>
               <For each={paged.items()}>
                 {(row) => {
                   const r = () => row;

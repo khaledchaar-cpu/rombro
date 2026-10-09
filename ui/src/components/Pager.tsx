@@ -1,6 +1,6 @@
 // Paging instead of scrolling: `createPaged` slices a list into pages, `fitCount` sizes a page
-// to the space left in the window, `Pager` is the ◀ 3/41 ▶ control. The mouse wheel over a
-// paged block turns pages (`wheelPage`), PageUp/PageDown too when the block has focus.
+// to the space left in the window, `Pager` is the ‹ 3/41 › control. Blocks take no focus and
+// leave the mouse wheel to the page.
 import { createEffect, createSignal, on, onCleanup, Show, type Accessor } from "solid-js";
 
 export interface Paged<T> {
@@ -62,35 +62,16 @@ export function fitCount(el: Accessor<HTMLElement | undefined>, itemH: number, r
   return n;
 }
 
-/** Wheel and PageUp/PageDown handlers that turn pages of `p`; spread onto the paged block. */
-export function wheelPage(p: Paged<unknown>) {
-  let last = 0;
-  return {
-    onWheel: (e: WheelEvent) => {
-      if (p.pages() < 2 || Math.abs(e.deltaY) < 4) return;
-      e.preventDefault();
-      // trackpads fire many small events: one page per gesture tick
-      if (e.timeStamp - last < 180) return;
-      last = e.timeStamp;
-      p.step(e.deltaY > 0 ? 1 : -1);
-    },
-    onKeyDown: (e: KeyboardEvent) => {
-      const d = e.key === "PageDown" ? 1 : e.key === "PageUp" ? -1 : 0;
-      if (d && p.pages() > 1) (e.preventDefault(), p.step(d));
-    },
-  };
-}
-
 export default function Pager(props: { paged: Paged<unknown>; class?: string }) {
   const p = props.paged;
   return (
     <Show when={p.pages() > 1}>
       <div class={`pager ${props.class ?? ""}`}>
-        <button class="btn ghost small" disabled={p.page() === 0} onClick={() => p.go(0)} title="First page">«</button>
-        <button class="btn ghost small" disabled={p.page() === 0} onClick={() => p.step(-1)} title="Previous page (PageUp)">◀</button>
-        <span class="mono small">{p.page() + 1} / {p.pages()}</span>
-        <button class="btn ghost small" disabled={p.page() >= p.pages() - 1} onClick={() => p.step(1)} title="Next page (PageDown)">▶</button>
-        <button class="btn ghost small" disabled={p.page() >= p.pages() - 1} onClick={() => p.go(p.pages() - 1)} title="Last page">»</button>
+        <button class="pager-btn" disabled={p.page() === 0} onClick={() => p.go(0)} title="First page">«</button>
+        <button class="pager-btn" disabled={p.page() === 0} onClick={() => p.step(-1)} title="Previous page">‹</button>
+        <span>{p.page() + 1} / {p.pages()}</span>
+        <button class="pager-btn" disabled={p.page() >= p.pages() - 1} onClick={() => p.step(1)} title="Next page">›</button>
+        <button class="pager-btn" disabled={p.page() >= p.pages() - 1} onClick={() => p.go(p.pages() - 1)} title="Last page">»</button>
       </div>
     </Show>
   );

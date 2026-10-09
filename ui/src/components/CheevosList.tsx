@@ -1,5 +1,5 @@
 import { createResource, For, Show } from "solid-js";
-import Pager, { createPaged, wheelPage } from "./Pager";
+import Pager, { createPaged } from "./Pager";
 import { cheevosAchievements, cheevosStatus } from "../ipc";
 
 const KIND: Record<string, string> = { progression: "progression", win_condition: "win", missable: "missable" };
@@ -27,7 +27,7 @@ export default function CheevosList(props: { game: number; other: string | null;
       </h3>
       <Show when={!list.loading} fallback={<p class="dim small">loading…</p>}>
         <Show when={!list.error} fallback={<p class="err small">{String(list.error)}</p>}>
-          <ul class="cheevo-list" {...wheelPage(paged)}>
+          <ul class="cheevo-list">
             <For each={paged.items()}>
               {(a) => (
                 <li class="cheevo" classList={{ locked: locked(a.earned) }}>

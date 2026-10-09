@@ -1,6 +1,6 @@
 // Dashboard gamification panels (SPEC F6): level/XP, KPIs, completeness per system, achievements.
 import { createMemo, For, Show } from "solid-js";
-import Pager, { createPaged, wheelPage } from "../components/Pager";
+import Pager, { createPaged } from "../components/Pager";
 import Panel from "../components/Panel";
 import Segments from "../components/Segments";
 import { stats } from "../state/gamify";
@@ -67,7 +67,7 @@ export function CompletenessPanel() {
   const paged = createPaged(systems, () => 8);
   return (
     <Panel title="Completeness (1G1R)">
-      <ul class="complete" {...wheelPage(paged)}>
+      <ul class="complete">
         <For each={paged.items()} fallback={<li class="dim">No identified games yet.</li>}>
           {(s) => (
             <li>
@@ -92,7 +92,7 @@ export function FranchisePanel() {
   const paged = createPaged(goals, () => 8);
   return (
     <Panel title="Franchise goals">
-      <ul class="complete" {...wheelPage(paged)}>
+      <ul class="complete">
         <For each={paged.items()} fallback={<li class="dim">No franchise started yet.</li>}>
           {(f) => (
             <li>
@@ -120,7 +120,7 @@ export function AchievementsPanel() {
   const paged = createPaged(list, () => 8);
   return (
     <Panel title={`Achievements ${unlocked()}/${list().length}`}>
-      <ul class="achs" {...wheelPage(paged)}>
+      <ul class="achs">
         <For each={paged.items()}>
           {([a, at]) => (
             <li classList={{ locked: !a.unlocked }} title={at ? `unlocked ${new Date(at * 1000).toLocaleString()}` : "locked"}>
