@@ -37,7 +37,7 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Tests Core | `cargo test -q -p romburak-core` |
 | CLI | `cargo run -q -p romburak-cli -- <cmd>` |
 | App dev | `cd ui && pnpm tauri dev` (nur Frontend: `pnpm dev`, Mock-IPC) |
-| RDBs + Arcade-DATs → SQLite | `cargo run -q --release -p romburak-cli -- db sync` (lädt DATs aus dem Netz) |
+| RDBs + Arcade-DATs → SQLite | `cargo run -q --release -p romburak-cli -- db sync [--path <rdb-dir>]` (lädt RDBs + DATs aus dem Netz; Test: `XDG_DATA_HOME=<scratch>`) |
 | Lookup | `cargo run -q --release -p romburak-cli -- db lookup <crc/sha1/md5/serial>` |
 | DB-Statistik | `cargo run -q --release -p romburak-cli -- db stats [--db <file>]` (inkl. DAT-Versionen) |
 | Benchmarks | `cargo bench -q -p romburak-rdb` / `-p romburak-core` |

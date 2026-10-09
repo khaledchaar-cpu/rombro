@@ -17,9 +17,10 @@ pub enum DbCmd {
         #[arg(long)]
         db: Option<PathBuf>,
     },
-    /// Import new/changed RDB files into the romburak database
+    /// Download the RetroArch databases (shared with the managed RetroArch) and import
+    /// new/changed RDB files into the romburak database
     Sync {
-        /// RDB directory (default: auto-detected RetroArch folder)
+        /// RDB directory to import instead of downloading
         #[arg(long)]
         path: Option<PathBuf>,
         /// Database file (default: $XDG_DATA_HOME/romburak/romburak.db)
@@ -37,7 +38,7 @@ pub enum DbCmd {
 pub fn run(cmd: DbCmd) -> Result<()> {
     match cmd {
         DbCmd::Stats { path, db } => stats(path.map_or_else(default_dir, Ok)?, db),
-        DbCmd::Sync { path, db } => sync(path.map_or_else(default_dir, Ok)?, db),
+        DbCmd::Sync { path, db } => sync(path.map_or_else(fetched_dir, Ok)?, db),
         DbCmd::Lookup { key, db } => lookup(&key, db),
     }
 }
@@ -45,6 +46,35 @@ pub fn run(cmd: DbCmd) -> Result<()> {
 fn default_dir() -> Result<PathBuf> {
     romburak_core::paths::rdb_dir()
         .context("RetroArch RDB folder not found (pass a path or set ROMBURAK_RDB_DIR)")
+}
+
+/// Fresh databases from the buildbot; offline the auto-detected folder.
+fn fetched_dir() -> Result<PathBuf> {
+    let m = romburak_core::retroarch::managed::Managed::detect();
+    let fetched = m.as_ref().map(|m| {
+        romburak_store::update_rdbs(m, &|done, total| {
+            eprint!(
+                "\rdownloading databases {} / {} MB",
+                done >> 20,
+                total.unwrap_or(0) >> 20
+            )
+        })
+    });
+    match fetched {
+        Some(Ok((dir, updated))) => {
+            println!(
+                "{}databases: {}",
+                if updated { "\n" } else { "" },
+                dir.display()
+            );
+            Ok(dir)
+        }
+        Some(Err(e)) => {
+            eprintln!("database download failed ({e}), using a local RetroArch folder");
+            default_dir()
+        }
+        None => default_dir(),
+    }
 }
 
 pub(crate) fn open_store(db: Option<PathBuf>) -> Result<Store> {

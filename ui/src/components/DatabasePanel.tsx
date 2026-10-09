@@ -24,7 +24,7 @@ export default function DatabasePanel() {
           : `${r.imported} imported · ${r.unchanged} unchanged · ${r.removed} removed`;
       const dats = r.dats_updated > 0 ? ` · ${r.dats_updated} arcade DATs updated` : "";
       const warn = r.dat_warnings.length > 0 ? ` · DAT warning: ${r.dat_warnings.join("; ")}` : "";
-      setMsg(rdbs + dats + warn);
+      setMsg((r.downloaded ? "Databases downloaded · " : "") + rdbs + dats + warn);
       void refetch();
     } catch (e) {
       setMsg(String(e));
@@ -46,19 +46,19 @@ export default function DatabasePanel() {
             </>
           )}
         </Show>
-        <p class="dim small">RetroArch databases (local) and arcade DATs (downloaded).</p>
+        <p class="dim small">RetroArch databases and arcade DATs, downloaded from libretro. The managed RetroArch uses the same databases.</p>
         <div class="row">
           <button class="btn" disabled={syncing()} onClick={() => void sync(false)}>
             Sync databases
           </button>
           <button class="btn ghost" disabled={syncing()} onClick={() => void sync(true)}>
-            Choose RDB folder…
+            Use local RDB folder…
           </button>
         </div>
         <Show when={syncing()} fallback={<Show when={msg()}><p class="dim small">{msg()}</p></Show>}>
           <PhaseProgress
             event="sync://progress"
-            labels={{ rdb: "reading RetroArch databases", dat: "downloading arcade DATs" }}
+            labels={{ download: "downloading RetroArch databases (MB)", rdb: "reading RetroArch databases", dat: "downloading arcade DATs" }}
           />
         </Show>
       </Panel>

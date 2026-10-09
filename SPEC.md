@@ -191,6 +191,9 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
   lässt RetroArch-Menü-Einstellungen unangetastet. Verwalteter Config-Ordner statt `~/.config/retroarch/config` (einmalige Kopie).
   Live-Wechsel (User 2026-10-09): Preset-Wahl in Picture gilt sofort fürs laufende Spiel – über stdin (kein Netzwerk-Port), nur
   für aus Romburak gestartete Spiele; Linux immer `glcore`, damit Slang auch ohne gespeicherten Shader live geht.
+- RDBs (User 2026-10-09): `db sync` lädt `database-rdb.zip` vom Buildbot nach `<data>/romburak/retroarch/database/rdb` (nur bei
+  geändertem `Last-Modified`); das verwaltete RetroArch nutzt denselben Ordner (`content_database_path`). Offline: letzter Download,
+  dann lokale RetroArch-Ordner, zuletzt die RDBs im RetroArch-Bundle. Manuell gewählter Ordner hat Vorrang.
 - **M21 Statistik-Seite**: Top-Spiele nach Zeit, Zeit je System, Verlauf (Woche/Monat; braucht Session-Log mit
   Zeitstempel je Lauf), Achievements-Fortschritt.
 

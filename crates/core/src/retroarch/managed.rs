@@ -144,6 +144,11 @@ impl Managed {
         self.current().map(|v| self.executable_of(&v))
     }
 
+    /// RetroArch databases shared with romburak (`content_database_path`).
+    pub fn database_dir(&self) -> PathBuf {
+        self.root.join("database").join("rdb")
+    }
+
     /// Savestates folder (`savestate_directory` in the managed config).
     pub fn states_dir(&self) -> PathBuf {
         self.root.join("states")

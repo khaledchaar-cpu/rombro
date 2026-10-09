@@ -82,11 +82,13 @@ export interface SyncSummary {
   entries: number;
   dats_updated: number;
   dat_warnings: string[];
+  /** RDBs freshly downloaded from the buildbot */
+  downloaded: boolean;
 }
 
 export async function dbSync(dir: string | null): Promise<SyncSummary> {
   if (!inTauri) {
-    await mockProgress("sync://progress", ["rdb", "dat"], phased);
+    await mockProgress("sync://progress", ["download", "rdb", "dat"], phased);
     return {
       dir: dir ?? "(mock)",
       imported: 0,
@@ -95,6 +97,7 @@ export async function dbSync(dir: string | null): Promise<SyncSummary> {
       entries: 0,
       dats_updated: 0,
       dat_warnings: [],
+      downloaded: dir === null,
     };
   }
   return invoke<SyncSummary>("db_sync", { dir });

@@ -235,22 +235,36 @@ pub struct SyncSummary {
     dats_updated: usize,
     /// DATs that could not be refreshed (offline, …).
     dat_warnings: Vec<String>,
+    /// RDBs were freshly downloaded from the buildbot.
+    downloaded: bool,
 }
 
-/// Imports RetroArch RDBs from `dir` (or the auto-detected folder) and downloads the arcade
-/// DATs; progress goes out as `sync://progress` (phase `rdb`/`dat`, done, total).
+/// Imports RetroArch RDBs from `dir` (default: downloaded from the buildbot into the managed
+/// RetroArch's folder, offline the auto-detected folder) and downloads the arcade DATs;
+/// progress goes out as `sync://progress` (phase `download` in MB/`rdb`/`dat`, done, total).
 #[tauri::command]
 pub async fn db_sync(app: AppHandle, dir: Option<PathBuf>) -> CmdResult<SyncSummary> {
     tauri::async_runtime::spawn_blocking(move || {
-        let dir = match dir {
-            Some(d) => d,
-            None => romburak_core::paths::rdb_dir()
-                .ok_or("RetroArch database folder not found – pick it manually")?,
-        };
-        let (mut store, _) = open_store()?;
         let emit = |phase: &'static str, done: usize, total: usize| {
             let _ = app.emit("sync://progress", (phase, Progress { done, total }));
         };
+        let fetched = match dir {
+            Some(_) => None,
+            None => romburak_core::retroarch::managed::Managed::detect().and_then(|m| {
+                romburak_store::update_rdbs(&m, &|d, t| {
+                    emit("download", (d >> 20) as usize, (t.unwrap_or(0) >> 20) as usize)
+                })
+                .ok()
+            }),
+        };
+        let downloaded = fetched.as_ref().is_some_and(|f| f.1);
+        let dir = match (dir, fetched) {
+            (Some(d), _) => d,
+            (None, Some((d, _))) => d,
+            (None, None) => romburak_core::paths::rdb_dir()
+                .ok_or("databases could not be downloaded and no RetroArch database folder was found – pick it manually")?,
+        };
+        let (mut store, _) = open_store()?;
         let r = store
             .sync_rdbs_progress(&dir, &|d, t| emit("rdb", d, t))
             .map_err(err)?;
@@ -270,6 +284,7 @@ pub async fn db_sync(app: AppHandle, dir: Option<PathBuf>) -> CmdResult<SyncSumm
             entries: r.entries as u64,
             dats_updated: d.updated.len(),
             dat_warnings: d.warnings,
+            downloaded,
         })
     })
     .await

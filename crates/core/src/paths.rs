@@ -27,6 +27,10 @@ pub fn rdb_candidates() -> Vec<PathBuf> {
     if let Some(d) = std::env::var_os(RDB_ENV) {
         out.push(PathBuf::from(d));
     }
+    // databases romburak downloads itself (`db sync`)
+    if let Some(m) = crate::retroarch::managed::Managed::detect() {
+        out.push(m.database_dir());
+    }
     let home = dirs::home_dir();
     let rel = Path::new("database/rdb");
     if cfg!(target_os = "macos") {
@@ -55,7 +59,9 @@ pub fn rdb_candidates() -> Vec<PathBuf> {
         out.push(PathBuf::from("/usr/share/libretro").join(rel));
     }
     // last resort: the databases bundled with the managed RetroArch
-    if let Some(d) = crate::retroarch::managed::Managed::detect()
+    let managed = crate::retroarch::managed::Managed::detect();
+    if let Some(d) = managed
+        .as_ref()
         .and_then(|m| m.bundled_dir(&m.current()?, "database"))
     {
         out.push(d.join("rdb"));
