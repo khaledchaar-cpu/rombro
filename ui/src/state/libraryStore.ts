@@ -68,17 +68,27 @@ export async function refreshProgress() {
 }
 
 /** Library cell: unlocked/total when logged in, else the count; ◌ = another version has some. */
+/** PS1 `.pbp` cannot be hashed by rcheevos, so RetroArch never identifies it for achievements. */
+export const CHEEVOS_PBP_HINT = "PS1 .pbp is not identified by RetroAchievements – convert to CHD or CUE/BIN";
+
+export function cheevosUnhashable(r: LibraryRow): boolean {
+  return r.system === "Sony - PlayStation" && r.path.toLowerCase().endsWith(".pbp");
+}
+
 export function cheevosCell(r: LibraryRow): string {
   const p = r.cheevos_progress;
   if (p?.award === "mastered" || p?.award === "completed") return `★ ${p.total}`;
   if (p?.awarded) return `${p.awarded}/${p.total}`;
-  return r.cheevos ? String(r.cheevos) : r.cheevos_other ? "◌" : "";
+  if (r.cheevos) return String(r.cheevos);
+  if (cheevosUnhashable(r)) return "⊘";
+  return r.cheevos_other ? "◌" : "";
 }
 
 export function cheevosTitle(r: LibraryRow): string {
   const p = r.cheevos_progress;
   if (p) return `${p.awarded} of ${p.total} achievements unlocked${p.hardcore ? ` (${p.hardcore} hardcore)` : ""}${p.award ? ` – ${p.award}` : ""}`;
   if (r.cheevos) return `${r.cheevos} achievements`;
+  if (cheevosUnhashable(r)) return CHEEVOS_PBP_HINT;
   return r.cheevos_other ? `Another version has achievements: ${r.cheevos_other}` : "";
 }
 

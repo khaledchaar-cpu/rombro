@@ -3,7 +3,7 @@ import Panel from "./Panel";
 import GamePlay from "./GamePlay";
 import CheevosList from "./CheevosList";
 import { thumbnail, type LibraryRow, type ThumbKind } from "../ipc";
-import { formatPlayTime, toggleFavorite } from "../state/libraryStore";
+import { CHEEVOS_PBP_HINT, cheevosUnhashable, formatPlayTime, toggleFavorite } from "../state/libraryStore";
 
 const KINDS: { kind: ThumbKind; label: string }[] = [
   { kind: "boxart", label: "Boxart" },
@@ -63,7 +63,9 @@ export default function GameDetail(props: { row: LibraryRow }) {
               ? `${props.row.cheevos_progress.awarded} of ${props.row.cheevos_progress.total} unlocked${props.row.cheevos_progress.award ? ` · ${props.row.cheevos_progress.award}` : ""}`
               : props.row.cheevos
               ? `${props.row.cheevos} (RetroAchievements)`
-              : props.row.cheevos_other
+              : cheevosUnhashable(props.row)
+                ? CHEEVOS_PBP_HINT
+                : props.row.cheevos_other
                 ? `none for this version – supported: ${props.row.cheevos_other}`
                 : "–"}
           </dd>
