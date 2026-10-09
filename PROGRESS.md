@@ -40,7 +40,8 @@
 | v0.8.0 Release (v2 Launcher M17–M21) | ✅ released 2026-10-09 |
 | v0.8.1 Release (RDB-Download, README) | ✅ released 2026-10-09 |
 | v0.8.2 Release (Atari-ST-Teile, Sufami-Turbo-Zips, CI-e2e Win/macOS) | ✅ released 2026-10-09 |
-| M22 Beliebtheit (RA-Spielerzahlen) | 🔶 gebaut, Sichtprüfung offen |
+| M22 Beliebtheit (RA-Spielerzahlen) | ✅ done (Sichtprüfung 2026-10-09) |
+| v0.9.0 Release (M22 Beliebtheit) | ✅ released 2026-10-09 |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
