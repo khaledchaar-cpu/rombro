@@ -3,6 +3,7 @@ import Panel from "../components/Panel";
 import { ContinuePanel } from "./DashboardContinue";
 import { PopularPanel } from "./DashboardPopular";
 import { LibraryPanel } from "./DashboardHistory";
+import PlayStats from "./Stats";
 import {
   AchievementsPanel,
   CompletenessPanel,
@@ -28,15 +29,17 @@ export default function Dashboard(props: {
           </button>
         </Panel>
       </Show>
+      {/* play first: what to start, then how you play, then the collection, then gamification */}
       <ContinuePanel onLibrary={props.onLibrary} />
       <PopularPanel onLibrary={props.onLibrary} />
+      <PlayStats />
+      <LibraryPanel onOpen={props.onLibrary} />
       <Show when={gamifyEnabled()}>
-        <ProgressPanel />
         <CompletenessPanel />
         <FranchisePanel />
+        <ProgressPanel />
         <AchievementsPanel />
       </Show>
-      <LibraryPanel onOpen={props.onLibrary} />
     </div>
   );
 }

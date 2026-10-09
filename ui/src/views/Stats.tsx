@@ -5,7 +5,6 @@ import Pager, { createPaged } from "../components/Pager";
 import Panel from "../components/Panel";
 import { onPlayEnded, playSessions, type LibraryRow } from "../ipc";
 import { formatPlayTime, libraryRows } from "../state/libraryStore";
-import { PopularStats } from "./StatsPopular";
 
 type Range = "week" | "month" | "year";
 const RANGES: { id: Range; label: string }[] = [
@@ -62,7 +61,8 @@ function Meter(props: { value: number; max: number }) {
   );
 }
 
-export default function Stats() {
+/** Play statistics panels (part of the dashboard): overview, history, most played, time per system, RA unlocks. */
+export default function PlayStats() {
   const [range, setRange] = createSignal<Range>("week");
   const span = createMemo(() => buckets(range()));
   const [sessions, { refetch }] = createResource(() => span()[0].start, playSessions);
@@ -98,7 +98,7 @@ export default function Stats() {
   const pSys = createPaged(perSystem, () => 10);
   const pAch = createPaged(cheevos, () => 10);
   return (
-    <div class="grid">
+    <>
       <Panel title="Overview" class="wide">
         <div class="stat-tiles">
           <div class="stat"><strong>{total() ? formatPlayTime(total()) : "0 min"}</strong><span class="dim small">played in total</span></div>
@@ -163,7 +163,7 @@ export default function Stats() {
         </Show>
       </Panel>
 
-      <Panel title="Achievements" class="wide">
+      <Panel title="RetroAchievements" class="wide">
         <Show when={cheevos().length} fallback={<p class="dim small">No unlocks yet (log in under RetroArch → RetroAchievements).</p>}>
           <ol class="rank" start={pAch.offset() + 1}>
             <For each={pAch.items()}>
@@ -186,7 +186,6 @@ export default function Stats() {
         </Show>
       </Panel>
 
-      <PopularStats />
-    </div>
+    </>
   );
 }

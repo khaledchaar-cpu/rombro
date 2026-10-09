@@ -217,6 +217,9 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
   „Added“-Filter ersetzt durch **Erscheinungsjahrzehnt** (RDB `releaseyear`, frühestes Jahr je Name; „unknown“).
 - Suchfeld: jedes Wort muss in Name oder System vorkommen; System auch per Kürzel der Wortanfänge (NES, SNES, GBA).
 - Details: Reiter Info / Savestates / Achievements, neben der Liste ab 1200 px Fensterbreite.
+- Dashboard = Dashboard + Stats (Stats-Seite entfällt), Reihenfolge: Weiterspielen, Beliebt, Spielstatistik, RA-Fortschritt,
+  Sammlung (Library, Vollständigkeit, Franchises), Gamification. „Most popular“-Liste entfällt (doppelt zum Beliebt-Regal).
+  „Recent runs“ entfernt; „Needs attention“ + „Trash“ unter Settings → Library.
 
 ## 7. Architektur
 ```
