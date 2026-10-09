@@ -1,4 +1,4 @@
-//! rombro-store: SQLite persistence for the RDB cache and (later) library state.
+//! romburak-store: SQLite persistence for the RDB cache and (later) library state.
 
 mod catalog;
 mod cheevos;
@@ -40,9 +40,9 @@ pub use snapshot::Snapshot;
 use rusqlite::Connection;
 use std::path::{Path, PathBuf};
 
-/// Default database location (per OS, see [`rombro_core::paths::database`]).
+/// Default database location (per OS, see [`romburak_core::paths::database`]).
 pub fn default_path() -> Option<PathBuf> {
-    rombro_core::paths::database()
+    romburak_core::paths::database()
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -52,7 +52,7 @@ pub enum Error {
     #[error("io: {0}")]
     Io(#[from] std::io::Error),
     #[error("rdb {0}: {1}")]
-    Rdb(String, rombro_rdb::Error),
+    Rdb(String, romburak_rdb::Error),
     #[error("json: {0}")]
     Json(#[from] serde_json::Error),
     #[error("database schema version {0} is newer than supported ({1})")]
@@ -61,7 +61,7 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Handle to the rombro SQLite database.
+/// Handle to the romburak SQLite database.
 pub struct Store {
     conn: Connection,
     /// Parsed DAT sets by (system, name); `None` = not in that DAT. Emptied on DAT import.

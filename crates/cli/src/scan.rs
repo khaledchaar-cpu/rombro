@@ -1,7 +1,7 @@
 use crate::db::open_store;
 use anyhow::Result;
-use rombro_core::ScannedRom;
-use rombro_store::{DiscMatch, Match, Record, Store, candidates};
+use romburak_core::ScannedRom;
+use romburak_store::{DiscMatch, Match, Record, Store, candidates};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
@@ -10,7 +10,7 @@ use std::time::Instant;
 pub fn run(dir: PathBuf, db: Option<PathBuf>, unknown_only: bool) -> Result<()> {
     let store = open_store(db)?;
     let t = Instant::now();
-    let report = rombro_core::scan(&dir);
+    let report = romburak_core::scan(&dir);
     let hashed = t.elapsed();
     let bytes: u64 = report
         .roms

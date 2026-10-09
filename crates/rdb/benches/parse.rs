@@ -1,6 +1,6 @@
 //! Parses the real SNES RDB if present (no fixture is checked in).
 use criterion::{Criterion, criterion_group, criterion_main};
-use rombro_rdb::RdbFile;
+use romburak_rdb::RdbFile;
 use std::path::PathBuf;
 
 fn bench(c: &mut Criterion) {

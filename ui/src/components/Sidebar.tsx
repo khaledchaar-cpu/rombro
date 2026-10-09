@@ -41,8 +41,8 @@ export default function Sidebar(props: Props) {
   );
   return (
     <aside class="sidebar" classList={{ collapsed: collapsed() }} data-tauri-drag-region>
-      <div class="logo" data-text="ROMBRO" data-tauri-drag-region>
-        <span class="logo-full">ROMBRO</span>
+      <div class="logo" data-text="Romburak" data-tauri-drag-region>
+        <span class="logo-full">Romburak</span>
         <span class="logo-short">RB</span>
       </div>
       <nav class="nav">

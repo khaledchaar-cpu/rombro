@@ -2,9 +2,9 @@
 
 use crate::commands::{CmdResult, Progress, err, open_store};
 use crate::retroarch::CoreOption;
-use rombro_core::retroarch::managed::launch::{self, Game, Step};
-use rombro_core::retroarch::managed::{Managed, Phase};
-use rombro_core::retroarch::pick;
+use romburak_core::retroarch::managed::launch::{self, Game, Step};
+use romburak_core::retroarch::managed::{Managed, Phase};
+use romburak_core::retroarch::pick;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use tauri::Emitter;
@@ -41,7 +41,7 @@ pub async fn game_cores(path: String) -> CmdResult<GameCores> {
     tauri::async_runtime::spawn_blocking(move || {
         let m = managed()?;
         let (rom, library) = game_path(&path)?;
-        let _ = m.ensure_info(&rombro_store::http_download, false);
+        let _ = m.ensure_info(&romburak_store::http_download, false);
         let (store, _) = open_store()?;
         let cores = m.cores();
         let system = launch::system_of(&rom, library.as_deref(), &cores);
@@ -119,7 +119,7 @@ pub async fn play(app: tauri::AppHandle, path: String) -> CmdResult<String> {
             let _ = app.emit("play://progress", (phase, p, item));
         };
         let mut l = m
-            .prepare(&game, &rombro_store::http_download, &|s| match s {
+            .prepare(&game, &romburak_store::http_download, &|s| match s {
                 Step::RetroArch(Phase::Download { done, total }) => {
                     emit("download", done, total.unwrap_or(0), "")
                 }

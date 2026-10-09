@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use clap::Subcommand;
 use rayon::prelude::*;
-use rombro_rdb::RdbFile;
-use rombro_store::Store;
+use romburak_rdb::RdbFile;
+use romburak_store::Store;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -13,16 +13,16 @@ pub enum DbCmd {
         /// RDB directory (default: auto-detected RetroArch folder)
         #[arg(long)]
         path: Option<PathBuf>,
-        /// Database file for the arcade DAT versions (default: $XDG_DATA_HOME/rombro/rombro.db)
+        /// Database file for the arcade DAT versions (default: $XDG_DATA_HOME/romburak/romburak.db)
         #[arg(long)]
         db: Option<PathBuf>,
     },
-    /// Import new/changed RDB files into the rombro database
+    /// Import new/changed RDB files into the romburak database
     Sync {
         /// RDB directory (default: auto-detected RetroArch folder)
         #[arg(long)]
         path: Option<PathBuf>,
-        /// Database file (default: $XDG_DATA_HOME/rombro/rombro.db)
+        /// Database file (default: $XDG_DATA_HOME/romburak/romburak.db)
         #[arg(long)]
         db: Option<PathBuf>,
     },
@@ -43,14 +43,14 @@ pub fn run(cmd: DbCmd) -> Result<()> {
 }
 
 fn default_dir() -> Result<PathBuf> {
-    rombro_core::paths::rdb_dir()
-        .context("RetroArch RDB folder not found (pass a path or set ROMBRO_RDB_DIR)")
+    romburak_core::paths::rdb_dir()
+        .context("RetroArch RDB folder not found (pass a path or set ROMBURAK_RDB_DIR)")
 }
 
 pub(crate) fn open_store(db: Option<PathBuf>) -> Result<Store> {
     let path = match db {
         Some(p) => p,
-        None => rombro_store::default_path().context("no data directory")?,
+        None => romburak_store::default_path().context("no data directory")?,
     };
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;

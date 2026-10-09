@@ -1,7 +1,7 @@
-//! The RetroArch rombro manages itself: status, install and update (Settings → RetroArch).
+//! The RetroArch romburak manages itself: status, install and update (Settings → RetroArch).
 
 use crate::commands::{CmdResult, err, open_store};
-use rombro_core::retroarch::managed::{self, Managed, Phase};
+use romburak_core::retroarch::managed::{self, Managed, Phase};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -24,7 +24,7 @@ pub async fn ra_status(check_latest: bool) -> CmdResult<ManagedView> {
     tauri::async_runtime::spawn_blocking(move || {
         let m = Managed::detect();
         let latest = check_latest
-            .then(|| rombro_store::http_get(&format!("{}/", managed::STABLE_URL)).ok())
+            .then(|| romburak_store::http_get(&format!("{}/", managed::STABLE_URL)).ok())
             .flatten()
             .and_then(|html| managed::latest_stable(&String::from_utf8_lossy(&html)));
         Ok(ManagedView {
@@ -61,7 +61,7 @@ pub async fn ra_install(app: tauri::AppHandle, version: Option<String>) -> CmdRe
                 ),
             );
         };
-        m.install(&version, &rombro_store::http_download, &|p| match p {
+        m.install(&version, &romburak_store::http_download, &|p| match p {
             Phase::Download { done, total } => emit("download", done, total.unwrap_or(0)),
             Phase::Verify => emit("verify", 0, 0),
             Phase::Unpack { done, total } => emit("unpack", done, total),
@@ -95,7 +95,7 @@ pub fn ra_set_display(mode: Option<String>) -> CmdResult<()> {
 }
 
 /// Rewrites the config of the installed managed RetroArch with the stored preferences.
-pub fn rewrite_config(store: &rombro_store::Store) -> CmdResult<()> {
+pub fn rewrite_config(store: &romburak_store::Store) -> CmdResult<()> {
     let Some(m) = Managed::detect() else {
         return Ok(());
     };

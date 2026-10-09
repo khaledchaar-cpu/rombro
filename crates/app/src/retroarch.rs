@@ -1,8 +1,8 @@
 //! The core choice per system (managed RetroArch).
 
 use crate::commands::{CmdResult, err, open_store};
-use rombro_core::retroarch::managed::Managed;
-use rombro_core::retroarch::pick;
+use romburak_core::retroarch::managed::Managed;
+use romburak_core::retroarch::pick;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -31,7 +31,7 @@ pub async fn retroarch_cores() -> CmdResult<Vec<SystemCores>> {
         let (store, _) = open_store()?;
         let library = store.library().map_err(err)?.ok_or("no library set")?;
         let m = Managed::detect().ok_or("no RetroArch stable build for this platform")?;
-        let _ = m.ensure_info(&rombro_store::http_download, false);
+        let _ = m.ensure_info(&romburak_store::http_download, false);
         let picks = store.rules().map_err(err)?.cores;
         let cores = m.cores();
         Ok(pick::library_systems(&library)

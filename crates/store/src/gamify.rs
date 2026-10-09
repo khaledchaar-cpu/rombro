@@ -1,10 +1,10 @@
 //! Gathers gamification inputs (1G1R sets, metadata, journals) and persists unlocked achievements.
 
 use crate::{Result, Store};
-use rombro_core::g1r::select;
-use rombro_core::gamify::{self, Achievement, Inputs, Kpis, Level, Owned};
-use rombro_core::naming;
-use rombro_core::plan::{Op, TRASH_DIR, journal_from_json};
+use romburak_core::g1r::select;
+use romburak_core::gamify::{self, Achievement, Inputs, Kpis, Level, Owned};
+use romburak_core::naming;
+use romburak_core::plan::{Op, TRASH_DIR, journal_from_json};
 use rusqlite::params;
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap, HashSet};

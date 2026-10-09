@@ -1,10 +1,10 @@
-# ROMBRO – Spezifikation
+# Romburak – Spezifikation
 
 > Lebendes Dokument. Wird bei jeder neuen Erkenntnis aktualisiert (siehe CLAUDE.md → Workflow).
 > Stand: 2026-10-04 · Version: v1 (Curator) · v2 (Launcher) ist Ausblick.
 
 ## 1. Vision
-ROMBRO liest alle RetroArch-Datenbanken (`.rdb`) aus, verifiziert neue ROM-Dateien per Hash/Serial und importiert sie
+Romburak liest alle RetroArch-Datenbanken (`.rdb`) aus, verifiziert neue ROM-Dateien per Hash/Serial und importiert sie
 in eine verwaltete Verzeichnisstruktur. Ergebnis: eine saubere, dublettenfreie Sammlung nach **1G1R** (One Game – One ROM).
 Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger Launcher (RetroArch-Cores).
 
@@ -63,7 +63,7 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
 - Dateinamen = RDB-`name` (Thumbnail-kompatibel: `&*/:<>?\|` → `_`).
 - Operationen: move | copy; optional (ent)zippen. (hardlink/reflink 2026-10-07 entfernt)
 - Immer: Plan → Dry-Run-Anzeige → Ausführen. Jede Ausführung schreibt ein **Journal** → Undo möglich.
-- Ports (2026-10-07): ROMBRO verwaltet nur RetroArch-relevante Titel. Ports mit libretro-Core, aber ohne RDB,
+- Ports (2026-10-07): Romburak verwaltet nur RetroArch-relevante Titel. Ports mit libretro-Core, aber ohne RDB,
   erkennt es an der Datei, die der Core lädt (`.info` `supported_extensions`, Tabelle `plan::PORTS`, z. B. `smw.game`),
   und verschiebt sie als Spiele-Ordner. Standalone-Ports ohne Core (Batocera: xash3d, devilutionx, cdogs) bleiben
   unerkannt und landen über „Inbox-Reste“ im Trash.
@@ -74,7 +74,7 @@ Optional: Gamification (Vollständigkeit, KPIs, Achievements). v2: vollwertiger 
 - Arcade-BIOS (2026-10-07): Neu gepackte BIOS-Zips (`neogeo.zip`, `stvbios.zip`) treffen nie den Ganzdatei-Hash;
   ein Zip, dessen Name im DAT ein `isbios`-Set ist und dessen Member zu ≥ 75 % passen, gilt als BIOS des
   bestplatzierten Cores. Der Library-`_trash` wird nicht gescannt.
-- Library-Snapshot (2026-10-07): RomBro verwaltet die Library allein, daher gilt der Index als Wahrheit.
+- Library-Snapshot (2026-10-07): Romburak verwaltet die Library allein, daher gilt der Index als Wahrheit.
   Die identifizierte Library (Items + Arcade-Setnamen) liegt als Snapshot in der DB (`snapshot`, gzip-JSON).
   Plan-Import und Library-View laden ihn (~60 ms) ohne Ordnerdurchlauf und ohne DB-Lookups. Verworfen wird er
   per Trigger bei RDB-/DAT-Sync und Resolutions sowie bei Index-Änderungen unter der Library (Execute/Undo,
@@ -126,25 +126,25 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
 
 ### M15 Launcher-Basis – Entscheidungen (2026-10-08)
 - **Verwaltetes RetroArch** (einzige Variante): offizielle Stable-Builds von buildbot.libretro.com für Linux (AppImage),
-  Windows (zip/7z) und macOS (dmg). Ablage im App-Datenverzeichnis (`~/.local/share/rombro/retroarch/` o. ä.).
-  Version gepinnt (mit ROMBRO-Releases angehoben), dazu „Update auf neueste Stable“ in Settings → RetroArch.
+  Windows (zip/7z) und macOS (dmg). Ablage im App-Datenverzeichnis (`~/.local/share/romburak/retroarch/` o. ä.).
+  Version gepinnt (mit Romburak-Releases angehoben), dazu „Update auf neueste Stable“ in Settings → RetroArch.
 - Einrichtung beim ersten „Play“ (Dialog mit Größe + Fortschritt) oder in Settings → RetroArch; erst herunterladen und
   prüfen, dann atomar verschieben, ohne Netz klare Fehlermeldung.
-- Eigene, von ROMBRO geschriebene `retroarch.cfg`. Saves/States/Config bleiben im Standardordner des verwalteten
+- Eigene, von Romburak geschriebene `retroarch.cfg`. Saves/States/Config bleiben im Standardordner des verwalteten
   RetroArch (App-Datenverzeichnis); das ROM-Verzeichnis bleibt sauber, nur `system_directory` zeigt auf `<library>/_bios`.
 - Start: Core = Standard-Core (bisherige Core-Wahl) oder Override pro Spiel (Dropdown in der Detailansicht, alle passenden
-  Cores); fehlende Cores werden automatisch installiert. CLI `rombro play <file>` + Play-Button in der App.
+  Cores); fehlende Cores werden automatisch installiert. CLI `romburak play <file>` + Play-Button in der App.
 - Spielzeit: Prozesslaufzeit, Läufe < 30 s ignoriert; „zuletzt gespielt“, Gesamtzeit, Starts; Zuordnung über Hash.
-- Favoriten: Stern + Library-Filter, nur in ROMBRO.
+- Favoriten: Stern + Library-Filter, nur in Romburak.
 - Der bisherige RetroArch-Export (Playlists, BIOS-Kopie, `--install-cores`, CLI `retroarch`) entfällt am Ende von M15;
   Core-Wahl/-Installation werden wiederverwendet.
-- Schnitt: **M15a** verwaltetes RetroArch (Download, Prüfung, Install, Update, Config, CLI `rombro ra install`, alle 3 OS);
+- Schnitt: **M15a** verwaltetes RetroArch (Download, Prüfung, Install, Update, Config, CLI `romburak ra install`, alle 3 OS);
   **M15b** Starten (`play`, Play-Button, Core-Override, Auto-Core-Install); **M15c** Spielzeit + Favoriten, alten Export entfernen.
   Später: Savestate-Übersicht, RetroAchievements.
 - Umsetzung M15a: Buildbot liefert keine Prüfsummen → SHA-256 der gepinnten Archive steht im Code (`PINNED_SHA256`),
   „latest“ wird nur über die 7z-CRCs geprüft. Linux: `linux/x86_64/RetroArch.7z` (AppImage + `.AppImage.home` mit
   Assets; AppImage setzt `$HOME` darauf, daher immer `--config <root>/retroarch.cfg`), Windows `RetroArch.7z`,
-  macOS `RetroArch_Metal.dmg`. Kein Build für Linux-aarch64 → „nicht unterstützt“. Ordner: `<data>/rombro/retroarch/`
+  macOS `RetroArch_Metal.dmg`. Kein Build für Linux-aarch64 → „nicht unterstützt“. Ordner: `<data>/romburak/retroarch/`
   mit `versions/<v>/`, `current`, `cores`, `info`, `saves`, `states`, `retroarch.cfg`; nur eine Version bleibt.
 - Umsetzung M15b: Cores aus `buildbot …/nightly/<os>/<arch>/latest` (macOS arm64/x86_64 je nach Arch), Info-Dateien aus
   `assets/frontend/info.zip`. Core-Override pro Spiel als Setting `core:<absoluter Pfad>` (einfach; Umbenennen
@@ -169,8 +169,8 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
   Disc-Systeme (PS1/PS2/Saturn/Sega CD/PCE-CD/DC/3DO …) und NDS eigene Verfahren.
 - Schnitt: **M16a** Hashing Cartridge + Arcade + N64, RA-Spielliste je Konsole (Cache in der DB), Badge/Filter/Hinweis;
   **M16b** Login, Token + Hardcore in der Config, Fortschritt je Spiel; **M16c** Disc-Systeme + NDS.
-- Entschieden (M16b, Default): Token liegt zusätzlich in der rombro-DB (`ra.token`), damit jede neu geschriebene Config
-  ihn trägt. Ein Login nur im RetroArch-Menü bleibt unangetastet, bis man sich in rombro an-/abmeldet (`ra.user` gesetzt).
+- Entschieden (M16b, Default): Token liegt zusätzlich in der romburak-DB (`ra.token`), damit jede neu geschriebene Config
+  ihn trägt. Ein Login nur im RetroArch-Menü bleibt unangetastet, bis man sich in romburak an-/abmeldet (`ra.user` gesetzt).
   Abmelden setzt `cheevos_enable = false` und löscht Token + Fortschritt. Fortschritt braucht zusätzlich den Web-API-Key.
 - M16c (Default): jede Disc wird einzeln gehasht (RA führt Hashes je Disc), nicht die `.m3u`. Unterstützt: PS1, PS2, PSP,
   Sega CD, Saturn, PCE-CD, Dreamcast, 3DO, NDS/DSi. Offen/nicht: PS1-`.pbp`, PCE-GameExpress, PC-FX, Neo Geo CD,
@@ -178,12 +178,12 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
 
 ## 7. Architektur
 ```
-rombro/
+romburak/
 ├─ crates/
 │  ├─ rdb/        # RDB/MessagePack-Parser, no deps, zero-copy        (lib)
 │  ├─ core/       # Domain: Hashing, Scanner, Naming, 1G1R, Planner    (lib)
 │  ├─ store/      # Persistenz: SQLite (rusqlite, WAL), Migrations     (lib)
-│  ├─ cli/        # `rombro` CLI – headless, für Tests & Power-User     (bin)
+│  ├─ cli/        # `romburak` CLI – headless, für Tests & Power-User     (bin)
 │  └─ app/        # Tauri-2-Shell, Commands/Events → core              (bin)
 ├─ ui/            # SolidJS + TypeScript + Vite, Cyberpunk-Design-System
 ├─ .claude/skills/  # projektspezifische Skills
@@ -235,12 +235,12 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 | # | Milestone | Inhalt | Done wenn |
 |---|---|---|---|
 | M0 | Bootstrap | Cargo-Workspace, Crates-Skelett, CI-Skript (fmt/clippy/test), git | `cargo test` grün |
-| M1 | RDB-Parser | `crates/rdb`: MessagePack-Leser, Entry-Struct, Laden aller 146 RDBs, Benchmark | CLI `rombro db stats` listet Systeme+Counts |
+| M1 | RDB-Parser | `crates/rdb`: MessagePack-Leser, Entry-Struct, Laden aller 146 RDBs, Benchmark | CLI `romburak db stats` listet Systeme+Counts |
 | M2 | Store & Index | SQLite-Schema, Migrations, Import/Cache der RDBs, Lookup-API | Lookup per crc/sha1/serial in < 1 ms |
-| M3 | Scanner & Hashing | Paralleler Scan, Hashing, ZIP/7z, Header-Stripping, Match | `rombro scan <dir>` zeigt Verified/Unknown |
+| M3 | Scanner & Hashing | Paralleler Scan, Hashing, ZIP/7z, Header-Stripping, Match | `romburak scan <dir>` zeigt Verified/Unknown |
 | M4 | Disc-Support | cue/bin, gdi, iso, m3u, Serial-Extraktion PS1/PS2/PSP/Saturn | Disc-Fixtures werden erkannt |
 | M5 | Naming & 1G1R | Tag-Parser für No-Intro-Namen, Gruppierung, Scoring, Regeln-Config | Snapshot-Tests für Picks |
-| M6 | Planner & Import | Plan/Dry-Run/Execute, Journal, Undo, Quarantäne, Audit, `.lpl`-Export | `rombro import --dry-run` + Undo getestet |
+| M6 | Planner & Import | Plan/Dry-Run/Execute, Journal, Undo, Quarantäne, Audit, `.lpl`-Export | `romburak import --dry-run` + Undo getestet |
 | M7 | App-Shell | Tauri 2 + SolidJS-Gerüst, Design-Tokens, Layout, Command-Palette, IPC | App startet auf Linux mit Dashboard-Dummy |
 | M8 | GUI Kern | Dashboard, Inbox-View (Streaming), Plan-Diff, Library-Tabelle | Import-Flow komplett per GUI |
 | M9 | GUI Feinschliff | Persistenter Library-Index (§10 M9), 1G1R-Regeln-Editor, Settings, Thumbnails, Effekte, Light-Theme | UX-Review bestanden |
@@ -253,10 +253,10 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - M2: Persistenter Cache = SQLite statt eigenem Binärformat. Kalt-Import ~3 s (einmalig, SQLite-Insert-bound),
   warm 2 ms. Ziel „< 2 s kalt" gilt für das Parsen (52 ms); Import ggf. später im Hintergrund.
 - M2: Systemname = Dateiname der RDB ohne `.rdb`. Metadaten-only-Einträge ohne Treffer werden verworfen.
-- M2: DB-Pfad Default `$XDG_DATA_HOME/rombro/rombro.db` (Linux), Felder als Spalten statt `meta_json`.
+- M2: DB-Pfad Default `$XDG_DATA_HOME/romburak/romburak.db` (Linux), Felder als Spalten statt `meta_json`.
 
 - M3: MD5 wird beim Scan nicht berechnet (4× langsamer); Verifikation über CRC+Größe → SHA1. Header-ROMs werden
-  zuerst headerless gematcht. Matching lebt in `rombro-store` (`identify`), Store → Core-Abhängigkeit.
+  zuerst headerless gematcht. Matching lebt in `romburak-store` (`identify`), Store → Core-Abhängigkeit.
 - M3: ZIP-Header-CRC als Schnelltest entfällt vorerst – SHA1 wird ohnehin gebraucht.
 
 - M4: Disc-RDBs (PS1, SegaCD, Saturn, DC) listen **nur den Datentrack** (Track 1 bzw. 3) – Disc gilt als
@@ -301,7 +301,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   einzige irreversible Aktion; ein Undo eines Laufs, dessen Dateien so gelöscht wurden, schlägt fehl). Persistiert pro (System, Name); wirkt beim nächsten Plan.
 - M8: 1G1R-Gleichstand → Verdict `prefer` auf ein Release (Name ohne Disc-Tag); das wird Pick, die übrigen
   landen als Rejected in der TBD-Queue (dort Keep/Trash).
-- M9 (User, 2026-10-05): Die Library ist eine von RomBro **kontinuierlich gemanagte** Sammlung und muss beim
+- M9 (User, 2026-10-05): Die Library ist eine von Romburak **kontinuierlich gemanagte** Sammlung und muss beim
   App-Start sofort da sein (kein manuelles Laden). Umsetzung:
   1. Library-Pfad als Einstellung in der DB (nicht localStorage); Schema erlaubt später mehrere Libraries.
   2. Persistenter Index (Tabelle `file`, vgl. §Schema): wird von Execute und Undo direkt fortgeschrieben;
@@ -317,7 +317,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - Default-Regionspriorität (User, 2026-10-04): **Europe > World > USA > Germany > Japan**; konfigurierbar.
 
 - M11: Pfaderkennung in `core::paths` (`dirs`-Crate); RDB-Ordner = erster Kandidat mit `.rdb`-Datei, Override per
-  `ROMBRO_RDB_DIR`. CLI wird als separates Binary neben den Bundles ausgeliefert. Releases als Draft per Tag `v*`.
+  `ROMBURAK_RDB_DIR`. CLI wird als separates Binary neben den Bundles ausgeliefert. Releases als Draft per Tag `v*`.
 - Archive mit unbekannten Membern (z. B. Arcade-Sets) werden nie zerlegt: bekannte Member werden entpackt, das Archiv geht danach als Ganzes nach `_quarantine/`.
 - **Arcade (FBNeo/MAME)**: Erkennung über CRC+Größe des *ganzen* Zips (RDB-Einträge beschreiben das Archiv, nicht Member). Nur exakte Treffer; Name passt, CRC nicht → normale Quarantäne (RDB ist Single Point of Truth).
   - Mehrfachtreffer: FBNeo > MAME (neueste zuerst: MAME, 2016, 2015, 2010, 2003-Plus, 2003, 2000) > HBMAME. Ein Zip landet genau einmal in der Library (keine CRC-Dubletten).
@@ -398,7 +398,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   Reihenfolge: User-Wahl (`rules.cores`, System → Core-ID) > Empfehlung > spezialisiertester installierter Core.
   Auswahl: alle Cores, deren `.info` das System nennt (RetroArch liefert Infos aller Cores). Installation nur auf
   Anforderung (`--install-cores` / Checkbox): `<core_updater_buildbot_cores_url>/<core>_libretro.so.zip` → Cache
-  `~/.cache/rombro/cores/`, dann `Op::Extract` in `libretro_directory` (Journal, Undo entfernt). Ohne Install bekommt
+  `~/.cache/romburak/cores/`, dann `Op::Extract` in `libretro_directory` (Journal, Undo entfernt). Ohne Install bekommt
   die Playlist den besten installierten Core, der gewünschte wird als fehlend gemeldet.
   Pflicht-Systemdateien (2026-10-08, `retroarch::assets`): Mit `--install-cores` lädt der Export für jeden genutzten
   Core, dessen Marker im `system`-Ordner fehlt, das Buildbot-Paket `<host>/assets/system/<zip>` (blueMSX `Machines/`,
@@ -420,4 +420,4 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
 - Umgang mit Arcade (MAME/FBNeo-Sets): v1 nur verifizieren, nicht 1G1R-reduzieren?
 - No-Intro-DAT-Import für echte Parent/Clone-Daten in v1 oder später?
 - Entschieden (User, 2026-10-08): Gamepad-/Controller-Bedienung der App ersatzlos gestrichen.
-- Entschieden (User, 2026-10-08): Anzeige des verwalteten RetroArch wählbar (Setting `ra_display`: `fullscreen` | `window:<1–6>` = `video_scale`; unset = RetroArch-Menü entscheidet), wird bei jedem Config-Schreiben gesetzt. Omarchy erzwingt per Fensterregel Vollbild für `com.libretro.RetroArch` → Override in der User-Hypr-Config, nicht in ROMBRO.
+- Entschieden (User, 2026-10-08): Anzeige des verwalteten RetroArch wählbar (Setting `ra_display`: `fullscreen` | `window:<1–6>` = `video_scale`; unset = RetroArch-Menü entscheidet), wird bei jedem Config-Schreiben gesetzt. Omarchy erzwingt per Fensterregel Vollbild für `com.libretro.RetroArch` → Override in der User-Hypr-Config, nicht in Romburak.

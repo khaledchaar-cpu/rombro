@@ -1,6 +1,6 @@
 use crate::db::open_store;
 use anyhow::Result;
-use rombro_core::g1r::select;
+use romburak_core::g1r::select;
 use std::path::PathBuf;
 
 /// Prints the 1G1R selection for one system; with a filter, every candidate and reason.

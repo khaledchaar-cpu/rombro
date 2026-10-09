@@ -2,7 +2,7 @@
 //! hardcore choice, and the settings the managed RetroArch gets from them.
 
 use crate::{Result, Store};
-use rombro_core::retroarch::managed::{Managed, cheevos::Cheevos};
+use romburak_core::retroarch::managed::{Managed, cheevos::Cheevos};
 use std::io;
 
 const LOGIN: &str = "https://retroachievements.org/dorequest.php";
@@ -21,11 +21,9 @@ struct LoginReply {
 
 /// Logs in and returns (user name as RA spells it, token).
 pub fn ra_login(user: &str, password: &str) -> io::Result<(String, String)> {
-    let reply = ureq::post(LOGIN).header("User-Agent", "rombro").send_form([
-        ("r", "login2"),
-        ("u", user),
-        ("p", password),
-    ]);
+    let reply = ureq::post(LOGIN)
+        .header("User-Agent", "romburak")
+        .send_form([("r", "login2"), ("u", user), ("p", password)]);
     // RA answers a wrong password with 401 and the JSON error body.
     let body = match reply {
         Ok(mut r) => r.body_mut().read_to_string(),
@@ -76,7 +74,7 @@ impl Store {
     }
 
     /// Achievement settings for the config; `None` until the user logged in or out once
-    /// in rombro (a login made in RetroArch's own menu stays untouched).
+    /// in romburak (a login made in RetroArch's own menu stays untouched).
     pub fn ra_cheevos(&self) -> Result<Option<Cheevos>> {
         if self.setting(USER)?.is_none() {
             return Ok(None);

@@ -78,7 +78,7 @@ pub struct HashCache {
     pub entries: HashMap<PathBuf, (Stamp, Vec<CachedRom>)>,
     /// Trust entries without checking each file's size and mtime: the folder listing still
     /// finds added and removed files, but a file overwritten in place goes unnoticed. For
-    /// the library, which only RomBro changes (its executions keep the index current);
+    /// the library, which only Romburak changes (its executions keep the index current);
     /// a full rescan checks every file.
     pub trusted: bool,
 }

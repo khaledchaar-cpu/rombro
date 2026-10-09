@@ -4,7 +4,7 @@
 
 use crate::files::{key, prefix};
 use crate::{Result, Store};
-use rombro_core::CachedRom;
+use romburak_core::CachedRom;
 use rusqlite::{OptionalExtension, params};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
@@ -176,7 +176,7 @@ mod tests {
     fn play_time_and_favorites_follow_the_content() {
         let s = Store::open_in_memory().unwrap();
         let roms = |sha: u8| {
-            let h = rombro_core::Hashes {
+            let h = romburak_core::Hashes {
                 size: 1,
                 crc: 0,
                 sha1: [sha; 20],

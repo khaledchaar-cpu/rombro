@@ -3098,12 +3098,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "rombro-app"
+name = "romburak-app"
 version = "0.6.0"
 dependencies = [
  "anyhow",
- "rombro-core",
- "rombro-store",
+ "romburak-core",
+ "romburak-store",
  "serde",
  "serde_json",
  "tauri",
@@ -3113,21 +3113,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "rombro-cli"
+name = "romburak-cli"
 version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
  "rayon",
- "rombro-core",
- "rombro-rdb",
- "rombro-store",
+ "romburak-core",
+ "romburak-rdb",
+ "romburak-store",
  "rpassword",
  "serde_json",
 ]
 
 [[package]]
-name = "rombro-core"
+name = "romburak-core"
 version = "0.6.0"
 dependencies = [
  "chd",
@@ -3138,7 +3138,7 @@ dependencies = [
  "md-5",
  "quick-xml 0.41.0",
  "rayon",
- "rombro-rdb",
+ "romburak-rdb",
  "serde",
  "serde_json",
  "sevenz-rust2",
@@ -3151,7 +3151,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rombro-rdb"
+name = "romburak-rdb"
 version = "0.6.0"
 dependencies = [
  "criterion",
@@ -3159,14 +3159,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "rombro-store"
+name = "romburak-store"
 version = "0.6.0"
 dependencies = [
  "crc32fast",
  "flate2",
  "rayon",
- "rombro-core",
- "rombro-rdb",
+ "romburak-core",
+ "romburak-rdb",
  "rusqlite",
  "serde",
  "serde_json",

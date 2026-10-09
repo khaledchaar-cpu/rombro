@@ -1,10 +1,10 @@
 //! Identified library per root, so planning and the library view need neither a folder walk
 //! nor a database lookup while nothing changed. Dropped (by triggers) when the game
-//! databases or resolutions change and when a full scan finds changes; files that RomBro's own
+//! databases or resolutions change and when a full scan finds changes; files that Romburak's own
 //! runs move are only marked dirty and re-identified one by one on the next load.
 
 use crate::{Result, Store};
-use rombro_core::plan::Item;
+use romburak_core::plan::Item;
 use rusqlite::{OptionalExtension, params};
 use std::io::{Read, Write};
 use std::path::Path;
@@ -117,7 +117,7 @@ impl Store {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rombro_core::plan::{Done, Files, Ident, Op};
+    use romburak_core::plan::{Done, Files, Ident, Op};
 
     fn snap() -> Snapshot {
         Snapshot {

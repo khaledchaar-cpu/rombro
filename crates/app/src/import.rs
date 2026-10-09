@@ -3,9 +3,9 @@
 use crate::commands::{
     CmdResult, Progress, Throttle, err, indexed_scan, library_snapshot, open_store,
 };
-use rombro_core::plan::{self, Decision, Mode, Op, Options};
-use rombro_core::rules::Why;
-use rombro_store::Store;
+use romburak_core::plan::{self, Decision, Mode, Op, Options};
+use romburak_core::rules::Why;
+use romburak_store::Store;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -113,7 +113,7 @@ fn emit_scan(
     app: &AppHandle,
     phase: &'static str,
     dir: &Path,
-) -> CmdResult<rombro_core::ScanReport> {
+) -> CmdResult<romburak_core::ScanReport> {
     // Announce the phase right away: walking a large tree takes a while before `total` is known.
     let _ = app.emit("import://progress", (phase, Progress { done: 0, total: 0 }));
     let throttle = Throttle::new();

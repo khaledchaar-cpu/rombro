@@ -66,7 +66,7 @@ pub fn options<'a>(cores: &'a [Core], system: &str) -> Vec<&'a Core> {
 }
 
 /// Systems of the library a core can be chosen for: its top-level system folders
-/// (rombro's own `_…` folders left out), sorted.
+/// (romburak's own `_…` folders left out), sorted.
 pub fn library_systems(library: &std::path::Path) -> Vec<String> {
     let mut out: Vec<String> = std::fs::read_dir(library)
         .map(|rd| {

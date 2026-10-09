@@ -3,9 +3,9 @@
 
 use crate::catalog::game;
 use crate::{Result, Store};
-use rombro_core::ScannedRom;
-use rombro_core::arcade::{self, CHIP_KEYED_BIOS};
-use rombro_core::plan::{Files, Game, Ident, Item};
+use romburak_core::ScannedRom;
+use romburak_core::arcade::{self, CHIP_KEYED_BIOS};
+use romburak_core::plan::{Files, Game, Ident, Item};
 use std::path::Path;
 
 impl Store {
@@ -147,7 +147,7 @@ fn file_name(p: &str) -> &str {
 #[cfg(test)]
 mod tests {
     use crate::Store;
-    use rombro_core::plan::{Files, Ident};
+    use romburak_core::plan::{Files, Ident};
     use std::io::Write;
 
     #[test]
@@ -172,9 +172,9 @@ mod tests {
             crc(b"gfx")
         );
         let mut s = Store::open_in_memory().unwrap();
-        let sets = rombro_core::arcade::dat::parse(dat.as_bytes()).unwrap();
+        let sets = romburak_core::arcade::dat::parse(dat.as_bytes()).unwrap();
         s.import_dat("MAME", "0.289", 1, &sets).unwrap();
-        let items = s.items(&rombro_core::scan(tmp.path()), false).unwrap();
+        let items = s.items(&romburak_core::scan(tmp.path()), false).unwrap();
         assert_eq!(items.len(), 1);
         assert!(matches!(items[0].files, Files::Set { .. }));
         assert!(

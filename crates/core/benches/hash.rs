@@ -1,5 +1,5 @@
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use rombro_core::hash_reader;
+use romburak_core::hash_reader;
 
 fn bench(c: &mut Criterion) {
     let data: Vec<u8> = (0..32 * 1024 * 1024u32)

@@ -3,7 +3,7 @@
 use crate::record::{Record, merge};
 use crate::{Error, Result, Store};
 use rayon::prelude::*;
-use rombro_rdb::{Entry, RdbFile};
+use romburak_rdb::{Entry, RdbFile};
 use rusqlite::params;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

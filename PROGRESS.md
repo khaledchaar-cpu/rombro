@@ -75,12 +75,12 @@ DAT-Versionen; Neo Geo (`2020bb`) läuft in RetroArch mit mame2016 und FBNeo (BI
 
 M15a (2026-10-08): `retroarch::managed` (Download → SHA-256 bei gepinnter Version → 7z/dmg entpacken in Temp →
 atomarer Rename → `current`-Marker, alte Versionen weg), `managed::config` (eigene `retroarch.cfg`, nur Ordner-Keys
-gesetzt, Rest bleibt; `system_directory` = `<library>/_bios`, wird nicht angelegt). CLI `rombro ra status [--check] |
+gesetzt, Rest bleibt; `system_directory` = `<library>/_bios`, wird nicht angelegt). CLI `romburak ra status [--check] |
 install [--version|--latest] [--library] | config`; App: Panel „Managed RetroArch“ im RetroArch-Tab
-(`ra_status`/`ra_install`, `ra://progress` in MB). Streaming-Download `rombro_store::http_download`.
+(`ra_status`/`ra_install`, `ra://progress` in MB). Streaming-Download `romburak_store::http_download`.
 E2E Linux (Scratch-XDG): 179 MB in 1:43 min, 1.22.2 startet headless fceumm 300 Frames, Saves/States im
 verwalteten Ordner. Panel inkl. Entpack-Fortschritt vom User abgenommen. Offen: Windows/macOS real testen (dmg via `hdiutil`).
-Nächste Schritte M15b: `info`-Dateien + Cores in den verwalteten Ordner (Buildbot `info.zip`), `rombro play`,
+Nächste Schritte M15b: `info`-Dateien + Cores in den verwalteten Ordner (Buildbot `info.zip`), `romburak play`,
 Play-Button, Core-Override, Auto-Core-Install.
 
 M15c (2026-10-08): Schema v16 `play_stats` + `favorite`, Schlüssel `sha1:<hex>` der ersten indizierten ROM
@@ -88,7 +88,7 @@ M15c (2026-10-08): Schema v16 `play_stats` + `favorite`, Schlüssel `sha1:<hex>`
 (`MIN_PLAY_SECS`). CLI `play` misst und zeigt Spielzeit; App: `play://ended` aktualisiert die Zeile lokal,
 Library-Spalten ★ + „Played“, Filter-Chips „★ favorites“/„played“, Details mit Spielzeit/zuletzt gespielt.
 Alter RetroArch-Export entfernt (core `export`, `Dirs`, CLI `retroarch`, App `retroarch_export`, RetroArchPanel).
-Ersatz: `rombro ra cores [--set Sys=id]`, Settings → RetroArch „Cores per system“ (verwaltete Cores, Systeme =
+Ersatz: `romburak ra cores [--set Sys=id]`, Settings → RetroArch „Cores per system“ (verwaltete Cores, Systeme =
 Top-Ordner der Library). Core-Systemdateien (blueMSX, PPSSPP, Dolphin, PCSX2, ECWolf) lädt jetzt `play` nach
 `download/assets/` und entpackt nach `<library>/_bios` über den Journal (`Store::execute_journaled`, undo-bar).
 Geprüft: `play --dry-run` Coleco → bluemsx + 300 Systemdateien geplant.
@@ -101,7 +101,7 @@ Savestate-Übersicht oder RetroAchievements (SPEC §6).
 
 M16a (2026-10-08): `core::cheevos` (rcheevos-Hashing, `consoles.tsv` RDB-System → RA-Konsole + Methode, `title_key`),
 Store v17 `ra_console/ra_game/ra_hash/ra_file` (`ra_sync` mit Pause + Retry bei 429, `ra_hash` cached nach size+mtime),
-CLI `rombro cheevos key|sync|scan`, App: Settings → Databases „RetroAchievements“ (Key, Sync + Hashing mit Fortschritt),
+CLI `romburak cheevos key|sync|scan`, App: Settings → Databases „RetroAchievements“ (Key, Sync + Hashing mit Fortschritt),
 Library-Spalte 🏆 (◌ = andere Version unterstützt), Filter-Chip, Details. Echte Library: 41 Konsolen, 7.737 Spiele,
 2.685/9.083 Dateien mit Achievements (erster Hash-Lauf 1:27 min über CIFS). Niedrige Quoten (N64 35/193) = EU-Versionen,
 die RA nicht führt (geprüft: Mario Kart 64 EU Rev 1 nicht in RA, Dr. Mario 64 `.n64` erkannt).
@@ -144,9 +144,9 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
   (Exit 0 = läuft). Schreibt in `playlists/builtin/content_history.lpl` → Testeinträge danach entfernen.
 - quick-xml 0.41: `unescape_value` deprecated → `normalized_value(XmlVersion::Implicit1_0)`.
 - DOS/ScummVM-RDBs identifizieren über *eine* Datei, die oft zwischen Spielen geteilt ist (`dosbox.bat`, `ADL.DRV`) → Ordnername statt DB-Name.
-- Kompletter Probelauf: `rombro import "<Sammlung>" <scratch-lib> --dry-run` (nur lesend), ~3 h für 1,2 TB.
+- Kompletter Probelauf: `romburak import "<Sammlung>" <scratch-lib> --dry-run` (nur lesend), ~3 h für 1,2 TB.
 - Leere Dateien matchen RDB-Einträge mit Leer-Hash (z. B. PSP-DLC) → Scanner ignoriert 0-Byte-Dateien.
-- Release: CI erstellt nur einen Draft; Veröffentlichen (`gh release edit --draft=false`) macht der User. CLI-Assets heißen `rombro-<os>-<arch>`.
+- Release: CI erstellt nur einen Draft; Veröffentlichen (`gh release edit --draft=false`) macht der User. CLI-Assets heißen `romburak-<os>-<arch>`.
 - Arcade-RDB-Einträge (FBNeo/MAME) hashen das **ganze Zip** → `ScanReport.archives`; Treffer werden `Files::Set` (Kurzname, kein 1G1R, CHDs aus `<set>/`), BIOS → `Ident::Bios` → FBNeo `_bios/fbneo/`, MAME-Cores neben die Sets (`arcade::bios_dir`).
 - Header-Offset ist **big-endian** u64; Einträge enden mit `nil` (0xc0), danach Map `{"count": n}`.
 - rusqlite braucht Feature `fallible_uint` für u64.
@@ -185,7 +185,7 @@ Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Da
 - 2026-10-06: Kompletter Probelauf über echte Sammlung (1,2 TB, 2:44 h). Behoben: Spielordner (DOS/ScummVM/Ports) wandern ganz, Arcade-Duplikate, Multi-Disk-Zips nie teilweise entpacken, Dreamcast-Serials ohne Bindestrich, N64 .v64/.n64, GC/Wii per Spiel-ID, unbekannte Ordner/BIOS-Ordner bleiben liegen.
 - 2026-10-05: Echter MAME-Ordner (674 Zips) als Probelauf: Chip-Treffer zerlegten Zips (behoben), `.keep`/`.DS_Store` (behoben), 63 Sets anderer MAME-Version → Quarantäne.
 - 2026-10-05: v0.1.0 veröffentlicht; README mit Screenshots (`docs/screenshots/`, Mock-Daten via Headless-Chrome/CDP).
-- 2026-10-05: Öffentliches Repo github.com/khaledchaar-cpu/rombro, CI grün (Linux/macOS/Windows). Commit-Mail = GitHub-noreply.
+- 2026-10-05: Öffentliches Repo github.com/khaledchaar-cpu/romburak, CI grün (Linux/macOS/Windows). Commit-Mail = GitHub-noreply.
 - 2026-10-04: Projekt-Dokumente erstellt, RDB-Format verifiziert (siehe SPEC §3).
 - 2026-10-04: M0 Bootstrap abgeschlossen.
 - 2026-10-04: M1 RDB-Parser abgeschlossen.
@@ -209,7 +209,7 @@ M15b (2026-10-08): `retroarch::managed::launch` – `Managed::prepare` installie
 Info-Dateien (`assets/frontend/info.zip` → `<root>/info`) und den Core (`nightly/<os>/<arch>/latest/<core>.zip` →
 `<root>/cores`, atomar), schreibt die Config und baut `retroarch --config … -L core rom`. System = oberster Ordner
 unter der Library (sonst nächster Elternordner, den ein Core kennt). Core: Override pro Spiel (Setting `core:<pfad>`,
-`Store::core_override`) > Systemwahl/Empfehlung > spezialisiertester Core. CLI `rombro play <file> [--core id [--save]]
+`Store::core_override`) > Systemwahl/Empfehlung > spezialisiertester Core. CLI `romburak play <file> [--core id [--save]]
 [--dry-run]`; App: `game_cores`/`set_game_core`/`play` (`play://progress`), Komponente `GamePlay` in der Detailansicht.
 E2E Linux (Scratch-XDG): leerer Ordner → RetroArch + Info + fceumm in 1:45 min, Befehl korrekt.
 Play-Button abgenommen; Cores nur aus Buildbot-Index (`cores.index`). Offen: Core-Assets (`assets::missing`, z. B. Dolphin-Sys) fehlen noch beim

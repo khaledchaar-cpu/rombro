@@ -1,7 +1,7 @@
 //! Identifying disc images: data-track hashes first, serial as fallback.
 
 use crate::{Match, Record, Result, Store};
-use rombro_core::ScannedDisc;
+use romburak_core::ScannedDisc;
 
 /// How a disc was matched.
 #[derive(Debug, Clone, PartialEq, Eq)]

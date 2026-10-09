@@ -1,4 +1,4 @@
-//! rombro-rdb: reader for RetroArch `libretrodb` (`.rdb`) files.
+//! romburak-rdb: reader for RetroArch `libretrodb` (`.rdb`) files.
 //!
 //! Layout: 16-byte header (`RARCHDB\0` + big-endian u64 metadata offset),
 //! then MessagePack maps (one per entry) terminated by `nil`, then a

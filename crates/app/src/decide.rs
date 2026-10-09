@@ -1,7 +1,7 @@
 //! TBD queue over IPC: resolve ambiguous matches and record verdicts on 1G1R-rejected releases.
 //! Both are persisted in the store and take effect on the next plan.
 use crate::commands::{CmdResult, err, open_store};
-use rombro_core::plan::{Verdict, trash};
+use romburak_core::plan::{Verdict, trash};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -33,7 +33,7 @@ pub async fn resolve_ambiguous(path: PathBuf, system: String, name: String) -> C
         let sha1 = match cached {
             Some(h) => h,
             None => {
-                let report = rombro_core::scan(&path);
+                let report = romburak_core::scan(&path);
                 match report.discs.first() {
                     Some(d) => d.tracks.first().map(|t| t.hashes.sha1),
                     None => report.roms.first().map(|r| r.hashes.sha1),
@@ -76,7 +76,7 @@ pub struct TrashFile {
 /// Contents of `<library>/_trash`.
 #[tauri::command]
 pub async fn trash_list(library: PathBuf) -> CmdResult<Vec<TrashFile>> {
-    let base = library.join(rombro_core::plan::TRASH_DIR);
+    let base = library.join(romburak_core::plan::TRASH_DIR);
     let files = trash::list(&library).map_err(err)?;
     Ok(files
         .into_iter()

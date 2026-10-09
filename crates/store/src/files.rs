@@ -2,8 +2,8 @@
 //! kept up to date by execute/undo so moved files are never rehashed.
 
 use crate::{Result, Store};
-use rombro_core::plan::{Done, Op};
-use rombro_core::{CachedDisc, CachedRom, HashCache, ScanReport, ScannedRom, Stamp};
+use romburak_core::plan::{Done, Op};
+use romburak_core::{CachedDisc, CachedRom, HashCache, ScanReport, ScannedRom, Stamp};
 use rusqlite::{OptionalExtension, params};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -52,14 +52,16 @@ impl Store {
     }
 
     /// Display mode of the managed RetroArch (setting `ra_display`); unset or unreadable → `None`.
-    pub fn ra_display(&self) -> Result<Option<rombro_core::retroarch::managed::display::Display>> {
+    pub fn ra_display(
+        &self,
+    ) -> Result<Option<romburak_core::retroarch::managed::display::Display>> {
         Ok(self.setting("ra_display")?.and_then(|s| s.parse().ok()))
     }
 
     /// Stores (`Some`) or clears the display mode.
     pub fn set_ra_display(
         &self,
-        d: Option<rombro_core::retroarch::managed::display::Display>,
+        d: Option<romburak_core::retroarch::managed::display::Display>,
     ) -> Result<()> {
         match d {
             Some(d) => self.set_setting("ra_display", &d.to_string()),
@@ -72,14 +74,14 @@ impl Store {
     }
 
     /// Stored 1G1R rules (setting `rules`, JSON), or the defaults when none or unreadable.
-    pub fn rules(&self) -> Result<rombro_core::g1r::Rules> {
+    pub fn rules(&self) -> Result<romburak_core::g1r::Rules> {
         Ok(self
             .setting(RULES_KEY)?
             .and_then(|s| serde_json::from_str(&s).ok())
             .unwrap_or_default())
     }
 
-    pub fn set_rules(&self, rules: &rombro_core::g1r::Rules) -> Result<()> {
+    pub fn set_rules(&self, rules: &romburak_core::g1r::Rules) -> Result<()> {
         let json = serde_json::to_string(rules).unwrap_or_default();
         self.set_setting(RULES_KEY, &json)
     }
@@ -105,8 +107,8 @@ impl Store {
             .unwrap_or_default())
     }
 
-    pub fn set_rule_hits(&self, why: &[rombro_core::rules::Why]) -> Result<()> {
-        let json = serde_json::to_string(&rombro_core::rules::hits(why)).unwrap_or_default();
+    pub fn set_rule_hits(&self, why: &[romburak_core::rules::Why]) -> Result<()> {
+        let json = serde_json::to_string(&romburak_core::rules::hits(why)).unwrap_or_default();
         self.set_setting(HITS_KEY, &json)
     }
 

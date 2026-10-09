@@ -9,9 +9,9 @@ license = "MIT"
 rust-version = "1.85"
 
 [workspace.dependencies]
-rombro-rdb = { path = "crates/rdb" }
-rombro-core = { path = "crates/core" }
-rombro-store = { path = "crates/store" }
+romburak-rdb = { path = "crates/rdb" }
+romburak-core = { path = "crates/core" }
+romburak-store = { path = "crates/store" }
 thiserror = "2"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }

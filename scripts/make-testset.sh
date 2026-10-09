@@ -27,6 +27,6 @@ cp "$R/00bios/scph1001.bin" "$T/inbox/bios/"
 head -c 300000 /dev/urandom > "$T/inbox/junk/mystery.bin"; echo notes > "$T/inbox/junk/readme.txt"
 head -c 4096 /dev/urandom > "$T/inbox/snes/corrupt.sfc"                  # unknown → quarantine
 cp "$S/Secret of Mana (USA).zip" "$T/inbox/keep-out/"                     # for ignore tests
-cp "${XDG_DATA_HOME:-$HOME/.local/share}/rombro/rombro.db" "$T/test.db"
+cp "${XDG_DATA_HOME:-$HOME/.local/share}/romburak/romburak.db" "$T/test.db"
 find "$T/inbox" -type f | sort | md5sum > "$T/before.txt"
 echo "test set in $T ($(du -sh "$T/inbox" | cut -f1)); use --db $T/test.db"

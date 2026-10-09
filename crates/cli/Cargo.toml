@@ -1,5 +1,5 @@
 [package]
-name = "rombro-cli"
+name = "romburak-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,15 +9,15 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-rombro-core.workspace = true
-rombro-store.workspace = true
+romburak-core.workspace = true
+romburak-store.workspace = true
 anyhow.workspace = true
-rombro-rdb.workspace = true
+romburak-rdb.workspace = true
 clap.workspace = true
 rayon.workspace = true
 serde_json = "1.0.151"
 rpassword = "7.5.4"
 
 [[bin]]
-name = "rombro"
+name = "romburak"
 path = "src/main.rs"

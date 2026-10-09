@@ -1,6 +1,6 @@
 //! Library table: every scanned unit in the library with its identification.
 use crate::commands::{CmdResult, Throttle, err, library_snapshot, open_store};
-use rombro_core::plan::{BIOS_DIR, Ident, PLAYLIST_DIR, TRASH_DIR};
+use romburak_core::plan::{BIOS_DIR, Ident, PLAYLIST_DIR, TRASH_DIR};
 use serde::Serialize;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter};
@@ -29,7 +29,7 @@ pub struct Row {
     /// RA game id (this file's game, else the other version's) for the achievement list.
     cheevos_game: Option<u64>,
     /// The user's unlocks in this file's RA game (when logged in).
-    cheevos_progress: Option<rombro_store::RaProgress>,
+    cheevos_progress: Option<romburak_store::RaProgress>,
 }
 
 fn added(p: &std::path::Path) -> i64 {
@@ -70,7 +70,7 @@ pub async fn session_get() -> CmdResult<Session> {
 }
 
 /// Lists the library from its snapshot (see [`library_snapshot`]); `rescan` checks every
-/// file on disk instead (maintenance, after changes made outside RomBro).
+/// file on disk instead (maintenance, after changes made outside Romburak).
 /// `library` replaces the stored library path; without it the stored one is used.
 #[tauri::command]
 pub async fn library_list(
@@ -98,7 +98,7 @@ pub async fn library_list(
             }
         })?;
         let rules = crate::settings::load_rules(&store)?;
-        let items = rombro_core::plan::name_only(&snap.items, &rules);
+        let items = romburak_core::plan::name_only(&snap.items, &rules);
         let added_db = store.added_times(&library).map_err(err)?;
         let keys = store.game_keys(&library).map_err(err)?;
         let stats = store.all_play_stats().map_err(err)?;
@@ -107,10 +107,10 @@ pub async fn library_list(
         let mut folder_systems = rules.folder_systems;
         // MSU-1 games: no database knows them; the ROM in `<MSU-1>/<Game>/` is the game,
         // named after its folder
-        let msu = library.join(rombro_core::plan::MSU1_SYSTEM);
+        let msu = library.join(romburak_core::plan::MSU1_SYSTEM);
         // Daphne: a collection, one game per `<game>.daphne/` folder (`roms/<game>.zip`
         // is what the core loads); every other file in it is data of the collection
-        let daphne = library.join(rombro_core::plan::DAPHNE_SYSTEM);
+        let daphne = library.join(romburak_core::plan::DAPHNE_SYSTEM);
         let daphne_game = |p: &std::path::Path| {
             let stem = p.file_stem()?.to_string_lossy().into_owned();
             let in_roms = p.parent()? == daphne.join("roms");
@@ -127,9 +127,9 @@ pub async fn library_list(
                 match daphne_game(p) {
                     // a multi-ROM zip comes as one item per member: list the game once
                     Some(name) if daphne_seen.insert(p.clone()) => {
-                        it.files = rombro_core::plan::Files::Single(p.clone());
-                        it.ident = Ident::Named(rombro_core::plan::Game {
-                            system: rombro_core::plan::DAPHNE_SYSTEM.to_owned(),
+                        it.files = romburak_core::plan::Files::Single(p.clone());
+                        it.ident = Ident::Named(romburak_core::plan::Game {
+                            system: romburak_core::plan::DAPHNE_SYSTEM.to_owned(),
                             name,
                             crc: None,
                         });
@@ -151,8 +151,8 @@ pub async fn library_list(
                     && let Some(dir) = p.parent().filter(|d| d.parent() == Some(msu.as_path()))
                     && let Some(name) = dir.file_name()
                 {
-                    it.ident = Ident::Named(rombro_core::plan::Game {
-                        system: rombro_core::plan::MSU1_SYSTEM.to_owned(),
+                    it.ident = Ident::Named(romburak_core::plan::Game {
+                        system: romburak_core::plan::MSU1_SYSTEM.to_owned(),
                         name: name.to_string_lossy().into_owned(),
                         crc: None,
                     });
@@ -160,9 +160,9 @@ pub async fn library_list(
                 it
             })
             .collect();
-        folder_systems.push(rombro_core::plan::MSU1_SYSTEM.to_owned());
+        folder_systems.push(romburak_core::plan::MSU1_SYSTEM.to_owned());
         folder_systems.extend(
-            rombro_core::plan::PORTS
+            romburak_core::plan::PORTS
                 .iter()
                 .map(|(s, _)| (*s).to_owned()),
         );
@@ -203,7 +203,7 @@ pub async fn library_list(
             .collect();
         Ok(items
             .into_iter()
-            // trash, playlists and BIOS sets are managed by RomBro, not part of the collection
+            // trash, playlists and BIOS sets are managed by Romburak, not part of the collection
             .filter(|it| {
                 let p = it.files.primary();
                 !matches!(it.ident, Ident::Bios(_) | Ident::Firmware(_))
@@ -233,7 +233,7 @@ pub async fn library_list(
                     Ident::Bios(g) => ("skip", g.system, g.name), // filtered above
                     Ident::Firmware(_) => ("skip", String::new(), String::new()), // filtered above
                 };
-                let regions = rombro_core::naming::parse(&name)
+                let regions = romburak_core::naming::parse(&name)
                     .regions
                     .into_iter()
                     .map(str::to_owned)

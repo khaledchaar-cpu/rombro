@@ -1,4 +1,4 @@
-//! Tauri shell: thin IPC adapter over `rombro-core` / `rombro-store`.
+//! Tauri shell: thin IPC adapter over `romburak-core` / `romburak-store`.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod cheevos;
@@ -15,6 +15,9 @@ mod settings;
 mod thumbs;
 
 fn main() {
+    if let Err(e) = romburak_core::paths::legacy::migrate() {
+        eprintln!("warning: moving data from the old app name failed: {e}");
+    }
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(import::Pending::default())
@@ -68,7 +71,7 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {
-            eprintln!("rombro: {e}");
+            eprintln!("romburak: {e}");
             std::process::exit(1);
         });
 }

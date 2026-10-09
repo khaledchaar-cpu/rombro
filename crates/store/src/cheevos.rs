@@ -4,7 +4,7 @@
 use crate::dat_sync::Fetch;
 use crate::files::{key, prefix};
 use crate::{Result, Store, http_get};
-use rombro_core::cheevos::{self, Method};
+use romburak_core::cheevos::{self, Method};
 use rusqlite::{OptionalExtension, params};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -160,7 +160,7 @@ fn parse_achievements(body: &[u8]) -> std::io::Result<Vec<RaAchievement>> {
 }
 
 impl Store {
-    /// Downloads the game lists of all consoles RomBro can hash (needs the user's Web API key).
+    /// Downloads the game lists of all consoles Romburak can hash (needs the user's Web API key).
     pub fn ra_sync(
         &mut self,
         api_key: &str,

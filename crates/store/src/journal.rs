@@ -1,7 +1,7 @@
 //! Journal of executed plans (for undo) and persisted user resolutions.
 
 use crate::{Result, Store};
-use rombro_core::plan::Verdict;
+use romburak_core::plan::Verdict;
 use rusqlite::{OptionalExtension, params};
 use std::collections::HashMap;
 
@@ -32,9 +32,9 @@ impl Store {
     pub fn execute_journaled(
         &self,
         library: &std::path::Path,
-        ops: &[rombro_core::plan::Op],
+        ops: &[romburak_core::plan::Op],
     ) -> Result<(Option<i64>, Option<String>)> {
-        use rombro_core::plan;
+        use romburak_core::plan;
         let r = plan::execute(ops);
         let id = if r.done.is_empty() {
             None

@@ -1,5 +1,5 @@
 [package]
-name = "rombro-app"
+name = "romburak-app"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -12,8 +12,8 @@ workspace = true
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-rombro-core.workspace = true
-rombro-store.workspace = true
+romburak-core.workspace = true
+romburak-store.workspace = true
 anyhow.workspace = true
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }

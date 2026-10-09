@@ -2,18 +2,23 @@
 
 use std::path::{Path, PathBuf};
 
-/// Environment override for the RDB directory.
-pub const RDB_ENV: &str = "ROMBRO_RDB_DIR";
+pub mod legacy;
 
-/// Database file: `<data dir>/rombro/rombro.db`
+/// Folder name of the app's data and cache dirs.
+pub const APP: &str = "romburak";
+
+/// Environment override for the RDB directory.
+pub const RDB_ENV: &str = "ROMBURAK_RDB_DIR";
+
+/// Database file: `<data dir>/romburak/romburak.db`
 /// (Linux `$XDG_DATA_HOME`, macOS `~/Library/Application Support`, Windows `%APPDATA%`).
 pub fn database() -> Option<PathBuf> {
-    Some(dirs::data_dir()?.join("rombro/rombro.db"))
+    Some(dirs::data_dir()?.join(APP).join(format!("{APP}.db")))
 }
 
-/// Cache root: `<cache dir>/rombro`.
+/// Cache root: `<cache dir>/romburak`.
 pub fn cache() -> Option<PathBuf> {
-    Some(dirs::cache_dir()?.join("rombro"))
+    Some(dirs::cache_dir()?.join(APP))
 }
 
 /// Candidate RetroArch RDB directories for this OS, most likely first.

@@ -742,12 +742,12 @@ export interface ManagedRetroArch {
   latest: string | null;
 }
 
-/** State of the RetroArch rombro manages; `checkLatest` asks the buildbot for the newest stable. */
+/** State of the RetroArch romburak manages; `checkLatest` asks the buildbot for the newest stable. */
 export async function raStatus(checkLatest: boolean): Promise<ManagedRetroArch> {
   if (!inTauri) {
     return {
       supported: true,
-      folder: "~/.local/share/rombro/retroarch",
+      folder: "~/.local/share/romburak/retroarch",
       installed: mockRa,
       pinned: "1.22.2",
       latest: checkLatest ? "1.22.3" : null,

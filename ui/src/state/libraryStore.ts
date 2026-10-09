@@ -16,7 +16,7 @@ export const [libraryError, setLibraryError] = createSignal("");
 const [loadedAt, setLoadedAt] = createSignal(0);
 
 /** Loads the library from its snapshot (rebuilt only after changes); `rescan` checks
- * every file on disk, for changes made outside RomBro. */
+ * every file on disk, for changes made outside Romburak. */
 export async function refreshLibrary(rescan = false) {
   if (libraryBusy() || !library()) return;
   setLibraryBusy(true);

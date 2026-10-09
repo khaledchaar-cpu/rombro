@@ -12,7 +12,7 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(
-    name = "rombro",
+    name = "romburak",
     version,
     about = "ROM curator based on RetroArch databases"
 )]
@@ -31,7 +31,7 @@ enum Cmd {
     /// Scan a directory and verify ROMs against the database
     Scan {
         dir: PathBuf,
-        /// Database file (default: $XDG_DATA_HOME/rombro/rombro.db)
+        /// Database file (default: $XDG_DATA_HOME/romburak/romburak.db)
         #[arg(long)]
         db: Option<PathBuf>,
         /// Only list unknown files
@@ -75,7 +75,7 @@ enum Cmd {
         #[arg(long)]
         db: Option<PathBuf>,
     },
-    /// Install, update and configure the RetroArch rombro manages
+    /// Install, update and configure the RetroArch romburak manages
     Ra {
         #[command(subcommand)]
         cmd: ra::Cmd,
@@ -128,8 +128,8 @@ impl PlanOpts {
             library,
             dry_run: self.dry_run,
             mode: match self.mode {
-                ModeArg::Move => rombro_core::plan::Mode::Move,
-                ModeArg::Copy => rombro_core::plan::Mode::Copy,
+                ModeArg::Move => romburak_core::plan::Mode::Move,
+                ModeArg::Copy => romburak_core::plan::Mode::Copy,
             },
             db: self.db,
         }
@@ -137,6 +137,9 @@ impl PlanOpts {
 }
 
 fn main() -> anyhow::Result<()> {
+    if let Err(e) = romburak_core::paths::legacy::migrate() {
+        eprintln!("warning: moving data from the old app name failed: {e}");
+    }
     match Cli::parse().cmd {
         Cmd::Db { cmd } => db::run(cmd),
         Cmd::Scan { dir, db, unknown } => scan::run(dir, db, unknown),

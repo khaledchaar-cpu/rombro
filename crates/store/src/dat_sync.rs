@@ -2,7 +2,7 @@
 //! Each source is versioned (commit or release tag); unchanged versions are not downloaded.
 
 use crate::{Result, Store};
-use rombro_core::arcade::dat;
+use romburak_core::arcade::dat;
 use std::io::{self, Cursor, Read};
 
 /// Where a core's DAT lives.
@@ -181,7 +181,7 @@ fn bad(msg: &str) -> io::Error {
 /// GET `url` (up to 512 MiB) – DATs, and RetroArch cores for the export.
 pub fn http_get(url: &str) -> io::Result<Vec<u8>> {
     let mut resp = ureq::get(url)
-        .header("User-Agent", "rombro")
+        .header("User-Agent", "romburak")
         .call()
         .map_err(io::Error::other)?;
     let mut buf = Vec::new();
@@ -200,7 +200,7 @@ pub fn http_download(
     progress: &dyn Fn(u64, Option<u64>),
 ) -> io::Result<()> {
     let mut resp = ureq::get(url)
-        .header("User-Agent", "rombro")
+        .header("User-Agent", "romburak")
         .call()
         .map_err(io::Error::other)?;
     let total = resp

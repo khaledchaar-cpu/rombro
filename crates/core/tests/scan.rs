@@ -1,7 +1,7 @@
 //! Scanner integration tests with synthetic files and archives.
 
-use rombro_core::header::Header;
-use rombro_core::{hash_reader, scan};
+use romburak_core::header::Header;
+use romburak_core::{hash_reader, scan};
 use std::fs;
 use std::io::Write;
 
@@ -78,8 +78,8 @@ fn broken_archive_is_reported() {
 
 #[test]
 fn scans_discs_without_loose_tracks() {
-    use rombro_core::disc::iso9660::testimg;
-    use rombro_core::disc::{DiscKind, Platform};
+    use romburak_core::disc::iso9660::testimg;
+    use romburak_core::disc::{DiscKind, Platform};
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path();
 
@@ -128,7 +128,7 @@ fn reports_progress_per_file() {
         fs::write(dir.path().join(format!("{i}.bin")), rom(64, i)).unwrap();
     }
     let calls = std::sync::Mutex::new(Vec::new());
-    let report = rombro_core::scan_with_progress(dir.path(), &|p| {
+    let report = romburak_core::scan_with_progress(dir.path(), &|p| {
         assert_eq!(p.bytes_total, 3 * 64);
         calls.lock().unwrap().push((p.done, p.total));
     });
@@ -140,7 +140,7 @@ fn reports_progress_per_file() {
 
 #[test]
 fn cached_scan_reuses_unchanged_files_only() {
-    use rombro_core::{CachedRom, HashCache, Stamp, scan_cached};
+    use romburak_core::{CachedRom, HashCache, Stamp, scan_cached};
     let dir = tempfile::tempdir().unwrap();
     let (a, b) = (dir.path().join("a.gb"), dir.path().join("b.gb"));
     fs::write(&a, rom(1024, 1)).unwrap();
@@ -210,7 +210,7 @@ fn reports_bytes_while_hashing_a_disc() {
     let dir = tempfile::tempdir().unwrap();
     fs::write(dir.path().join("big.iso"), vec![0u8; 4 << 20]).unwrap();
     let calls = std::sync::Mutex::new(Vec::new());
-    rombro_core::scan_with_progress(dir.path(), &|p| {
+    romburak_core::scan_with_progress(dir.path(), &|p| {
         let item = p.item.map(str::to_owned);
         calls.lock().unwrap().push((p.done, p.bytes, item));
     });
@@ -225,7 +225,7 @@ fn reports_bytes_while_hashing_a_disc() {
 
 #[test]
 fn trusted_cache_skips_file_checks_but_sees_added_and_removed_files() {
-    use rombro_core::{CachedRom, HashCache, Stamp, scan_cached};
+    use romburak_core::{CachedRom, HashCache, Stamp, scan_cached};
     let dir = tempfile::tempdir().unwrap();
     let (a, b) = (dir.path().join("a.gb"), dir.path().join("b.gb"));
     fs::write(&a, rom(1024, 1)).unwrap();
@@ -258,8 +258,8 @@ fn trusted_cache_skips_file_checks_but_sees_added_and_removed_files() {
 
 #[test]
 fn cached_disc_id_is_used_without_reading_the_disc() {
-    use rombro_core::disc::iso9660::testimg;
-    use rombro_core::{CachedDisc, CachedRom, HashCache, Stamp, scan_cached};
+    use romburak_core::disc::iso9660::testimg;
+    use romburak_core::{CachedDisc, CachedRom, HashCache, Stamp, scan_cached};
     let dir = tempfile::tempdir().unwrap();
     let iso = dir.path().join("ps2.iso");
     let ps2 = testimg::iso(&[("SYSTEM.CNF;1", b"BOOT2 = cdrom0:\\SLES_509.33;1\n")]);

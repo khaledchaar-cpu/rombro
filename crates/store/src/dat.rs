@@ -1,7 +1,7 @@
 //! Arcade DATs per core: stored member lists and the completeness check (SPEC F8).
 
 use crate::{Result, Store};
-use rombro_core::arcade::dat::{self, DatRom, DatSet};
+use romburak_core::arcade::dat::{self, DatRom, DatSet};
 use rusqlite::{OptionalExtension, params};
 
 /// Parsed sets per (system, name): identifying a library checks thousands of zips against
@@ -167,7 +167,7 @@ impl Store {
                 found.push(info.system);
             }
         }
-        found.sort_by_key(|s| rombro_core::arcade::rank_in(&order, s));
+        found.sort_by_key(|s| romburak_core::arcade::rank_in(&order, s));
         Ok(found)
     }
 
@@ -181,7 +181,7 @@ impl Store {
         has_set: impl Fn(&str) -> bool + Copy,
     ) -> Result<Vec<String>> {
         let rules = self.rules()?;
-        let rank = |s: &str| rombro_core::arcade::rank_in(&rules.arcade_order, s);
+        let rank = |s: &str| romburak_core::arcade::rank_in(&rules.arcade_order, s);
         let mut systems: Vec<String> = self
             .conn
             .prepare_cached("SELECT system FROM dat_set WHERE name = ?1")?

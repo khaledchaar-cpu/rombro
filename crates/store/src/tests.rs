@@ -149,7 +149,7 @@ fn sync_is_incremental() {
 #[test]
 fn identify_confirms_by_sha1() {
     use crate::Match;
-    use rombro_core::Hashes;
+    use romburak_core::Hashes;
     let dir = tempfile::tempdir().unwrap();
     fixture(dir.path());
     let mut s = Store::open_in_memory().unwrap();
@@ -180,8 +180,8 @@ fn identify_confirms_by_sha1() {
 #[test]
 fn identify_disc_by_hash_then_serial() {
     use crate::{DiscMatch, Match};
-    use rombro_core::disc::{DiscId, DiscKind, Platform};
-    use rombro_core::{Hashes, ScannedDisc, ScannedRom};
+    use romburak_core::disc::{DiscId, DiscKind, Platform};
+    use romburak_core::{Hashes, ScannedDisc, ScannedRom};
     let dir = tempfile::tempdir().unwrap();
     fixture(dir.path());
     write_rdb(
@@ -262,14 +262,14 @@ fn identify_disc_by_hash_then_serial() {
 
 #[test]
 fn import_end_to_end_with_resolution_journal_and_undo() {
-    use rombro_core::MultiHasher;
-    use rombro_core::plan::{self, Decision, Ident, Mode, Options};
+    use romburak_core::MultiHasher;
+    use romburak_core::plan::{self, Decision, Ident, Mode, Options};
     let hash = |data: &[u8]| {
         let mut h = MultiHasher::new();
         h.update(data);
         h.finish()
     };
-    let entry = |name: &'static str, h: &rombro_core::Hashes| {
+    let entry = |name: &'static str, h: &romburak_core::Hashes| {
         map(&[
             ("name", F::S(name)),
             ("size", F::U(h.size as u32)),
@@ -308,7 +308,7 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
         inbox: None,
         ignore: Vec::new(),
     };
-    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
+    let items = s.items(&romburak_core::scan(&inbox), false).unwrap();
     let p = plan::build(&items, &lib, &opts);
     assert_eq!((p.placed, p.quarantined), (1, 1));
     assert!(
@@ -318,7 +318,7 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
     // The user's choice is remembered and applied on the next scan.
     s.set_resolution(&shared.sha1, "Nintendo - SNES", "Baz (USA)")
         .unwrap();
-    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
+    let items = s.items(&romburak_core::scan(&inbox), false).unwrap();
     assert!(
         items
             .iter()
@@ -345,7 +345,7 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
 
 #[test]
 fn verdicts_roundtrip() {
-    use rombro_core::plan::Verdict;
+    use romburak_core::plan::Verdict;
     let s = Store::open_in_memory().unwrap();
     s.set_verdict("Sys", "A", Some(Verdict::Keep), "").unwrap();
     s.set_verdict("Sys", "B", Some(Verdict::Keep), "").unwrap();
@@ -380,7 +380,7 @@ fn journals_newest_first_with_state() {
 
 #[test]
 fn file_index_follows_scan_execute_and_undo() {
-    use rombro_core::plan::{Op, execute, undo};
+    use romburak_core::plan::{Op, execute, undo};
     let dir = tempfile::tempdir().unwrap();
     let (inbox, lib) = (dir.path().join("in"), dir.path().join("lib"));
     std::fs::create_dir_all(&inbox).unwrap();
@@ -392,7 +392,7 @@ fn file_index_follows_scan_execute_and_undo() {
     assert_eq!(store.library().unwrap().as_deref(), Some(lib.as_path()));
 
     store
-        .save_scan(&inbox, &rombro_core::scan(&inbox), false)
+        .save_scan(&inbox, &romburak_core::scan(&inbox), false)
         .unwrap();
     assert!(store.hash_cache(&inbox).unwrap().get(&src).is_some());
     assert!(store.hash_cache(&lib).unwrap().entries.is_empty());
@@ -422,7 +422,7 @@ fn file_index_follows_scan_execute_and_undo() {
     }]);
     store.index_executed(&ex2.done).unwrap();
     store
-        .save_scan(&lib, &rombro_core::scan(&lib), false)
+        .save_scan(&lib, &romburak_core::scan(&lib), false)
         .unwrap();
     assert_eq!(store.added_times(&lib).unwrap()[&renamed], 1);
     assert!(undo(&ex2.done).is_empty());
@@ -435,7 +435,7 @@ fn file_index_follows_scan_execute_and_undo() {
 
     std::fs::remove_file(&src).unwrap();
     store
-        .save_scan(&inbox, &rombro_core::scan(&inbox), false)
+        .save_scan(&inbox, &romburak_core::scan(&inbox), false)
         .unwrap();
     assert!(store.hash_cache(&inbox).unwrap().entries.is_empty());
 }
@@ -466,8 +466,8 @@ fn gamify_completeness_meta_and_persisted_unlocks() {
 
 #[test]
 fn arcade_chip_inside_unknown_zip_or_loose_is_not_identified() {
-    use rombro_core::MultiHasher;
-    use rombro_core::plan::Ident;
+    use romburak_core::MultiHasher;
+    use romburak_core::plan::Ident;
     use std::io::Write;
     let mut h = MultiHasher::new();
     h.update(b"prom chip");
@@ -497,7 +497,7 @@ fn arcade_chip_inside_unknown_zip_or_loose_is_not_identified() {
 
     let mut s = Store::open_in_memory().unwrap();
     s.sync_rdbs(&rdb).unwrap();
-    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
+    let items = s.items(&romburak_core::scan(&inbox), false).unwrap();
     assert!(
         items
             .iter()
@@ -520,8 +520,8 @@ fn exceptions_roundtrip() {
 
 #[test]
 fn arcade_set_goes_to_first_core_whose_dat_it_completes() {
-    use rombro_core::arcade::dat;
-    use rombro_core::plan::Ident;
+    use romburak_core::arcade::dat;
+    use romburak_core::plan::Ident;
     use std::io::Write;
     let tmp = tempfile::tempdir().unwrap();
     let (rdb, inbox) = (tmp.path().join("rdb"), tmp.path().join("inbox"));
@@ -536,7 +536,7 @@ fn arcade_set_goes_to_first_core_whose_dat_it_completes() {
         w.write_all(data).unwrap();
     }
     w.finish().unwrap();
-    let mut h = rombro_core::MultiHasher::new();
+    let mut h = romburak_core::MultiHasher::new();
     h.update(&std::fs::read(&zip).unwrap());
     let whole = h.finish();
     for db in ["MAME", "MAME 2003-Plus"] {
@@ -562,7 +562,7 @@ fn arcade_set_goes_to_first_core_whose_dat_it_completes() {
     let mut s = Store::open_in_memory().unwrap();
     s.sync_rdbs(&rdb).unwrap();
     let ident = |s: &Store| {
-        s.items(&rombro_core::scan(&inbox), false).unwrap()[0]
+        s.items(&romburak_core::scan(&inbox), false).unwrap()[0]
             .ident
             .clone()
     };
@@ -579,8 +579,8 @@ fn arcade_set_goes_to_first_core_whose_dat_it_completes() {
     .unwrap();
     s.import_dat("MAME 2003-Plus", "x", 0, &dat(old)).unwrap();
     assert!(matches!(ident(&s), Ident::Known(g) if g.system == "MAME 2003-Plus"));
-    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
-    let rombro_core::plan::Files::Set { dat_note, .. } = &items[0].files else {
+    let items = s.items(&romburak_core::scan(&inbox), false).unwrap();
+    let romburak_core::plan::Files::Set { dat_note, .. } = &items[0].files else {
         panic!()
     };
     assert_eq!(dat_note, "skipped MAME: 1 missing (c.bin)");
@@ -614,15 +614,15 @@ fn arcade_set_goes_to_first_core_whose_dat_it_completes() {
     assert!(matches!(ident(&s), Ident::Incomplete(w) if w.ends_with("parent set p missing")));
     let known = ["p".to_owned()].into();
     let items = s
-        .items_with(&rombro_core::scan(&inbox), false, &known)
+        .items_with(&romburak_core::scan(&inbox), false, &known)
         .unwrap();
     assert!(matches!(&items[0].ident, Ident::Known(g) if g.system == "MAME 2003-Plus"));
 }
 
 #[test]
 fn chip_keyed_zip_is_a_set_and_its_bios_is_bios() {
-    use rombro_core::MultiHasher;
-    use rombro_core::plan::{Files, Ident};
+    use romburak_core::MultiHasher;
+    use romburak_core::plan::{Files, Ident};
     use std::io::Write;
     let mut h = MultiHasher::new();
     h.update(b"key chip");
@@ -661,7 +661,7 @@ fn chip_keyed_zip_is_a_set_and_its_bios_is_bios() {
 
     let mut s = Store::open_in_memory().unwrap();
     s.sync_rdbs(&rdb).unwrap();
-    let items = s.items(&rombro_core::scan(&inbox), false).unwrap();
+    let items = s.items(&romburak_core::scan(&inbox), false).unwrap();
     assert_eq!(items.len(), 2);
     let by = |n: &str| {
         items

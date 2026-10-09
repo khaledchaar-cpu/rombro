@@ -1,7 +1,7 @@
 //! Matching scanned hashes against the entry index.
 
 use crate::{Record, Result, Store};
-use rombro_core::Hashes;
+use romburak_core::Hashes;
 
 /// How a ROM was matched.
 #[derive(Debug, Clone, PartialEq, Eq)]

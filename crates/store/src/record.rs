@@ -1,6 +1,6 @@
 //! Owned database entry, as stored in and returned from SQLite.
 
-use rombro_rdb::Entry;
+use romburak_rdb::Entry;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Record {

@@ -84,12 +84,12 @@ jobs:
       - name: Build CLI
         shell: bash
         run: |
-          cargo build --release -p rombro-cli
+          cargo build --release -p romburak-cli
           ext=${{ runner.os == 'Windows' && '.exe' || '' }}
-          mkdir -p dist-cli && cp target/release/rombro$ext dist-cli/rombro-${{ matrix.cli }}$ext
+          mkdir -p dist-cli && cp target/release/romburak$ext dist-cli/romburak-${{ matrix.cli }}$ext
       - uses: actions/upload-artifact@v4
         with:
-          name: rombro-${{ matrix.os }}
+          name: romburak-${{ matrix.os }}
           path: |
             target/release/bundle/**/*.AppImage
             target/release/bundle/**/*.deb

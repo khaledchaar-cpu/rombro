@@ -1,8 +1,8 @@
-//! `rombro cheevos`: which library games have RetroAchievements; login and hardcore for the
+//! `romburak cheevos`: which library games have RetroAchievements; login and hardcore for the
 //! managed RetroArch.
 
 use anyhow::{Context, Result};
-use rombro_core::cheevos;
+use romburak_core::cheevos;
 use std::path::PathBuf;
 
 /// Setting holding the user's RetroAchievements Web API key.
@@ -51,7 +51,7 @@ pub fn run(cmd: Cmd, db: Option<PathBuf>) -> Result<()> {
                 std::io::stdin().read_line(&mut line)?;
                 line.trim_end_matches(['\r', '\n']).to_owned()
             };
-            let (user, token) = rombro_store::ra_login(&user, &password)?;
+            let (user, token) = romburak_store::ra_login(&user, &password)?;
             store.set_ra_account(Some((&user, &token)))?;
             println!("logged in as {user}");
             write_config(&store)?;
@@ -72,7 +72,7 @@ pub fn run(cmd: Cmd, db: Option<PathBuf>) -> Result<()> {
         Cmd::Sync => {
             let key = store
                 .setting(KEY)?
-                .context("no Web API key stored (rombro cheevos key <key>)")?;
+                .context("no Web API key stored (romburak cheevos key <key>)")?;
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)?
                 .as_secs() as i64;
@@ -139,8 +139,8 @@ pub fn run(cmd: Cmd, db: Option<PathBuf>) -> Result<()> {
 }
 
 /// Rewrites the managed RetroArch config (if installed) so it carries the achievement settings.
-fn write_config(store: &rombro_store::Store) -> Result<()> {
-    let Some(m) = rombro_core::retroarch::managed::Managed::detect() else {
+fn write_config(store: &romburak_store::Store) -> Result<()> {
+    let Some(m) = romburak_core::retroarch::managed::Managed::detect() else {
         return Ok(());
     };
     let m = store.ra_prefs(m)?;

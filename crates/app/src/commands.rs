@@ -1,5 +1,5 @@
 //! IPC commands. Errors cross the boundary as strings.
-use rombro_store::Store;
+use romburak_store::Store;
 use serde::Serialize;
 use std::path::PathBuf;
 use std::time::Instant;
@@ -12,7 +12,7 @@ pub(crate) fn err(e: impl std::fmt::Display) -> String {
 }
 
 fn db_path() -> CmdResult<PathBuf> {
-    rombro_store::default_path().ok_or_else(|| "no data directory".to_owned())
+    romburak_store::default_path().ok_or_else(|| "no data directory".to_owned())
 }
 
 pub(crate) fn open_store() -> CmdResult<(Store, PathBuf)> {
@@ -25,29 +25,29 @@ pub(crate) fn open_store() -> CmdResult<(Store, PathBuf)> {
 
 /// Scans `root` incrementally via the persistent file index and updates the index.
 /// `trusted`: known files are taken from the index without checking them on disk (the
-/// library, which only RomBro changes); otherwise every file's size and mtime is checked.
+/// library, which only Romburak changes); otherwise every file's size and mtime is checked.
 pub(crate) fn indexed_scan(
     store: &Store,
     root: &std::path::Path,
     trusted: bool,
-    progress: &(dyn Fn(rombro_core::ScanTick<'_>) + Sync),
-) -> CmdResult<rombro_core::ScanReport> {
+    progress: &(dyn Fn(romburak_core::ScanTick<'_>) + Sync),
+) -> CmdResult<romburak_core::ScanReport> {
     let mut cache = store.hash_cache(root).map_err(err)?;
     cache.trusted = trusted;
-    let report = rombro_core::scan_cached(root, &cache, progress);
+    let report = romburak_core::scan_cached(root, &cache, progress);
     store.save_scan(root, &report, trusted).map_err(err)?;
     Ok(report)
 }
 
 /// The identified library: the stored snapshot while it is current, otherwise a scan
 /// (`full`: every file checked on disk, else trusted) whose result becomes the new snapshot.
-/// Nothing but RomBro changes the library, so planning never needs to walk it.
+/// Nothing but Romburak changes the library, so planning never needs to walk it.
 pub(crate) fn library_snapshot(
     store: &Store,
     library: &std::path::Path,
     full: bool,
-    progress: &(dyn Fn(rombro_core::ScanTick<'_>) + Sync),
-) -> CmdResult<rombro_store::Snapshot> {
+    progress: &(dyn Fn(romburak_core::ScanTick<'_>) + Sync),
+) -> CmdResult<romburak_store::Snapshot> {
     if !full && let Some(mut snap) = store.snapshot(library).map_err(err)? {
         let dirty = store.snapshot_dirty(library).map_err(err)?;
         if !dirty.is_empty() {
@@ -57,22 +57,22 @@ pub(crate) fn library_snapshot(
         return Ok(snap);
     }
     let report = indexed_scan(store, library, !full, progress)?;
-    let snap = rombro_store::Snapshot {
+    let snap = romburak_store::Snapshot {
         items: store.items(&report, true).map_err(err)?,
-        sets: rombro_store::set_names(&report).into_iter().collect(),
+        sets: romburak_store::set_names(&report).into_iter().collect(),
     };
     store.save_snapshot(library, &snap).map_err(err)?;
     Ok(snap)
 }
 
-/// Re-identifies only what RomBro's own runs changed: items touching a `dirty` path are
+/// Re-identifies only what Romburak's own runs changed: items touching a `dirty` path are
 /// dropped from `snap` and their files (plus the dirty ones) scanned and identified again.
 fn refresh_snapshot(
     store: &Store,
     library: &std::path::Path,
-    snap: &mut rombro_store::Snapshot,
+    snap: &mut romburak_store::Snapshot,
     dirty: &[std::path::PathBuf],
-    progress: &(dyn Fn(rombro_core::ScanTick<'_>) + Sync),
+    progress: &(dyn Fn(romburak_core::ScanTick<'_>) + Sync),
 ) -> CmdResult<()> {
     use std::collections::HashSet;
     use std::path::PathBuf;
@@ -86,11 +86,11 @@ fn refresh_snapshot(
         }
         !touched
     });
-    let trash = library.join(rombro_core::plan::TRASH_DIR);
+    let trash = library.join(romburak_core::plan::TRASH_DIR);
     rescan.retain(|p| p.starts_with(library) && !p.starts_with(&trash));
     let mut cache = store.hash_cache(library).map_err(err)?;
     cache.trusted = true;
-    let report = rombro_core::scan_paths_cached(library, rescan, &cache, progress);
+    let report = romburak_core::scan_paths_cached(library, rescan, &cache, progress);
     // archive names: gone ones leave, rescanned ones (re)enter
     let stem = |p: &PathBuf| {
         p.file_stem()
@@ -109,7 +109,7 @@ fn refresh_snapshot(
         .filter(|s| !kept.contains(s))
         .collect();
     let mut sets: HashSet<String> = snap.sets.drain(..).filter(|s| !gone.contains(s)).collect();
-    sets.extend(rombro_store::set_names(&report));
+    sets.extend(romburak_store::set_names(&report));
     let items = store.items_with(&report, true, &sets).map_err(err)?;
     snap.items.extend(items);
     // same order as a full scan builds
@@ -199,7 +199,7 @@ pub async fn scan(app: AppHandle, dir: PathBuf) -> CmdResult<ScanSummary> {
     tauri::async_runtime::spawn_blocking(move || {
         let t = Instant::now();
         let throttle = Throttle::new();
-        let report = rombro_core::scan_with_progress(&dir, &|p| {
+        let report = romburak_core::scan_with_progress(&dir, &|p| {
             if throttle.ready(p.done, p.total) {
                 // Event delivery is best effort; a closed window is not an error.
                 let _ = app.emit("scan://progress", p);
@@ -244,7 +244,7 @@ pub async fn db_sync(app: AppHandle, dir: Option<PathBuf>) -> CmdResult<SyncSumm
     tauri::async_runtime::spawn_blocking(move || {
         let dir = match dir {
             Some(d) => d,
-            None => rombro_core::paths::rdb_dir()
+            None => romburak_core::paths::rdb_dir()
                 .ok_or("RetroArch database folder not found – pick it manually")?,
         };
         let (mut store, _) = open_store()?;

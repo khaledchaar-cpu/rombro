@@ -4,7 +4,7 @@ import PhaseProgress from "./PhaseProgress";
 import Select from "./Select";
 import { raDisplay, raInstall, raSetDisplay, raStatus } from "../ipc";
 
-/** The RetroArch RomBro downloads and runs itself: install, version, update to newest stable. */
+/** The RetroArch Romburak downloads and runs itself: install, version, update to newest stable. */
 export default function ManagedRetroArchPanel() {
   const [check, setCheck] = createSignal(false);
   // Wrapped: a falsy source (`false`) would keep the resource from ever loading.
@@ -53,7 +53,7 @@ export default function ManagedRetroArchPanel() {
           <Show when={s().supported} fallback={<p class="dim">No RetroArch build for this platform.</p>}>
             <div class="kpi">{s().installed ?? "not installed"}</div>
             <p class="dim small">
-              RomBro downloads the official stable build (pinned: {s().pinned}, ~200 MB) and keeps cores, saves and
+              Romburak downloads the official stable build (pinned: {s().pinned}, ~200 MB) and keeps cores, saves and
               states in its own folder. Your ROM folders stay untouched.
             </p>
             <p class="dim mono small">{s().folder}</p>

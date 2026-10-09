@@ -1,8 +1,8 @@
 //! Firmware recognised by size + SHA1 against libretro's bundled `System.dat`.
 
-use rombro_core::Hashes;
-use rombro_core::plan::{Game, Ident};
-use rombro_core::retroarch::firmware;
+use romburak_core::Hashes;
+use romburak_core::plan::{Game, Ident};
+use romburak_core::retroarch::firmware;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 

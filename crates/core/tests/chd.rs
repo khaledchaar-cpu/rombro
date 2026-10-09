@@ -1,9 +1,9 @@
 //! CHD CD images: the data track is hashed and its serial read like a loose `.bin`.
 
-use rombro_core::disc::iso9660::testimg;
-use rombro_core::disc::{DiscKind, Platform};
-use rombro_core::hash::hash_reader;
-use rombro_core::scan::scan;
+use romburak_core::disc::iso9660::testimg;
+use romburak_core::disc::{DiscKind, Platform};
+use romburak_core::hash::hash_reader;
+use romburak_core::scan::scan;
 use std::fs;
 
 const FRAME: usize = 2448;

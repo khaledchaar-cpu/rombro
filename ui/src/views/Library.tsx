@@ -66,7 +66,7 @@ export default function Library() {
           <button
             class="btn"
             disabled={busy() || !library()}
-            title="Checks every file on disk – only needed after changes made outside RomBro"
+            title="Checks every file on disk – only needed after changes made outside Romburak"
             onClick={() => void refreshLibrary(true)}
           >
             {busy() ? "Scanning" : "Rescan library"}

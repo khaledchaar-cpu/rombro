@@ -1,8 +1,8 @@
-//! `rombro ra`: the RetroArch rombro manages itself.
+//! `romburak ra`: the RetroArch romburak manages itself.
 
 use anyhow::{Context, Result};
-use rombro_core::retroarch::managed::{self, Managed, Phase};
-use rombro_core::retroarch::pick;
+use romburak_core::retroarch::managed::{self, Managed, Phase};
+use romburak_core::retroarch::pick;
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -54,7 +54,7 @@ pub enum Cmd {
 
 pub fn run(cmd: Cmd) -> Result<()> {
     let mut m = Managed::detect().context("no RetroArch stable build for this platform")?;
-    // the stored display mode and achievement login belong into every config rombro writes
+    // the stored display mode and achievement login belong into every config romburak writes
     if let Ok(s) = crate::db::open_store(None) {
         m = s.ra_prefs(m)?;
     }
@@ -81,7 +81,7 @@ pub fn run(cmd: Cmd) -> Result<()> {
                 (None, false) => managed::PINNED.to_owned(),
             };
             println!("RetroArch {v} → {}", m.root.display());
-            m.install(&v, &rombro_store::http_download, &show)
+            m.install(&v, &romburak_store::http_download, &show)
                 .with_context(|| format!("installing RetroArch {v}"))?;
             m.write_config(library.as_deref())?;
             println!("installed, config: {}", m.cfg().display());
@@ -134,7 +134,7 @@ fn cores(m: &Managed, library: Option<PathBuf>, set: &[String], db: Option<PathB
         }
         store.set_rules(&rules)?;
     }
-    m.ensure_info(&rombro_store::http_download, false)
+    m.ensure_info(&romburak_store::http_download, false)
         .context("loading the core list")?;
     let cores = m.cores();
     let picks = store.rules()?.cores;
@@ -165,7 +165,7 @@ fn cores(m: &Managed, library: Option<PathBuf>, set: &[String], db: Option<PathB
 }
 
 fn latest() -> Result<String> {
-    let html = rombro_store::http_get(&format!("{}/", managed::STABLE_URL))
+    let html = romburak_store::http_get(&format!("{}/", managed::STABLE_URL))
         .context("buildbot not reachable")?;
     managed::latest_stable(&String::from_utf8_lossy(&html)).context("no stable version listed")
 }

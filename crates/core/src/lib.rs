@@ -1,4 +1,4 @@
-//! rombro-core: domain logic (hashing, scanning, naming, 1G1R, planner).
+//! romburak-core: domain logic (hashing, scanning, naming, 1G1R, planner).
 
 pub mod arcade;
 pub mod archive;

@@ -1,6 +1,6 @@
 //! Thumbnails from thumbnails.libretro.com, cached on disk (misses as `.miss` markers).
 use crate::commands::{CmdResult, err, open_store};
-use rombro_core::thumbnail::{Kind, cache_path, url};
+use romburak_core::thumbnail::{Kind, cache_path, url};
 use std::io::Read;
 use std::path::PathBuf;
 use tauri::ipc::Response;
@@ -28,7 +28,7 @@ pub async fn thumbs_online_set(on: bool) -> CmdResult<()> {
 }
 
 fn cache_root() -> CmdResult<PathBuf> {
-    let base = rombro_core::paths::cache().ok_or("no cache directory")?;
+    let base = romburak_core::paths::cache().ok_or("no cache directory")?;
     Ok(base.join("thumbnails"))
 }
 

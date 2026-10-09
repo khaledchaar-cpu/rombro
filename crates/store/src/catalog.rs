@@ -1,10 +1,10 @@
 //! Turning a scan report into planner items (identification + stored resolutions).
 
 use crate::{DiscMatch, Match, Record, Result, Store, candidates};
-use rombro_core::arcade;
-use rombro_core::disc::{self, DiscKind};
-use rombro_core::plan::{Files, Game, Ident, Item};
-use rombro_core::{ScanReport, ScannedDisc, ScannedRom};
+use romburak_core::arcade;
+use romburak_core::disc::{self, DiscKind};
+use romburak_core::plan::{Files, Game, Ident, Item};
+use romburak_core::{ScanReport, ScannedDisc, ScannedRom};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
@@ -201,7 +201,7 @@ impl Store {
             }
             Err(reason) => {
                 // a set on a Flycast board runs there whatever MAME's driver status says
-                let crcs: Vec<u32> = rombro_core::archive::members(&whole.path)
+                let crcs: Vec<u32> = romburak_core::archive::members(&whole.path)
                     .map(|m| m.into_iter().map(|(_, crc)| crc).collect())
                     .unwrap_or_default();
                 let stem = whole.path.file_stem().map(|s| s.to_string_lossy());
@@ -294,7 +294,7 @@ impl Store {
             .filter_map(|r| Some((r.member.clone()?, r.hashes.crc)))
             .collect();
         let members = if scanned.is_empty() {
-            match rombro_core::archive::members(&whole.path) {
+            match romburak_core::archive::members(&whole.path) {
                 Ok(m) => m,
                 Err(_) => return Ok(None),
             }
@@ -398,7 +398,7 @@ impl Store {
         if !uncertain || !is_zip {
             return Ok(Ok(None));
         }
-        let Ok(members) = rombro_core::archive::members(archive) else {
+        let Ok(members) = romburak_core::archive::members(archive) else {
             return Ok(Ok(None));
         };
         let stem = archive
@@ -457,7 +457,7 @@ impl Store {
         if sheets.len() > 1 {
             return skip(format!("archive with {} disc sheets", sheets.len()));
         }
-        let text = match rombro_core::archive::read_member(archive, &sheet_name) {
+        let text = match romburak_core::archive::read_member(archive, &sheet_name) {
             Ok(b) => String::from_utf8_lossy(&b).into_owned(),
             Err(e) => return skip(format!("cannot read sheet: {e}")),
         };

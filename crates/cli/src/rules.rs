@@ -1,8 +1,8 @@
-//! `rombro rules`: planner rules with explanation, last-plan hits and current settings.
+//! `romburak rules`: planner rules with explanation, last-plan hits and current settings.
 use crate::db::open_store;
 use anyhow::{Context, Result};
-use rombro_core::g1r::Rules;
-use rombro_core::rules::Rule;
+use romburak_core::g1r::Rules;
+use romburak_core::rules::Rule;
 use std::path::PathBuf;
 
 pub fn run(
@@ -43,7 +43,7 @@ pub fn run(
         println!("{:<20} {:>7} ops  {}", r.id(), n, r.title());
         println!("    {}", r.explain());
     }
-    println!("\nsettings (edit and load with `rombro rules --set <file>`):");
+    println!("\nsettings (edit and load with `romburak rules --set <file>`):");
     println!("{}", serde_json::to_string_pretty(&store.rules()?)?);
     let ignored = store.ignored()?;
     if !ignored.is_empty() {

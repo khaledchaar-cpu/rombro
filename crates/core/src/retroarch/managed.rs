@@ -1,5 +1,5 @@
-//! The RetroArch rombro downloads and runs itself: official stable builds from the
-//! libretro buildbot, unpacked into `<data dir>/rombro/retroarch/versions/<version>/`.
+//! The RetroArch romburak downloads and runs itself: official stable builds from the
+//! libretro buildbot, unpacked into `<data dir>/romburak/retroarch/versions/<version>/`.
 //! Download → verify → unpack into a temp folder → atomic rename → `current` marker.
 //! Cores, saves, states and the config live next to the versions, so updates keep them.
 
@@ -12,7 +12,7 @@ pub mod display;
 pub mod launch;
 mod unpack;
 
-/// Version shipped with this rombro release (raised with releases).
+/// Version shipped with this romburak release (raised with releases).
 pub const PINNED: &str = "1.22.2";
 
 /// Buildbot root of the stable builds.
@@ -108,10 +108,10 @@ pub struct Managed {
 }
 
 impl Managed {
-    /// `<data dir>/rombro/retroarch` for this OS.
+    /// `<data dir>/romburak/retroarch` for this OS.
     pub fn detect() -> Option<Self> {
         Some(Self {
-            root: dirs::data_dir()?.join("rombro/retroarch"),
+            root: dirs::data_dir()?.join(crate::paths::APP).join("retroarch"),
             target: Target::current()?,
             display: None,
             cheevos: None,

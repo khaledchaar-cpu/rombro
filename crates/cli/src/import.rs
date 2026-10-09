@@ -1,7 +1,7 @@
 use crate::db::open_store;
 use anyhow::{Context, Result, bail};
-use rombro_core::plan::{self, Decision, Mode, Op, Options};
-use rombro_store::{DiscMatch, Match, Record, candidates};
+use romburak_core::plan::{self, Decision, Mode, Op, Options};
+use romburak_store::{DiscMatch, Match, Record, candidates};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -21,7 +21,7 @@ pub fn run(a: Args) -> Result<()> {
     let mut known = Default::default();
     if library.is_dir() {
         let report = scan_cached(&store, &library, true)?;
-        known = rombro_store::set_names(&report);
+        known = romburak_store::set_names(&report);
         items = store.items(&report, true)?;
     }
     let inbox = a.inbox.as_deref().map(absolute).transpose()?;
@@ -84,7 +84,7 @@ pub fn run(a: Args) -> Result<()> {
             &plan::journal_to_json(&ex.done),
         )?;
         println!(
-            "executed {} operations (journal #{id}; `rombro undo` reverts)",
+            "executed {} operations (journal #{id}; `romburak undo` reverts)",
             ex.done.len()
         );
     }
@@ -154,8 +154,8 @@ pub fn resolve(file: PathBuf, pick: Option<usize>, db: Option<PathBuf>) -> Resul
     Ok(())
 }
 
-fn scan(dir: &Path) -> rombro_core::ScanReport {
-    let report = rombro_core::scan(dir);
+fn scan(dir: &Path) -> romburak_core::ScanReport {
+    let report = romburak_core::scan(dir);
     for f in &report.failures {
         eprintln!("ERROR   {}: {}", f.path.display(), f.error);
     }
@@ -165,13 +165,13 @@ fn scan(dir: &Path) -> rombro_core::ScanReport {
 /// Scan through the hash cache (unchanged files are not read again), like the app;
 /// `trusted` takes indexed files without checking them on disk (the library).
 fn scan_cached(
-    store: &rombro_store::Store,
+    store: &romburak_store::Store,
     dir: &Path,
     trusted: bool,
-) -> Result<rombro_core::ScanReport> {
+) -> Result<romburak_core::ScanReport> {
     let mut cache = store.hash_cache(dir)?;
     cache.trusted = trusted;
-    let report = rombro_core::scan_cached(dir, &cache, &|_| {});
+    let report = romburak_core::scan_cached(dir, &cache, &|_| {});
     store.save_scan(dir, &report, trusted)?;
     for f in &report.failures {
         eprintln!("ERROR   {}: {}", f.path.display(), f.error);
@@ -205,7 +205,7 @@ fn describe(op: &Op, lib: &Path) -> String {
 fn decision(d: &Decision) -> String {
     match d {
         Decision::Ambiguous { path, candidates } => {
-            let mut s = format!("AMBIG   {} (`rombro resolve` to choose)", path.display());
+            let mut s = format!("AMBIG   {} (`romburak resolve` to choose)", path.display());
             for g in candidates {
                 s.push_str(&format!("\n          ? [{}] {}", g.system, g.name));
             }

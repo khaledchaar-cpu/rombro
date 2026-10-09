@@ -1,7 +1,7 @@
 //! RetroAchievements in the managed RetroArch: login (user + token, never the password)
 //! and hardcore mode. The token comes from `dorequest.php?r=login2`.
 
-/// Achievement settings rombro writes into the config.
+/// Achievement settings romburak writes into the config.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Cheevos {
     /// (user name, login token); `None` = logged out.

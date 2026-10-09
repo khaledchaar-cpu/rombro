@@ -1,4 +1,4 @@
-//! The `retroarch.cfg` of the managed RetroArch. rombro owns the folder settings (and the display
+//! The `retroarch.cfg` of the managed RetroArch. romburak owns the folder settings (and the display
 //! mode and achievement login, if chosen); every other
 //! line (the user's menu changes, saved on exit) is kept.
 
@@ -7,7 +7,7 @@ use std::io;
 use std::path::Path;
 
 impl Managed {
-    /// Folder settings rombro writes, for the version in use and `library` (BIOS from `_bios`).
+    /// Folder settings romburak writes, for the version in use and `library` (BIOS from `_bios`).
     pub fn managed_keys(
         &self,
         version: &str,

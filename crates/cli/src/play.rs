@@ -1,8 +1,8 @@
-//! `rombro play`: start a game in the managed RetroArch.
+//! `romburak play`: start a game in the managed RetroArch.
 
 use crate::db::open_store;
 use anyhow::{Context, Result};
-use rombro_core::retroarch::managed::{
+use romburak_core::retroarch::managed::{
     Managed, Phase,
     launch::{Game, Step},
 };
@@ -53,7 +53,7 @@ pub fn run(a: Args) -> Result<()> {
         picks: &picks,
         core: over.as_deref(),
     };
-    let mut l = m.prepare(&game, &rombro_store::http_download, &show)?;
+    let mut l = m.prepare(&game, &romburak_store::http_download, &show)?;
     println!("{} · {}", l.system, l.core.id);
     if a.dry_run {
         println!("{:?}", l.command);
@@ -80,11 +80,11 @@ pub fn run(a: Args) -> Result<()> {
     Ok(())
 }
 
-/// Extracts the core's system files: in a library journaled (`rombro undo` reverts them).
+/// Extracts the core's system files: in a library journaled (`romburak undo` reverts them).
 fn run_assets(
-    store: &rombro_store::Store,
+    store: &romburak_store::Store,
     library: Option<&std::path::Path>,
-    ops: &[rombro_core::plan::Op],
+    ops: &[romburak_core::plan::Op],
 ) -> Result<()> {
     if ops.is_empty() {
         return Ok(());

@@ -1,6 +1,6 @@
 //! Gamification (SPEC F6): stats for the library rows the UI already holds; can be switched off.
 use crate::commands::{CmdResult, err, open_store};
-use rombro_store::Stats;
+use romburak_store::Stats;
 
 /// Setting: `"0"` hides gamification.
 const KEY: &str = "gamification";
