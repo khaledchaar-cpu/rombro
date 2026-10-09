@@ -136,9 +136,7 @@ Nächste Schritte: v0.6.0 (M15–M16) releasen.
 Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
 1. v0.6.0 releasen (M15–M16: verwaltetes RetroArch, Starten, Spielzeit/Favoriten, RetroAchievements).
 2. Verwaltetes RetroArch auf Windows/macOS testen.
-3. Bekannt, nicht ROMBRO: `rumblef` (MAME 2010 will älteres awbios, Flycast stürzt ab), fehlende User-BIOS
-   Sega CD (`bios_CD_U.bin`) / Satellaview (`BS-X.bin`), PPSSPP headless nicht testbar.
-4. v2 Launcher (SPEC §6) – erst ganz zum Schluss.
+3. v2 Launcher (SPEC §6) – erst ganz zum Schluss.
 
 ## Stolpersteine
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie
