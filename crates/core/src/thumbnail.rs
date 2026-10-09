@@ -71,6 +71,82 @@ pub fn cache_path(root: &Path, system: &str, name: &str, kind: Kind) -> PathBuf 
         .join(file_name(name))
 }
 
+/// Thumbnail names (without `.png`) from a server directory listing (Apache index HTML).
+pub fn parse_listing(html: &str) -> Vec<String> {
+    html.split("</a>")
+        .filter_map(|part| {
+            let text = &part[part.rfind('>')? + 1..];
+            let name = text.strip_suffix(".png")?;
+            Some(
+                name.replace("&amp;", "&")
+                    .replace("&#39;", "'")
+                    .replace("&quot;", "\"")
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">"),
+            )
+        })
+        .collect()
+}
+
+/// Title without `(...)`/`[...]` tags, lowercased, thumbnail-sanitized.
+fn base_title(name: &str) -> String {
+    let end = [name.find(" ("), name.find(" [")]
+        .into_iter()
+        .flatten()
+        .min()
+        .unwrap_or(name.len());
+    file_name(name[..end].trim())
+        .trim_end_matches(".png")
+        .to_lowercase()
+}
+
+fn tags(name: &str) -> impl Iterator<Item = &str> {
+    name.split(['(', '['])
+        .skip(1)
+        .filter_map(|t| t.split([')', ']']).next())
+}
+
+fn region_rank(name: &str) -> usize {
+    const ORDER: [&str; 4] = ["World", "USA", "Europe", "Japan"];
+    tags(name)
+        .flat_map(|t| t.split(", "))
+        .filter_map(|r| ORDER.iter().position(|o| *o == r))
+        .min()
+        .unwrap_or(ORDER.len())
+}
+
+/// Best server thumbnail for `name` when the exact name is missing: same title ignoring
+/// region/tags; prefers shared tags, releases, World/USA/Europe/Japan, few extra tags.
+pub fn best_match<'a>(name: &str, candidates: &'a [String]) -> Option<&'a str> {
+    let base = base_title(name);
+    let want: Vec<&str> = tags(name).collect();
+    candidates
+        .iter()
+        .filter(|c| base_title(c) == base)
+        .max_by_key(|c| {
+            let (shared, extra) = tags(c).fold((0i32, 0i32), |(s, e), t| {
+                if want.contains(&t) {
+                    (s + 1, e)
+                } else {
+                    (s, e + 1)
+                }
+            });
+            let unreleased = tags(c).filter(|t| !want.contains(t)).any(|t| {
+                ["Beta", "Proto", "Sample", "Demo"]
+                    .iter()
+                    .any(|b| t.starts_with(b))
+            });
+            (
+                shared,
+                !unreleased,
+                std::cmp::Reverse(region_rank(c)),
+                -extra,
+                std::cmp::Reverse(c.len()),
+            )
+        })
+        .map(String::as_str)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -89,5 +165,32 @@ mod tests {
         let p = cache_path(Path::new("/c"), "Sega - X", "Y", Kind::Snap);
         assert_eq!(p, Path::new("/c/Sega - X/Named_Snaps/Y.png"));
         assert_eq!(Kind::parse("title"), Some(Kind::Title));
+    }
+
+    #[test]
+    fn fuzzy() {
+        let html = r#"<a href="x">Parent Directory</a><a href="a.png">Tetris (Japan).png</a>
+<a href="b.png">Tetris (World) (Rev 1).png</a><a href="c.png">Tetris (USA) (Beta).png</a>
+<a href="d.png">Tetris 2 (USA).png</a><a href="e.png">Tom &amp; Jerry (USA).png</a>"#;
+        let names = parse_listing(html);
+        assert_eq!(names.len(), 5);
+        assert_eq!(names[4], "Tom & Jerry (USA)");
+        assert_eq!(
+            best_match("Tetris (World)", &names),
+            Some("Tetris (World) (Rev 1)")
+        );
+        assert_eq!(
+            best_match("Tetris (Europe)", &names),
+            Some("Tetris (World) (Rev 1)")
+        );
+        assert_eq!(
+            best_match("Tetris (Japan) (Rev 2)", &names),
+            Some("Tetris (Japan)")
+        );
+        assert_eq!(
+            best_match("Tom & Jerry (Europe)", &names),
+            Some("Tom & Jerry (USA)")
+        );
+        assert_eq!(best_match("Tetris DX (USA)", &names), None);
     }
 }
