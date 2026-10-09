@@ -198,3 +198,4 @@
 .rank-name { display: grid; gap: 3px; min-width: 0; }
 .meter { display: block; height: 4px; background: var(--bg-sunken); border: 1px solid var(--line); }
 .meter span { display: block; height: 100%; background: var(--accent); }
+.preset-search { width: 100%; }

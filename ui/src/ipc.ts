@@ -353,7 +353,64 @@ export async function sessionGet(): Promise<Session> {
 }
 
 /** The library from its stored snapshot; `rescan` checks every file on disk (maintenance). */
+/** Real titles for screenshots (`?demo` in the browser); covers load from libretro. */
+const DEMO_TITLES: [string, string][] = [
+  ["Nintendo - Super Nintendo Entertainment System", "Super Mario World (USA)"],
+  ["Nintendo - Super Nintendo Entertainment System", "Legend of Zelda, The - A Link to the Past (USA)"],
+  ["Nintendo - Super Nintendo Entertainment System", "Super Metroid (Japan, USA) (En,Ja)"],
+  ["Nintendo - Super Nintendo Entertainment System", "Chrono Trigger (USA)"],
+  ["Nintendo - Super Nintendo Entertainment System", "Secret of Mana (USA)"],
+  ["Sega - Mega Drive - Genesis", "Sonic The Hedgehog (USA, Europe)"],
+  ["Sega - Mega Drive - Genesis", "Sonic The Hedgehog 2 (World)"],
+  ["Sega - Mega Drive - Genesis", "Streets of Rage 2 (USA)"],
+  ["Sega - Mega Drive - Genesis", "Gunstar Heroes (USA)"],
+  ["Sega - Mega Drive - Genesis", "Phantasy Star IV (USA)"],
+  ["Nintendo - Game Boy", "Tetris (World) (Rev 1)"],
+  ["Nintendo - Game Boy", "Pokemon - Red Version (USA, Europe) (SGB Enhanced)"],
+  ["Nintendo - Game Boy", "Legend of Zelda, The - Link's Awakening (USA, Europe) (Rev 2)"],
+  ["Nintendo - Game Boy Advance", "Metroid Fusion (USA)"],
+  ["Nintendo - Game Boy Advance", "Advance Wars (USA)"],
+  ["Nintendo - Game Boy Advance", "Golden Sun (USA, Europe)"],
+  ["Sony - PlayStation", "Castlevania - Symphony of the Night (USA)"],
+  ["Sony - PlayStation", "Crash Bandicoot (USA)"],
+  ["Sony - PlayStation", "Spyro the Dragon (USA)"],
+  ["Nintendo - Nintendo 64", "Super Mario 64 (USA)"],
+  ["Nintendo - Nintendo 64", "Legend of Zelda, The - Ocarina of Time (USA) (Rev 2)"],
+  ["Nintendo - Nintendo 64", "Mario Kart 64 (USA)"],
+  ["Nintendo - Nintendo 64", "GoldenEye 007 (USA)"],
+  ["NEC - PC Engine - TurboGrafx 16", "Bonk's Adventure (USA)"],
+  ["Sega - Master System - Mark III", "Alex Kidd in Miracle World (USA, Europe)"],
+  ["Sega - Dreamcast", "Crazy Taxi (USA)"],
+  ["Sega - Saturn", "Panzer Dragoon Saga (USA) (Disc 1)"],
+  ["SNK - Neo Geo Pocket Color", "Metal Slug - 1st Mission (World) (En,Ja)"],
+  ["Atari - Lynx", "California Games (USA, Europe)"],
+  ["Sony - PlayStation 2", "Shadow of the Colossus (USA)"],
+];
+const demo = !inTauri && typeof location !== "undefined" && new URLSearchParams(location.search).has("demo");
+
+function demoRows(): LibraryRow[] {
+  const now = Date.now() / 1000;
+  return DEMO_TITLES.map(([system, name], i) => ({
+    path: `${system}/${name}.zip`,
+    system,
+    name,
+    state: "known",
+    files: 1,
+    regions: [name.includes("Japan") ? "Japan" : name.includes("Europe") ? "Europe" : "USA"],
+    added: now - i * 86400,
+    favorite: i % 5 === 1,
+    plays: i % 3 ? 0 : 2 + (i % 7),
+    seconds: i % 3 ? 0 : 3600 * (1 + ((i * 7) % 23)) + i * 97,
+    last_played: i % 3 ? 0 : now - i * 20000,
+    cheevos: 20 + (i % 50),
+    cheevos_other: null,
+    cheevos_game: i,
+    cheevos_progress: i % 3 ? null : { awarded: (i * 3) % 40, hardcore: 0, total: 40 + (i % 20), award: i === 3 ? "mastered" : null },
+  }));
+}
+
 export async function libraryList(library?: string, rescan = false): Promise<LibraryRow[]> {
+  if (demo) return demoRows();
   if (!inTauri) {
     return Array.from({ length: 5000 }, (_, i) => ({
       path: `Nintendo - Game Boy/Game ${i} (Europe).zip`,
@@ -494,6 +551,11 @@ export type ThumbKind = "boxart" | "title" | "snap";
 
 /** URL of a libretro thumbnail (`thumb://` protocol, cached on disk by the backend; 404 if none). */
 export function thumbUrl(system: string, name: string, kind: ThumbKind): string | null {
+  if (demo && system) {
+    const dir = { boxart: "Named_Boxarts", snap: "Named_Snaps", title: "Named_Titles" }[kind];
+    const file = name.replace(/[&*/:`<>?\\|]/g, "_") + ".png";
+    return `https://thumbnails.libretro.com/${encodeURIComponent(system)}/${dir}/${encodeURIComponent(file)}`;
+  }
   if (!inTauri || !system) return null;
   return convertFileSrc(`${kind}/${system}/${name}`, "thumb");
 }

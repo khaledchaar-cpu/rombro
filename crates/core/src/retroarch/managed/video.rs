@@ -79,6 +79,13 @@ impl Managed {
             .find(|d| d.read_dir().is_ok_and(|mut r| r.next().is_some()))
     }
 
+    /// Folder `sub` next to the bundled assets (Linux/Windows builds ship shaders,
+    /// autoconfig and databases there).
+    pub fn bundled_dir(&self, version: &str, sub: &str) -> Option<PathBuf> {
+        let assets = self.version_dir(version).join(self.target.assets()?);
+        Some(assets.parent()?.join(sub))
+    }
+
     fn downloaded_package(&self, name: &str) -> PathBuf {
         if name == "autoconfig" {
             self.root.join("autoconfig")

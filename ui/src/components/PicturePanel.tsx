@@ -71,7 +71,7 @@ export default function PicturePanel() {
         <Show when={!presets.loading} fallback={<p class="dim small">Loading shaders (first time: downloading the slang shader package, ~55 MB)…</p>}>
           <Show when={!presets.error} fallback={<p class="err small">{String(presets.error)}</p>}>
             <input
-              class="field"
+              class="field preset-search"
               type="search"
               placeholder={`Search ${presets()?.length ?? 0} presets, e.g. "crt royale"`}
               value={query()}

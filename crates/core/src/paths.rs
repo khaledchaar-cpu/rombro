@@ -54,6 +54,12 @@ pub fn rdb_candidates() -> Vec<PathBuf> {
         }
         out.push(PathBuf::from("/usr/share/libretro").join(rel));
     }
+    // last resort: the databases bundled with the managed RetroArch
+    if let Some(d) = crate::retroarch::managed::Managed::detect()
+        .and_then(|m| m.bundled_dir(&m.current()?, "database"))
+    {
+        out.push(d.join("rdb"));
+    }
     out
 }
 
