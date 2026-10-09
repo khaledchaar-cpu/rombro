@@ -37,7 +37,8 @@
 | M19 Savestates | ✅ done (Sichtprüfung 2026-10-09) |
 | M20 Globale RA-Einstellungen | ✅ done (Sichtprüfung 2026-10-09) |
 | M21 Statistik | ✅ done (Sichtprüfung 2026-10-09) |
-| v0.8.0 Release (v2 Launcher M17–M21) | 🔶 getaggt 2026-10-09 |
+| v0.8.0 Release (v2 Launcher M17–M21) | ✅ released 2026-10-09 |
+| v0.8.1 Release (RDB-Download, README) | 🔶 getaggt 2026-10-09 |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -145,7 +146,7 @@ Nächste Schritte: v0.6.0 (M15–M16) releasen.
 
 ## Nächste Schritte
 Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
-1. v0.8.0 (v2 Launcher M17–M21) getaggt 2026-10-09; Claude veröffentlicht nach CI. (v0.7.0 = M16 + Umbenennung.)
+1. v0.8.1 (RDB-Download vom Buildbot, README neu) getaggt 2026-10-09; Claude veröffentlicht nach CI. (v0.8.0 = M17–M21.) (v0.7.0 = M16 + Umbenennung.)
 2. Später (User, 2026-10-09): verwaltetes RetroArch auf Windows/macOS testen – Windows per CI-e2e-Job (ra install, status, Core + Test-ROM headless), macOS manuell durch den User.
 3. v2 Launcher geklärt (Grilling 2026-10-09, SPEC §6): M17 Cover → M18 Dashboard → M19 Savestates → M20 globale RA-Einstellungen → M21 Statistik. M17 gebaut: `thumb://`-Protokoll (`thumbs::protocol`, Browser lädt lazy + cached), unscharfer Abgleich über die
    Server-Verzeichnisliste (`thumbnail::best_match`, Liste 30 Tage in `.index`), Library Liste ↔ Grid (`rombro.libraryView`),
