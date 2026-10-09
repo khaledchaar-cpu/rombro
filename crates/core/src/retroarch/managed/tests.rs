@@ -8,6 +8,7 @@ fn linux(root: &Path) -> Managed {
         target: Target::LinuxX64,
         display: None,
         cheevos: None,
+        video: Default::default(),
     }
 }
 
@@ -167,4 +168,55 @@ fn config_keeps_user_lines_and_sets_folders() {
     let cfg = std::fs::read_to_string(m.cfg()).unwrap();
     assert!(cfg.contains("video_fullscreen = \"false\"") && cfg.contains("video_scale = \"2\""));
     assert!(!cfg.contains("video_fullscreen = \"true\""));
+
+    // the config folder used so far is adopted once (without shader presets)
+    let _ = std::fs::remove_dir_all(t.path().join("config"));
+    let sys = t.path().join("sys-config");
+    std::fs::create_dir_all(sys.join("Snes9x")).unwrap();
+    std::fs::write(sys.join("Snes9x/Snes9x.opt"), b"x").unwrap();
+    std::fs::write(sys.join("global.glslp"), b"x").unwrap();
+    let cfg = std::fs::read_to_string(m.cfg()).unwrap();
+    let own = t.path().join("config").display().to_string();
+    std::fs::write(m.cfg(), cfg.replace(&own, &sys.display().to_string())).unwrap();
+    m.write_config(None).unwrap();
+    assert!(t.path().join("config/Snes9x/Snes9x.opt").is_file());
+    assert!(!t.path().join("config/global.glslp").exists());
+    assert!(sys.join("global.glslp").exists(), "source untouched");
+
+    // shader preset from the bundled shaders_slang, aspect ratio
+    let v = m.current().unwrap();
+    let base = m.version_dir(&v).join(m.target.assets().unwrap());
+    let slang = base.parent().unwrap().join("shaders/shaders_slang/crt");
+    std::fs::create_dir_all(&slang).unwrap();
+    std::fs::write(slang.join("crt-x.slangp"), b"shaders = 1").unwrap();
+    assert_eq!(m.shader_presets(), ["crt/crt-x.slangp"]);
+    let m = Managed {
+        video: super::video::Video {
+            shader: Some(super::video::Shader::Preset("crt/crt-x.slangp".into())),
+            aspect: Some("4:3".into()),
+        },
+        ..m
+    };
+    m.write_config(None).unwrap();
+    let cfg = std::fs::read_to_string(m.cfg()).unwrap();
+    assert!(
+        cfg.contains("video_shader_enable = \"true\"") && cfg.contains("video_driver = \"glcore\"")
+    );
+    assert!(cfg.contains("aspect_ratio_index = \"0\""));
+    let global = std::fs::read_to_string(t.path().join("config/global.slangp")).unwrap();
+    assert!(global.starts_with("#reference \"") && global.contains("crt/crt-x.slangp"));
+    let m = Managed {
+        video: super::video::Video {
+            shader: Some(super::video::Shader::Off),
+            aspect: None,
+        },
+        ..m
+    };
+    m.write_config(None).unwrap();
+    assert!(!t.path().join("config/global.slangp").exists());
+    assert!(
+        std::fs::read_to_string(m.cfg())
+            .unwrap()
+            .contains("video_shader_enable = \"false\"")
+    );
 }

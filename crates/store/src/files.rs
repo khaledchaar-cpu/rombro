@@ -51,6 +51,12 @@ impl Store {
         Ok(())
     }
 
+    pub fn delete_setting(&self, name: &str) -> Result<()> {
+        self.conn
+            .execute("DELETE FROM settings WHERE key = ?1", [name])?;
+        Ok(())
+    }
+
     /// Display mode of the managed RetroArch (setting `ra_display`); unset or unreadable → `None`.
     pub fn ra_display(
         &self,
@@ -65,11 +71,7 @@ impl Store {
     ) -> Result<()> {
         match d {
             Some(d) => self.set_setting("ra_display", &d.to_string()),
-            None => {
-                self.conn
-                    .execute("DELETE FROM settings WHERE key = 'ra_display'", [])?;
-                Ok(())
-            }
+            None => self.delete_setting("ra_display"),
         }
     }
 

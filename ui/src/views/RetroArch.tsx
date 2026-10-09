@@ -2,6 +2,7 @@ import CheevosAccountPanel from "../components/CheevosAccountPanel";
 import CorePicker from "../components/CorePicker";
 import ManagedRetroArchPanel from "../components/ManagedRetroArchPanel";
 import Panel from "../components/Panel";
+import PicturePanel from "../components/PicturePanel";
 
 /** Everything RetroArch: the managed RetroArch, achievement login and the core per system. */
 export default function RetroArch() {
@@ -10,6 +11,7 @@ export default function RetroArch() {
       <div class="wide">
         <ManagedRetroArchPanel />
       </div>
+      <PicturePanel />
       <div class="wide">
         <CheevosAccountPanel />
       </div>

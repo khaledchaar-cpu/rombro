@@ -174,3 +174,9 @@
 .state-meta { display: grid; gap: 2px; min-width: 0; }
 .state-actions { display: flex; gap: var(--sp-1); align-items: center; }
 @media (max-width: 640px) { .state { grid-template-columns: 72px minmax(0, 1fr); } .state-actions { grid-column: 1 / -1; } .state-shot { width: 72px; } }
+
+/* picture settings (M20) */
+.preset-list { list-style: none; margin: var(--sp-2) 0 0; padding: 0; max-height: 320px; overflow: auto; border: 1px solid var(--line); background: var(--bg-sunken); }
+.preset { display: block; width: 100%; text-align: left; padding: 3px var(--sp-2); background: none; border: 0; color: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.preset:hover { background: var(--bg-raised); }
+.preset.sel { color: var(--accent); outline: 1px solid var(--accent); outline-offset: -1px; }

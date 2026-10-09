@@ -38,6 +38,22 @@ pub enum Cmd {
         #[arg(long)]
         db: Option<PathBuf>,
     },
+    /// Show or set the global shader preset: a path from `--list` (e.g. `crt/crt-royale.slangp`),
+    /// `off` or `auto` (leave it to RetroArch's menu). Downloads the shader package if needed.
+    Shader {
+        preset: Option<String>,
+        /// List presets containing this text (`""` = all)
+        #[arg(long)]
+        list: Option<String>,
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
+    /// Show or set the aspect ratio: core, 4:3, 16:9, square, full or auto
+    Aspect {
+        ratio: Option<String>,
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
     /// List the cores for each system of the library (`*` = used, recommended marked)
     Cores {
         /// Library (default: the stored one)
@@ -91,6 +107,67 @@ pub fn run(cmd: Cmd) -> Result<()> {
             println!("{}", m.cfg().display());
         }
         Cmd::Cores { library, set, db } => cores(&m, library, &set, db)?,
+        Cmd::Shader { preset, list, db } => {
+            let store = crate::db::open_store(db)?;
+            if list.is_some() || preset.as_deref().is_some_and(|p| p != "off" && p != "auto") {
+                m.ensure_package(
+                    "shaders_slang",
+                    &romburak_store::http_download,
+                    &|done, total| show(Phase::Download { done, total }),
+                )?;
+            }
+            let presets = m.shader_presets();
+            if let Some(q) = list {
+                let q = q.to_lowercase();
+                presets
+                    .iter()
+                    .filter(|p| p.to_lowercase().contains(&q))
+                    .for_each(|p| println!("{p}"));
+                return Ok(());
+            }
+            if let Some(p) = preset {
+                match p.as_str() {
+                    "auto" => store.delete_setting("ra_shader")?,
+                    "off" => store.set_setting("ra_shader", "off")?,
+                    p if presets.iter().any(|x| x == p) => store.set_setting("ra_shader", p)?,
+                    p => anyhow::bail!("{p}: unknown preset (see --list)"),
+                }
+                m = store.ra_prefs(m)?;
+                if m.current().is_some() {
+                    m.write_config(store.library()?.as_deref())?;
+                }
+            }
+            println!(
+                "{}",
+                store
+                    .setting("ra_shader")?
+                    .as_deref()
+                    .unwrap_or("auto (RetroArch's own setting)")
+            );
+        }
+        Cmd::Aspect { ratio, db } => {
+            let store = crate::db::open_store(db)?;
+            if let Some(r) = ratio {
+                match r.as_str() {
+                    "auto" => store.delete_setting("ra_aspect")?,
+                    r if managed::video::aspect_index(r).is_some() => {
+                        store.set_setting("ra_aspect", r)?
+                    }
+                    r => anyhow::bail!("{r}: expected core, 4:3, 16:9, square, full or auto"),
+                }
+                m = store.ra_prefs(m)?;
+                if m.current().is_some() {
+                    m.write_config(store.library()?.as_deref())?;
+                }
+            }
+            println!(
+                "{}",
+                store
+                    .setting("ra_aspect")?
+                    .as_deref()
+                    .unwrap_or("auto (RetroArch's own setting)")
+            );
+        }
         Cmd::Display { mode, db } => {
             let store = crate::db::open_store(db)?;
             if let Some(mode) = mode {

@@ -2,7 +2,11 @@
 //! hardcore choice, and the settings the managed RetroArch gets from them.
 
 use crate::{Result, Store};
-use romburak_core::retroarch::managed::{Managed, cheevos::Cheevos};
+use romburak_core::retroarch::managed::{
+    Managed,
+    cheevos::Cheevos,
+    video::{Shader, Video},
+};
 use std::io;
 
 const LOGIN: &str = "https://retroachievements.org/dorequest.php";
@@ -85,11 +89,15 @@ impl Store {
         }))
     }
 
-    /// `m` with the stored display mode and achievement settings.
+    /// `m` with the stored display mode, achievement and picture settings.
     pub fn ra_prefs(&self, m: Managed) -> Result<Managed> {
         Ok(Managed {
             display: self.ra_display()?,
             cheevos: self.ra_cheevos()?,
+            video: Video {
+                shader: self.setting("ra_shader")?.map(|s| Shader::parse(&s)),
+                aspect: self.setting("ra_aspect")?,
+            },
             ..m
         })
     }

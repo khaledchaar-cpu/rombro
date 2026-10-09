@@ -188,6 +188,8 @@ impl Managed {
             self.install_core(&core, fetch)?;
         }
         let assets = self.core_assets(&core, game.library, fetch, progress)?;
+        // controller profiles (best effort: offline keeps RetroArch's defaults)
+        let _ = self.ensure_package("autoconfig", fetch, &|_, _| {});
         self.write_config(game.library)?;
         let command = self.command(&core, &content(&core, game.rom), game.slot)?;
         Ok(Launch {

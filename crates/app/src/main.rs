@@ -10,6 +10,7 @@ mod import;
 mod library;
 mod managed_ra;
 mod play;
+mod ra_video;
 mod retroarch;
 mod settings;
 mod states;
@@ -65,6 +66,10 @@ fn main() {
             managed_ra::ra_status,
             managed_ra::ra_install,
             managed_ra::ra_display,
+            ra_video::ra_video,
+            ra_video::ra_shaders,
+            ra_video::ra_set_shader,
+            ra_video::ra_set_aspect,
             managed_ra::ra_set_display,
             play::game_cores,
             play::set_game_core,

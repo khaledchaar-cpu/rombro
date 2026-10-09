@@ -187,6 +187,8 @@ Architektur v1 muss das vorbereiten: Daten-Modell mit `play_stats`-Tabelle reser
   durchsuchbar, Paket wird automatisch geladen), Seitenverhältnis, Fenster/Vollbild (heute CLI `ra display`).
 - Controller: RetroArch-Autoconfig; verwalteter Build bringt keine Profile mit → `assets/frontend/autoconfig.zip` beim
   Install mitladen (Default).
+- M20 (Default): Shader-Wahl gilt global über RetroArchs Auto-Preset `global.slangp` im verwalteten Config-Ordner; „RetroArch decides“
+  lässt RetroArch-Menü-Einstellungen unangetastet. Verwalteter Config-Ordner statt `~/.config/retroarch/config` (einmalige Kopie).
 - **M21 Statistik-Seite**: Top-Spiele nach Zeit, Zeit je System, Verlauf (Woche/Monat; braucht Session-Log mit
   Zeitstempel je Lauf), Achievements-Fortschritt.
 

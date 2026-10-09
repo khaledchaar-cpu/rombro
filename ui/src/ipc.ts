@@ -775,6 +775,46 @@ export async function raSetDisplay(mode: string | null): Promise<void> {
   return invoke<void>("ra_set_display", { mode });
 }
 
+export interface RaVideo {
+  /** null = RetroArch decides; "off" or a preset path */
+  shader: string | null;
+  aspect: string | null;
+  installed: boolean;
+}
+
+let mockVideo: RaVideo = { shader: null, aspect: null, installed: true };
+
+export async function raVideo(): Promise<RaVideo> {
+  if (!inTauri) return mockVideo;
+  return invoke<RaVideo>("ra_video");
+}
+
+/** Shader presets (`shaders_slang`); downloads the package first if RetroArch has none. */
+export async function raShaders(): Promise<string[]> {
+  if (!inTauri) {
+    await new Promise((r) => setTimeout(r, 400));
+    return ["crt/crt-royale.slangp", "crt/crt-lottes.slangp", "crt/crt-geom.slangp", "handheld/lcd-grid-v2.slangp",
+      "presets/crt-royale-smooth.slangp", "scanlines/scanline.slangp", "xbrz/xbrz-freescale.slangp"];
+  }
+  return invoke<string[]>("ra_shaders");
+}
+
+export async function raSetShader(shader: string | null): Promise<void> {
+  if (!inTauri) {
+    mockVideo = { ...mockVideo, shader };
+    return;
+  }
+  return invoke("ra_set_shader", { shader });
+}
+
+export async function raSetAspect(aspect: string | null): Promise<void> {
+  if (!inTauri) {
+    mockVideo = { ...mockVideo, aspect };
+    return;
+  }
+  return invoke("ra_set_aspect", { aspect });
+}
+
 export interface GameCores {
   system: string | null;
   chosen: string | null;

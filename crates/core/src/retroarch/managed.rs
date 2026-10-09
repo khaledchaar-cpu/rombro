@@ -11,12 +11,15 @@ pub mod config;
 pub mod display;
 pub mod launch;
 mod unpack;
+pub mod video;
 
 /// Version shipped with this romburak release (raised with releases).
 pub const PINNED: &str = "1.22.2";
 
 /// Buildbot root of the stable builds.
 pub const STABLE_URL: &str = "https://buildbot.libretro.com/stable";
+/// Frontend packages (`shaders_slang.zip`, `autoconfig.zip`).
+pub const FRONTEND_ASSETS_URL: &str = "https://buildbot.libretro.com/assets/frontend";
 
 /// SHA-256 of the pinned archives per target; newer versions are checked by archive CRCs only.
 const PINNED_SHA256: &[(Target, &str)] = &[
@@ -105,6 +108,8 @@ pub struct Managed {
     pub display: Option<display::Display>,
     /// RetroAchievements login + hardcore; `None` keeps RetroArch's settings.
     pub cheevos: Option<cheevos::Cheevos>,
+    /// Shader preset and aspect ratio.
+    pub video: video::Video,
 }
 
 impl Managed {
@@ -115,6 +120,7 @@ impl Managed {
             target: Target::current()?,
             display: None,
             cheevos: None,
+            video: video::Video::default(),
         })
     }
 

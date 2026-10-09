@@ -45,7 +45,10 @@ impl Managed {
         let version = self
             .current()
             .ok_or_else(|| io::Error::other("RetroArch is not installed"))?;
-        let keys = self.managed_keys(&version, library);
+        let old = std::fs::read_to_string(self.cfg()).unwrap_or_default();
+        self.adopt_config_dir(&old)?;
+        let mut keys = self.managed_keys(&version, library);
+        keys.extend(self.video_keys(&version)?);
         for (k, v) in &keys {
             // The library's `_bios` is the planner's to create.
             let in_library = *k == "system_directory" && library.is_some();
@@ -53,7 +56,6 @@ impl Managed {
                 std::fs::create_dir_all(v)?;
             }
         }
-        let old = std::fs::read_to_string(self.cfg()).unwrap_or_default();
         let tmp = self.cfg().with_extension("cfg.tmp");
         std::fs::write(&tmp, merge(&old, &keys))?;
         std::fs::rename(tmp, self.cfg())
