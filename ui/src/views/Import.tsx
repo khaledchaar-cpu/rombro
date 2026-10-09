@@ -239,7 +239,6 @@ export default function Import() {
         when={plan()}
         fallback={
           <>
-          <RunReport rel={rel} />
           <Panel title="Plan" class="wide">
             <Show
               when={busy()}
@@ -257,6 +256,7 @@ export default function Import() {
               Undo last run
             </button>
           </Panel>
+          <RunReport rel={rel} />
           </>
         }
       >
