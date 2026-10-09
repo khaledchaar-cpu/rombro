@@ -28,6 +28,8 @@ fn opts(rules: Rules) -> Options {
         mode: Mode::Copy,
         rules,
         verdicts: Default::default(),
+        hashes: Default::default(),
+        misnamed: Default::default(),
         inbox: None,
         ignore: Vec::new(),
     }

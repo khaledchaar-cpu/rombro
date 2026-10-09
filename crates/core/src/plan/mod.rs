@@ -7,6 +7,8 @@ mod build;
 #[cfg(test)]
 mod daphne_tests;
 #[cfg(test)]
+mod dedupe_tests;
+#[cfg(test)]
 mod dup_folder_tests;
 pub mod inbox;
 mod ops;
@@ -24,7 +26,7 @@ pub use ops::{
 };
 
 use crate::g1r::Rules;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 /// How files from the inbox get into the library. Files already in the library are always moved.
@@ -138,6 +140,11 @@ pub struct Options {
     pub rules: Rules,
     /// User verdicts on releases 1G1R rejected, keyed by (system, name).
     pub verdicts: HashMap<(String, String), Verdict>,
+    /// SHA1 of whole library files (loose files and archives) for the duplicate check;
+    /// empty = no check.
+    pub hashes: HashMap<PathBuf, [u8; 20]>,
+    /// Library archives in an arcade core folder whose DAT doesn't know their name.
+    pub misnamed: HashSet<PathBuf>,
     /// Inbox root; quarantined files keep their path below it (no clashes on equal names).
     pub inbox: Option<PathBuf>,
     /// Paths the user excluded: nothing at or below them is planned (left as is).

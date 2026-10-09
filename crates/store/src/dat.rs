@@ -3,6 +3,8 @@
 use crate::{Result, Store};
 use romburak_core::arcade::dat::{self, DatRom, DatSet};
 use rusqlite::{OptionalExtension, params};
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
 
 /// Parsed sets per (system, name): identifying a library checks thousands of zips against
 /// every DAT, with the same parents and BIOS sets over and over.
@@ -116,6 +118,45 @@ impl Store {
             }
         }
         Ok(false)
+    }
+
+    /// Archives among `paths` lying in an arcade core folder whose loaded DAT has no set of
+    /// their name (the core would not find them there).
+    pub fn dat_misnamed(&self, paths: &[&Path]) -> Result<HashSet<PathBuf>> {
+        let systems: HashSet<String> = self.dats()?.into_iter().map(|i| i.system).collect();
+        let mut st = self
+            .conn
+            .prepare_cached("SELECT 1 FROM dat_set WHERE system = ?1 AND name = ?2")?;
+        let mut out = HashSet::new();
+        for p in paths {
+            let folder = p
+                .parent()
+                .and_then(|d| d.file_name())
+                .map(|f| f.to_string_lossy());
+            let (Some(folder), Some(stem)) = (folder, p.file_stem().map(|s| s.to_string_lossy()))
+            else {
+                continue;
+            };
+            if systems.contains(folder.as_ref()) && !st.exists([folder.as_ref(), stem.as_ref()])? {
+                out.insert(p.to_path_buf());
+            }
+        }
+        Ok(out)
+    }
+
+    /// Inputs of the library duplicate check: hashes of shared whole files below `library`
+    /// and the misnamed arcade archives among them.
+    pub fn duplicate_check(
+        &self,
+        library: &Path,
+    ) -> Result<(
+        std::collections::HashMap<PathBuf, [u8; 20]>,
+        HashSet<PathBuf>,
+    )> {
+        let hashes = self.whole_hashes(library)?;
+        let paths: Vec<&Path> = hashes.keys().map(PathBuf::as_path).collect();
+        let misnamed = self.dat_misnamed(&paths)?;
+        Ok((hashes, misnamed))
     }
 
     /// Reason to reject an archive without database match whose name and members belong to

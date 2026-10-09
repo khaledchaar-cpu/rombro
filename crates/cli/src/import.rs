@@ -29,12 +29,19 @@ pub fn run(a: Args) -> Result<()> {
         items.extend(store.items_with(&scan_cached(&store, inbox, false)?, false, &known)?);
     }
     let ts = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
+    let (hashes, misnamed) = if library.is_dir() {
+        store.duplicate_check(&library)?
+    } else {
+        Default::default()
+    };
     let opts = Options {
         mode: a.mode,
         rules: store.rules()?,
         verdicts: store.verdicts()?,
         inbox: inbox.clone(),
         ignore: store.ignored()?,
+        hashes,
+        misnamed,
     };
     let p = plan::build(&items, &library, &opts);
     store.set_rule_hits(&p.why)?;

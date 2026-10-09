@@ -176,12 +176,15 @@ pub async fn plan_import(
             "import://progress",
             ("planning", Progress { done: 0, total: 0 }),
         );
+        let (hashes, misnamed) = store.duplicate_check(&lib).map_err(err)?;
         let opts = Options {
             mode: mode.into(),
             rules: crate::settings::load_rules(&store)?,
             verdicts: store.verdicts().map_err(err)?,
             inbox: inbox_root.clone(),
             ignore: store.ignored().map_err(err)?,
+            hashes,
+            misnamed,
         };
         let p = plan::build(&items, &lib, &opts);
         store.set_rule_hits(&p.why).map_err(err)?;

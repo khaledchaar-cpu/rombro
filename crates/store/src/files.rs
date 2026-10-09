@@ -149,6 +149,32 @@ impl Store {
         Ok(HashCache::new(map))
     }
 
+    /// SHA1 of each whole indexed file below `root` (loose files and archives) that another
+    /// file there shares, for the library duplicate check.
+    pub fn whole_hashes(&self, root: &Path) -> Result<HashMap<PathBuf, [u8; 20]>> {
+        let pre = prefix(root);
+        let mut stmt = self
+            .conn
+            .prepare_cached("SELECT path, roms FROM file WHERE substr(path, 1, ?2) = ?1")?;
+        let rows = stmt.query_map(params![pre, pre.chars().count() as i64], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+        })?;
+        let mut map = HashMap::new();
+        for row in rows {
+            let (path, roms) = row?;
+            let roms: Vec<CachedRom> = serde_json::from_str(&roms)?;
+            if let Some(r) = roms.iter().find(|r| r.member.is_none()) {
+                map.insert(PathBuf::from(path), r.hashes.sha1);
+            }
+        }
+        let mut seen: HashMap<[u8; 20], usize> = HashMap::new();
+        for h in map.values() {
+            *seen.entry(*h).or_default() += 1;
+        }
+        map.retain(|_, h| seen[h] > 1);
+        Ok(map)
+    }
+
     /// Replaces the index below `root` with the files of `report` (vanished files drop out).
     /// With `trusted` (the scan used a trusted cache) rows whose hashes are unchanged are
     /// kept as they are instead of re-reading each file's stamp.

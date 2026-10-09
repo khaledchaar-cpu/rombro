@@ -45,6 +45,8 @@ fn opts(mode: Mode) -> Options {
             ..Default::default()
         },
         verdicts: Default::default(),
+        hashes: Default::default(),
+        misnamed: Default::default(),
         inbox: None,
         ignore: Vec::new(),
     }

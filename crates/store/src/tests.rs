@@ -305,6 +305,8 @@ fn import_end_to_end_with_resolution_journal_and_undo() {
         mode: Mode::Move,
         rules: Default::default(),
         verdicts: Default::default(),
+        hashes: Default::default(),
+        misnamed: Default::default(),
         inbox: None,
         ignore: Vec::new(),
     };

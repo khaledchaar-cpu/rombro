@@ -15,6 +15,7 @@ const UNKNOWN_TRASH: &str = "unknown";
 
 mod archives;
 mod daphne;
+mod dedupe;
 mod dup_folders;
 mod firmware;
 mod folders;
@@ -103,6 +104,9 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             }
         }
     }
+
+    // Bit-identical copies inside the library: one stays, the others go to the trash.
+    let items = dedupe::run(&mut b, items);
 
     // Archives with any unknown member stay whole (e.g. multi-disk games where only some
     // disks match): nothing is extracted, the archive goes to quarantine as is.

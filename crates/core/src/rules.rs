@@ -21,10 +21,11 @@ pub enum Rule {
     FrontendMeta,
     Playlist,
     NameOnly,
+    LibraryDuplicate,
 }
 
 impl Rule {
-    pub const ALL: [Rule; 15] = [
+    pub const ALL: [Rule; 16] = [
         Rule::G1rPick,
         Rule::ArcadeSet,
         Rule::ArcadeDat,
@@ -40,6 +41,7 @@ impl Rule {
         Rule::FrontendMeta,
         Rule::Playlist,
         Rule::NameOnly,
+        Rule::LibraryDuplicate,
     ];
 
     pub fn id(self) -> &'static str {
@@ -59,6 +61,7 @@ impl Rule {
             Rule::FrontendMeta => "frontend-meta",
             Rule::Playlist => "playlist",
             Rule::NameOnly => "name-only",
+            Rule::LibraryDuplicate => "library-duplicate",
         }
     }
 
@@ -79,6 +82,7 @@ impl Rule {
             Rule::FrontendMeta => "Frontend metadata",
             Rule::Playlist => "Old RetroArch playlist",
             Rule::NameOnly => "Identified by name",
+            Rule::LibraryDuplicate => "Duplicate in the library",
         }
     }
 
@@ -148,6 +152,9 @@ impl Rule {
                  solarus → Solarus, openbor → OpenBOR) are placed under that system with their file name. 1G1R runs \
                  among them by name only, never against verified dumps; rejected ones become a \
                  decision, nothing is trashed by name alone."
+            }
+            Rule::LibraryDuplicate => {
+                "Audit: bit-identical copies of an identified file directly in system folders                  (across systems) – one stays, the others go to the trash. The copy in its own                  system's folder wins, among arcade cores the best one (FBNeo, MAME, older MAME).                  Game folders, multi-disc folders and _bios are left alone."
             }
         }
     }
