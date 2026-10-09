@@ -151,7 +151,7 @@ Nächste Schritte: v0.6.0 (M15–M16) releasen.
 mit Kopie eines echten Kombi-Images gezippt verifiziert (Scan + Import). In der echten Sammlung gibt es keine solchen Zips. Wikipedia-Ratings: verworfen.
 Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
 1. v0.8.1 (RDB-Download vom Buildbot, README neu) getaggt 2026-10-09; Claude veröffentlicht nach CI. (v0.8.0 = M17–M21.) (v0.7.0 = M16 + Umbenennung.)
-2. Später (User, 2026-10-09): verwaltetes RetroArch auf Windows/macOS testen – Windows per CI-e2e-Job (ra install, status, Core + Test-ROM headless), macOS manuell durch den User.
+2. ✅ 2026-10-09: verwaltetes RetroArch per CI-e2e auf Windows + macOS-14 (arm64) grün; offen nur echte Bedienung (Fenster, Controller).
 3. v2 Launcher geklärt (Grilling 2026-10-09, SPEC §6): M17 Cover → M18 Dashboard → M19 Savestates → M20 globale RA-Einstellungen → M21 Statistik. M17 gebaut: `thumb://`-Protokoll (`thumbs::protocol`, Browser lädt lazy + cached), unscharfer Abgleich über die
    Server-Verzeichnisliste (`thumbnail::best_match`, Liste 30 Tage in `.index`), Library Liste ↔ Grid (`rombro.libraryView`),
    Mini-Boxart in der Liste. Sichtprüfung ok.
