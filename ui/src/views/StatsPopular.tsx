@@ -13,7 +13,7 @@ export function PopularStats() {
   const [system, setSystem] = createSignal("");
   const systems = createMemo(() => {
     const s = new Set(libraryRows().filter((r) => r.cheevos_players != null).map((r) => r.system));
-    return [{ value: "", label: "All systems" }, ...[...s].sort().map((v) => ({ value: v, label: shortSystem(v) }))];
+    return [{ value: "", label: "All systems" }, ...[...s].map((v) => ({ value: v, label: shortSystem(v) })).sort((a, b) => a.label.localeCompare(b.label))];
   });
   const top = createMemo(() =>
     popularList(libraryRows().filter((r) => !system() || r.system === system()), TOP),
