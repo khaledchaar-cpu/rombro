@@ -64,4 +64,14 @@ impl Store {
         let rows = st.query_map(args, Record::from_row)?;
         Ok(rows.collect::<rusqlite::Result<_>>()?)
     }
+
+    /// Release year per game name of `system` (earliest when entries disagree).
+    pub fn release_years(&self, system: &str) -> Result<std::collections::HashMap<String, u16>> {
+        let mut stmt = self.conn.prepare_cached(
+            "SELECT name, MIN(release_year) FROM entry
+             WHERE system = ?1 AND release_year BETWEEN 1950 AND 2100 GROUP BY name",
+        )?;
+        let rows = stmt.query_map([system], |r| Ok((r.get(0)?, r.get::<_, i64>(1)? as u16)))?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
 }

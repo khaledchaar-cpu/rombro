@@ -79,7 +79,7 @@ export default function App() {
             <Import />
           </Match>
           <Match when={view() === "library"}>
-            <Library />
+            <Library onSettings={() => (setSystemSection("library"), setView("system"))} />
           </Match>
           <Match when={view() === "stats"}>
             <Stats />

@@ -275,6 +275,11 @@
 .xsel-pop li > .ellipsis { flex: 1; }
 .xsel-hint { font: var(--fs-xs) var(--font-mono); color: var(--text-dim); }
 .xsel-pop li.hi .xsel-hint { color: var(--cyan); }
+/* MultiSelect: column-flowing grid, no scrolling */
+.xsel-multi { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(180px, 240px); overflow: hidden; }
+.xsel-multi li { height: 27px; box-sizing: border-box; gap: var(--sp-2); }
+.xsel-multi li input { pointer-events: none; }
+.xsel-multi li.on { color: var(--magenta); }
 @keyframes xsel-in { from { opacity: 0; transform: translateY(-4px); } }
 
 /* Window controls: skewed neon chips, one color each. */

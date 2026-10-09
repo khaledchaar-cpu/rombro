@@ -1,11 +1,33 @@
 import { createResource, For, Match, Switch } from "solid-js";
 import CheevosPanel from "../components/CheevosPanel";
 import DatabasePanel from "../components/DatabasePanel";
+import DirField from "../components/DirField";
 import Panel from "../components/Panel";
 import { thumbsOnlineGet, thumbsOnlineSet } from "../ipc";
+import { library, libraryBusy, refreshLibrary, setLibrary } from "../state/libraryStore";
 import { gamifyEnabled, setGamifyEnabled } from "../state/gamify";
 import { effects, setEffects, setTheme, theme, THEMES } from "../state/appearance";
 import { SECTIONS, setSystemSection, systemSection } from "../state/settingsNav";
+
+function LibrarySettings() {
+  return (
+    <div class="settings">
+      <Panel title="Library">
+        <DirField label="Library" value={library()} onChange={(v) => (setLibrary(v), void refreshLibrary())} />
+        <div class="row">
+          <button
+            class="btn"
+            disabled={libraryBusy() || !library()}
+            title="Checks every file on disk – only needed after changes made outside Romburak"
+            onClick={() => void refreshLibrary(true)}
+          >
+            {libraryBusy() ? "Scanning" : "Rescan library"}
+          </button>
+        </div>
+      </Panel>
+    </div>
+  );
+}
 
 function Appearance() {
   const [online, { mutate: setOnline }] = createResource(thumbsOnlineGet);
@@ -49,7 +71,7 @@ function Appearance() {
   );
 }
 
-/** Maintenance and preferences: game databases, appearance. */
+/** Maintenance and preferences: library folder, game databases, appearance. */
 export default function System() {
   return (
     <div class="settings-shell">
@@ -69,6 +91,9 @@ export default function System() {
       </nav>
       <div class="settings-body">
         <Switch>
+          <Match when={systemSection() === "library"}>
+            <LibrarySettings />
+          </Match>
           <Match when={systemSection() === "databases"}>
             <div class="settings">
               <DatabasePanel />

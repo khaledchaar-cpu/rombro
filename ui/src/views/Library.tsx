@@ -1,6 +1,5 @@
 import { createVirtualizer } from "@tanstack/solid-virtual";
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
-import DirField from "../components/DirField";
 import Cover from "../components/Cover";
 import GameDetail from "../components/GameDetail";
 import Panel from "../components/Panel";
@@ -9,8 +8,7 @@ import Select from "../components/Select";
 import { createLibraryFilter } from "./LibraryFilters";
 import { onScanProgress, type LibraryRow, type ScanProgress } from "../ipc";
 import {
-  cheevosCell, cheevosTitle, formatPlayTime, library, libraryBusy as busy, libraryError as error, libraryRows as rows, refreshLibrary,
-  setLibrary, toggleFavorite,
+  cheevosCell, cheevosTitle, formatPlayTime, library, libraryBusy as busy, libraryError as error, libraryRows as rows, toggleFavorite,
 } from "../state/libraryStore";
 import { popularityRank, rankLabel, rankTitle } from "../state/popularity";
 
@@ -27,9 +25,9 @@ const savedMode = (): "list" | "grid" => {
 };
 const EMPTY: LibraryRow = {
   path: "", system: "", name: "", state: "known", files: 0, regions: [], added: 0,
-  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null, cheevos_progress: null, cheevos_players: null,
+  favorite: false, plays: 0, seconds: 0, last_played: 0, cheevos: 0, cheevos_other: null, cheevos_game: null, cheevos_progress: null, cheevos_players: null, year: null,
 };
-type Key = "favorite" | "system" | "name" | "path" | "state" | "seconds" | "cheevos" | "cheevos_players" | "last_played" | "added";
+type Key = "favorite" | "system" | "name" | "state" | "seconds" | "cheevos" | "cheevos_players" | "last_played" | "added";
 const SORTS: { value: Key; label: string }[] = [
   { value: "system", label: "Sort: system" },
   { value: "name", label: "Sort: name" },
@@ -44,7 +42,6 @@ const COLS: { key: Key; label: string }[] = [
   { key: "state", label: "State" },
   { key: "system", label: "System" },
   { key: "name", label: "Name" },
-  { key: "path", label: "Path" },
   { key: "seconds", label: "Played" },
   { key: "cheevos", label: "🏆" },
   { key: "cheevos_players", label: "Rank" },
@@ -55,7 +52,7 @@ const cmp = (a: LibraryRow, b: LibraryRow, key: Key) => {
   return typeof x === "string" ? x.localeCompare(y as string) : Number(y) - Number(x);
 };
 
-export default function Library() {
+export default function Library(props: { onSettings: () => void }) {
   const filter = createLibraryFilter(rows);
   const [sort, setSort] = createSignal<{ key: Key; asc: boolean }>({ key: "system", asc: true });
   const [progress, setProgress] = createSignal<ScanProgress>({ done: 0, total: 0 });
@@ -103,17 +100,12 @@ export default function Library() {
   return (
     <div class="grid">
       <Panel title="Library" class="wide">
-        <DirField label="Library" value={library()} onChange={(v) => (setLibrary(v), void refreshLibrary())} />
-        <div class="row">
-          <button
-            class="btn"
-            disabled={busy() || !library()}
-            title="Checks every file on disk – only needed after changes made outside Romburak"
-            onClick={() => void refreshLibrary(true)}
-          >
-            {busy() ? "Scanning" : "Rescan library"}
-          </button>
-        </div>
+        <Show when={!library()}>
+          <p class="dim">
+            No library folder set –{" "}
+            <button class="btn ghost small" onClick={() => props.onSettings()}>choose one in Settings</button>
+          </p>
+        </Show>
         <filter.Bar />
         <Show when={busy()}>
           <Segments
@@ -191,7 +183,6 @@ export default function Library() {
                         <Cover system={r().system} name={r().name} class="cover-mini" />
                         <span class="ellipsis">{r().name}</span>
                       </span>
-                      <span class="ellipsis mono dim" title={r().path}>{r().path}</span>
                       <span class="dim">{r().seconds ? formatPlayTime(r().seconds) : ""}</span>
                       <span
                         class="dim"

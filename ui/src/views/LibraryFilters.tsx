@@ -1,27 +1,30 @@
-// Filter bar for the Library table: text, system, state, region, added-date, favorite and played filters.
+// Filter bar for the Library table: text (name + system), systems, regions, release decades (all
+// multiple choice), favorite/played/achievement and state chips.
 import { createMemo, createSignal, For, Show, type Accessor } from "solid-js";
-import Select, { type Option } from "../components/Select";
+import MultiSelect from "../components/MultiSelect";
+import type { Option } from "../components/Select";
 import type { LibraryRow } from "../ipc";
 
-const opts = (all: string, list: [string, number][]): Option<string>[] => [
-  { value: "", label: all },
-  ...list.map(([s, n]) => ({ value: s, label: s, hint: String(n) })),
-];
+const opts = (list: [string, number][]): Option<string>[] => list.map(([s, n]) => ({ value: s, label: s, hint: String(n) }));
+
+export const UNKNOWN_YEAR = "unknown";
+/** Release decade of a row, e.g. `1990s`, or `unknown`. */
+export const decade = (r: LibraryRow) => (r.year ? `${Math.floor(r.year / 10) * 10}s` : UNKNOWN_YEAR);
+
+const toggled = (cur: Set<string>, s: string) => {
+  const n = new Set(cur);
+  if (n.has(s)) n.delete(s);
+  else n.add(s);
+  return n;
+};
 
 const STATES = ["known", "named", "ambiguous", "unknown", "skip"] as const;
-const AGES = [
-  { label: "Any time", secs: 0 },
-  { label: "Last 24 h", secs: 86400 },
-  { label: "Last 7 days", secs: 7 * 86400 },
-  { label: "Last 30 days", secs: 30 * 86400 },
-  { label: "Last 90 days", secs: 90 * 86400 },
-];
 
 export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
   const [query, setQuery] = createSignal("");
-  const [system, setSystem] = createSignal("");
-  const [region, setRegion] = createSignal("");
-  const [age, setAge] = createSignal(0);
+  const [systems, setSystems] = createSignal<Set<string>>(new Set());
+  const [regions, setRegions] = createSignal<Set<string>>(new Set());
+  const [decades, setDecades] = createSignal<Set<string>>(new Set());
   const [states, setStates] = createSignal<Set<string>>(new Set());
   const [favOnly, setFavOnly] = createSignal(false);
   const [playedOnly, setPlayedOnly] = createSignal(false);
@@ -32,49 +35,47 @@ export function createLibraryFilter(rows: Accessor<LibraryRow[]>) {
     for (const r of rows()) for (const k of key(r)) if (k) m.set(k, (m.get(k) ?? 0) + 1);
     return [...m].sort((a, b) => a[0].localeCompare(b[0]));
   };
-  const systems = createMemo(() => count((r) => [r.system]));
-  const regions = createMemo(() => count((r) => r.regions));
+  const systemOpts = createMemo(() => opts(count((r) => [r.system])));
+  const regionOpts = createMemo(() => opts(count((r) => r.regions)));
+  // decades oldest first, unknown last
+  const decadeOpts = createMemo(() =>
+    opts(count((r) => [decade(r)]).sort((a, b) => +(a[0] === UNKNOWN_YEAR) - +(b[0] === UNKNOWN_YEAR) || a[0].localeCompare(b[0]))),
+  );
   const stateCounts = createMemo(() => new Map(count((r) => [r.state])));
   const favCount = createMemo(() => rows().filter((r) => r.favorite).length);
   const playedCount = createMemo(() => rows().filter((r) => r.plays > 0).length);
   const cheevosCount = createMemo(() => rows().filter((r) => r.cheevos > 0).length);
 
   const filtered = createMemo(() => {
-    const q = query().toLowerCase();
-    const [sys, reg, st, fav, played, ach] = [system(), region(), states(), favOnly(), playedOnly(), cheevosOnly()];
-    const since = age() ? Date.now() / 1000 - age() : 0;
+    // every word must occur in name or system ("arkanoid cpc")
+    const words = query().toLowerCase().split(/\s+/).filter(Boolean);
+    const [sys, reg, dec, st, fav, played, ach] = [systems(), regions(), decades(), states(), favOnly(), playedOnly(), cheevosOnly()];
     return rows().filter(
       (r) =>
-        (!sys || r.system === sys) &&
-        (!reg || r.regions.includes(reg)) &&
+        (!sys.size || sys.has(r.system)) &&
+        (!reg.size || r.regions.some((x) => reg.has(x))) &&
+        (!dec.size || dec.has(decade(r))) &&
         (!st.size || st.has(r.state)) &&
         (!fav || r.favorite) &&
         (!played || r.plays > 0) &&
         (!ach || r.cheevos > 0) &&
-        r.added >= since &&
-        (!q || r.name.toLowerCase().includes(q) || r.path.toLowerCase().includes(q) || r.system.toLowerCase().includes(q)),
+        (!words.length || ((h) => words.every((w) => h.includes(w)))(`${r.name} ${r.system}`.toLowerCase())),
     );
   });
 
-  const active = () => !!(query() || system() || region() || age() || states().size || favOnly() || playedOnly() || cheevosOnly());
+  const active = () => !!(query() || systems().size || regions().size || decades().size || states().size || favOnly() || playedOnly() || cheevosOnly());
   const reset = () => (
-    setQuery(""), setSystem(""), setRegion(""), setAge(0), setStates(new Set<string>()), setFavOnly(false), setPlayedOnly(false), setCheevosOnly(false)
+    setQuery(""), setSystems(new Set<string>()), setRegions(new Set<string>()), setDecades(new Set<string>()), setStates(new Set<string>()), setFavOnly(false), setPlayedOnly(false), setCheevosOnly(false)
   );
-  const toggleState = (s: string) =>
-    setStates((cur) => {
-      const n = new Set(cur);
-      if (n.has(s)) n.delete(s);
-      else n.add(s);
-      return n;
-    });
+  const toggleState = (s: string) => setStates((cur) => toggled(cur, s));
 
   function Bar() {
     return (
       <div class="filters">
-        <input class="field" placeholder="Filter…" value={query()} onInput={(e) => setQuery(e.currentTarget.value)} />
-        <Select value={system()} onChange={setSystem} options={opts("All systems", systems())} />
-        <Select value={region()} onChange={setRegion} options={opts("All regions", regions())} />
-        <Select value={age()} onChange={setAge} options={AGES.map((a) => ({ value: a.secs, label: a.label }))} />
+        <input class="field" placeholder="Filter name + system…" value={query()} onInput={(e) => setQuery(e.currentTarget.value)} />
+        <MultiSelect values={systems()} onChange={setSystems} options={systemOpts()} all="All systems" noun="systems" />
+        <MultiSelect values={regions()} onChange={setRegions} options={regionOpts()} all="All regions" noun="regions" />
+        <MultiSelect values={decades()} onChange={setDecades} options={decadeOpts()} all="Any release year" noun="decades" />
         <div class="chips">
           <button class="chip" classList={{ on: favOnly() }} disabled={!favCount()} onClick={() => setFavOnly((v) => !v)}>
             ★ favorites {favCount()}
