@@ -1,7 +1,44 @@
 import { For, Show, createResource, createSignal } from "solid-js";
 import Panel from "../components/Panel";
 import DirField from "../components/DirField";
-import { exceptionsGet, ignoreSet, resolutionClear, setVerdict } from "../ipc";
+import { exceptionsGet, ignoreSet, resolutionClear, setVerdict, type Exceptions as Ex } from "../ipc";
+
+type Verdict = Ex["verdicts"][number];
+
+/** Past keep/discard/prefer decisions on releases, filterable, each removable. */
+export function VerdictList(props: { verdicts: Verdict[]; onChange: () => void }) {
+  const [q, setQ] = createSignal("");
+  const shown = () => {
+    const words = q().toLowerCase().split(/\s+/).filter(Boolean);
+    return props.verdicts.filter((v) => words.every((w) => `${v.verdict} ${v.name} ${v.system}`.toLowerCase().includes(w)));
+  };
+  return (
+    <>
+      <p class="dim small">keep = always place in addition · discard = move to _trash · prefer = wins a 1G1R tie. Remove a decision to be asked again on the next plan.</p>
+      <Show when={props.verdicts.length} fallback={<p class="dim small">none yet – decisions are made in the import review</p>}>
+        <Show when={props.verdicts.length > 8}>
+          <input class="field preset-search" placeholder={`Filter ${props.verdicts.length} decisions…`} value={q()} onInput={(e) => setQ(e.currentTarget.value)} />
+        </Show>
+        <For each={shown()}>
+          {(v) => (
+            <div class="row ex-row">
+              <span class="tag mono">{v.verdict}</span>
+              <div class="ex-main">
+                <span class="ellipsis" title={v.name}>{v.name}</span>
+                <span class="dim small ellipsis">
+                  {[v.system, v.reason || "reason not recorded", v.decided && new Date(v.decided * 1000).toLocaleDateString()]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </div>
+              <button class="btn ghost" onClick={async () => (await setVerdict(v, null), props.onChange())}>Remove</button>
+            </div>
+          )}
+        </For>
+      </Show>
+    </>
+  );
+}
 
 /** Your exceptions: ignored paths, verdicts on 1G1R rejects, resolved ambiguous matches. */
 export default function Exceptions() {
@@ -33,25 +70,7 @@ export default function Exceptions() {
           </button>
 
           <h4>Your decisions on releases</h4>
-          <p class="dim small">keep = always place in addition · discard = move to _trash · prefer = wins a 1G1R tie.</p>
-          <Show when={e().verdicts.length} fallback={<p class="dim small">none</p>}>
-            <For each={e().verdicts}>
-              {(v) => (
-                <div class="row ex-row">
-                  <span class="tag mono">{v.verdict}</span>
-                  <div class="ex-main">
-                    <span class="ellipsis" title={v.name}>{v.name}</span>
-                    <span class="dim small ellipsis">
-                      {[v.system, v.reason || "reason not recorded", v.decided && new Date(v.decided * 1000).toLocaleDateString()]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                  </div>
-                  <button class="btn ghost" onClick={async () => (await setVerdict(v, null), refetch())}>Remove</button>
-                </div>
-              )}
-            </For>
-          </Show>
+          <VerdictList verdicts={e().verdicts} onChange={refetch} />
 
           <h4>Resolved ambiguous matches</h4>
           <Show when={e().resolutions.length} fallback={<p class="dim small">none</p>}>

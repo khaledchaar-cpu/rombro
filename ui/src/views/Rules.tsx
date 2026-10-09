@@ -1,8 +1,8 @@
 import { For, type JSX, Match, Show, Switch, createResource, createSignal } from "solid-js";
 import Panel from "../components/Panel";
 import PriorityList from "../components/PriorityList";
-import { FLAG_KEYS, type FlagKey, type RuleInfo, type Rules as R, rulesCatalog, rulesDefaults, rulesGet, rulesSet } from "../ipc";
-import Exceptions from "./Exceptions";
+import { FLAG_KEYS, type FlagKey, type RuleInfo, type Rules as R, exceptionsGet, rulesCatalog, rulesDefaults, rulesGet, rulesSet } from "../ipc";
+import Exceptions, { VerdictList } from "./Exceptions";
 import NameFolders from "./NameFolders";
 import SystemOverrides from "./SystemOverrides";
 
@@ -25,6 +25,21 @@ const FIELDS: Record<string, (keyof R)[]> = {
 };
 
 /** Every planner rule: what it does, how often it fired in the last plan, its settings. */
+/** Decisions made so far, shown under the "Your decision" rule. */
+function PastVerdicts() {
+  const [ex, { refetch }] = createResource(exceptionsGet);
+  return (
+    <Show when={ex()}>
+      {(e) => (
+        <>
+          <h4>Past decisions ({e().verdicts.length})</h4>
+          <VerdictList verdicts={e().verdicts} onChange={refetch} />
+        </>
+      )}
+    </Show>
+  );
+}
+
 export default function Rules() {
   const [catalog] = createResource(rulesCatalog);
   const [defaults] = createResource(rulesDefaults);
@@ -171,6 +186,9 @@ export default function Rules() {
                 </div>
                 <p class="dim">{info.explain}</p>
                 {editor(info, rules()!)}
+                <Show when={info.id === "verdict"}>
+                  <PastVerdicts />
+                </Show>
               </Panel>
             )}
           </For>
