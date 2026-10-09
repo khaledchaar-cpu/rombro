@@ -21,7 +21,7 @@ impl Managed {
             ("libretro_info_path", sub("info")),
             ("system_directory", system),
             ("savefile_directory", sub("saves")),
-            ("savestate_directory", sub("states")),
+            ("savestate_directory", dir(&self.states_dir())),
             ("screenshot_directory", sub("screenshots")),
             ("playlist_directory", sub("playlists")),
             ("core_assets_directory", sub("downloads")),

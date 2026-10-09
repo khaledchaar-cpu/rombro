@@ -6,3 +6,4 @@ pub mod firmware;
 pub mod info;
 pub mod managed;
 pub mod pick;
+pub mod states;

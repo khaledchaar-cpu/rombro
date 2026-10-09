@@ -47,7 +47,7 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 | Testset bauen | `./scripts/make-testset.sh "<Sammlung>"` → `~/rombro-test`, dann `--db ~/rombro-test/test.db` |
 | Regeln zeigen/laden | `… -- rules [--set rules.json] [--ignore/--unignore <pfad>]` |
 | Cores je System | `… -- ra cores [--library <lib>] [--set "Sys=id"]` (`Sys=` = Empfehlung) |
-| Spielen | `… -- play <datei> [--core id [--save]] [--dry-run]` (zählt Spielzeit ≥ 30 s) |
+| Spielen | `… -- play <datei> [--core id [--save]] [--slot n] [--states] [--dry-run]` (zählt Spielzeit ≥ 30 s) |
 | Verwaltetes RetroArch | `… -- ra status [--check]` / `ra install [--latest] [--library <lib>]` (Test: `XDG_DATA_HOME=<scratch>`) |
 | Anzeige RetroArch | `… -- ra display [fullscreen|window[:1-6]|auto]` |
 | RetroAchievements | `… -- cheevos key <key>` / `cheevos sync` / `cheevos scan [--list]` / `cheevos login <user>` / `logout` / `hardcore [on\|off]` |

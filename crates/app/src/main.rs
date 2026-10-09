@@ -12,6 +12,7 @@ mod managed_ra;
 mod play;
 mod retroarch;
 mod settings;
+mod states;
 mod thumbs;
 
 fn main() {
@@ -48,6 +49,8 @@ fn main() {
             exceptions::ignore_set,
             exceptions::resolution_clear,
             thumbs::thumbnail,
+            states::save_states,
+            states::delete_save_state,
             thumbs::thumbs_online_get,
             thumbs::thumbs_online_set,
             cheevos::cheevos_status,

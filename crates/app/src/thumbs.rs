@@ -116,7 +116,7 @@ pub async fn thumbnail(system: String, name: String, kind: String) -> CmdResult<
     .map_err(err)?
 }
 
-/// `thumb://localhost/<kind>/<system>/<name>` (one percent-encoded segment, as built by
+/// `thumb://localhost/<kind>/<system>/<name>` or `state/<screenshot path>` (one percent-encoded segment, as built by
 /// `convertFileSrc`): PNG, or 404 so the UI shows its placeholder. Lets the webview lazy-load
 /// and cache grid tiles itself.
 pub fn protocol(request: tauri::http::Request<Vec<u8>>, responder: tauri::UriSchemeResponder) {
@@ -124,13 +124,17 @@ pub fn protocol(request: tauri::http::Request<Vec<u8>>, responder: tauri::UriSch
     tauri::async_runtime::spawn_blocking(move || {
         let decoded = percent_encoding::percent_decode_str(&path).decode_utf8_lossy();
         let mut parts = decoded.splitn(3, '/');
-        let found = match (
-            parts.next().and_then(Kind::parse),
-            parts.next(),
-            parts.next(),
-        ) {
-            (Some(kind), Some(system), Some(name)) => fetch(system, name, kind).ok().flatten(),
-            _ => None,
+        let found = if let Some(file) = decoded.strip_prefix("state/") {
+            crate::states::screenshot(file)
+        } else {
+            match (
+                parts.next().and_then(Kind::parse),
+                parts.next(),
+                parts.next(),
+            ) {
+                (Some(kind), Some(system), Some(name)) => fetch(system, name, kind).ok().flatten(),
+                _ => None,
+            }
         };
         let res = tauri::http::Response::builder()
             .header("Access-Control-Allow-Origin", "*")

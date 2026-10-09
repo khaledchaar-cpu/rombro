@@ -21,6 +21,12 @@ pub struct Args {
     /// Remember `--core` for this game (without `--core`: forget the override)
     #[arg(long)]
     save: bool,
+    /// Load this savestate slot on start
+    #[arg(long)]
+    slot: Option<u32>,
+    /// List the game's savestates instead of starting it
+    #[arg(long)]
+    states: bool,
     /// Only prepare and print the command
     #[arg(long)]
     dry_run: bool,
@@ -39,6 +45,18 @@ pub fn run(a: Args) -> Result<()> {
         None => store.library()?,
     }
     .filter(|l| rom.starts_with(l));
+    if a.states {
+        for st in romburak_core::retroarch::states::list(&m.states_dir(), &rom) {
+            let slot = st.slot.map_or("auto".into(), |n| n.to_string());
+            let age = st.modified.elapsed().map_or(0, |d| d.as_secs() / 3600);
+            println!(
+                "slot {slot:>4} · {:<16} · {age} h ago · {}",
+                st.core,
+                st.path.display()
+            );
+        }
+        return Ok(());
+    }
     if a.save {
         store.set_core_override(&rom, a.core.as_deref())?;
     }
@@ -52,6 +70,7 @@ pub fn run(a: Args) -> Result<()> {
         library: library.as_deref(),
         picks: &picks,
         core: over.as_deref(),
+        slot: a.slot,
     };
     let mut l = m.prepare(&game, &romburak_store::http_download, &show)?;
     println!("{} · {}", l.system, l.core.id);

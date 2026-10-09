@@ -2,6 +2,7 @@ import { For, Show } from "solid-js";
 import Cover from "./Cover";
 import Panel from "./Panel";
 import GamePlay from "./GamePlay";
+import SaveStates from "./SaveStates";
 import CheevosList from "./CheevosList";
 import { type LibraryRow, type ThumbKind } from "../ipc";
 import { CHEEVOS_PBP_HINT, cheevosUnhashable, formatPlayTime, toggleFavorite } from "../state/libraryStore";
@@ -31,6 +32,7 @@ export default function GameDetail(props: { row: LibraryRow }) {
         </button>
       </div>
       <GamePlay path={props.row.path} />
+      <SaveStates path={props.row.path} />
       <div class="detail">
         <div class="thumbs">
           <For each={KINDS}>{(k) => <Thumb row={props.row} kind={k.kind} label={k.label} />}</For>

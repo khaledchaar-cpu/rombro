@@ -824,7 +824,7 @@ export function onPlayEnded(cb: (path: string, secs: number) => void): Promise<U
 }
 
 /** Installs what is missing (RetroArch, core) and starts the game; progress on `play://progress`. */
-export async function play(path: string): Promise<string> {
+export async function play(path: string, slot?: number, core?: string): Promise<string> {
   if (!inTauri) {
     if (!mockRa) await mockProgress("play://progress", ["download", "verify", "unpack"], phased);
     mockRa = mockRa ?? "1.22.2";
@@ -832,7 +832,44 @@ export async function play(path: string): Promise<string> {
     setTimeout(() => mockBus.get("play://ended")?.forEach((cb) => cb([path, 95])), 3000);
     return mockGameCore.get(path) ?? "snes9x";
   }
-  return invoke<string>("play", { path });
+  return invoke<string>("play", { path, slot: slot ?? null, core: core ?? null });
+}
+
+export interface SaveState {
+  path: string;
+  /** core folder name and its id (if known) */
+  core: string;
+  core_id: string | null;
+  /** null = auto state */
+  slot: number | null;
+  /** unix seconds */
+  modified: number;
+  screenshot: string | null;
+}
+
+let mockStates: SaveState[] = [
+  { path: "/s/Snes9x/Game.state1", core: "Snes9x", core_id: "snes9x", slot: 1, modified: Date.now() / 1000 - 3600, screenshot: null },
+  { path: "/s/Snes9x/Game.state", core: "Snes9x", core_id: "snes9x", slot: 0, modified: Date.now() / 1000 - 86400 * 3, screenshot: null },
+  { path: "/s/Snes9x/Game.state.auto", core: "Snes9x", core_id: "snes9x", slot: null, modified: Date.now() / 1000 - 86400 * 9, screenshot: null },
+];
+
+/** Savestates of a library game in the managed RetroArch, newest first. */
+export async function saveStates(path: string): Promise<SaveState[]> {
+  if (!inTauri) return mockStates;
+  return invoke<SaveState[]>("save_states", { path });
+}
+
+export async function deleteSaveState(path: string): Promise<void> {
+  if (!inTauri) {
+    mockStates = mockStates.filter((s) => s.path !== path);
+    return;
+  }
+  return invoke("delete_save_state", { path });
+}
+
+/** URL of a savestate screenshot (served by the backend from the states folder only). */
+export function stateShotUrl(path: string): string | null {
+  return inTauri ? convertFileSrc(`state/${path}`, "thumb") : null;
 }
 
 export interface CheevosStatus {

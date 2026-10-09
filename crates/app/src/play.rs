@@ -19,12 +19,12 @@ pub struct GameCores {
     options: Vec<CoreOption>,
 }
 
-fn managed() -> CmdResult<Managed> {
+pub(crate) fn managed() -> CmdResult<Managed> {
     Managed::detect().ok_or_else(|| "no RetroArch stable build for this platform".into())
 }
 
 /// Library file `path` (relative to the library, as listed) as absolute path plus library.
-fn game_path(path: &str) -> CmdResult<(PathBuf, Option<PathBuf>)> {
+pub(crate) fn game_path(path: &str) -> CmdResult<(PathBuf, Option<PathBuf>)> {
     let (store, _) = open_store()?;
     let library = store.library().map_err(err)?;
     let p = Path::new(path);
@@ -94,21 +94,31 @@ pub async fn set_favorite(path: String, on: bool) -> CmdResult<()> {
     store.set_favorite(&key, on).map_err(err)
 }
 
-/// Installs what is missing and starts the game; returns the core id. Emits `play://progress`
+/// Installs what is missing and starts the game (optionally from savestate `slot`, with
+/// `core` for this run only); returns the core id. Emits `play://progress`
 /// (phase download/verify/unpack/info/core, MB, core id).
 #[tauri::command]
-pub async fn play(app: tauri::AppHandle, path: String) -> CmdResult<String> {
+pub async fn play(
+    app: tauri::AppHandle,
+    path: String,
+    slot: Option<u32>,
+    core: Option<String>,
+) -> CmdResult<String> {
     tauri::async_runtime::spawn_blocking(move || {
         let (rom, library) = game_path(&path)?;
         let (store, _) = open_store()?;
         let m = store.ra_prefs(managed()?).map_err(err)?;
-        let over = store.core_override(&rom).map_err(err)?;
+        let over = match core {
+            Some(c) => Some(c),
+            None => store.core_override(&rom).map_err(err)?,
+        };
         let picks = store.rules().map_err(err)?.cores;
         let game = Game {
             rom: &rom,
             library: library.as_deref().filter(|l| rom.starts_with(l)),
             picks: &picks,
             core: over.as_deref(),
+            slot,
         };
         let emit = |phase: &str, done: u64, total: u64, item: &str| {
             let mb = |b: u64| (b >> 20) as usize;

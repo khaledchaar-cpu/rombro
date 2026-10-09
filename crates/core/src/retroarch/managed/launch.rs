@@ -107,8 +107,8 @@ impl Managed {
         std::fs::rename(tmp, &core.path)
     }
 
-    /// `retroarch --config <cfg> -L <core> <rom>`.
-    pub fn command(&self, core: &Core, rom: &Path) -> io::Result<Command> {
+    /// `retroarch --config <cfg> -L <core> [--entryslot=<slot>] <rom>`.
+    pub fn command(&self, core: &Core, rom: &Path, slot: Option<u32>) -> io::Result<Command> {
         let exe = self
             .executable()
             .ok_or_else(|| io::Error::other("RetroArch is not installed"))?;
@@ -116,8 +116,11 @@ impl Managed {
         cmd.arg("--config")
             .arg(self.cfg())
             .arg("-L")
-            .arg(&core.path)
-            .arg(rom);
+            .arg(&core.path);
+        if let Some(slot) = slot {
+            cmd.arg(format!("--entryslot={slot}"));
+        }
+        cmd.arg(rom);
         Ok(cmd)
     }
 }
@@ -148,6 +151,8 @@ pub struct Game<'a> {
     pub library: Option<&'a Path>,
     pub picks: &'a BTreeMap<String, String>,
     pub core: Option<&'a str>,
+    /// Savestate slot to load on start (`--entryslot`).
+    pub slot: Option<u32>,
 }
 
 impl Managed {
@@ -184,7 +189,7 @@ impl Managed {
         }
         let assets = self.core_assets(&core, game.library, fetch, progress)?;
         self.write_config(game.library)?;
-        let command = self.command(&core, &content(&core, game.rom))?;
+        let command = self.command(&core, &content(&core, game.rom), game.slot)?;
         Ok(Launch {
             system,
             core,

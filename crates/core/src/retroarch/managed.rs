@@ -138,6 +138,11 @@ impl Managed {
         self.current().map(|v| self.executable_of(&v))
     }
 
+    /// Savestates folder (`savestate_directory` in the managed config).
+    pub fn states_dir(&self) -> PathBuf {
+        self.root.join("states")
+    }
+
     pub fn cfg(&self) -> PathBuf {
         self.root.join("retroarch.cfg")
     }
