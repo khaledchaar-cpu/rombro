@@ -4,8 +4,12 @@ import { cheevosAchievements, cheevosStatus } from "../ipc";
 const KIND: Record<string, string> = { progression: "progression", win_condition: "win", missable: "missable" };
 
 /** The achievements of a RetroAchievements game (details view); `other` = they belong to another version. */
-export default function CheevosList(props: { game: number; other: string | null }) {
-  const [list] = createResource(() => props.game, cheevosAchievements);
+/** `unlocked` = the row's known unlock count; a change (after playing) reloads the list. */
+export default function CheevosList(props: { game: number; other: string | null; unlocked?: number }) {
+  const [list] = createResource(
+    () => [props.game, props.unlocked ?? 0] as const,
+    ([game]) => cheevosAchievements(game),
+  );
   const [status] = createResource(cheevosStatus);
   const total = () => (list() ?? []).reduce((s, a) => s + a.points, 0);
   const unlocked = () => (list() ?? []).filter((a) => a.earned).length;

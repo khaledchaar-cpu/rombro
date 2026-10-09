@@ -71,7 +71,7 @@ export default function GameDetail(props: { row: LibraryRow }) {
         </dl>
       </div>
       <Show when={props.row.cheevos_game}>
-        {(g) => <CheevosList game={g()} other={props.row.cheevos ? null : props.row.cheevos_other} />}
+        {(g) => <CheevosList game={g()} other={props.row.cheevos ? null : props.row.cheevos_other} unlocked={props.row.cheevos_progress?.awarded} />}
       </Show>
     </Panel>
   );
