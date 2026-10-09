@@ -32,6 +32,7 @@
 | M16b RA-Login, Hardcore, Fortschritt | ✅ done (echter Login + Freischaltung + Sichtprüfung 2026-10-09) |
 | v0.6.0 Release (M15 Launcher-Basis) | ✅ released 2026-10-08 |
 | M16c RA Disc-Systeme + NDS | ✅ done (2026-10-09, gegen rcheevos verifiziert; Sichtprüfung PSP + PS1-.pbp-Hinweis ok) |
+| M17 Cover | 🔶 gebaut 2026-10-09, Sichtprüfung offen |
 
 ## Aktuell
 Stand 2026-10-07: v0.3.0 veröffentlicht. Seitdem: `.cso` (PSP) wird entpackt gehasht + Serial (`disc::cso`),
@@ -141,7 +142,9 @@ Nächste Schritte: v0.6.0 (M15–M16) releasen.
 Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
 1. v0.7.0 (M16 RetroAchievements + Umbenennung Romburak) getaggt 2026-10-09; Claude veröffentlicht nach CI. (v0.6.0 = M15, 2026-10-08.)
 2. Später (User, 2026-10-09): verwaltetes RetroArch auf Windows/macOS testen – Windows per CI-e2e-Job (ra install, status, Core + Test-ROM headless), macOS manuell durch den User.
-3. v2 Launcher geklärt (Grilling 2026-10-09, SPEC §6): M17 Cover → M18 Dashboard → M19 Savestates → M20 globale RA-Einstellungen → M21 Statistik. **Nächster Milestone: M17 Cover.**
+3. v2 Launcher geklärt (Grilling 2026-10-09, SPEC §6): M17 Cover → M18 Dashboard → M19 Savestates → M20 globale RA-Einstellungen → M21 Statistik. M17 gebaut: `thumb://`-Protokoll (`thumbs::protocol`, Browser lädt lazy + cached), unscharfer Abgleich über die
+   Server-Verzeichnisliste (`thumbnail::best_match`, Liste 30 Tage in `.index`), Library Liste ↔ Grid (`rombro.libraryView`),
+   Mini-Boxart in der Liste. **Offen: Sichtprüfung M17, dann M18 Dashboard.**
 
 ## Stolpersteine
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie
