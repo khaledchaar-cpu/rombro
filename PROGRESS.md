@@ -12,14 +12,14 @@
 | M7 App-Shell | ✅ done |
 | M8 GUI Kern | ✅ done |
 | M9 GUI Feinschliff | ✅ done |
-| M10 Gamification | ✅ done (Sichtprüfung offen) |
+| M10 Gamification | ✅ done (Sichtprüfung 2026-10-09) |
 | M11 Release | ✅ done (CI grün auf 3 OS) |
 | M12 Übertragen & Container | ✅ done |
 | M12b Arcade & Sichtprüfung | ✅ done |
 | M12c Echte Sammlung (Probelauf) | ✅ done |
 | M13 Regeln transparent & einstellbar | ✅ done (Rules-Seite abgenommen 2026-10-06; Entscheidungen zeigen Grund + Datum) |
 | M14 Arcade-DATs | ✅ done |
-| M14b Core-Wahl & -Installation | ✅ done (Sichtprüfung App offen) |
+| M14b Core-Wahl & -Installation | ✅ done (Sichtprüfung 2026-10-09) |
 | v0.3.0 Release + Inbox-Importe | ✅ released 2026-10-06; Nachträge 2026-10-07 (CSO, OpenBOR, Library-Perf) |
 | v0.4.0 Release (Perf, Settings-Umbau) | ✅ released 2026-10-07 |
 | v0.5.0 Release (Firmware/BIOS, Daphne, Disc-Serials, neue UI) | ✅ released 2026-10-08 |
@@ -128,87 +128,17 @@ PS1-`.pbp` (rcheevos auch nicht), PCE-GameExpress (BOOT.BIN), PC-FX, Neo Geo CD,
 Sichtprüfung 2026-10-09 (PSP ok). PS1-`.pbp` (RetroArch erkennt sie auch nicht): Library zeigt `⊘` + Hinweis „convert to CHD or CUE/BIN“ (`cheevosUnhashable`); automatische Umwandlung bewusst nicht gebaut.
 Doppelte Spielordner (2026-10-09): gleicher Titel (System + RDB-Name) in zwei Spielordnern → TBD „Duplicate“ mit
 behaltenem Ordner (Library vor Inbox, mehr Dateien, Pfad; `plan::build::dup_folders`); Discard trasht den ganzen Ordner
-nach `_trash/<Ordner>/`. Echt: `Quake/quake` verworfen (Journal #93), `Quake/tyrquake` behalten. Offen: loses
-`Quake/tyrquake/pak0.pak` (bitgleich zu `id1/pak0.pak`) muss der User von Hand entfernen.
+nach `_trash/<Ordner>/`. Echt: `Quake/quake` verworfen (Journal #93), `Quake/tyrquake` behalten. Loses
+`Quake/tyrquake/pak0.pak` vom User entfernt.
 Nächste Schritte: v0.6.0 (M15–M16) releasen.
 
 ## Nächste Schritte
--2. RetroArch-Stichprobe 2 (2026-10-08, 3 Spiele/Playlist, 211 Starts headless): 189 OK, 9 Snes9x-Timeouts (bekannt,
-   lädt), bekannt: Sega CD/Satellaview-BIOS, PPSSPP headless. Neu → ROMBRO-Fixes: (a) Mehrdisk-Release aus Einzel-Zips
-   bekam `.m3u` auf `.zip` (fceumm lädt das nicht) → Zips werden jetzt entpackt (Hatari/cap32 können Zips, ST/CPC
-   bleiben unangetastet, da platzierte `.m3u`-Ordner fertig sind). Betroffen: FDS „Tenshitachi no Houkago“ (manuell
-   oder neu importieren). (b) DAT-Check verlangt jetzt auch das BIOS-Set (`rumblef` ohne `awbios` lief in MAME 2010
-   nicht) → nächster `audit` quarantänisiert Sets ohne BIOS. Nicht ROMBRO: HBMAME-Core kennt `dimahoo` nicht
-   (kein HBMAME-DAT, RDB neuer als Core), Flycast kennt `sgdrvsim` nicht.
-   Nachtrag: `awbios`/`naomi` (Flycast-BIOS) werden jetzt auch in MAME-Ordner kopiert, deren DAT sie führt
-   (Audit ausgeführt, Journal #87: 5 Kopien). `rumblef` bleibt offen: MAME 2010 will älteres awbios
-   (`bios.ic23_l`), Flycast stürzt headless damit ab (Illegal instruction). FDS-Tenshitachi repariert: `audit` platziert
-   `.m3u`-Ordner mit Zips neu (außer ST/CPC, deren Cores Zips lesen; Journal #88), FDS-Playlist zeigt auf Disk 1,
-   weil FCEUmm keine `.m3u` lädt (#89/#90, Disk 1 headless OK). Allow-Regeln für CLI audit/import/retroarch/undo
-   in `.claude/settings.local.json`.
--1. RetroArch-Stichprobe (2026-10-08, 2 Spiele/Playlist, 142 Starts headless): 121 OK. Rest nicht ROMBRO:
-   Sega CD `bios_CD_U.bin` fehlt, Satellaview vermutl. `BS-X.bin`, melonDS-Core (exec stack, glibc), PPSSPP-Assets
-   fehlen, blueMSX (Coleco/MSX2) „Failed to load content“ ungeklärt, Snes9x ignoriert `--max-frames` (lädt aber).
-   ROMBRO-Fix: Arcade-BIOS in alle MAME-Ordner, deren DAT es führt (MAME 2010 fand `neogeo.zip` nicht).
-   `audit` ausgeführt (Journal #84, 40 BIOS-Kopien), MAME 2010 findet `neogeo.zip`.
-   Folge-Fixes: Export lädt Pflicht-Systemdateien der Cores (`retroarch::assets`, blueMSX lief damit),
-   NDS → `melondsds`. PPSSPP stürzt headless ab (braucht GL/Vulkan, Null-Treiber) – Testgrenze, nicht ROMBRO.
-   Export mit `--install-cores` ausgeführt (Journal #86); Nachtest: Coleco, MSX2, NDS (melondsds), MAME 2010 laden.
-0. Nachträge 2026-10-06 (abends): RetroArch-Export räumt verwaiste Playlists (alle Einträge in der Library, System
-   leer oder ohne Core) nach `_trash/playlists`; Systeme ohne jeden Core (Solarus) bekommen keine RA-Playlist.
-   Name-Ordner (`rules.name_folders`, Regel `name-only`, `Ident::Named`, SPEC 11a): n64dd-Cartridge-Umbauten → N64,
-   solarus → Solarus. GUI: „Last run“-Bericht nach Execute, Meldung bei leerem Plan. **Offen:** Sichtprüfung der neuen GUI-Teile;
-   **Aufräumen GUI-Elemente**.
-   Stolperstein: nach Schema-Wechseln mit DAT-Drop erst `db sync`, sonst greifen Arcade-Prüfungen nicht.
-0. M14b (2026-10-06): Core-Empfehlung (Batocera) + Auswahl + Installation beim Export, siehe SPEC 11a. CLI e2e in
-   Scratch-RA verifiziert (4 Cores geladen/entpackt, Playlists mit Pfad, Undo). **Offen:** Sichtprüfung CorePicker in
-   der App (Settings → RetroArch); installierten Core einmal headless in RetroArch starten.
-   Nachträge: Dashboard „Sync databases“ + Fortschritt (RDB/DAT), Export-Fortschritt (scan/download/write,
-   `PhaseProgress`), Plan-Panel „Left in inbox“ + „Move to trash“ (`plan::inbox`, Journal → `_trash/inbox-<ts>/`),
-   CLI-Import nutzt Hash-Cache. Inbox auf CIFS: erster Scan netzgebunden (~118 MB/s), danach Cache (0,2 s).
-   Sichtprüfung dieser UI-Teile ebenfalls offen (Chrome-Extension war nicht verbunden).
-   Weitere Nachträge (2026-10-06): Import-Tab (Inbox+Plan), Library zählt Ordner-Spieldaten zum Spiel, Regel
-   `frontend-meta` (gamelist/Medien → `_trash/frontend`), Unbekanntes → `_trash/unknown` statt Quarantäne
-   (`unknown_to_trash`), geleerte Ordner werden entfernt, lose Arcade-Chips nicht mehr als Spiel, DAT-Prüfung mit
-   CHDs (`<disk>`) und Treiberstatus (`arcade_working_only`), verwaiste Playlists → `_trash/playlists`.
-   Schema v11: DATs müssen einmal neu geladen werden („Sync databases“).
-   **Offen:** Sichtprüfung App; doppeltes Quake (`Quake/quake` vs. `tyrquake`); RetroArch-Export entfernt keine
-   veralteten Playlists im RetroArch-Ordner (z. B. alte `MAME.lpl`).
-   Import 4 Systeme (2026-10-06): DAT-benannte ZIPs ohne RDB-Treffer bekommen den DAT-Grund (Model 3 „not working“
-   → Trash statt Quarantäne, ≥75 % Member-Treffer), `astrocde` → `Bally - Astrocade` (Namensordner, kein Core),
-   GX4000-`.cpr` bleiben bewusst in `Amstrad - CPC` (RDB führt sie dort), geleerte Inbox-Bäume samt leerer
-   `media/*/default_*` werden entfernt. 2048-Byte-`.iso` (3DO u. a.) werden zusätzlich als rohe MODE1-Sektoren (EDC/ECC) gehasht (`hash::hash_iso`, Ergebnis in `headerless`). RetroArch-Export schreibt ScummVM-Targets in `scummvm.ini` (`retroarch::scummvm`, Engine-Tabelle `data/scummvm-engines.tsv` aus scummvm-web `games.yaml`). MSU-1: Ordner mit `.msu` (oder ROM + `-N.pcm`) → `Nintendo - Super Nintendo Entertainment System (MSU-1)/<Ordner>/` als Ganzes (`plan::build::msu`, Regel `msu1`, fehlender Marker wird angelegt), Core snes9x.
-   Atomiswave/Naomi (2026-10-06): RDB nennt nur einen Key-Chip pro Spiel → ZIP mit diesem Chip = Set
-   (`store::chipset`, `arcade::CHIP_KEYED`), vor der MAME-„not working“-Regel (Flycast, nicht MAME);
-   `awbios`/`naomi`/`naomi2` → `_bios/dc/` (Export → `system/dc/`).
-   CHD-Pregap (2026-10-06): RDB hasht den Datentrack wie Redumps `.bin` inkl. Pregap; nicht gespeicherter Pregap
-   wird nachgebaut (Stille + 150 leere MODE1-Sektoren mit EDC/ECC, `disc::cdsector`, `ChdTrack::open_redump`).
-   PCE CD 1 → 16/28 erkannt; Migration v12 hasht CHDs neu.
-1. ✅ Rules-Seite abgenommen (User, 2026-10-06). Alte Entscheidungen ohne gespeicherten Grund → „reason not recorded“.
-2. ✅ Echter Import auf Testset (2026-10-06, `scripts/make-testset.sh`): Import → Audit (0 Ops) → Undo bitgleich;
-   Ignore, Quarantäne aus, SNES-Override Japan verifiziert. Bug gefixt: ScummVM-Ordner wanderte beim Audit nach DOS.
-   ✅ Komplett-Probelauf (2026-10-06, 2 h 05 min, `~/rombro-test/fullrun.txt`): 225.720 Items, 16.522 zu platzieren,
-   5.270 Quarantäne (wie M12c), 1.672 Entscheidungen, 39.635 Ops, 3 Konflikte (bitgleiche Doppel: 2 FBNeo-BIOS in
-   `Commodore - C64/FBNeo - Arcade/` + `00bios`, Wolfenstein 3D in `ECWolf/` + `Ports/`), 18 Lesefehler (MAME-/CD-i-
-   HDD-CHDs ohne CD-Track, 2 CHDs mit Dekompressionsfehler = vermutlich defekt, 2 Zips).
-   Danach: bitgleiche Doppel → Duplikat in der TBD-Queue statt Konflikt (BIOS-Fälle verifiziert; Wolfenstein ist
-   echter Konflikt: Shareware vs. Vollversion). CLI: `rules --ignore/--unignore <pfad>`.
-3. ✅ (2026-10-06) Prüfung in RetroArch: `2020bb` (Neo Geo) läuft headless 300 Frames mit mame2016 und FBNeo,
-   jeweils mit `neogeo.zip` neben dem Set aus `ra-lib`.
-   Ursprünglich: MAME-BIOS neben den Sets (BIOS-abhängiges Spiel, z. B. Neo Geo, startet mit MAME-Core
-   und FBNeo aus der importierten Library).
-   Vorbereitet (2026-10-06): `~/rombro-test/ra-lib` (Copy-Import Arcade-Testset), Playlist `ROMBRO Test.lpl`,
-   Cores fbneo + mame2016 + mame (0.289) vom Buildbot. User-`neogeo.zip` ist nicht DB-konform (4 Dateien fehlen, 2 anders
-   benannt) → Quarantäne ist korrekt; für den Test manuell neben die Sets kopiert. Logik bleibt (User-Entscheidung).
-4. ✅ M14 Arcade-DATs. ✅ Ideen umgesetzt: platzierte geprüfte Sets zeigen übersprungene Cores
-   (`[arcade-set: skipped MAME: …]`, `Files::Set.dat_note`); ~~Eltern-Set auch in der Library suchen~~ ✅ (Eltern zählen, wenn sie irgendwo im Scan oder in der Library liegen: `set_names`/`items_with`); ✅ `db stats` zeigt DAT-Versionen (`--db`).
-4b. ✅ (2026-10-06) Kombinierte Sufami-Turbo-Images → BIOS + Carts extrahiert (8 echte Dateien als Kopie: 7 Carts +
-   BIOS SHA1-verifiziert, Undo bitgleich). Schema v9 erzwingt Rehash betroffener SNES-Dateien im Cache.
-4c. ✅ (2026-10-06) RetroArch-Export (Playlists mit Core, BIOS aus System.dat). Getestet mit Scratch-cfg:
-   ra-lib → 3 Playlists mit FBNeo/MAME 2016/MAME; Sufami-Kopie → `STBIOS.bin` SHA1-korrekt. App-Panel nicht visuell
-   geprüft. Idee: System.dat bei `db sync` aktualisieren; Core-Wahl pro System einstellbar.
-5. Sichtprüfung in der App (M10-Rest): Gamification-Panels mit echten Daten plausibel; Effects off in beiden Themes.
-6. v2 Launcher (SPEC §6) – **erst ganz zum Schluss**.
+Stand 2026-10-09 (alte Einträge erledigt, Details in der Git-Historie dieser Datei):
+1. v0.6.0 releasen (M15–M16: verwaltetes RetroArch, Starten, Spielzeit/Favoriten, RetroAchievements).
+2. Verwaltetes RetroArch auf Windows/macOS testen.
+3. Bekannt, nicht ROMBRO: `rumblef` (MAME 2010 will älteres awbios, Flycast stürzt ab), fehlende User-BIOS
+   Sega CD (`bios_CD_U.bin`) / Satellaview (`BS-X.bin`), PPSSPP headless nicht testbar.
+4. v2 Launcher (SPEC §6) – erst ganz zum Schluss.
 
 ## Stolpersteine
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie
