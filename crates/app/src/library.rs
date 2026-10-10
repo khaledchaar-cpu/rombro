@@ -176,7 +176,7 @@ pub async fn library_list(
                 .iter()
                 .map(|(s, _)| (*s).to_owned()),
         );
-        let items = loose_game_folders(items, &library, &folder_systems);
+        let (items, game_roots) = loose_game_folders(items, &library, &folder_systems);
         // Game folders (DOS, ScummVM, ports): the folder of a known key file is the game;
         // its other files are game data, not unknown items.
         let game_dirs: std::collections::HashSet<PathBuf> = items
@@ -188,6 +188,7 @@ pub async fn library_list(
                 _ => None,
             })
             .filter(|d| d != &library)
+            .chain(game_roots)
             .collect();
         let mut extra: std::collections::HashMap<PathBuf, usize> = Default::default();
         let in_game = |p: &std::path::Path| {
@@ -306,11 +307,16 @@ pub async fn library_list(
 /// Game folders (`<library>/<folder system>/<game>/`) where no file is known to a database:
 /// the folder is still one game, named after it, started from its most likely launcher;
 /// its other files count as its data (see `game_dirs`), not as unknown items.
+/// Also returns the game folders with a known file further down (`Risk/CGA/RISK.EXE`): the
+/// launchers next to it (`Risk/dosbox.bat`) are that game's data as well.
 fn loose_game_folders(
     mut items: Vec<romburak_core::plan::Item>,
     library: &std::path::Path,
     folder_systems: &[String],
-) -> Vec<romburak_core::plan::Item> {
+) -> (
+    Vec<romburak_core::plan::Item>,
+    std::collections::HashSet<PathBuf>,
+) {
     use std::collections::HashMap;
     let root_of = |p: &std::path::Path| -> Option<(String, PathBuf)> {
         let rel = p.strip_prefix(library).ok()?;
@@ -339,8 +345,8 @@ fn loose_game_folders(
             known_roots.insert(root);
         }
     }
-    for (root, (system, idx)) in loose {
-        if known_roots.contains(&root) {
+    for (root, (system, idx)) in &loose {
+        if known_roots.contains(root) {
             continue;
         }
         let rank = |p: &std::path::Path| {
@@ -372,7 +378,7 @@ fn loose_game_folders(
             continue;
         };
         items[pick].ident = Ident::Named(romburak_core::plan::Game {
-            system,
+            system: system.clone(),
             name: root
                 .file_name()
                 .unwrap_or_default()
@@ -381,7 +387,7 @@ fn loose_game_folders(
             crc: None,
         });
     }
-    items
+    (items, known_roots)
 }
 
 #[cfg(test)]
@@ -404,7 +410,7 @@ mod tests {
             item("DOS/Risk/AUTOBOOT.DBP"),
             item("SNES/odd.bin"),
         ];
-        let out = loose_game_folders(items, &lib, &["DOS".to_owned()]);
+        let (out, _) = loose_game_folders(items, &lib, &["DOS".to_owned()]);
         let named: Vec<_> = out
             .iter()
             .filter_map(|it| match &it.ident {
@@ -418,5 +424,36 @@ mod tests {
             named,
             [(lib.join("DOS/Risk/dosbox.bat"), "DOS".into(), "Risk".into())]
         );
+    }
+}
+
+#[cfg(test)]
+mod root_tests {
+    use super::*;
+    use romburak_core::plan::{Files, Game, Item};
+
+    #[test]
+    fn launchers_next_to_a_known_subfolder_belong_to_the_game() {
+        let lib = PathBuf::from("/lib");
+        let items = vec![
+            Item {
+                files: Files::Single(lib.join("DOS/Risk/CGA/RISK.EXE")),
+                ident: Ident::Known(Game {
+                    system: "DOS".into(),
+                    name: "Risk (1986)".into(),
+                    crc: Some(1),
+                }),
+                in_library: true,
+            },
+            Item {
+                files: Files::Single(lib.join("DOS/Risk/dosbox.bat")),
+                ident: Ident::Unknown,
+                in_library: true,
+            },
+        ];
+        let (out, roots) = loose_game_folders(items, &lib, &["DOS".to_owned()]);
+        assert!(roots.contains(&lib.join("DOS/Risk")));
+        // the launcher is no extra game
+        assert!(matches!(out[1].ident, Ident::Unknown));
     }
 }
