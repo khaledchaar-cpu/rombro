@@ -29,7 +29,14 @@ pub async fn resolve_ambiguous(path: PathBuf, system: String, name: String) -> C
             .flatten()
             .and_then(|dir| store.hash_cache(dir).ok())
             .and_then(|c| c.get(&path))
-            .and_then(|roms| roms.first().map(|r| r.hashes.sha1));
+            // an archive's entries start with the whole file: the item is its member
+            .and_then(|roms| {
+                let first = roms.first();
+                roms.iter()
+                    .find(|r| r.member.is_some())
+                    .or(first)
+                    .map(|r| r.hashes.sha1)
+            });
         let sha1 = match cached {
             Some(h) => h,
             None => {

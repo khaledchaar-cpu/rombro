@@ -80,4 +80,5 @@ ROM-Curator auf Basis der RetroArch-Datenbanken (1G1R, Import, Gamification; v2 
 ## Erkenntnisse / Stolpersteine
 - RetroArch headless **nie mit `--appendconfig`** (bei `config_save_on_exit` landen die Null-Treiber in der echten
   Config!): `cp retroarch.cfg <scratch>/ra.cfg`, Treiber dort auf null, `retroarch --config <scratch>/ra.cfg -L <core.so> <zip> --max-frames=300`.
+- `audit <lib>` **führt den Plan aus**, wenn er Operationen hat – gegen die echte Library immer `--dry-run`.
 - RDB: Hashes sind MessagePack-`bin`, nicht Hex. Header 16 Byte (`RARCHDB\0` + u64-Offset auf Metadaten). Siehe SPEC §3.
