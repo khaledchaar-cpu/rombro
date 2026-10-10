@@ -1,5 +1,6 @@
 import { createResource, createSignal, For, Match, Show, Switch } from "solid-js";
 import Panel from "../components/Panel";
+import LibraryProgress from "../components/LibraryProgress";
 import { ContinuePanel } from "./DashboardContinue";
 import { PopularPanel } from "./DashboardPopular";
 import { LibraryPanel } from "./DashboardHistory";
@@ -55,7 +56,7 @@ export default function Dashboard(props: {
       <Switch>
         <Match when={shown() === "play"}>
           <Show when={libraryBusy() && !libraryRows().length}>
-            <p class="dim">Loading the library…</p>
+            <LibraryProgress />
           </Show>
           <ContinuePanel onLibrary={props.onLibrary} />
           <PopularPanel onLibrary={props.onLibrary} />
