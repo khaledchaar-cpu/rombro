@@ -2,6 +2,7 @@
 
 use crate::{Record, Result, Store};
 use romburak_core::Hashes;
+use std::path::Path;
 
 /// How a ROM was matched.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,9 +59,78 @@ pub fn candidates(records: &[Record]) -> Vec<&Record> {
     out
 }
 
+/// Among several candidates, the one the file itself points to: the only one whose ROM name
+/// has the file's extension (`.a52` = Atari 5200, not the 8-bit `.bin`), else the only one
+/// whose system names a folder the file is in. `name` is the file (or archive member) name,
+/// `at` its location.
+pub fn pick_by_file<'r>(c: &[&'r Record], name: &Path, at: &Path) -> Option<&'r Record> {
+    let only = |hits: Vec<&'r Record>| match hits.as_slice() {
+        [r] => Some(*r),
+        _ => None,
+    };
+    let ext = name
+        .extension()
+        .map(|e| e.to_string_lossy().to_ascii_lowercase());
+    let by_ext = ext.and_then(|ext| {
+        only(
+            c.iter()
+                .copied()
+                .filter(|r| {
+                    r.rom_name.as_deref().is_some_and(|n| {
+                        Path::new(n)
+                            .extension()
+                            .is_some_and(|e| e.eq_ignore_ascii_case(&ext))
+                    })
+                })
+                .collect(),
+        )
+    });
+    by_ext.or_else(|| {
+        only(
+            c.iter()
+                .copied()
+                .filter(|r| {
+                    at.ancestors()
+                        .any(|a| a.file_name().is_some_and(|n| n == r.system.as_str()))
+                })
+                .collect(),
+        )
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pick_by_file_uses_extension_then_folder() {
+        let r = |system: &str, rom: &str| Record {
+            system: system.into(),
+            name: rom.into(),
+            rom_name: Some(rom.into()),
+            ..Record::default()
+        };
+        let (a52, bin) = (
+            r("Atari - 5200", "Miner.a52"),
+            r("Atari - 8-bit Family", "Miner.bin"),
+        );
+        let c = [&a52, &bin];
+        let lib = Path::new("/lib/Inbox/x.zip");
+        assert_eq!(
+            pick_by_file(&c, Path::new("m.A52"), lib).map(|r| &r.system),
+            Some(&a52.system)
+        );
+        // extension fits neither: the folder decides
+        let at = Path::new("/lib/Atari - 8-bit Family/m.zip");
+        assert_eq!(
+            pick_by_file(&c, Path::new("m.rom"), at).map(|r| &r.system),
+            Some(&bin.system)
+        );
+        assert!(pick_by_file(&c, Path::new("m.rom"), lib).is_none());
+        // same extension on both: still ambiguous
+        let bin2 = r("Atari - 5200", "Other.bin");
+        assert!(pick_by_file(&[&bin, &bin2], Path::new("m.bin"), lib).is_none());
+    }
 
     #[test]
     fn candidates_dedup_by_system_and_name() {

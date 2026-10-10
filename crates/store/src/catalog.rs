@@ -1,6 +1,6 @@
 //! Turning a scan report into planner items (identification + stored resolutions).
 
-use crate::{DiscMatch, Match, Record, Result, Store, candidates};
+use crate::{DiscMatch, Match, Record, Result, Store, candidates, pick_by_file};
 use romburak_core::arcade;
 use romburak_core::disc::{self, DiscKind};
 use romburak_core::plan::{Files, Game, Ident, Item};
@@ -126,7 +126,12 @@ impl Store {
                 }
                 out.push(Item {
                     files,
-                    ident: self.ident(&records, &rom.hashes.sha1)?,
+                    ident: self.ident(
+                        &records,
+                        &rom.hashes.sha1,
+                        rom.member.as_deref().map_or(&rom.path, Path::new),
+                        &rom.path,
+                    )?,
                     in_library,
                 });
             }
@@ -154,7 +159,7 @@ impl Store {
                     DiscMatch::Hash(Match::Unknown) | DiscMatch::Unknown => Vec::new(),
                 };
                 let sha1 = d.tracks.first().map(|t| t.hashes.sha1).unwrap_or_default();
-                self.ident(&records, &sha1)?
+                self.ident(&records, &sha1, &d.path, &d.path)?
             };
             let files = if d.tracks.len() == 1 && d.tracks[0].path == d.path {
                 Files::Single(d.path.clone())
@@ -271,7 +276,7 @@ impl Store {
         let bios = records
             .iter()
             .any(|r| arcade::is_bios(r.rom_name.as_deref(), &r.name));
-        let ident = match self.ident(&records, &whole.hashes.sha1)? {
+        let ident = match self.ident(&records, &whole.hashes.sha1, &whole.path, &whole.path)? {
             Ident::Known(g) if bios => bios_named(g, &records, &whole.path),
             i => i,
         };
@@ -517,7 +522,8 @@ impl Store {
                 .filter_map(|t| t.member)
                 .collect(),
         };
-        Ok(Some(item(files, self.ident(&records, &sha1)?)))
+        let ident = self.ident(&records, &sha1, archive, archive)?;
+        Ok(Some(item(files, ident)))
     }
 
     /// Headerless hashes first (RetroArch hashes without headers), then the full file.
@@ -533,7 +539,8 @@ impl Store {
         })
     }
 
-    fn ident(&self, records: &[Record], sha1: &[u8]) -> Result<Ident> {
+    /// `name`/`at`: the file (or member) name and location, for [`pick_by_file`].
+    fn ident(&self, records: &[Record], sha1: &[u8], name: &Path, at: &Path) -> Result<Ident> {
         let c = candidates(records);
         Ok(match c.as_slice() {
             [] => Ident::Unknown,
@@ -547,7 +554,11 @@ impl Store {
                         None => Ident::Ambiguous(c.iter().map(|r| game(r)).collect()),
                     }
                 }
-                None => Ident::Ambiguous(c.iter().map(|r| game(r)).collect()),
+                None => match pick_by_file(&c, name, at) {
+                    Some(r) if r.name.starts_with("[BIOS]") => unnamed_bios(r),
+                    Some(r) => Ident::Known(game(r)),
+                    None => Ident::Ambiguous(c.iter().map(|r| game(r)).collect()),
+                },
             },
         })
     }

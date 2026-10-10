@@ -412,6 +412,7 @@ Jeder Milestone ist so geschnitten, dass er in **einer Session** abschließbar i
   erkannt (Nintendo - Nintendo 64DD), Umbauten landen in der Quarantäne (User-Entscheidung).
 - Library-Scan beim Planen/Export vertraut dem Index (`HashCache.trusted`): nur Ordnerlisten werden gelesen (neue/gelöschte Dateien), bekannte Dateien ohne `stat`. Überschreiben an Ort und Stelle fällt erst beim Library-„Rescan“ (volle Prüfung) auf. Inbox wird immer voll geprüft. Library-Phase ~16 s → ~3 s bei 15k Dateien auf CIFS.
 
+- Mehrdeutige Treffer (2026-10-10): ohne gespeicherte Auflösung wählt `identify::pick_by_file` selbst, wenn genau ein Kandidat passt – zuerst Endung der Datei/des Zip-Members = Endung des `rom_name` (`.a52` → Atari 5200 statt 8-bit `.bin`), sonst Systemname = ein Ordner des Pfads. Sonst Rückfrage. Gespeicherte Auflösung geht vor.
 ## 11. Offene Fragen
 - Ziel (User): vollständige Sammlung im Sinne der RetroArch-Datenbanken. Andere Versionen, Derivate, Formate interessieren nicht, solange sie in keiner RDB stehen → Quarantäne ist richtig für Unbekanntes in erkannten System-Ordnern.
 - Entschieden: 1G1R auch für Arcade (User). Keine Parent/Clone-Infos in den RDBs → Gruppierung über den Titel vor der ersten Klammer, über alle DBs, die ein Set listen (Union-Find; `Gradius III: Densetsu…` findet über den MAME-Namen `Gradius III (Japan)` in die Gruppe). Auswahl: Regionen-Reihenfolge der Regeln → Original vor Bootleg/Hack/Proto → neueste Fassung (Name absteigend: Datum/Revision). Abgelehnte → Entscheidungen (wie Konsole). Code: `arcade/g1r.rs`.

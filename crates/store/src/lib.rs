@@ -35,7 +35,7 @@ pub use dat::DatInfo;
 pub use dat_sync::{DatSyncReport, http_download, http_get};
 pub use disc::DiscMatch;
 pub use gamify::Stats;
-pub use identify::{Match, candidates};
+pub use identify::{Match, candidates, pick_by_file};
 pub use import::SyncReport;
 pub use journal::{JournalEntry, VerdictRow};
 pub use lookup::ReleaseMeta;
