@@ -176,6 +176,7 @@ pub async fn library_list(
                 .iter()
                 .map(|(s, _)| (*s).to_owned()),
         );
+        let items = loose_game_folders(items, &library, &folder_systems);
         // Game folders (DOS, ScummVM, ports): the folder of a known key file is the game;
         // its other files are game data, not unknown items.
         let game_dirs: std::collections::HashSet<PathBuf> = items
@@ -300,4 +301,122 @@ pub async fn library_list(
     })
     .await
     .map_err(err)?
+}
+
+/// Game folders (`<library>/<folder system>/<game>/`) where no file is known to a database:
+/// the folder is still one game, named after it, started from its most likely launcher;
+/// its other files count as its data (see `game_dirs`), not as unknown items.
+fn loose_game_folders(
+    mut items: Vec<romburak_core::plan::Item>,
+    library: &std::path::Path,
+    folder_systems: &[String],
+) -> Vec<romburak_core::plan::Item> {
+    use std::collections::HashMap;
+    let root_of = |p: &std::path::Path| -> Option<(String, PathBuf)> {
+        let rel = p.strip_prefix(library).ok()?;
+        let mut parts = rel.components();
+        let system = parts.next()?.as_os_str().to_string_lossy().into_owned();
+        let game = parts.next()?;
+        // a file right in the system folder is no game folder
+        parts.next()?;
+        folder_systems
+            .contains(&system)
+            .then(|| (system.clone(), library.join(&system).join(game)))
+    };
+    let mut known_roots = std::collections::HashSet::new();
+    let mut loose: HashMap<PathBuf, (String, Vec<usize>)> = HashMap::new();
+    for (i, it) in items.iter().enumerate() {
+        let Some((system, root)) = root_of(it.files.primary()) else {
+            continue;
+        };
+        if matches!(it.ident, Ident::Unknown) {
+            loose
+                .entry(root)
+                .or_insert_with(|| (system, Vec::new()))
+                .1
+                .push(i);
+        } else {
+            known_roots.insert(root);
+        }
+    }
+    for (root, (system, idx)) in loose {
+        if known_roots.contains(&root) {
+            continue;
+        }
+        let rank = |p: &std::path::Path| {
+            let name = p
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_lowercase();
+            let ext = p
+                .extension()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_lowercase();
+            let depth = p.components().count();
+            let kind = match (name.as_str(), ext.as_str()) {
+                ("dosbox.bat", _) => 0,
+                (_, "bat") => 1,
+                (_, "exe" | "com") => 2,
+                _ => 3,
+            };
+            // shallowest first: its folder becomes the game folder, covering all files below
+            (depth, kind, name)
+        };
+        let Some(&pick) = idx
+            .iter()
+            .filter(|&&i| matches!(items[i].files, romburak_core::plan::Files::Single(_)))
+            .min_by_key(|&&i| rank(items[i].files.primary()))
+        else {
+            continue;
+        };
+        items[pick].ident = Ident::Named(romburak_core::plan::Game {
+            system,
+            name: root
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .into_owned(),
+            crc: None,
+        });
+    }
+    items
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use romburak_core::plan::{Files, Item};
+
+    #[test]
+    fn loose_game_folder_is_one_named_game() {
+        let lib = PathBuf::from("/lib");
+        let item = |p: &str| Item {
+            files: Files::Single(lib.join(p)),
+            ident: Ident::Unknown,
+            in_library: true,
+        };
+        let items = vec![
+            item("DOS/Risk/floppy/RISK.EXE"),
+            item("DOS/Risk/run.bat"),
+            item("DOS/Risk/dosbox.bat"),
+            item("DOS/Risk/AUTOBOOT.DBP"),
+            item("SNES/odd.bin"),
+        ];
+        let out = loose_game_folders(items, &lib, &["DOS".to_owned()]);
+        let named: Vec<_> = out
+            .iter()
+            .filter_map(|it| match &it.ident {
+                Ident::Named(g) => {
+                    Some((it.files.primary().clone(), g.system.clone(), g.name.clone()))
+                }
+                _ => None,
+            })
+            .collect();
+        assert_eq!(
+            named,
+            [(lib.join("DOS/Risk/dosbox.bat"), "DOS".into(), "Risk".into())]
+        );
+    }
 }
