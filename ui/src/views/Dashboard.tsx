@@ -13,6 +13,7 @@ import {
 } from "./DashboardProgress";
 import { gamifyEnabled } from "../state/gamify";
 import { dbStats } from "../ipc";
+import { libraryBusy, libraryRows } from "../state/libraryStore";
 
 type Page = "play" | "stats" | "collection" | "goals";
 // kept while switching views
@@ -53,6 +54,9 @@ export default function Dashboard(props: {
       </div>
       <Switch>
         <Match when={shown() === "play"}>
+          <Show when={libraryBusy() && !libraryRows().length}>
+            <p class="dim">Loading the library…</p>
+          </Show>
           <ContinuePanel onLibrary={props.onLibrary} />
           <PopularPanel onLibrary={props.onLibrary} />
         </Match>
