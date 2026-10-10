@@ -71,6 +71,9 @@ pub struct Store {
     conn: Connection,
     /// Parsed DAT sets by (system, name); `None` = not in that DAT. Emptied on DAT import.
     dat_cache: std::cell::RefCell<dat::DatCache>,
+    /// CHDs of the report being identified, by folder: spares a `read_dir` per archive
+    /// (network shares). `None` outside [`Store::items_with`].
+    chd_dirs: std::cell::RefCell<Option<catalog::ChdDirs>>,
 }
 
 impl Store {
@@ -95,6 +98,7 @@ impl Store {
         Ok(Self {
             conn,
             dat_cache: Default::default(),
+            chd_dirs: Default::default(),
         })
     }
 }

@@ -181,6 +181,8 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
     // multi-disk games already in the library (`<Game>/<Game>.m3u`) are finished units:
     // their disks may carry inconsistent database names and must not be renamed apart
     let mut placed_sets: BTreeSet<&Path> = BTreeSet::new();
+    // one file check per folder, not per game (network shares)
+    let mut own_m3u: HashMap<&Path, bool> = HashMap::new();
     let items: Vec<&Item> = items
         .into_iter()
         .filter(|it| {
@@ -193,7 +195,9 @@ pub fn build(items: &[Item], library: &Path, opts: &Options) -> Plan {
             }
             match (&it.ident, it.files.primary().parent()) {
                 (Ident::Known(g), Some(dir))
-                    if it.in_library && has_own_m3u(dir) && !zip_m3u_unloadable(dir, &g.system) =>
+                    if it.in_library
+                        && *own_m3u.entry(dir).or_insert_with(|| has_own_m3u(dir))
+                        && !zip_m3u_unloadable(dir, &g.system) =>
                 {
                     placed_sets.insert(dir);
                     false
@@ -496,7 +500,7 @@ impl Builder<'_> {
         };
         let free = |s: &str| {
             let t = self.library.join(s).join(file_name(archive));
-            !self.claimed.contains_key(&t) && (!t.exists() || t == *archive)
+            !self.claimed.contains_key(&t) && (t == *archive || !t.exists())
         };
         std::iter::once(g)
             .chain(alt)

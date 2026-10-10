@@ -33,6 +33,18 @@ impl Store {
         in_library: bool,
         known_sets: &HashSet<String>,
     ) -> Result<Vec<Item>> {
+        *self.chd_dirs.borrow_mut() = Some(chd_dirs(report));
+        let out = self.identify_all(report, in_library, known_sets);
+        *self.chd_dirs.borrow_mut() = None;
+        out
+    }
+
+    fn identify_all(
+        &self,
+        report: &ScanReport,
+        in_library: bool,
+        known_sets: &HashSet<String>,
+    ) -> Result<Vec<Item>> {
         let mut known = set_names(report);
         known.extend(known_sets.iter().cloned());
         let mut out = Vec::new();
@@ -46,7 +58,15 @@ impl Store {
             if let Some(item) = firmware_item(whole, in_library) {
                 sets.insert(whole.path.as_path());
                 out.push(item);
-            } else if let Some(item) = self.romset(whole, in_library, &known)? {
+            } else if let Some(item) = self.romset(
+                whole,
+                groups
+                    .get(whole.path.as_path())
+                    .copied()
+                    .unwrap_or_default(),
+                in_library,
+                &known,
+            )? {
                 sets.insert(whole.path.as_path());
                 out.push(item);
             } else if let Some(item) = self.chip_set(
@@ -158,6 +178,7 @@ impl Store {
     fn romset(
         &self,
         whole: &ScannedRom,
+        group: &[ScannedRom],
         in_library: bool,
         known: &HashSet<String>,
     ) -> Result<Option<Item>> {
@@ -168,7 +189,7 @@ impl Store {
         let order = self.rules()?.arcade_order;
         let rank = |s: &str| arcade::rank_in(&order, s);
         let mut dat_note = String::new();
-        let best = match self.dat_pick(&records, &whole.path, &rank, known)? {
+        let best = match self.dat_pick(&records, whole, group, &rank, known)? {
             Ok(Some((system, skipped))) => {
                 if !skipped.is_empty() {
                     dat_note = format!("skipped {skipped}");
@@ -189,7 +210,7 @@ impl Store {
                     return Ok(Some(Item {
                         files: Files::Set {
                             archive: whole.path.clone(),
-                            chds: set_chds(&whole.path),
+                            chds: self.set_chds(&whole.path),
                             alt: Vec::new(),
                             dat_note: String::new(),
                         },
@@ -201,7 +222,7 @@ impl Store {
             }
             Err(reason) => {
                 // a set on a Flycast board runs there whatever MAME's driver status says
-                let crcs: Vec<u32> = romburak_core::archive::members(&whole.path)
+                let crcs: Vec<u32> = members(whole, group)
                     .map(|m| m.into_iter().map(|(_, crc)| crc).collect())
                     .unwrap_or_default();
                 let stem = whole.path.file_stem().map(|s| s.to_string_lossy());
@@ -211,7 +232,7 @@ impl Store {
                     return Ok(Some(Item {
                         files: Files::Set {
                             archive: whole.path.clone(),
-                            chds: set_chds(&whole.path),
+                            chds: self.set_chds(&whole.path),
                             alt: Vec::new(),
                             dat_note: String::new(),
                         },
@@ -226,7 +247,7 @@ impl Store {
                 return Ok(Some(Item {
                     files: Files::Set {
                         archive: whole.path.clone(),
-                        chds: set_chds(&whole.path),
+                        chds: self.set_chds(&whole.path),
                         alt: Vec::new(),
                         dat_note: String::new(),
                     },
@@ -257,7 +278,7 @@ impl Store {
         Ok(Some(Item {
             files: Files::Set {
                 archive: whole.path.clone(),
-                chds: set_chds(&whole.path),
+                chds: self.set_chds(&whole.path),
                 alt,
                 dat_note,
             },
@@ -288,18 +309,8 @@ impl Store {
         if !self.dat_knows(&stem)? {
             return Ok(None);
         }
-        // the scan already hashed the members: no second read of the zip (network shares)
-        let scanned: Vec<(String, u32)> = group
-            .iter()
-            .filter_map(|r| Some((r.member.clone()?, r.hashes.crc)))
-            .collect();
-        let members = if scanned.is_empty() {
-            match romburak_core::archive::members(&whole.path) {
-                Ok(m) => m,
-                Err(_) => return Ok(None),
-            }
-        } else {
-            scanned
+        let Ok(members) = members(whole, group) else {
+            return Ok(None);
         };
         let mut bios = self
             .bios_systems(&stem, &members)?
@@ -324,7 +335,7 @@ impl Store {
             }));
         }
         let has_set = |n: &str| known.contains(&n.to_ascii_lowercase());
-        let chds = set_chds(&whole.path);
+        let chds = self.set_chds(&whole.path);
         let chd_names: Vec<String> = chds
             .iter()
             .filter_map(|p| Some(p.file_stem()?.to_string_lossy().into_owned()))
@@ -361,7 +372,7 @@ impl Store {
         Ok(Some(Item {
             files: Files::Set {
                 archive: whole.path.clone(),
-                chds: set_chds(&whole.path),
+                chds: self.set_chds(&whole.path),
                 alt: Vec::new(),
                 dat_note: String::new(),
             },
@@ -378,7 +389,8 @@ impl Store {
     fn dat_pick<'r>(
         &self,
         records: &'r [Record],
-        archive: &Path,
+        whole: &ScannedRom,
+        group: &[ScannedRom],
         rank: &impl Fn(&str) -> usize,
         known: &HashSet<String>,
     ) -> Result<std::result::Result<Option<(&'r str, String)>, String>> {
@@ -392,20 +404,22 @@ impl Store {
             [r] => r.system == "MAME",
             c => c.len() > 1,
         };
+        let archive = whole.path.as_path();
         let is_zip = archive
             .extension()
             .is_some_and(|e| e.eq_ignore_ascii_case("zip"));
         if !uncertain || !is_zip {
             return Ok(Ok(None));
         }
-        let Ok(members) = romburak_core::archive::members(archive) else {
+        let Ok(members) = members(whole, group) else {
             return Ok(Ok(None));
         };
         let stem = archive
             .file_stem()
             .map(|s| s.to_string_lossy().into_owned());
         let has_set = |n: &str| known.contains(&n.to_ascii_lowercase());
-        let chds: Vec<String> = set_chds(archive)
+        let chds: Vec<String> = self
+            .set_chds(archive)
             .iter()
             .filter_map(|p| Some(p.file_stem()?.to_string_lossy().into_owned()))
             .collect();
@@ -586,8 +600,55 @@ pub(crate) fn game(r: &Record) -> Game {
 }
 
 /// CHDs in the folder named like the romset (`kinst.zip` → `kinst/*.chd`), sorted.
-fn set_chds(archive: &Path) -> Vec<PathBuf> {
-    let Ok(dir) = std::fs::read_dir(archive.with_extension("")) else {
+/// Member names and CRCs of an archive. The scan already hashed them (`group`): no second
+/// read of the zip (network shares); read only if it has none.
+fn members(whole: &ScannedRom, group: &[ScannedRom]) -> std::io::Result<Vec<(String, u32)>> {
+    let scanned: Vec<(String, u32)> = group
+        .iter()
+        .filter_map(|r| Some((r.member.clone()?, r.hashes.crc)))
+        .collect();
+    if scanned.is_empty() {
+        romburak_core::archive::members(&whole.path)
+    } else {
+        Ok(scanned)
+    }
+}
+
+pub(crate) type ChdDirs = HashMap<PathBuf, Vec<PathBuf>>;
+
+/// The scanned CHDs grouped by folder (sorted).
+fn chd_dirs(report: &ScanReport) -> ChdDirs {
+    let mut dirs = ChdDirs::new();
+    // unreadable CHDs still belong to their set
+    let paths = report.discs.iter().map(|d| &d.path);
+    for p in paths.chain(report.failures.iter().map(|f| &f.path)) {
+        if disc::is_chd(p)
+            && let Some(parent) = p.parent()
+        {
+            dirs.entry(parent.to_path_buf())
+                .or_default()
+                .push(p.clone());
+        }
+    }
+    for chds in dirs.values_mut() {
+        chds.sort();
+    }
+    dirs
+}
+
+impl Store {
+    /// The CHDs in an arcade set's folder (`<set>/` next to `<set>.zip`).
+    fn set_chds(&self, archive: &Path) -> Vec<PathBuf> {
+        let dir = archive.with_extension("");
+        if let Some(dirs) = &*self.chd_dirs.borrow() {
+            return dirs.get(&dir).cloned().unwrap_or_default();
+        }
+        read_chds(&dir)
+    }
+}
+
+fn read_chds(dir: &Path) -> Vec<PathBuf> {
+    let Ok(dir) = std::fs::read_dir(dir) else {
         return Vec::new();
     };
     let mut chds: Vec<PathBuf> = dir

@@ -34,6 +34,13 @@ fn games(dir: &Path) -> BTreeSet<String> {
 /// Collection roots among the folders of `items` within `roots` (the inbox itself may be
 /// one, the library root not).
 pub(super) fn find(items: &[&Item], roots: &[&Path], library: &Path) -> BTreeSet<PathBuf> {
+    // folders with a `roms/` holding items: only these are checked on disk (network shares)
+    let with_roms: BTreeSet<&Path> = items
+        .iter()
+        .flat_map(|it| it.files.archive().unwrap_or(it.files.primary()).ancestors())
+        .filter(|a| a.file_name().is_some_and(|n| n == "roms"))
+        .filter_map(Path::parent)
+        .collect();
     let mut seen: BTreeSet<&Path> = BTreeSet::new();
     let mut found = BTreeSet::new();
     for it in items {
@@ -45,7 +52,7 @@ pub(super) fn find(items: &[&Item], roots: &[&Path], library: &Path) -> BTreeSet
             if !seen.insert(dir) {
                 break;
             }
-            if is_collection(dir) {
+            if with_roms.contains(dir) && is_collection(dir) {
                 found.insert(dir.to_path_buf());
                 break;
             }
