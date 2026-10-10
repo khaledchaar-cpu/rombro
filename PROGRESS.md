@@ -183,6 +183,12 @@ Library-Pfad/Needs attention/Trash → Settings → Library, Details mit Reitern
 Dashboard-Einträge springen in die Library (`state/jump.ts`), Graph „Library growth“, Core-Override am Inhalt.
 Nachträge 2026-10-09: Dashboard in Reiter Play/Stats/Collection/Goals (jede Seite passt ohne Scrollen, Stats-Listen 5 je Seite); Library-Zeilen tragen `franchise` (`Store::release_meta`), Filter „franchise“, Franchise-Ziele springen dorthin; Gamification-Sprünge filtern auf `known` (gleiche Basis wie die Zahlen). Rest-Abweichung gewollt: Completeness/Franchise zählen 1G1R-Gruppen, die Library jede Fassung (Tooltip). Offen: Sichtprüfung User, dann v0.10.0.
 
+Nachträge 2026-10-10 (nach v0.11.0): Last-run-Liste kleinere Schrift; Dashboard-Play zeigt Ladebalken, solange die
+Library lädt; Library: Unbekannte zeigen Dateinamen und stehen beim Sortieren am Ende; Ordner-Systeme (DOS …) ohne
+erkannte Datei = ein Spiel (Ordnername, Start `dosbox.bat` > `.bat` > `.exe`), Starter neben einem in einem Unterordner
+erkannten Spiel zählen als dessen Daten (`library::loose_game_folders`). Unknown in der echten Library: 0 (User ok).
+Bally - Astrocade/Solarus sind „named“ über `Rules::name_folders` (SPEC §11a) – nicht in die Quarantäne.
+
 ## Stolpersteine
 - Chrome-Tab im Hintergrund (`visibilityState: hidden`): kein rAF, Screenshots hängen – Tests per JS, `fitCount` misst erst sichtbar.
 - RetroArch headless testen: nur mit eigener Config-Kopie (`--config <scratch>/ra.cfg`, Treiber null), **nie
