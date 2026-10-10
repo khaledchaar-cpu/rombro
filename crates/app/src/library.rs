@@ -238,7 +238,15 @@ pub async fn library_list(
                         String::new(),
                         format!("{} candidates", c.len()),
                     ),
-                    Ident::Unknown => ("unknown", String::new(), String::new()),
+                    // no database knows it: the file name is all there is to show
+                    Ident::Unknown => (
+                        "unknown",
+                        String::new(),
+                        p.file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .into_owned(),
+                    ),
                     Ident::Skip(r) | Ident::Incomplete(r) => ("skip", String::new(), r),
                     Ident::Bios(g) => ("skip", g.system, g.name), // filtered above
                     Ident::Firmware(_) => ("skip", String::new(), String::new()), // filtered above

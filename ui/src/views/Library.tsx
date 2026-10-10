@@ -59,7 +59,8 @@ export default function Library(props: { onSettings: () => void }) {
   const view = createMemo(() => {
     const { key, asc } = sort();
     const f = [...filter.filtered()];
-    return f.sort((a, b) => (asc ? 1 : -1) * cmp(a, b, key) || a.name.localeCompare(b.name));
+    // rows without a system (unknown files) stay at the end in both directions
+    return f.sort((a, b) => +!a.system - +!b.system || (asc ? 1 : -1) * cmp(a, b, key) || a.name.localeCompare(b.name));
   });
 
   // by path: rows are replaced when a favorite or play time changes
